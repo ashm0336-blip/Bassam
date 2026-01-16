@@ -91,18 +91,38 @@ function AppRoutes() {
       }>
         <Route index element={<Dashboard />} />
         <Route path="map" element={<MapPage />} />
-        <Route path="planning" element={<PlanningDepartment />} />
-        <Route path="plazas" element={<PlazasDepartment />} />
-        <Route path="gates" element={<GatesDepartment />} />
-        <Route path="crowd-services" element={<CrowdServicesDepartment />} />
-        <Route path="mataf" element={<MatafDepartment />} />
+        <Route path="planning" element={
+          <DepartmentProtectedRoute department="planning">
+            <PlanningDepartment />
+          </DepartmentProtectedRoute>
+        } />
+        <Route path="plazas" element={
+          <DepartmentProtectedRoute department="plazas">
+            <PlazasDepartment />
+          </DepartmentProtectedRoute>
+        } />
+        <Route path="gates" element={
+          <DepartmentProtectedRoute department="gates">
+            <GatesDepartment />
+          </DepartmentProtectedRoute>
+        } />
+        <Route path="crowd-services" element={
+          <DepartmentProtectedRoute department="crowd_services">
+            <CrowdServicesDepartment />
+          </DepartmentProtectedRoute>
+        } />
+        <Route path="mataf" element={
+          <DepartmentProtectedRoute department="mataf">
+            <MatafDepartment />
+          </DepartmentProtectedRoute>
+        } />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={
-          <AdminRoute>
+          <AdminProtectedRoute>
             <AdminPage />
-          </AdminRoute>
+          </AdminProtectedRoute>
         } />
       </Route>
       
