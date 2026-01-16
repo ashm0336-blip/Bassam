@@ -1,5 +1,6 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable';
+applyPlugin(jsPDF);
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
