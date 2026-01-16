@@ -258,23 +258,23 @@ export default function UserManagement() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo">
+          <CardTitle className="font-cairo text-left">
             {language === 'ar' ? 'قائمة المستخدمين' : 'Users List'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-left">
             {language === 'ar' ? `إجمالي ${users.length} مستخدم` : `Total ${users.length} users`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" dir="ltr">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
                   <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
