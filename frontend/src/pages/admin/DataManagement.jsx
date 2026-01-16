@@ -299,17 +299,17 @@ export default function DataManagement() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="mataf" className="gap-2">
-            <Circle className="w-4 h-4" />
-            {language === 'ar' ? 'المطاف' : 'Mataf'} ({matafLevels.length})
+          <TabsTrigger value="gates" className="gap-2">
+            <DoorOpen className="w-4 h-4" />
+            {language === 'ar' ? 'الأبواب' : 'Gates'} ({gates.length})
           </TabsTrigger>
           <TabsTrigger value="plazas" className="gap-2">
             <LayoutGrid className="w-4 h-4" />
             {language === 'ar' ? 'الساحات' : 'Plazas'} ({plazas.length})
           </TabsTrigger>
-          <TabsTrigger value="gates" className="gap-2">
-            <DoorOpen className="w-4 h-4" />
-            {language === 'ar' ? 'الأبواب' : 'Gates'} ({gates.length})
+          <TabsTrigger value="mataf" className="gap-2">
+            <Circle className="w-4 h-4" />
+            {language === 'ar' ? 'المطاف' : 'Mataf'} ({matafLevels.length})
           </TabsTrigger>
         </TabsList>
 
