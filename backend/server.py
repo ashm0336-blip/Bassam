@@ -519,6 +519,10 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.employees.update_one({"id": employee_id}, {"$set": update_data})
+    
+    # Log activity
+    await log_activity("employee_updated", user, existing["name"], f"تم تحديث بيانات الموظف: {existing['name']}")
+    
     return {"message": "تم تحديث الموظف بنجاح"}
 
 @api_router.delete("/employees/{employee_id}")
