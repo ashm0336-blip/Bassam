@@ -630,7 +630,7 @@ async def get_departments():
             "max_capacity": plazas_max,
             "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0,
             "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0),
-            "active_staff": len(plazas) * 20,
+            "active_staff": plazas_employees,
             "incidents_today": 0
         },
         {
@@ -642,7 +642,7 @@ async def get_departments():
             "max_capacity": gates_max,
             "percentage": round((gates_flow / gates_max) * 100, 1) if gates_max else 0,
             "status": get_status((gates_flow / gates_max) * 100 if gates_max else 0),
-            "active_staff": len(gates) * 5,
+            "active_staff": gates_employees,
             "incidents_today": 0
         },
         {
@@ -654,7 +654,7 @@ async def get_departments():
             "max_capacity": plazas_max + mataf_max,
             "percentage": round(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100, 1) if (plazas_max + mataf_max) else 0,
             "status": get_status(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100 if (plazas_max + mataf_max) else 0),
-            "active_staff": 150,
+            "active_staff": crowd_employees,
             "incidents_today": 0
         },
         {
@@ -666,7 +666,7 @@ async def get_departments():
             "max_capacity": mataf_max,
             "percentage": round((mataf_crowd / mataf_max) * 100, 1) if mataf_max else 0,
             "status": get_status((mataf_crowd / mataf_max) * 100 if mataf_max else 0),
-            "active_staff": len(mataf) * 50,
+            "active_staff": mataf_employees,
             "incidents_today": 0
         }
     ]
