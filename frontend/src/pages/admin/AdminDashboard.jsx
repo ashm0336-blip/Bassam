@@ -130,13 +130,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Prepare pie chart data
-  const pieData = Object.entries(stats.byRole).map(([role, count]) => ({
-    name: ROLE_LABELS[language][role] || role,
-    value: count,
-    color: ROLE_COLORS[role]
-  }));
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
