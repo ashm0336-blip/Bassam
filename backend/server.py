@@ -344,6 +344,9 @@ async def update_user(user_id: str, user_data: UserUpdate, admin: dict = Depends
     if update_data:
         await db.users.update_one({"id": user_id}, {"$set": update_data})
         user.update(update_data)
+        
+        # Log activity
+        await log_activity("user_updated", admin, user["name"], f"تم تحديث بيانات المستخدم: {user['name']}")
     
     return UserResponse(
         id=user["id"],
