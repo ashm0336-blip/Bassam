@@ -57,11 +57,15 @@ export default function DataManagement() {
   const [gateForm, setGateForm] = useState({
     name: "",
     number: "",
-    status: "open",
-    direction: "both",
+    plaza: "الساحة الشرقية",
+    gate_type: "رئيسي",
+    direction: "دخول",
+    category: "محرمين",
+    classification: "عام",
+    indicator_status: "متاح",
+    current_indicator: "مغلق",
     current_flow: 0,
-    max_flow: 5000,
-    location: ""
+    max_flow: 5000
   });
   
   // Plazas state
