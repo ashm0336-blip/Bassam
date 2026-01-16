@@ -60,10 +60,10 @@ export default function DataManagement() {
     plaza: "الساحة الشرقية",
     gate_type: "رئيسي",
     direction: "دخول",
-    category: [],  // Multi-select
+    category: [],
     classification: "عام",
-    status: "متاح",
-    current_indicator: "مغلق",
+    status: "مفتوح",
+    current_indicator: "خفيف",
     current_flow: 0,
     max_flow: 5000
   });
