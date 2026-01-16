@@ -548,6 +548,18 @@ export default function AdminPage() {
     }
   };
 
+  // User operations
+  const createUser = async (data) => {
+    try {
+      await axios.post(`${API}/admin/users`, data);
+      toast.success("تم إنشاء المستخدم بنجاح");
+      setUserDialog(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "حدث خطأ");
+    }
+  };
+
   // Quick update for flow/crowd
   const quickUpdateGate = async (id, field, value) => {
     try {
