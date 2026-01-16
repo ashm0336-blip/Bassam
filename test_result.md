@@ -159,11 +159,14 @@ frontend:
     file: "/app/frontend/src/context/LanguageContext.jsx, /app/frontend/src/components/Layout.jsx, /app/frontend/src/pages/Dashboard.jsx, /app/frontend/src/pages/ReportsPage.jsx, /app/frontend/src/pages/SettingsPage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Language switching fully implemented with comprehensive translations, RTL/LTR direction handling, toggle in header and settings page. Dashboard, Reports, Settings, and Layout all support bilingual display"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED - Language switching is fully functional. Tested: (1) Language toggle in header switches between Arabic (RTL) and English (LTR) correctly, (2) Document direction changes properly (dir='rtl' for Arabic, dir='ltr' for English), (3) Language buttons in Settings page work correctly, (4) Translations are applied across Dashboard, Reports, and Settings pages, (5) Language persists across navigation. All features working as expected."
 
   - task: "PDF & Excel Export Functionality"
     implemented: true
