@@ -1,0 +1,133 @@
+{
+  "identity": {
+    "name": "Al-Haram OS",
+    "tone": "Majestic, Sacred, Authoritative, Efficient",
+    "description": "A unified crowd management platform for the Holy Mosque, blending Islamic aesthetic heritage with cutting-edge digital efficiency.",
+    "keywords": ["Sacred", "Precision", "Flow", "Serenity", "Authority"]
+  },
+  "typography": {
+    "primary_font": "Cairo",
+    "secondary_font": "Tajawal",
+    "mono_font": "IBM Plex Mono",
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight lg:text-5xl",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold tracking-tight",
+      "body": "text-base leading-7",
+      "small": "text-sm font-medium leading-none"
+    },
+    "instructions": "Use 'Cairo' for all Headings to evoke a modern Kufic architectural feel. Use 'Tajawal' for body text and data tables for maximum legibility in Arabic."
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#004D38",
+        "foreground": "#FFFFFF",
+        "description": "Saudi Green / Deep Emerald - Represents the flag and sanctity."
+      },
+      "secondary": {
+        "DEFAULT": "#C5A059",
+        "foreground": "#1A1A1A",
+        "description": "Muted Gold / Bronze - Represents the Kiswah embroidery and luxury."
+      },
+      "background": {
+        "DEFAULT": "#F9F9F7",
+        "description": "Warm Marble - Represents the mosque floors."
+      },
+      "surface": {
+        "DEFAULT": "#FFFFFF",
+        "description": "Pure White - For cards and panels."
+      },
+      "muted": {
+        "DEFAULT": "#F0F0E8",
+        "foreground": "#64748B"
+      },
+      "accent": {
+        "DEFAULT": "#E6D5B8",
+        "foreground": "#2C3E50"
+      },
+      "destructive": {
+        "DEFAULT": "#991B1B",
+        "foreground": "#FFFFFF"
+      }
+    },
+    "gradients": {
+      "gold_sheen": "linear-gradient(135deg, #C5A059 0%, #E6D5B8 50%, #C5A059 100%)",
+      "emerald_depth": "linear-gradient(180deg, #004D38 0%, #002E22 100%)"
+    }
+  },
+  "layout": {
+    "direction": "rtl",
+    "grid_system": "Bento Grid Mode B (High Density)",
+    "spacing": "Generous (2x standard)",
+    "radius": "rounded-md",
+    "sidebar": {
+      "position": "right",
+      "width": "w-64",
+      "behavior": "fixed"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "Flat White with subtle border",
+      "classes": "bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
+    },
+    "buttons": {
+      "primary": "bg-[#004D38] text-white hover:bg-[#003829] shadow-sm",
+      "secondary": "bg-[#F9F9F7] text-[#004D38] border border-[#004D38]/20 hover:bg-[#F0F0E8]"
+    },
+    "inputs": {
+      "style": "Minimalist",
+      "classes": "bg-white border-gray-200 focus:border-[#C5A059] focus:ring-[#C5A059]/20"
+    }
+  },
+  "visual_enhancers": {
+    "textures": {
+      "noise": "url('https://grainy-gradients.vercel.app/noise.svg')",
+      "pattern": "url('https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80')"
+    },
+    "glassmorphism": "backdrop-blur-md bg-white/80 border-b border-white/20",
+    "shadows": {
+      "soft": "0 4px 20px -2px rgba(0, 77, 56, 0.05)",
+      "glow": "0 0 15px rgba(197, 160, 89, 0.3)"
+    }
+  },
+  "image_urls": {
+    "hero_kaaba": "https://images.unsplash.com/photo-1564769662533-4f00a87b4056?auto=format&fit=crop&q=80",
+    "crowd_texture": "https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&q=80",
+    "pattern_bg": "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80",
+    "security_personnel": "https://images.unsplash.com/photo-1555436169-20e93ea9a7ff?auto=format&fit=crop&q=80",
+    "map_placeholder": "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80"
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Set 'dir=rtl' on the root html element immediately.",
+    "Use 'Cairo' font for all headings. Import it from Google Fonts.",
+    "Implement the 'Bento Grid' layout for the main dashboard.",
+    "Use the defined 'Saudi Green' (#004D38) as the primary brand color.",
+    "Do not use generic 'blue' or 'indigo' colors. Stick to the Earth/Gold/Green palette.",
+    "Ensure all text contrast meets WCAG AA standards.",
+    "Use the provided image URLs for backgrounds and context.",
+    "For charts, use the Gold and Green palette, avoiding rainbow colors.",
+    "Add 'data-testid' to all interactive elements."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
