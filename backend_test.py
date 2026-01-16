@@ -39,16 +39,24 @@ class AlHaramAPITester:
 
     def test_endpoint(self, name: str, endpoint: str, expected_status: int = 200, 
                      method: str = "GET", data: dict = None, 
-                     required_fields: List[str] = None) -> tuple:
+                     required_fields: List[str] = None, auth_required: bool = False) -> tuple:
         """Test a single API endpoint"""
         url = f"{self.api_url}/{endpoint}"
         headers = {'Content-Type': 'application/json'}
+        
+        # Add auth header if required and available
+        if auth_required and self.auth_token:
+            headers['Authorization'] = f'Bearer {self.auth_token}'
         
         try:
             if method == 'GET':
                 response = requests.get(url, headers=headers, timeout=10)
             elif method == 'POST':
                 response = requests.post(url, json=data, headers=headers, timeout=10)
+            elif method == 'PUT':
+                response = requests.put(url, json=data, headers=headers, timeout=10)
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers, timeout=10)
             else:
                 raise ValueError(f"Unsupported method: {method}")
 
