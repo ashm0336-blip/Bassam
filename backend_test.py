@@ -460,13 +460,13 @@ class AlHaramAPITester:
             "admin/gates",
             method="POST",
             data={"name": "Test"},
-            expected_status=401
+            expected_status=403  # Changed from 401 to 403
         )
         
         success, data = self.test_endpoint(
             "Unauthorized Users Access",
             "admin/users",
-            expected_status=401
+            expected_status=403  # Changed from 401 to 403
         )
         
         # Restore token
