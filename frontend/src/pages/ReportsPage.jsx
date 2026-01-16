@@ -101,6 +101,7 @@ const ReportCard = ({ report }) => {
 };
 
 export default function ReportsPage() {
+  const { t, language } = useLanguage();
   const [reports, setReports] = useState([]);
   const [gates, setGates] = useState([]);
   const [plazas, setPlazas] = useState([]);
