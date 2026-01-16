@@ -455,6 +455,7 @@ export default function AdminPage() {
   const [gateDialog, setGateDialog] = useState({ open: false, gate: null });
   const [plazaDialog, setPlazaDialog] = useState({ open: false, plaza: null });
   const [alertDialog, setAlertDialog] = useState(false);
+  const [userDialog, setUserDialog] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
