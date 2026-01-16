@@ -208,12 +208,16 @@ async def get_me(user: dict = Depends(get_current_user)):
     )
 
 # Admin-only user creation
-@api_router.post("/admin/users", response_model=UserResponse)
+@api_router.post("/users", response_model=UserResponse)
 async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin)):
     # Check if email exists
     existing = await db.users.find_one({"email": user_data.email})
     if existing:
         raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل مسبقاً")
+    
+    # Validate department for roles that need it
+    if user_data.role in ["department_manager", "field_staff"] and not user_data.department:
+        raise HTTPException(status_code=400, detail="يجب تحديد الإدارة لهذا الدور")
     
     user_id = str(uuid.uuid4())
     user = {
@@ -222,6 +226,7 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin
         "password": hash_password(user_data.password),
         "name": user_data.name,
         "role": user_data.role,
+        "department": user_data.department,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -232,8 +237,58 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin
         email=user_data.email,
         name=user_data.name,
         role=user_data.role,
+        department=user_data.department,
         created_at=user["created_at"]
     )
+
+# Get all users (admin only)
+@api_router.get("/users", response_model=List[UserResponse])
+async def get_all_users(admin: dict = Depends(require_admin)):
+    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
+    return [UserResponse(**user) for user in users]
+
+# Update user (admin only)
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(user_id: str, user_data: UserUpdate, admin: dict = Depends(require_admin)):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    
+    update_data = {}
+    if user_data.name:
+        update_data["name"] = user_data.name
+    if user_data.role:
+        update_data["role"] = user_data.role
+    if user_data.department is not None:
+        update_data["department"] = user_data.department
+    if user_data.password:
+        update_data["password"] = hash_password(user_data.password)
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+        user.update(update_data)
+    
+    return UserResponse(
+        id=user["id"],
+        email=user["email"],
+        name=user["name"],
+        role=user["role"],
+        department=user.get("department"),
+        created_at=user["created_at"]
+    )
+
+# Delete user (admin only)
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, admin: dict = Depends(require_admin)):
+    # Don't allow deleting yourself
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="لا يمكنك حذف حسابك الخاص")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    
+    return {"message": "تم حذف المستخدم بنجاح"}
 
 # ============= Admin Routes - Gates =============
 @api_router.post("/admin/gates")
