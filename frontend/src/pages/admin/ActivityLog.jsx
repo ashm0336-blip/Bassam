@@ -273,7 +273,7 @@ export default function ActivityLog() {
                     
                     return (
                       <TableRow key={log.id}>
-                        <TableCell className="text-sm text-muted-foreground text-right">
+                        <TableCell className="text-sm text-muted-foreground text-center">
                           {new Date(log.timestamp).toLocaleString(language === 'ar' ? 'ar-SA' : 'en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -282,24 +282,24 @@ export default function ActivityLog() {
                             minute: '2-digit'
                           })}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate text-right">
+                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate text-center">
                           {log.details}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-center">
                           {log.target ? (
                             <span className="text-sm">{log.target}</span>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-center">
                           <div>
                             <p className="text-sm font-medium">{log.user_name}</p>
                             <p className="text-xs text-muted-foreground">{log.user_email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center gap-2 justify-end">
+                        <TableCell className="text-center">
+                          <div className="flex items-center gap-2 justify-center">
                             <span className="text-sm">{config.label[language]}</span>
                             <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center`}>
                               <Icon className="w-4 h-4 text-white" />
