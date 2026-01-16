@@ -461,6 +461,7 @@ export default function DataManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
