@@ -387,6 +387,10 @@ async def create_gate(gate: GateCreate, user: dict = Depends(require_admin)):
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     await db.gates.insert_one(gate_doc)
+    
+    # Log activity
+    await log_activity("gate_created", user, gate.name, f"تم إضافة باب جديد: {gate.name} (رقم {gate.number})")
+    
     return {"message": "تم إضافة الباب بنجاح", "id": gate_id}
 
 @api_router.put("/admin/gates/{gate_id}")
