@@ -876,6 +876,11 @@ export default function AdminPage() {
         onClose={() => setAlertDialog(false)}
         onSave={createAlert}
       />
+      <UserDialog 
+        open={userDialog} 
+        onClose={() => setUserDialog(false)}
+        onSave={createUser}
+      />
     </div>
   );
 }
