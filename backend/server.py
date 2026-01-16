@@ -40,7 +40,14 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
-    role: str = "user"  # admin, manager, supervisor, user
+    role: str = "field_staff"  # super_admin, department_manager, field_staff, monitoring_team
+    department: Optional[str] = None  # planning, plazas, gates, crowd_services, mataf
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    password: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -51,6 +58,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
+    department: Optional[str] = None
     created_at: str
 
 class TokenResponse(BaseModel):
