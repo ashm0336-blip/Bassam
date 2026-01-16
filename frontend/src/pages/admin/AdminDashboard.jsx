@@ -324,13 +324,13 @@ export default function AdminDashboard() {
               
               return (
                 <div key={key} className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg ${roleConfig.color} flex items-center justify-center`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
+                  <span className="text-xs text-muted-foreground w-12 text-right">
+                    {percentage}%
+                  </span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{label}</span>
                       <span className="text-sm font-bold">{count}</span>
+                      <span className="text-sm font-medium">{label}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div 
@@ -339,9 +339,9 @@ export default function AdminDashboard() {
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground w-12 text-left">
-                    {percentage}%
-                  </span>
+                  <div className={`w-10 h-10 rounded-lg ${roleConfig.color} flex items-center justify-center`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
                 </div>
               );
             })}
