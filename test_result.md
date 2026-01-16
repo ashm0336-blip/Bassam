@@ -239,13 +239,15 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
-  test_sequence: 3
+  version: "2.1"
+  test_sequence: 4
   run_ui: true
   testing_credentials:
-    email: "admin@crowd.sa"
-    password: "admin123"
-    base_url: "http://localhost:3000"
+    super_admin: "admin@crowd.sa / admin123"
+    dept_manager: "manager.plazas@crowd.sa / manager123"
+    field_staff: "staff.mataf@crowd.sa / staff123"
+    monitoring: "monitoring@crowd.sa / monitor123"
+    base_url: "https://mecca-crowd.preview.emergentagent.com"
   last_backend_test:
     timestamp: "2025-01-15"
     tests_run: 34
@@ -253,10 +255,10 @@ metadata:
     success_rate: 100.0
   last_frontend_test:
     timestamp: "2025-01-16"
-    tests_run: 5
-    tests_passed: 4
+    tests_run: 11
+    tests_passed: 10
     tests_failed: 1
-    success_rate: 80.0
+    success_rate: 90.9
 
 test_plan:
   current_focus:
