@@ -60,7 +60,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = 
   </Card>
 );
 
-const DepartmentCard = ({ dept }) => {
+const DepartmentCard = ({ dept, language }) => {
   const statusColors = {
     normal: "bg-primary",
     warning: "bg-secondary",
@@ -68,9 +68,9 @@ const DepartmentCard = ({ dept }) => {
   };
 
   const statusLabels = {
-    normal: "طبيعي",
-    warning: "مرتفع",
-    critical: "حرج"
+    normal: language === 'ar' ? "طبيعي" : "Normal",
+    warning: language === 'ar' ? "مرتفع" : "High",
+    critical: language === 'ar' ? "حرج" : "Critical"
   };
 
   return (
