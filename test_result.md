@@ -245,8 +245,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dark Mode Theme Implementation"
-    - "Language Switching (Arabic/English)"
     - "PDF & Excel Export Functionality"
   stuck_tasks: []
   test_all: false
