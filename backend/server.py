@@ -182,7 +182,7 @@ async def login(credentials: UserLogin):
     if not user or not verify_password(credentials.password, user["password"]):
         raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     
-    token = create_token(user["id"], user["email"], user["role"])
+    token = create_token(user["id"], user["email"], user["role"], user.get("department"))
     
     return TokenResponse(
         access_token=token,
@@ -191,6 +191,7 @@ async def login(credentials: UserLogin):
             email=user["email"],
             name=user["name"],
             role=user["role"],
+            department=user.get("department"),
             created_at=user["created_at"]
         )
     )
@@ -202,6 +203,7 @@ async def get_me(user: dict = Depends(get_current_user)):
         email=user["email"],
         name=user["name"],
         role=user["role"],
+        department=user.get("department"),
         created_at=user["created_at"]
     )
 
