@@ -480,7 +480,16 @@ class AlHaramAPITester:
         print(f"📡 Testing API at: {self.api_url}")
         print("=" * 60)
         
-        # Test all endpoints
+        # Test authentication first
+        self.test_authentication_endpoints()
+        
+        # Test admin endpoints (requires auth)
+        self.test_admin_endpoints()
+        
+        # Test unauthorized access
+        self.test_unauthorized_access()
+        
+        # Test all public endpoints
         self.test_root_endpoint()
         self.test_dashboard_endpoints()
         self.test_gates_endpoints()
