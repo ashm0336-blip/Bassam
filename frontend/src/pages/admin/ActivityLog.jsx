@@ -252,11 +252,11 @@ export default function ActivityLog() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
