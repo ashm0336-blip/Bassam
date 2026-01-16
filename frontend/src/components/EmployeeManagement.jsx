@@ -60,6 +60,8 @@ export default function EmployeeManagement({ department }) {
   const [formData, setFormData] = useState({
     name: "",
     job_title: "",
+    location: "",
+    shift: "صباحية",
     department: department || user?.department || "planning",
     is_active: true
   });
