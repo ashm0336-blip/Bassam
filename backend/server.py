@@ -70,19 +70,27 @@ class TokenResponse(BaseModel):
 class GateCreate(BaseModel):
     name: str
     number: int
-    status: str = "open"  # open, closed, maintenance
-    direction: str = "both"  # entry, exit, both
+    plaza: str  # الساحة الشرقية، الشمالية، الجنوبية، الغربية
+    gate_type: str  # رئيسي، فرعي، سلم كهربائي، مصعد، درج، جسر، مشابة، عبارة، مزلقان
+    direction: str = "both"  # دخول، خروج، دخول وخروج
+    category: str = "محرمين"  # محرمين، مصلين، عربات، عريات ومصلين، إلخ
+    classification: str = "عام"  # عام، رجال، نساء، طوارئ، خدمات، جنائز
+    indicator_status: str = "متاح"  # متاح، مغلق، متوسط، مزدحم
+    current_indicator: str = "مغلق"  # مغلق، خفيف، متوسط، مزدحم
     current_flow: int = 0
     max_flow: int = 5000
-    location: str = "الجهة الشمالية"
 
 class GateUpdate(BaseModel):
     name: Optional[str] = None
-    status: Optional[str] = None
+    plaza: Optional[str] = None
+    gate_type: Optional[str] = None
     direction: Optional[str] = None
+    category: Optional[str] = None
+    classification: Optional[str] = None
+    indicator_status: Optional[str] = None
+    current_indicator: Optional[str] = None
     current_flow: Optional[int] = None
     max_flow: Optional[int] = None
-    location: Optional[str] = None
 
 class PlazaCreate(BaseModel):
     name: str
