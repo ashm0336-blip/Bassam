@@ -219,15 +219,15 @@ export default function UserManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-cairo font-bold text-xl text-left">
+          <h2 className="font-cairo font-bold text-xl">
             {language === 'ar' ? 'إدارة المستخدمين' : 'User Management'}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1 text-left">
+          <p className="text-sm text-muted-foreground mt-1">
             {language === 'ar' ? 'إضافة وإدارة مستخدمي المنصة' : 'Add and manage platform users'}
           </p>
         </div>
         <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 ml-2" />
           {language === 'ar' ? 'مستخدم جديد' : 'New User'}
         </Button>
       </div>
