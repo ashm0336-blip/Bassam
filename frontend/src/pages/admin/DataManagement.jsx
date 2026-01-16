@@ -572,7 +572,7 @@ export default function DataManagement() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleGateSubmit}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[500px] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>{language === 'ar' ? 'رقم الباب' : 'Gate Number'}</Label>
@@ -585,7 +585,7 @@ export default function DataManagement() {
                   />
                 </div>
                 <div>
-                  <Label>{language === 'ar' ? 'الاسم' : 'Name'}</Label>
+                  <Label>{language === 'ar' ? 'اسم الباب' : 'Gate Name'}</Label>
                   <Input
                     value={gateForm.name}
                     onChange={(e) => setGateForm({...gateForm, name: e.target.value})}
@@ -597,62 +597,108 @@ export default function DataManagement() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{language === 'ar' ? 'الحالة' : 'Status'}</Label>
-                  <Select value={gateForm.status} onValueChange={(value) => setGateForm({...gateForm, status: value})}>
+                  <Label>{language === 'ar' ? 'المنطقة (الساحة)' : 'Plaza'}</Label>
+                  <Select value={gateForm.plaza} onValueChange={(value) => setGateForm({...gateForm, plaza: value})}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      <SelectItem value="open">{language === 'ar' ? 'مفتوح' : 'Open'}</SelectItem>
-                      <SelectItem value="closed">{language === 'ar' ? 'مغلق' : 'Closed'}</SelectItem>
-                      <SelectItem value="maintenance">{language === 'ar' ? 'صيانة' : 'Maintenance'}</SelectItem>
+                      {Object.keys(PLAZA_COLORS).map(plaza => (
+                        <SelectItem key={plaza} value={plaza}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PLAZA_COLORS[plaza] }} />
+                            {plaza}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>{language === 'ar' ? 'الاتجاه' : 'Direction'}</Label>
+                  <Label>{language === 'ar' ? 'النوع' : 'Type'}</Label>
+                  <Select value={gateForm.gate_type} onValueChange={(value) => setGateForm({...gateForm, gate_type: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {GATE_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>{language === 'ar' ? 'المسار' : 'Direction'}</Label>
                   <Select value={gateForm.direction} onValueChange={(value) => setGateForm({...gateForm, direction: value})}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      <SelectItem value="entry">{language === 'ar' ? 'دخول' : 'Entry'}</SelectItem>
-                      <SelectItem value="exit">{language === 'ar' ? 'خروج' : 'Exit'}</SelectItem>
-                      <SelectItem value="both">{language === 'ar' ? 'دخول/خروج' : 'Both'}</SelectItem>
+                      {DIRECTIONS.map(dir => (
+                        <SelectItem key={dir} value={dir}>{dir}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{language === 'ar' ? 'الفئة' : 'Category'}</Label>
+                  <Select value={gateForm.category} onValueChange={(value) => setGateForm({...gateForm, category: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>{language === 'ar' ? 'التصنيف' : 'Classification'}</Label>
+                  <Select value={gateForm.classification} onValueChange={(value) => setGateForm({...gateForm, classification: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {CLASSIFICATIONS.map(cls => (
+                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{language === 'ar' ? 'إضافة المؤشر' : 'Indicator Status'}</Label>
+                  <Select value={gateForm.indicator_status} onValueChange={(value) => setGateForm({...gateForm, indicator_status: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {INDICATOR_STATUSES.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
               <div>
-                <Label>{language === 'ar' ? 'الموقع' : 'Location'}</Label>
-                <Input
-                  value={gateForm.location}
-                  onChange={(e) => setGateForm({...gateForm, location: e.target.value})}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>{language === 'ar' ? 'التدفق الحالي' : 'Current Flow'}</Label>
-                  <Input
-                    type="number"
-                    value={gateForm.current_flow}
-                    onChange={(e) => setGateForm({...gateForm, current_flow: e.target.value})}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label>{language === 'ar' ? 'الطاقة القصوى' : 'Max Flow'}</Label>
-                  <Input
-                    type="number"
-                    value={gateForm.max_flow}
-                    onChange={(e) => setGateForm({...gateForm, max_flow: e.target.value})}
-                    className="mt-1"
-                  />
-                </div>
+                <Label>{language === 'ar' ? 'المؤشر الحالي' : 'Current Indicator'}</Label>
+                <Select value={gateForm.current_indicator} onValueChange={(value) => setGateForm({...gateForm, current_indicator: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {CURRENT_INDICATORS.map(ind => (
+                      <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
