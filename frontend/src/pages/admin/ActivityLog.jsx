@@ -240,10 +240,10 @@ export default function ActivityLog() {
       {/* Activity Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo">
+          <CardTitle className="font-cairo text-right">
             {language === 'ar' ? 'سجل الأنشطة' : 'Activity Log'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-right">
             {language === 'ar' ? `عرض ${filteredLogs.length} من ${logs.length} نشاط` : `Showing ${filteredLogs.length} of ${logs.length} activities`}
           </CardDescription>
         </CardHeader>
