@@ -246,12 +246,6 @@ async def get_activity_logs(
     logs = await db.activity_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
     return logs
 
-        logging.error(f"Failed to log activity: {e}")
-
-    if user["role"] == "field_staff":
-        return user.get("department") == department
-    return False
-
 # ============= Auth Routes =============
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
