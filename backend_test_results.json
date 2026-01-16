@@ -4,178 +4,178 @@
     "passed_tests": 34,
     "failed_tests": 0,
     "success_rate": 100.0,
-    "timestamp": "2026-01-16T15:24:34.749968"
+    "timestamp": "2026-01-16T15:49:08.351414"
   },
   "results": {
     "Admin Login": {
       "success": true,
       "details": "Status: 200, Data length: 436",
-      "timestamp": "2026-01-16T15:24:33.407894"
+      "timestamp": "2026-01-16T15:49:06.978016"
     },
     "Get Current User": {
       "success": true,
       "details": "Status: 200, Data length: 163",
-      "timestamp": "2026-01-16T15:24:33.446874"
+      "timestamp": "2026-01-16T15:49:07.022269"
     },
     "Invalid Login (Should Fail)": {
       "success": true,
       "details": "Status: 401, Data length: 37",
-      "timestamp": "2026-01-16T15:24:33.487371"
+      "timestamp": "2026-01-16T15:49:07.061904"
     },
     "Create Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 81",
-      "timestamp": "2026-01-16T15:24:33.527977"
+      "timestamp": "2026-01-16T15:49:07.107140"
     },
     "Create Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 82",
-      "timestamp": "2026-01-16T15:24:33.564638"
+      "timestamp": "2026-01-16T15:49:07.150638"
     },
     "Create Alert (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 83",
-      "timestamp": "2026-01-16T15:24:33.605731"
+      "timestamp": "2026-01-16T15:49:07.194833"
     },
     "Get Users (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 165",
-      "timestamp": "2026-01-16T15:24:33.646662"
+      "timestamp": "2026-01-16T15:49:07.237444"
     },
     "Update Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 35",
-      "timestamp": "2026-01-16T15:24:33.684562"
+      "timestamp": "2026-01-16T15:49:07.275651"
     },
     "Delete Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 33",
-      "timestamp": "2026-01-16T15:24:33.721155"
+      "timestamp": "2026-01-16T15:49:07.313846"
     },
     "Update Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-16T15:24:33.756666"
+      "timestamp": "2026-01-16T15:49:07.352204"
     },
     "Delete Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 34",
-      "timestamp": "2026-01-16T15:24:33.794389"
+      "timestamp": "2026-01-16T15:49:07.389706"
     },
     "Unauthorized Gate Creation": {
       "success": true,
       "details": "Status: 403, Data length: 31",
-      "timestamp": "2026-01-16T15:24:33.829342"
+      "timestamp": "2026-01-16T15:49:07.425953"
     },
     "Unauthorized Users Access": {
       "success": true,
       "details": "Status: 403, Data length: 31",
-      "timestamp": "2026-01-16T15:24:33.867088"
+      "timestamp": "2026-01-16T15:49:07.462387"
     },
     "API Root": {
       "success": true,
       "details": "Status: 200, Data length: 65",
-      "timestamp": "2026-01-16T15:24:33.901735"
+      "timestamp": "2026-01-16T15:49:07.541925"
     },
     "Dashboard Stats": {
       "success": true,
       "details": "Status: 200, Data length: 161",
-      "timestamp": "2026-01-16T15:24:33.941591"
+      "timestamp": "2026-01-16T15:49:07.587681"
     },
     "Dashboard Departments": {
       "success": true,
       "details": "Status: 200, Data length: 1103",
-      "timestamp": "2026-01-16T15:24:33.980097"
+      "timestamp": "2026-01-16T15:49:07.628460"
     },
     "Hourly Crowd Data": {
       "success": true,
       "details": "Status: 200, Data length: 1152",
-      "timestamp": "2026-01-16T15:24:34.016150"
+      "timestamp": "2026-01-16T15:49:07.664383"
     },
     "Gates List": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T15:24:34.056724"
+      "timestamp": "2026-01-16T15:49:07.705761"
     },
     "Gates Filtered by Status": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T15:24:34.091690"
+      "timestamp": "2026-01-16T15:49:07.744642"
     },
     "Gates Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 106",
-      "timestamp": "2026-01-16T15:24:34.127628"
+      "timestamp": "2026-01-16T15:49:07.780477"
     },
     "Plazas List": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T15:24:34.163177"
+      "timestamp": "2026-01-16T15:49:07.817893"
     },
     "Plazas Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 127",
-      "timestamp": "2026-01-16T15:24:34.200072"
+      "timestamp": "2026-01-16T15:49:07.852839"
     },
     "Mataf Levels": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T15:24:34.236126"
+      "timestamp": "2026-01-16T15:49:07.897239"
     },
     "Mataf Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 172",
-      "timestamp": "2026-01-16T15:24:34.312748"
+      "timestamp": "2026-01-16T15:49:07.932512"
     },
     "Alerts List": {
       "success": true,
-      "details": "Status: 200, Data length: 873",
-      "timestamp": "2026-01-16T15:24:34.349928"
+      "details": "Status: 200, Data length: 1164",
+      "timestamp": "2026-01-16T15:49:07.970089"
     },
     "Alerts Filtered by Department": {
       "success": true,
-      "details": "Status: 200, Data length: 873",
-      "timestamp": "2026-01-16T15:24:34.426770"
+      "details": "Status: 200, Data length: 1164",
+      "timestamp": "2026-01-16T15:49:08.010220"
     },
     "Alerts Filtered by Type": {
       "success": true,
-      "details": "Status: 200, Data length: 873",
-      "timestamp": "2026-01-16T15:24:34.460067"
+      "details": "Status: 200, Data length: 1164",
+      "timestamp": "2026-01-16T15:49:08.091411"
     },
     "Notifications List": {
       "success": true,
-      "details": "Status: 200, Data length: 873",
-      "timestamp": "2026-01-16T15:24:34.494500"
+      "details": "Status: 200, Data length: 1164",
+      "timestamp": "2026-01-16T15:49:08.127787"
     },
     "Unread Notifications": {
       "success": true,
-      "details": "Status: 200, Data length: 873",
-      "timestamp": "2026-01-16T15:24:34.533594"
+      "details": "Status: 200, Data length: 1164",
+      "timestamp": "2026-01-16T15:49:08.164686"
     },
     "Reports List": {
       "success": true,
       "details": "Status: 200, Data length: 659",
-      "timestamp": "2026-01-16T15:24:34.565929"
+      "timestamp": "2026-01-16T15:49:08.199843"
     },
     "Reports Filtered by Type": {
       "success": true,
       "details": "Status: 200, Data length: 659",
-      "timestamp": "2026-01-16T15:24:34.601398"
+      "timestamp": "2026-01-16T15:49:08.241469"
     },
     "Reports Filtered by Department": {
       "success": true,
       "details": "Status: 200, Data length: 163",
-      "timestamp": "2026-01-16T15:24:34.679969"
+      "timestamp": "2026-01-16T15:49:08.278593"
     },
     "Planning Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 140",
-      "timestamp": "2026-01-16T15:24:34.715705"
+      "timestamp": "2026-01-16T15:49:08.315322"
     },
     "Crowd Services Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 151",
-      "timestamp": "2026-01-16T15:24:34.749035"
+      "timestamp": "2026-01-16T15:49:08.350540"
     }
   },
   "failures": []
