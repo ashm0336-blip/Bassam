@@ -8,7 +8,9 @@ import {
   Clock,
   Activity,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,7 @@ import {
   BarChart,
   Bar
 } from "recharts";
+import { CrowdAlertMonitor } from "@/hooks/useAlertSound";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -144,6 +147,7 @@ export default function Dashboard() {
   const [crowdData, setCrowdData] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -187,6 +191,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
+      {/* Sound Alert Monitor */}
+      <CrowdAlertMonitor 
+        departments={departments}
+        enabled={soundEnabled}
+        threshold={85}
+      />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -303,10 +314,22 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-cairo font-bold text-xl">حالة الإدارات</h2>
-          <Button variant="outline" size="sm" className="text-xs">
-            <TrendingUp className="w-4 h-4 ml-2" />
-            تقرير مفصل
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="text-xs"
+              data-testid="sound-toggle"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 ml-1" /> : <VolumeX className="w-4 h-4 ml-1" />}
+              {soundEnabled ? "تنبيهات صوتية" : "صامت"}
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs">
+              <TrendingUp className="w-4 h-4 ml-2" />
+              تقرير مفصل
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {departments.map((dept, index) => (
