@@ -225,7 +225,7 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "2.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: true
   testing_credentials:
     email: "admin@crowd.sa"
@@ -236,6 +236,12 @@ metadata:
     tests_run: 34
     tests_passed: 34
     success_rate: 100.0
+  last_frontend_test:
+    timestamp: "2025-01-16"
+    tests_run: 5
+    tests_passed: 4
+    tests_failed: 1
+    success_rate: 80.0
 
 test_plan:
   current_focus:
