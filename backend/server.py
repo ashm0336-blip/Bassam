@@ -482,23 +482,36 @@ async def get_employee_stats(department: str, user: dict = Depends(get_current_u
     if not check_department_access(user, department):
         raise HTTPException(status_code=403, detail="لا يمكنك الوصول لبيانات هذه الإدارة")
     
-    total = await db.employees.count_documents({"department": department})
-    active = await db.employees.count_documents({"department": department, "is_active": True})
+    employees_list = await db.employees.find({"department": department}, {"_id": 0}).to_list(1000)
+    
+    total = len(employees_list)
+    active = sum(1 for e in employees_list if e.get("is_active", True))
     
     # Get shift distribution
-    morning_shift = await db.employees.count_documents({"department": department, "shift": "صباحية", "is_active": True})
-    evening_shift = await db.employees.count_documents({"department": department, "shift": "مسائية", "is_active": True})
-    night_shift = await db.employees.count_documents({"department": department, "shift": "ليلية", "is_active": True})
+    shift_1 = sum(1 for e in employees_list if e.get("shift") == "الأولى" and e.get("is_active", True))
+    shift_2 = sum(1 for e in employees_list if e.get("shift") == "الثانية" and e.get("is_active", True))
+    shift_3 = sum(1 for e in employees_list if e.get("shift") == "الثالثة" and e.get("is_active", True))
+    shift_4 = sum(1 for e in employees_list if e.get("shift") == "الرابعة" and e.get("is_active", True))
+    
+    # Get unique locations count
+    active_employees = [e for e in employees_list if e.get("is_active", True)]
+    unique_locations = len(set(e.get("location", "") for e in active_employees if e.get("location")))
+    
+    # Count employees assigned to locations
+    employees_with_location = sum(1 for e in active_employees if e.get("location"))
     
     return {
         "total_employees": total,
         "active_employees": active,
         "inactive_employees": total - active,
         "shifts": {
-            "morning": morning_shift,
-            "evening": evening_shift,
-            "night": night_shift
-        }
+            "shift_1": shift_1,
+            "shift_2": shift_2,
+            "shift_3": shift_3,
+            "shift_4": shift_4
+        },
+        "locations_count": unique_locations,
+        "employees_with_location": employees_with_location
     }
 
 async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
