@@ -148,38 +148,6 @@ async def require_admin(user: dict = Depends(get_current_user)):
     return user
 
 # ============= Auth Routes =============
-@api_router.post("/auth/register", response_model=TokenResponse)
-async def register(user_data: UserCreate):
-    # Check if email exists
-    existing = await db.users.find_one({"email": user_data.email})
-    if existing:
-        raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل مسبقاً")
-    
-    user_id = str(uuid.uuid4())
-    user = {
-        "id": user_id,
-        "email": user_data.email,
-        "password": hash_password(user_data.password),
-        "name": user_data.name,
-        "role": user_data.role,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    await db.users.insert_one(user)
-    
-    token = create_token(user_id, user_data.email, user_data.role)
-    
-    return TokenResponse(
-        access_token=token,
-        user=UserResponse(
-            id=user_id,
-            email=user_data.email,
-            name=user_data.name,
-            role=user_data.role,
-            created_at=user["created_at"]
-        )
-    )
-
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
@@ -206,6 +174,34 @@ async def get_me(user: dict = Depends(get_current_user)):
         email=user["email"],
         name=user["name"],
         role=user["role"],
+        created_at=user["created_at"]
+    )
+
+# Admin-only user creation
+@api_router.post("/admin/users", response_model=UserResponse)
+async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin)):
+    # Check if email exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل مسبقاً")
+    
+    user_id = str(uuid.uuid4())
+    user = {
+        "id": user_id,
+        "email": user_data.email,
+        "password": hash_password(user_data.password),
+        "name": user_data.name,
+        "role": user_data.role,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user)
+    
+    return UserResponse(
+        id=user_id,
+        email=user_data.email,
+        name=user_data.name,
+        role=user_data.role,
         created_at=user["created_at"]
     )
 
