@@ -189,12 +189,12 @@ export const Layout = () => {
       {/* Mobile sidebar */}
       <aside 
         className={`
-          fixed inset-y-0 right-0 w-72 bg-white z-50 transform transition-transform duration-300
+          fixed inset-y-0 right-0 w-72 bg-card z-50 transform transition-transform duration-300
           lg:hidden
           ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}
         `}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-white font-cairo font-bold text-lg">ح</span>
