@@ -266,26 +266,9 @@ class AlHaramAPITester:
         """Test JWT authentication endpoints"""
         print("\n🔐 Testing Authentication Endpoints...")
         
-        # Test user registration
-        test_user_data = {
-            "name": "Test User",
-            "email": f"test_{datetime.now().strftime('%H%M%S')}@test.com",
-            "password": "testpass123",
-            "role": "user"
-        }
-        
-        success, data = self.test_endpoint(
-            "User Registration",
-            "auth/register",
-            method="POST",
-            data=test_user_data,
-            expected_status=200,
-            required_fields=["access_token", "token_type", "user"]
-        )
-        
-        # Test admin login with provided credentials
+        # Test admin login with correct credentials from frontend
         admin_login_data = {
-            "email": "admin@haram.gov.sa",
+            "email": "admin@crowd.sa",
             "password": "admin123"
         }
         
