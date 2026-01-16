@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useLanguage } from "@/context/LanguageContext";
 import { 
   Users, 
   DoorOpen, 
