@@ -302,6 +302,12 @@ export default function GatesDepartment() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="employees" className="mt-6">
+          <EmployeeManagement department="gates" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
