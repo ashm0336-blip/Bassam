@@ -266,6 +266,9 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  completed_tests:
+    - "Admin Panel - User Management (CRUD Operations)"
+    - "Role-Based Access Control & Permissions System"
 
 agent_communication:
   - agent: "main"
