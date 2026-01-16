@@ -11,6 +11,7 @@ import MatafDepartment from "@/pages/MatafDepartment";
 import ReportsPage from "@/pages/ReportsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import MapPage from "@/pages/MapPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="gates" element={<GatesDepartment />} />
             <Route path="crowd-services" element={<CrowdServicesDepartment />} />
             <Route path="mataf" element={<MatafDepartment />} />
+            <Route path="map" element={<MapPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="settings" element={<SettingsPage />} />

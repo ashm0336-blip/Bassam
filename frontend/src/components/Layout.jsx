@@ -12,7 +12,8 @@ import {
   Settings,
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Map
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 
 const navigation = [
   { name: "لوحة التحكم", href: "/", icon: LayoutDashboard },
+  { name: "الخريطة التفاعلية", href: "/map", icon: Map },
   { name: "تخطيط خدمات الحشود", href: "/planning", icon: ClipboardList },
   { name: "إدارة الساحات", href: "/plazas", icon: LayoutGrid },
   { name: "إدارة الأبواب", href: "/gates", icon: DoorOpen },
