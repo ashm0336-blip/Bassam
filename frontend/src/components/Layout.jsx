@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -13,7 +14,9 @@ import {
   Menu,
   X,
   ChevronLeft,
-  Map
+  Map,
+  Shield,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,12 +37,24 @@ const secondaryNav = [
   { name: "التقارير", href: "/reports", icon: FileText },
   { name: "الإشعارات", href: "/notifications", icon: Bell, badge: 5 },
   { name: "الإعدادات", href: "/settings", icon: Settings },
+  { name: "لوحة الإدارة", href: "/admin", icon: Shield, adminOnly: true },
 ];
 
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAdmin } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const filteredSecondaryNav = secondaryNav.filter(item => 
+    !item.adminOnly || (item.adminOnly && isAdmin())
+  );
 
   const NavItem = ({ item, mobile = false }) => {
     const isActive = location.pathname === item.href;
@@ -119,7 +134,7 @@ export const Layout = () => {
           <Separator className="my-4 mx-3" />
           
           <nav className="space-y-1 px-3">
-            {secondaryNav.map((item) => (
+            {filteredSecondaryNav.map((item) => (
               <NavItem key={item.href} item={item} />
             ))}
           </nav>
@@ -130,12 +145,26 @@ export const Layout = () => {
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
-                <span className="font-cairo font-semibold text-secondary-foreground">م</span>
+                <span className="font-cairo font-semibold text-secondary-foreground">
+                  {user?.name?.charAt(0) || 'م'}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">محمد العمري</p>
-                <p className="text-xs text-muted-foreground truncate">مدير النظام</p>
+                <p className="text-sm font-medium truncate">{user?.name || 'مستخدم'}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.role === 'admin' ? 'مدير النظام' : 
+                   user?.role === 'manager' ? 'مشرف' : 'مستخدم'}
+                </p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="text-muted-foreground hover:text-destructive"
+                data-testid="logout-btn"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         )}
@@ -187,7 +216,7 @@ export const Layout = () => {
           <Separator className="my-4 mx-3" />
           
           <nav className="space-y-1 px-3">
-            {secondaryNav.map((item) => (
+            {filteredSecondaryNav.map((item) => (
               <NavItem key={item.href} item={item} mobile />
             ))}
           </nav>
