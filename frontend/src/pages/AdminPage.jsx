@@ -48,6 +48,89 @@ import { Textarea } from "@/components/ui/textarea";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+// User Form Dialog
+const UserDialog = ({ open, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "user"
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formData.password.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+    onSave(formData);
+    setFormData({ name: "", email: "", password: "", role: "user" });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="font-cairo">إضافة مستخدم جديد</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>الاسم الكامل</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="محمد أحمد"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>البريد الإلكتروني</Label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="user@crowd.sa"
+              dir="ltr"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>كلمة المرور</Label>
+            <Input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="••••••••"
+              dir="ltr"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>الصلاحية</Label>
+            <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">مدير النظام</SelectItem>
+                <SelectItem value="manager">مشرف</SelectItem>
+                <SelectItem value="supervisor">منسق</SelectItem>
+                <SelectItem value="user">مستخدم</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>إلغاء</Button>
+            <Button type="submit" className="bg-primary">إضافة المستخدم</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Gate Form Dialog
 const GateDialog = ({ open, onClose, gate, onSave }) => {
   const [formData, setFormData] = useState({
