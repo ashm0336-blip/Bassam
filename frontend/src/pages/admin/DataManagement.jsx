@@ -338,7 +338,7 @@ export default function DataManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center">{language === 'ar' ? 'المؤشر' : 'Indicator'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'إضافة المؤشر' : 'Add Indicator'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
                     <TableHead className="text-center">{language === 'ar' ? 'التصنيف' : 'Classification'}</TableHead>
                     <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
                     <TableHead className="text-center">{language === 'ar' ? 'المسار' : 'Direction'}</TableHead>
@@ -356,13 +356,13 @@ export default function DataManagement() {
                         <span className="text-sm">{gate.current_indicator}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="text-sm">{gate.indicator_status}</span>
+                        <span className="text-sm">{gate.status}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="text-sm">{gate.classification}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="text-sm">{gate.category}</span>
+                        <span className="text-sm">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="text-sm">{gate.direction}</span>
@@ -403,9 +403,9 @@ export default function DataManagement() {
                                 plaza: gate.plaza,
                                 gate_type: gate.gate_type,
                                 direction: gate.direction,
-                                category: gate.category,
+                                category: Array.isArray(gate.category) ? gate.category : [gate.category],
                                 classification: gate.classification,
-                                indicator_status: gate.indicator_status,
+                                status: gate.status,
                                 current_indicator: gate.current_indicator,
                                 current_flow: gate.current_flow,
                                 max_flow: gate.max_flow
