@@ -143,6 +143,7 @@ const AlertItem = ({ alert }) => {
 };
 
 export default function Dashboard() {
+  const { t, language } = useLanguage();
   const [stats, setStats] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [crowdData, setCrowdData] = useState([]);
