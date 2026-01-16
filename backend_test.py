@@ -827,6 +827,10 @@ class AlHaramAPITester:
         # Test authentication first
         self.test_authentication_endpoints()
         
+        # Test user management and permissions (NEW - comprehensive tests)
+        self.test_user_management_endpoints()
+        self.test_permission_validation()
+        
         # Test admin endpoints (requires auth)
         self.test_admin_endpoints()
         
