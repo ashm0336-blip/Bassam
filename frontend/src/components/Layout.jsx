@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -16,7 +18,10 @@ import {
   ChevronLeft,
   Map,
   Shield,
-  LogOut
+  LogOut,
+  Moon,
+  Sun,
+  Languages
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
