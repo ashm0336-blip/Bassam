@@ -328,17 +328,18 @@ export default function DataManagement() {
           
           <Card>
             <CardContent className="p-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاتجاه' : 'Direction'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
-                    <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div dir="ltr">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left">{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الاتجاه' : 'Direction'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {gates.map((gate) => (
                     <TableRow key={gate.id}>
