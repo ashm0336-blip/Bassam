@@ -215,6 +215,37 @@ async def log_activity(action: str, user: dict, target: str = None, details: str
         }
         await db.activity_logs.insert_one(activity)
     except Exception as e:
+
+# ============= Activity Log Routes =============
+@api_router.get("/admin/activity-logs")
+async def get_activity_logs(
+    action: Optional[str] = None,
+    user_email: Optional[str] = None,
+    date: Optional[str] = None,
+    limit: int = 100,
+    admin: dict = Depends(require_admin)
+):
+    """Get activity logs with optional filters"""
+    query = {}
+    
+    if action and action != "all":
+        query["action"] = action
+    
+    if user_email:
+        query["user_email"] = {"$regex": user_email, "$options": "i"}
+    
+    if date:
+        # Filter by date (YYYY-MM-DD)
+        start_date = datetime.fromisoformat(f"{date}T00:00:00")
+        end_date = datetime.fromisoformat(f"{date}T23:59:59")
+        query["timestamp"] = {
+            "$gte": start_date.isoformat(),
+            "$lte": end_date.isoformat()
+        }
+    
+    logs = await db.activity_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
         logging.error(f"Failed to log activity: {e}")
 
     if user["role"] == "field_staff":
