@@ -8,7 +8,9 @@ import {
   TrendingUp,
   BarChart3,
   PieChart,
-  FileBarChart
+  FileBarChart,
+  FileSpreadsheet,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { 
+  exportGatesReport, 
+  exportPlazasReport, 
+  exportMatafReport, 
+  exportDailySummary 
+} from "@/utils/exportUtils";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -86,30 +101,70 @@ const ReportCard = ({ report }) => {
 
 export default function ReportsPage() {
   const [reports, setReports] = useState([]);
+  const [gates, setGates] = useState([]);
+  const [plazas, setPlazas] = useState([]);
+  const [mataf, setMataf] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [departments, setDepartments] = useState([]);
   const [filterType, setFilterType] = useState("all");
   const [filterDept, setFilterDept] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(null);
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchData = async () => {
       try {
-        let url = `${API}/reports`;
-        const params = [];
-        if (filterType !== "all") params.push(`type=${filterType}`);
-        if (filterDept !== "all") params.push(`department=${filterDept}`);
-        if (params.length > 0) url += `?${params.join("&")}`;
-        
-        const response = await axios.get(url);
-        setReports(response.data);
+        const [reportsRes, gatesRes, plazasRes, matafRes, statsRes, deptsRes] = await Promise.all([
+          axios.get(`${API}/reports`),
+          axios.get(`${API}/gates`),
+          axios.get(`${API}/plazas`),
+          axios.get(`${API}/mataf`),
+          axios.get(`${API}/dashboard/stats`),
+          axios.get(`${API}/dashboard/departments`)
+        ]);
+        setReports(reportsRes.data);
+        setGates(gatesRes.data);
+        setPlazas(plazasRes.data);
+        setMataf(matafRes.data);
+        setStats(statsRes.data);
+        setDepartments(deptsRes.data);
       } catch (error) {
-        console.error("Error fetching reports:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReports();
-  }, [filterType, filterDept]);
+    fetchData();
+  }, []);
+
+  const handleExport = async (type, format) => {
+    setExporting(`${type}-${format}`);
+    try {
+      switch (type) {
+        case 'gates':
+          exportGatesReport(gates, format);
+          break;
+        case 'plazas':
+          exportPlazasReport(plazas, format);
+          break;
+        case 'mataf':
+          exportMatafReport(mataf, format);
+          break;
+        case 'daily':
+          exportDailySummary(stats, departments, format);
+          break;
+        default:
+          break;
+      }
+      toast.success(`تم تصدير التقرير بنجاح (${format.toUpperCase()})`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("حدث خطأ أثناء التصدير");
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const quickStats = [
     { label: "التقارير اليومية", value: 28, icon: Calendar, color: "bg-primary/10 text-primary" },
@@ -138,10 +193,26 @@ export default function ReportsPage() {
           <h1 className="font-cairo font-bold text-2xl">التقارير والإحصائيات</h1>
           <p className="text-sm text-muted-foreground mt-1">عرض وتصدير التقارير والتحليلات</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90" data-testid="create-report-btn">
-          <FileBarChart className="w-4 h-4 ml-2" />
-          إنشاء تقرير
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90" data-testid="export-daily-btn">
+                <Download className="w-4 h-4 ml-2" />
+                تصدير التقرير اليومي
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport('daily', 'pdf')}>
+                <FileBarChart className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('daily', 'excel')}>
+                <FileSpreadsheet className="w-4 h-4 ml-2" />
+                تصدير Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Quick Stats */}
@@ -162,6 +233,156 @@ export default function ReportsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Export Section */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="font-cairo text-lg">تصدير التقارير</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Gates Report */}
+            <div className="p-4 rounded-lg border border-gray-200 hover:border-primary/30 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">تقرير الأبواب</h3>
+                  <p className="text-xs text-muted-foreground">{gates.length} باب</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('gates', 'pdf')}
+                  disabled={exporting === 'gates-pdf'}
+                  data-testid="export-gates-pdf"
+                >
+                  {exporting === 'gates-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('gates', 'excel')}
+                  disabled={exporting === 'gates-excel'}
+                  data-testid="export-gates-excel"
+                >
+                  {exporting === 'gates-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Plazas Report */}
+            <div className="p-4 rounded-lg border border-gray-200 hover:border-secondary/30 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-secondary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">تقرير الساحات</h3>
+                  <p className="text-xs text-muted-foreground">{plazas.length} ساحة</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('plazas', 'pdf')}
+                  disabled={exporting === 'plazas-pdf'}
+                  data-testid="export-plazas-pdf"
+                >
+                  {exporting === 'plazas-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('plazas', 'excel')}
+                  disabled={exporting === 'plazas-excel'}
+                  data-testid="export-plazas-excel"
+                >
+                  {exporting === 'plazas-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Mataf Report */}
+            <div className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">تقرير المطاف</h3>
+                  <p className="text-xs text-muted-foreground">{mataf.length} طوابق</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('mataf', 'pdf')}
+                  disabled={exporting === 'mataf-pdf'}
+                  data-testid="export-mataf-pdf"
+                >
+                  {exporting === 'mataf-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('mataf', 'excel')}
+                  disabled={exporting === 'mataf-excel'}
+                  data-testid="export-mataf-excel"
+                >
+                  {exporting === 'mataf-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Daily Summary */}
+            <div className="p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">التقرير الشامل</h3>
+                  <p className="text-xs text-muted-foreground">ملخص يومي</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('daily', 'pdf')}
+                  disabled={exporting === 'daily-pdf'}
+                  data-testid="export-summary-pdf"
+                >
+                  {exporting === 'daily-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleExport('daily', 'excel')}
+                  disabled={exporting === 'daily-excel'}
+                  data-testid="export-summary-excel"
+                >
+                  {exporting === 'daily-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -198,68 +419,17 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      {/* Reports Tabs */}
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="list">قائمة التقارير</TabsTrigger>
-          <TabsTrigger value="table">عرض جدولي</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {reports.map((report, index) => (
-              <div key={report.id} className={`animate-fade-in stagger-${(index % 4) + 1}`}>
-                <ReportCard report={report} />
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="table" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">عنوان التقرير</TableHead>
-                    <TableHead className="text-right">النوع</TableHead>
-                    <TableHead className="text-right">الإدارة</TableHead>
-                    <TableHead className="text-right">التاريخ</TableHead>
-                    <TableHead className="text-right">الملخص</TableHead>
-                    <TableHead className="text-right">إجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell className="font-medium">{report.title}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {report.type === "daily" ? "يومي" : 
-                           report.type === "weekly" ? "أسبوعي" : "شهري"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {report.department === "all" ? "جميع الإدارات" :
-                         report.department === "gates" ? "الأبواب" :
-                         report.department === "plazas" ? "الساحات" :
-                         report.department === "mataf" ? "المطاف" : report.department}
-                      </TableCell>
-                      <TableCell>{report.date}</TableCell>
-                      <TableCell className="text-muted-foreground max-w-[200px] truncate">{report.summary}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="text-primary">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Reports List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {reports
+          .filter(r => filterType === 'all' || r.type === filterType)
+          .filter(r => filterDept === 'all' || r.department === filterDept)
+          .map((report, index) => (
+            <div key={report.id} className={`animate-fade-in stagger-${(index % 4) + 1}`}>
+              <ReportCard report={report} />
+            </div>
+          ))}
+      </div>
     </div>
   );
 }
