@@ -336,7 +336,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {departments.map((dept, index) => (
             <div key={dept.id} className={`animate-fade-in stagger-${index + 1}`}>
-              <DepartmentCard dept={dept} />
+              <DepartmentCard dept={dept} language={language} />
             </div>
           ))}
         </div>
