@@ -55,9 +55,10 @@ const DEPARTMENTS = {
 };
 
 const SHIFTS = [
-  { value: "صباحية", label: "صباحية", color: "bg-yellow-500" },
-  { value: "مسائية", label: "مسائية", color: "bg-blue-500" },
-  { value: "ليلية", label: "ليلية", color: "bg-purple-500" }
+  { value: "الأولى", label: "الأولى", color: "bg-blue-500" },
+  { value: "الثانية", label: "الثانية", color: "bg-green-500" },
+  { value: "الثالثة", label: "الثالثة", color: "bg-orange-500" },
+  { value: "الرابعة", label: "الرابعة", color: "bg-purple-500" }
 ];
 
 export default function EmployeeManagement({ department }) {
