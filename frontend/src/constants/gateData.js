@@ -33,6 +33,16 @@ export const CATEGORIES = [
   "عربات"
 ];
 
+// التصنيفات
+export const CLASSIFICATIONS = [
+  "عام",
+  "رجال",
+  "نساء",
+  "طوارئ",
+  "خدمات",
+  "جنائز"
+];
+
 // حالة الباب
 export const GATE_STATUSES = [
   "متاح",
