@@ -35,6 +35,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -46,6 +53,12 @@ const DEPARTMENTS = {
   crowd_services: { ar: "خدمات حشود الحرم", en: "Crowd Services" },
   mataf: { ar: "صحن المطاف", en: "Mataf Management" }
 };
+
+const SHIFTS = [
+  { value: "صباحية", label: "صباحية", color: "bg-yellow-500" },
+  { value: "مسائية", label: "مسائية", color: "bg-blue-500" },
+  { value: "ليلية", label: "ليلية", color: "bg-purple-500" }
+];
 
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
