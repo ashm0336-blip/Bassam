@@ -76,7 +76,7 @@ export const Layout = () => {
           transition-colors duration-200 relative
           ${isActive 
             ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
-            : "text-gray-600 hover:bg-muted hover:text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-primary"
           }
         `}
         data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
