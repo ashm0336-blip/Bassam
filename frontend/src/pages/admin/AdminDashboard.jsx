@@ -179,17 +179,10 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title={language === 'ar' ? 'إجمالي المستخدمين' : 'Total Users'}
-          value={stats.total}
-          subtitle={language === 'ar' ? 'في النظام' : 'in system'}
-          icon={Users}
-          color="primary"
-        />
-        <StatCard
-          title={language === 'ar' ? 'المستخدمون النشطون' : 'Active Users'}
-          value={stats.activeToday}
-          subtitle={language === 'ar' ? 'اليوم' : 'today'}
-          icon={Activity}
+          title={language === 'ar' ? 'الأدوار النشطة' : 'Active Roles'}
+          value={Object.keys(stats.byRole).length}
+          subtitle={language === 'ar' ? 'من 5 أدوار' : 'of 5 roles'}
+          icon={Shield}
           color="secondary"
         />
         <StatCard
@@ -202,11 +195,18 @@ export default function AdminDashboard() {
           color="primary"
         />
         <StatCard
-          title={language === 'ar' ? 'الأدوار النشطة' : 'Active Roles'}
-          value={Object.keys(stats.byRole).length}
-          subtitle={language === 'ar' ? 'من 5 أدوار' : 'of 5 roles'}
-          icon={Shield}
+          title={language === 'ar' ? 'المستخدمون النشطون' : 'Active Users'}
+          value={stats.activeToday}
+          subtitle={language === 'ar' ? 'اليوم' : 'today'}
+          icon={Activity}
           color="secondary"
+        />
+        <StatCard
+          title={language === 'ar' ? 'إجمالي المستخدمين' : 'Total Users'}
+          value={stats.total}
+          subtitle={language === 'ar' ? 'في النظام' : 'in system'}
+          icon={Users}
+          color="primary"
         />
       </div>
 
