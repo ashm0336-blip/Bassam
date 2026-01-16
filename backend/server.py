@@ -198,6 +198,25 @@ def check_department_access(user: dict, department: str) -> bool:
         return True  # Can view all departments
     if user["role"] == "department_manager":
         return user.get("department") == department
+
+# ============= Activity Logging =============
+async def log_activity(action: str, user: dict, target: str = None, details: str = None):
+    """Log user activity to database"""
+    try:
+        activity = {
+            "id": str(uuid.uuid4()),
+            "action": action,
+            "user_id": user["id"],
+            "user_name": user["name"],
+            "user_email": user["email"],
+            "target": target,
+            "details": details,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.activity_logs.insert_one(activity)
+    except Exception as e:
+        logging.error(f"Failed to log activity: {e}")
+
     if user["role"] == "field_staff":
         return user.get("department") == department
     return False
