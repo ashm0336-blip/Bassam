@@ -364,9 +364,15 @@ async def delete_user(user_id: str, admin: dict = Depends(require_admin)):
     if user_id == admin["id"]:
         raise HTTPException(status_code=400, detail="لا يمكنك حذف حسابك الخاص")
     
-    result = await db.users.delete_one({"id": user_id})
-    if result.deleted_count == 0:
+    # Get user before deleting for logging
+    user_to_delete = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user_to_delete:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    
+    result = await db.users.delete_one({"id": user_id})
+    
+    # Log activity
+    await log_activity("user_deleted", admin, user_to_delete["name"], f"تم حذف المستخدم: {user_to_delete['name']}")
     
     return {"message": "تم حذف المستخدم بنجاح"}
 
