@@ -80,10 +80,10 @@ export default function SystemSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="font-cairo font-bold text-xl">
+        <h2 className="font-cairo font-bold text-xl text-right">
           {language === 'ar' ? 'إعدادات النظام' : 'System Settings'}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 text-right">
           {language === 'ar' ? 'إدارة إعدادات الأمان والنظام العامة' : 'Manage security and general system settings'}
         </p>
       </div>
