@@ -1,117 +1,122 @@
 {
   "summary": {
     "total_tests": 21,
-    "passed_tests": 21,
-    "failed_tests": 0,
-    "success_rate": 100.0,
-    "timestamp": "2026-01-16T14:09:41.340524"
+    "passed_tests": 20,
+    "failed_tests": 1,
+    "success_rate": 95.23809523809523,
+    "timestamp": "2026-01-16T14:22:00.469050"
   },
   "results": {
     "API Root": {
-      "success": true,
-      "details": "Status: 200, Data length: 65",
-      "timestamp": "2026-01-16T14:09:40.567104"
+      "success": false,
+      "details": "Request error: HTTPSConnectionPool(host='crowdservices.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='crowdservices.preview.emergentagent.com', port=443) at 0xfb044e6bd250>, 'Connection to crowdservices.preview.emergentagent.com timed out. (connect timeout=10)'))",
+      "timestamp": "2026-01-16T14:21:59.675603"
     },
     "Dashboard Stats": {
       "success": true,
-      "details": "Status: 200, Data length: 182",
-      "timestamp": "2026-01-16T14:09:40.603984"
+      "details": "Status: 200, Data length: 183",
+      "timestamp": "2026-01-16T14:21:59.730019"
     },
     "Dashboard Departments": {
       "success": true,
-      "details": "Status: 200, Data length: 1165",
-      "timestamp": "2026-01-16T14:09:40.639539"
+      "details": "Status: 200, Data length: 1166",
+      "timestamp": "2026-01-16T14:21:59.770384"
     },
     "Hourly Crowd Data": {
       "success": true,
       "details": "Status: 200, Data length: 1335",
-      "timestamp": "2026-01-16T14:09:40.674882"
+      "timestamp": "2026-01-16T14:21:59.808065"
     },
     "Gates List": {
       "success": true,
-      "details": "Status: 200, Data length: 2332",
-      "timestamp": "2026-01-16T14:09:40.707066"
+      "details": "Status: 200, Data length: 2314",
+      "timestamp": "2026-01-16T14:21:59.843522"
     },
     "Gates Filtered by Status": {
       "success": true,
-      "details": "Status: 200, Data length: 966",
-      "timestamp": "2026-01-16T14:09:40.743593"
+      "details": "Status: 200, Data length: 1535",
+      "timestamp": "2026-01-16T14:21:59.884736"
     },
     "Gates Statistics": {
       "success": true,
-      "details": "Status: 200, Data length: 111",
-      "timestamp": "2026-01-16T14:09:40.781409"
+      "details": "Status: 200, Data length: 112",
+      "timestamp": "2026-01-16T14:21:59.919842"
     },
     "Plazas List": {
       "success": true,
-      "details": "Status: 200, Data length: 1061",
-      "timestamp": "2026-01-16T14:09:40.817434"
+      "details": "Status: 200, Data length: 1060",
+      "timestamp": "2026-01-16T14:21:59.957106"
     },
     "Plazas Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 138",
-      "timestamp": "2026-01-16T14:09:40.850677"
+      "timestamp": "2026-01-16T14:21:59.992734"
     },
     "Mataf Levels": {
       "success": true,
-      "details": "Status: 200, Data length: 559",
-      "timestamp": "2026-01-16T14:09:40.930317"
+      "details": "Status: 200, Data length: 558",
+      "timestamp": "2026-01-16T14:22:00.034287"
     },
     "Mataf Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 183",
-      "timestamp": "2026-01-16T14:09:40.968024"
+      "timestamp": "2026-01-16T14:22:00.067590"
     },
     "Alerts List": {
       "success": true,
-      "details": "Status: 200, Data length: 1145",
-      "timestamp": "2026-01-16T14:09:40.999896"
+      "details": "Status: 200, Data length: 1147",
+      "timestamp": "2026-01-16T14:22:00.104781"
     },
     "Alerts Filtered by Department": {
       "success": true,
-      "details": "Status: 200, Data length: 461",
-      "timestamp": "2026-01-16T14:09:41.037239"
+      "details": "Status: 200, Data length: 460",
+      "timestamp": "2026-01-16T14:22:00.141779"
     },
     "Alerts Filtered by Type": {
       "success": true,
-      "details": "Status: 200, Data length: 461",
-      "timestamp": "2026-01-16T14:09:41.083498"
+      "details": "Status: 200, Data length: 459",
+      "timestamp": "2026-01-16T14:22:00.217439"
     },
     "Notifications List": {
       "success": true,
-      "details": "Status: 200, Data length: 1095",
-      "timestamp": "2026-01-16T14:09:41.122946"
+      "details": "Status: 200, Data length: 1096",
+      "timestamp": "2026-01-16T14:22:00.257083"
     },
     "Unread Notifications": {
       "success": true,
-      "details": "Status: 200, Data length: 661",
-      "timestamp": "2026-01-16T14:09:41.161886"
+      "details": "Status: 200, Data length: 217",
+      "timestamp": "2026-01-16T14:22:00.297120"
     },
     "Reports List": {
       "success": true,
       "details": "Status: 200, Data length: 733",
-      "timestamp": "2026-01-16T14:09:41.197863"
+      "timestamp": "2026-01-16T14:22:00.330689"
     },
     "Reports Filtered by Type": {
       "success": true,
       "details": "Status: 200, Data length: 359",
-      "timestamp": "2026-01-16T14:09:41.234302"
+      "timestamp": "2026-01-16T14:22:00.367720"
     },
     "Reports Filtered by Department": {
       "success": true,
       "details": "Status: 200, Data length: 188",
-      "timestamp": "2026-01-16T14:09:41.269674"
+      "timestamp": "2026-01-16T14:22:00.399625"
     },
     "Planning Statistics": {
       "success": true,
-      "details": "Status: 200, Data length: 140",
-      "timestamp": "2026-01-16T14:09:41.305255"
+      "details": "Status: 200, Data length: 141",
+      "timestamp": "2026-01-16T14:22:00.432708"
     },
     "Crowd Services Statistics": {
       "success": true,
-      "details": "Status: 200, Data length: 155",
-      "timestamp": "2026-01-16T14:09:41.339839"
+      "details": "Status: 200, Data length: 153",
+      "timestamp": "2026-01-16T14:22:00.468285"
     }
   },
-  "failures": []
+  "failures": [
+    {
+      "test": "API Root",
+      "details": "Request error: HTTPSConnectionPool(host='crowdservices.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='crowdservices.preview.emergentagent.com', port=443) at 0xfb044e6bd250>, 'Connection to crowdservices.preview.emergentagent.com timed out. (connect timeout=10)'))"
+    }
+  ]
 }
