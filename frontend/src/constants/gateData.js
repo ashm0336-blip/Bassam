@@ -26,28 +26,15 @@ export const DIRECTIONS = [
   "دخول وخروج"
 ];
 
-// الفئات
+// الفئات (يمكن اختيار أكثر من واحدة)
 export const CATEGORIES = [
   "محرمين",
   "مصلين",
-  "عربات",
-  "عريات",
-  "عريات ومصلين",
-  "عمال"
+  "عربات"
 ];
 
-// التصنيفات
-export const CLASSIFICATIONS = [
-  "عام",
-  "رجال",
-  "نساء",
-  "طوارئ",
-  "خدمات",
-  "جنائز"
-];
-
-// حالة المؤشر
-export const INDICATOR_STATUSES = [
+// حالة الباب
+export const GATE_STATUSES = [
   "متاح",
   "مغلق",
   "متوسط",
