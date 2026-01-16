@@ -150,6 +150,19 @@ export default function GatesDepartment() {
 
   return (
     <div className="space-y-6" data-testid="gates-page">
+      <Tabs defaultValue="gates" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="employees">
+            <Users className="w-4 h-4 ml-2" />
+            الموظفون
+          </TabsTrigger>
+          <TabsTrigger value="gates">
+            <DoorOpen className="w-4 h-4 ml-2" />
+            الأبواب
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="gates" className="space-y-6 mt-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
