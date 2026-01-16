@@ -177,10 +177,10 @@ export default function ActivityLog() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="font-cairo font-bold text-xl text-left">
+        <h2 className="font-cairo font-bold text-xl">
           {language === 'ar' ? 'سجل النشاط' : 'Activity Log'}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1 text-left">
+        <p className="text-sm text-muted-foreground mt-1">
           {language === 'ar' ? 'تتبع جميع الإجراءات والأنشطة في النظام' : 'Track all actions and activities in the system'}
         </p>
       </div>
