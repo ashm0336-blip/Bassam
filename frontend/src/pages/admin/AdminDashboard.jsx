@@ -168,10 +168,10 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="font-cairo font-bold text-xl text-left">
+        <h2 className="font-cairo font-bold text-xl">
           {language === 'ar' ? 'لوحة تحكم مسؤول النظام' : 'System Admin Dashboard'}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1 text-left">
+        <p className="text-sm text-muted-foreground mt-1">
           {language === 'ar' ? 'نظرة عامة على نشاط المستخدمين والنظام' : 'Overview of user activity and system'}
         </p>
       </div>
