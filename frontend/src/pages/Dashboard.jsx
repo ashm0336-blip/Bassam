@@ -240,10 +240,10 @@ export default function Dashboard() {
         <Card className="lg:col-span-2" data-testid="crowd-chart">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="font-cairo text-lg">حركة الحشود على مدار اليوم</CardTitle>
+              <CardTitle className="font-cairo text-lg">{t('crowdMovement')}</CardTitle>
               <Badge variant="outline" className="text-xs">
                 <Clock className="w-3 h-3 ml-1" />
-                تحديث مباشر
+                {t('liveUpdate')}
               </Badge>
             </div>
           </CardHeader>
