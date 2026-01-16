@@ -240,23 +240,23 @@ export default function ActivityLog() {
       {/* Activity Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo">
+          <CardTitle className="font-cairo text-left">
             {language === 'ar' ? 'سجل الأنشطة' : 'Activity Log'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-left">
             {language === 'ar' ? `عرض ${filteredLogs.length} من ${logs.length} نشاط` : `Showing ${filteredLogs.length} of ${logs.length} activities`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" dir="ltr">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
