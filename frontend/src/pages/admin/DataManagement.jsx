@@ -289,10 +289,10 @@ export default function DataManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="font-cairo font-bold text-xl">
+        <h2 className="font-cairo font-bold text-xl text-left">
           {language === 'ar' ? 'إدارة البيانات الأساسية' : 'Master Data Management'}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 text-left">
           {language === 'ar' ? 'إدارة الأبواب، الساحات، وطوابق المطاف' : 'Manage gates, plazas, and mataf levels'}
         </p>
       </div>
