@@ -129,11 +129,12 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-def create_token(user_id: str, email: str, role: str) -> str:
+def create_token(user_id: str, email: str, role: str, department: Optional[str] = None) -> str:
     payload = {
         "sub": user_id,
         "email": email,
         "role": role,
+        "department": department,
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -151,9 +152,28 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="رمز غير صالح")
 
 async def require_admin(user: dict = Depends(get_current_user)):
-    if user["role"] not in ["admin", "manager"]:
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    """Requires super_admin role only"""
+    if user["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات المدير العام")
     return user
+
+async def require_department_manager(user: dict = Depends(get_current_user)):
+    """Requires department_manager or super_admin"""
+    if user["role"] not in ["super_admin", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مدير أو أعلى")
+    return user
+
+def check_department_access(user: dict, department: str) -> bool:
+    """Check if user has access to specific department"""
+    if user["role"] == "super_admin":
+        return True
+    if user["role"] == "monitoring_team":
+        return True  # Can view all departments
+    if user["role"] == "department_manager":
+        return user.get("department") == department
+    if user["role"] == "field_staff":
+        return user.get("department") == department
+    return False
 
 # ============= Auth Routes =============
 @api_router.post("/auth/login", response_model=TokenResponse)
