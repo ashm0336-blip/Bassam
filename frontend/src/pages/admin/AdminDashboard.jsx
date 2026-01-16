@@ -59,17 +59,6 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = 
   <Card className="card-hover">
     <CardContent className="p-6">
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="text-3xl font-cairo font-bold text-foreground">{value}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-          {trend && (
-            <div className={`flex items-center gap-1 text-xs ${trendUp ? "text-primary" : "text-destructive"}`}>
-              <TrendingUp className="w-3 h-3" />
-              <span>{trend}</span>
-            </div>
-          )}
-        </div>
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
           color === "primary" ? "bg-primary/10 text-primary" :
           color === "secondary" ? "bg-secondary/20 text-secondary" :
@@ -77,6 +66,17 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = 
           "bg-muted text-muted-foreground"
         }`}>
           <Icon className="w-6 h-6" />
+        </div>
+        <div className="space-y-2 text-right flex-1">
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-3xl font-cairo font-bold text-foreground">{value}</p>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          {trend && (
+            <div className={`flex items-center gap-1 text-xs justify-end ${trendUp ? "text-primary" : "text-destructive"}`}>
+              <TrendingUp className="w-3 h-3" />
+              <span>{trend}</span>
+            </div>
+          )}
         </div>
       </div>
     </CardContent>
