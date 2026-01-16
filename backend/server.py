@@ -150,8 +150,21 @@ async def require_admin(user: dict = Depends(get_current_user)):
 # ============= Auth Routes =============
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
+    logger.info(f"Login attempt for: {credentials.email}")
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
-    if not user or not verify_password(credentials.password, user["password"]):
+    logger.info(f"User found: {user is not None}")
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
+    
+    try:
+        password_valid = verify_password(credentials.password, user["password"])
+        logger.info(f"Password valid: {password_valid}")
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
+    
+    if not password_valid:
         raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     
     token = create_token(user["id"], user["email"], user["role"])
