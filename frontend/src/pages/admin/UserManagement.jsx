@@ -270,12 +270,12 @@ export default function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
