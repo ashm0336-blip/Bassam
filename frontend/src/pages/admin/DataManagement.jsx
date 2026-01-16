@@ -122,7 +122,8 @@ export default function DataManagement() {
         ...gateForm,
         number: parseInt(gateForm.number),
         current_flow: parseInt(gateForm.current_flow),
-        max_flow: parseInt(gateForm.max_flow)
+        max_flow: parseInt(gateForm.max_flow),
+        plaza_color: PLAZA_COLORS[gateForm.plaza]
       };
       
       if (editingGate) {
