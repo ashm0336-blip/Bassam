@@ -33,19 +33,28 @@ export const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, canViewDepartment } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const { t, language, toggleLanguage, isRTL } = useLanguage();
 
-  const navigation = [
-    { name: t('dashboard'), href: "/", icon: LayoutDashboard },
-    { name: t('interactiveMap'), href: "/map", icon: Map },
-    { name: t('crowdPlanning'), href: "/planning", icon: ClipboardList },
-    { name: t('plazasManagement'), href: "/plazas", icon: LayoutGrid },
-    { name: t('gatesManagement'), href: "/gates", icon: DoorOpen },
-    { name: t('crowdServices'), href: "/crowd-services", icon: Users },
-    { name: t('matafManagement'), href: "/mataf", icon: Circle },
+  const allNavigation = [
+    { name: t('dashboard'), href: "/", icon: LayoutDashboard, public: true },
+    { name: t('interactiveMap'), href: "/map", icon: Map, public: true },
+    { name: t('crowdPlanning'), href: "/planning", icon: ClipboardList, department: "planning" },
+    { name: t('plazasManagement'), href: "/plazas", icon: LayoutGrid, department: "plazas" },
+    { name: t('gatesManagement'), href: "/gates", icon: DoorOpen, department: "gates" },
+    { name: t('crowdServices'), href: "/crowd-services", icon: Users, department: "crowd_services" },
+    { name: t('matafManagement'), href: "/mataf", icon: Circle, department: "mataf" },
   ];
+
+  // Filter navigation based on user permissions
+  const navigation = allNavigation.filter(item => {
+    if (item.public) return true;
+    if (item.department) {
+      return canViewDepartment(item.department);
+    }
+    return true;
+  });
 
   const secondaryNav = [
     { name: t('reports'), href: "/reports", icon: FileText },
