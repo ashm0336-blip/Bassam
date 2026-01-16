@@ -285,6 +285,8 @@ export default function EmployeeManagement({ department }) {
                 <TableRow>
                   <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                 </TableRow>
@@ -320,6 +322,16 @@ export default function EmployeeManagement({ department }) {
                         {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-center">
+                      {employee.shift && (
+                        <Badge 
+                          className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
+                        >
+                          {employee.shift}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">{employee.location || '-'}</TableCell>
                     <TableCell className="text-center">{employee.job_title}</TableCell>
                     <TableCell className="font-medium text-center">{employee.name}</TableCell>
                   </TableRow>
