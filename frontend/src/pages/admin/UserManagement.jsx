@@ -274,6 +274,7 @@ export default function UserManagement() {
                   <TableHead className="text-center">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'كلمة المرور' : 'Password'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                 </TableRow>
@@ -315,6 +316,9 @@ export default function UserManagement() {
                       )}
                     </TableCell>
                     <TableCell className="text-center">{getRoleBadge(user.role)}</TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-sm text-muted-foreground font-mono">••••••••</span>
+                    </TableCell>
                     <TableCell className="font-mono text-sm text-center">{user.email}</TableCell>
                     <TableCell className="font-medium text-center">{user.name}</TableCell>
                   </TableRow>
