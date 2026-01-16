@@ -121,13 +121,30 @@ function AppRoutes() {
 function App() {
   // Suppress ResizeObserver errors
   useEffect(() => {
+    // Override console.error to filter ResizeObserver errors
+    const originalError = console.error;
+    console.error = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('ResizeObserver')) {
+        return;
+      }
+      originalError.apply(console, args);
+    };
+
+    // Handle window errors
     const errorHandler = (e) => {
-      if (e.message.includes('ResizeObserver')) {
+      if (e.message && e.message.includes('ResizeObserver')) {
         e.stopImmediatePropagation();
+        e.preventDefault();
+        return false;
       }
     };
+    
     window.addEventListener('error', errorHandler);
-    return () => window.removeEventListener('error', errorHandler);
+    
+    return () => {
+      console.error = originalError;
+      window.removeEventListener('error', errorHandler);
+    };
   }, []);
 
   return (
