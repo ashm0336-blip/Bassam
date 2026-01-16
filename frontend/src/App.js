@@ -118,6 +118,17 @@ function AppRoutes() {
 }
 
 function App() {
+  // Suppress ResizeObserver errors
+  useEffect(() => {
+    const errorHandler = (e) => {
+      if (e.message.includes('ResizeObserver')) {
+        e.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener('error', errorHandler);
+    return () => window.removeEventListener('error', errorHandler);
+  }, []);
+
   return (
     <ThemeProvider>
       <LanguageProvider>
