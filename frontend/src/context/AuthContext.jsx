@@ -66,17 +66,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.role === 'super_admin';
+    return user?.role === 'system_admin';
+  };
+
+  const isGeneralManager = () => {
+    return user?.role === 'general_manager';
   };
 
   const canManageDepartment = (department) => {
-    if (user?.role === 'super_admin') return true;
+    if (user?.role === 'system_admin') return true;
+    if (user?.role === 'general_manager') return true;
     if (user?.role === 'department_manager' && user?.department === department) return true;
     return false;
   };
 
   const canViewDepartment = (department) => {
-    if (user?.role === 'super_admin') return true;
+    if (user?.role === 'system_admin') return true;
+    if (user?.role === 'general_manager') return true;
     if (user?.role === 'monitoring_team') return true;
     if (user?.role === 'department_manager' && user?.department === department) return true;
     if (user?.role === 'field_staff' && user?.department === department) return true;
@@ -84,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const canAddAlerts = () => {
-    return user?.role === 'super_admin' || user?.role === 'department_manager' || user?.role === 'field_staff';
+    return user?.role === 'system_admin' || user?.role === 'general_manager' || user?.role === 'department_manager' || user?.role === 'field_staff';
   };
 
   return (
@@ -95,6 +101,7 @@ export const AuthProvider = ({ children }) => {
       login, 
       logout,
       isAdmin,
+      isGeneralManager,
       canManageDepartment,
       canViewDepartment,
       canAddAlerts,
