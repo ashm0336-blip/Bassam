@@ -123,6 +123,17 @@ class AlertCreate(BaseModel):
     department: str
     priority: str = "medium"  # critical, high, medium, low
 
+class EmployeeCreate(BaseModel):
+    name: str
+    job_title: str
+    department: str  # planning, plazas, gates, crowd_services, mataf
+    is_active: bool = True
+
+class EmployeeUpdate(BaseModel):
+    name: Optional[str] = None
+    job_title: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
