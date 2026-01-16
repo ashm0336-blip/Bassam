@@ -215,7 +215,7 @@ export default function AdminDashboard() {
         {/* Pie Chart - Users by Role */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-cairo text-lg">
+            <CardTitle className="font-cairo text-lg text-right">
               {language === 'ar' ? 'المستخدمون حسب الدور' : 'Users by Role'}
             </CardTitle>
           </CardHeader>
