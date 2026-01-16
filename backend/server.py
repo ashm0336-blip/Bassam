@@ -152,21 +152,23 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="رمز غير صالح")
 
 async def require_admin(user: dict = Depends(get_current_user)):
-    """Requires super_admin role only"""
-    if user["role"] != "super_admin":
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات المدير العام")
+    """Requires system_admin role only"""
+    if user["role"] != "system_admin":
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مسؤول النظام")
     return user
 
 async def require_department_manager(user: dict = Depends(get_current_user)):
-    """Requires department_manager or super_admin"""
-    if user["role"] not in ["super_admin", "department_manager"]:
+    """Requires department_manager, general_manager or system_admin"""
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مدير أو أعلى")
     return user
 
 def check_department_access(user: dict, department: str) -> bool:
     """Check if user has access to specific department"""
-    if user["role"] == "super_admin":
+    if user["role"] == "system_admin":
         return True
+    if user["role"] == "general_manager":
+        return True  # Can view all departments
     if user["role"] == "monitoring_team":
         return True  # Can view all departments
     if user["role"] == "department_manager":
