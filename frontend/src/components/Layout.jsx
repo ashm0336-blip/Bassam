@@ -123,7 +123,7 @@ export const Layout = () => {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-500 hover:text-primary"
+            className="text-muted-foreground hover:text-primary"
             data-testid="sidebar-toggle"
           >
             <ChevronLeft className={`w-5 h-5 transition-transform ${!sidebarOpen ? "rotate-180" : ""}`} />
