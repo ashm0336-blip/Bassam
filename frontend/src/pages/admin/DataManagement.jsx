@@ -353,10 +353,25 @@ export default function DataManagement() {
                   {gates.map((gate) => (
                     <TableRow key={gate.id}>
                       <TableCell className="text-center">
-                        <span className="text-sm">{gate.current_indicator}</span>
+                        {gate.current_indicator && (
+                          <div className="flex items-center gap-2 justify-center">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ 
+                                backgroundColor: 
+                                  gate.current_indicator === 'خفيف' ? '#22c55e' :
+                                  gate.current_indicator === 'متوسط' ? '#f97316' :
+                                  gate.current_indicator === 'مزدحم' ? '#ef4444' : '#gray'
+                              }}
+                            />
+                            <span className="text-sm">{gate.current_indicator}</span>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="text-sm">{gate.status}</span>
+                        <Badge variant={gate.status === 'مفتوح' ? 'default' : 'destructive'}>
+                          {gate.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="text-sm">{gate.classification}</span>
