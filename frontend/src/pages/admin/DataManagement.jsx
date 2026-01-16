@@ -480,22 +480,26 @@ export default function DataManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{language === 'ar' ? 'الطابق' : 'Level'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'متوسط الطواف' : 'Avg. Tawaf Time'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'متوسط الطواف' : 'Avg. Tawaf Time'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الطابق' : 'Level'}</TableHead>
                     </TableRow>
                   </TableHeader>
                 <TableBody>
                   {matafLevels.map((level) => (
                     <TableRow key={level.id}>
-                      <TableCell className="font-medium">{level.level}</TableCell>
-                      <TableCell>{level.current_crowd?.toLocaleString('ar-SA')}</TableCell>
-                      <TableCell>{level.max_capacity?.toLocaleString('ar-SA')}</TableCell>
-                      <TableCell>{level.average_tawaf_time} {language === 'ar' ? 'دقيقة' : 'min'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => setDeleteDialog({ open: true, type: 'mataf', item: level })}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -513,16 +517,12 @@ export default function DataManagement() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => setDeleteDialog({ open: true, type: 'mataf', item: level })}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="text-center">{level.average_tawaf_time} {language === 'ar' ? 'دقيقة' : 'min'}</TableCell>
+                      <TableCell className="text-center">{level.max_capacity?.toLocaleString('ar-SA')}</TableCell>
+                      <TableCell className="text-center">{level.current_crowd?.toLocaleString('ar-SA')}</TableCell>
+                      <TableCell className="font-medium text-center">{level.level}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
