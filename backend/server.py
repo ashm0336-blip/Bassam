@@ -127,11 +127,15 @@ class EmployeeCreate(BaseModel):
     name: str
     job_title: str
     department: str  # planning, plazas, gates, crowd_services, mataf
+    location: str  # موقع التغطية
+    shift: str  # الوردية: صباحية، مسائية، ليلية
     is_active: bool = True
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     job_title: Optional[str] = None
+    location: Optional[str] = None
+    shift: Optional[str] = None
     is_active: Optional[bool] = None
 
 class StatusCheck(BaseModel):
