@@ -615,12 +615,35 @@ async def get_departments():
     gates = await db.gates.find({}, {"_id": 0}).to_list(200)
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
     
-    # Get employee counts per department
-    planning_employees = await db.employees.count_documents({"department": "planning", "is_active": True})
-    plazas_employees = await db.employees.count_documents({"department": "plazas", "is_active": True})
-    gates_employees = await db.employees.count_documents({"department": "gates", "is_active": True})
-    crowd_employees = await db.employees.count_documents({"department": "crowd_services", "is_active": True})
-    mataf_employees = await db.employees.count_documents({"department": "mataf", "is_active": True})
+    async def get_dept_employee_stats(dept_name):
+        """Helper function to get detailed employee stats for a department"""
+        employees = await db.employees.find({"department": dept_name, "is_active": True}, {"_id": 0}).to_list(1000)
+        
+        # Count per shift
+        shift_1 = sum(1 for e in employees if e.get("shift") == "الأولى")
+        shift_2 = sum(1 for e in employees if e.get("shift") == "الثانية")
+        shift_3 = sum(1 for e in employees if e.get("shift") == "الثالثة")
+        shift_4 = sum(1 for e in employees if e.get("shift") == "الرابعة")
+        
+        # Unique locations
+        locations = set(e.get("location", "") for e in employees if e.get("location"))
+        
+        # Employees with assigned location
+        with_location = sum(1 for e in employees if e.get("location"))
+        
+        return {
+            "total": len(employees),
+            "shifts": {"الأولى": shift_1, "الثانية": shift_2, "الثالثة": shift_3, "الرابعة": shift_4},
+            "locations_count": len(locations),
+            "employees_with_location": with_location
+        }
+    
+    # Get employee stats for all departments
+    planning_stats = await get_dept_employee_stats("planning")
+    plazas_stats = await get_dept_employee_stats("plazas")
+    gates_stats = await get_dept_employee_stats("gates")
+    crowd_stats = await get_dept_employee_stats("crowd_services")
+    mataf_stats = await get_dept_employee_stats("mataf")
     
     # Calculate stats per department
     plazas_crowd = sum(p.get("current_crowd", 0) for p in plazas)
