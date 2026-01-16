@@ -645,22 +645,6 @@ export default function DataManagement() {
                   </Select>
                 </div>
                 <div>
-                  <Label>{language === 'ar' ? 'الفئة' : 'Category'}</Label>
-                  <Select value={gateForm.category} onValueChange={(value) => setGateForm({...gateForm, category: value})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
                   <Label>{language === 'ar' ? 'التصنيف' : 'Classification'}</Label>
                   <Select value={gateForm.classification} onValueChange={(value) => setGateForm({...gateForm, classification: value})}>
                     <SelectTrigger className="mt-1">
@@ -673,33 +657,62 @@ export default function DataManagement() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              <div>
+                <Label>{language === 'ar' ? 'الفئة (يمكن اختيار أكثر من فئة)' : 'Category (multiple)'}</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {CATEGORIES.map(cat => {
+                    const isSelected = Array.isArray(gateForm.category) && gateForm.category.includes(cat);
+                    return (
+                      <Button
+                        key={cat}
+                        type="button"
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          const currentCategories = Array.isArray(gateForm.category) ? gateForm.category : [];
+                          if (isSelected) {
+                            setGateForm({...gateForm, category: currentCategories.filter(c => c !== cat)});
+                          } else {
+                            setGateForm({...gateForm, category: [...currentCategories, cat]});
+                          }
+                        }}
+                      >
+                        {cat}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{language === 'ar' ? 'إضافة المؤشر' : 'Indicator Status'}</Label>
-                  <Select value={gateForm.indicator_status} onValueChange={(value) => setGateForm({...gateForm, indicator_status: value})}>
+                  <Label>{language === 'ar' ? 'الحالة' : 'Status'}</Label>
+                  <Select value={gateForm.status} onValueChange={(value) => setGateForm({...gateForm, status: value})}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      {INDICATOR_STATUSES.map(status => (
+                      {GATE_STATUSES.map(status => (
                         <SelectItem key={status} value={status}>{status}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <div>
-                <Label>{language === 'ar' ? 'المؤشر الحالي' : 'Current Indicator'}</Label>
-                <Select value={gateForm.current_indicator} onValueChange={(value) => setGateForm({...gateForm, current_indicator: value})}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {CURRENT_INDICATORS.map(ind => (
-                      <SelectItem key={ind} value={ind}>{ind}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label>{language === 'ar' ? 'المؤشر الحالي' : 'Current Indicator'}</Label>
+                  <Select value={gateForm.current_indicator} onValueChange={(value) => setGateForm({...gateForm, current_indicator: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {CURRENT_INDICATORS.map(ind => (
+                        <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <DialogFooter>
