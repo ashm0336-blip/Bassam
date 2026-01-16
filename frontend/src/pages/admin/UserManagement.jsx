@@ -234,7 +234,7 @@ export default function UserManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {Object.entries(ROLES).map(([key, config]) => {
+        {Object.entries(ROLES).reverse().map(([key, config]) => {
           const count = users.filter(u => u.role === key).length;
           const Icon = config.icon;
           return (
