@@ -43,21 +43,6 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Admin Route Component
-const AdminRoute = ({ children }) => {
-  const { isAdmin, loading } = useAuth();
-  
-  if (loading) {
-    return null;
-  }
-  
-  if (!isAdmin()) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return children;
-};
-
 // Public Route (redirect to dashboard if authenticated)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
