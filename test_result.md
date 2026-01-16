@@ -301,3 +301,45 @@ agent_communication:
       
       Since backend is fully operational and main agent has manually verified frontend functionality,
       the implementation appears complete and ready for user acceptance testing.
+  
+  - agent: "testing"
+    message: |
+      COMPREHENSIVE UI TESTING COMPLETED (2025-01-16)
+      
+      TEST RESULTS SUMMARY:
+      ✅ Login Flow - WORKING (admin@crowd.sa / admin123)
+      ✅ Dark Mode Implementation - WORKING (header toggle, settings buttons, persistence)
+      ✅ Language Switching - WORKING (Arabic/English, RTL/LTR, translations, persistence)
+      ❌ PDF Export - FAILING (Gates PDF, Mataf PDF)
+      ✅ Excel Export - WORKING (Plazas Excel, Daily Summary Excel)
+      ✅ Navigation & Core UI - WORKING (all pages accessible, no errors)
+      
+      CRITICAL ISSUE FOUND:
+      PDF exports fail with error: "TypeError: doc.autoTable is not a function"
+      
+      ROOT CAUSE:
+      In jspdf-autotable v5.0.7, the plugin is no longer automatically applied to jsPDF instances.
+      The current code uses: import jsPDF from 'jspdf'; import 'jspdf-autotable';
+      This worked in older versions but fails in v5+.
+      
+      REQUIRED FIX:
+      Update /app/frontend/src/utils/exportUtils.js:
+      
+      Option 1 (Recommended):
+      ```javascript
+      import { jsPDF } from 'jspdf';
+      import { applyPlugin } from 'jspdf-autotable';
+      applyPlugin(jsPDF);
+      ```
+      
+      Option 2:
+      ```javascript
+      import { jsPDF } from 'jspdf';
+      import autoTable from 'jspdf-autotable';
+      // Then use: autoTable(doc, { ... }) instead of doc.autoTable({ ... })
+      ```
+      
+      NEXT STEPS:
+      1. Main agent should fix the PDF export issue using one of the solutions above
+      2. After fix, retest PDF exports to confirm they work
+      3. Once PDF exports work, all features will be complete and ready for production
