@@ -101,13 +101,13 @@ export const Layout = () => {
       {/* Desktop Sidebar */}
       <aside 
         className={`
-          hidden lg:flex flex-col bg-white border-l border-gray-200 
+          hidden lg:flex flex-col bg-card border-l border-border 
           transition-all duration-300 ease-in-out
           ${sidebarOpen ? "w-64" : "w-20"}
         `}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
