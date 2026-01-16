@@ -77,7 +77,7 @@ export default function EmployeeManagement({ department }) {
     name: "",
     job_title: "",
     location: "",
-    shift: "صباحية",
+    shift: "الأولى",
     department: department || user?.department || "planning",
     is_active: true
   });
