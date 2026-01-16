@@ -149,7 +149,7 @@ export const Layout = () => {
 
         {/* User info */}
         {sidebarOpen && (
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
                 <span className="font-cairo font-semibold text-secondary-foreground">
