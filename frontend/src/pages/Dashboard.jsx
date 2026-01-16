@@ -203,32 +203,32 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="إجمالي الزوار اليوم"
+          title={t('totalVisitorsToday')}
           value={stats?.total_visitors_today?.toLocaleString('ar-SA') || "0"}
-          subtitle="منذ الفجر"
+          subtitle={t('sinceFajr')}
           icon={Users}
-          trend="+12% من أمس"
+          trend={language === 'ar' ? '+12% من أمس' : '+12% from yesterday'}
           trendUp={true}
           color="primary"
         />
         <StatCard
-          title="الحشود الحالية"
+          title={t('currentCrowd')}
           value={stats?.current_crowd?.toLocaleString('ar-SA') || "0"}
-          subtitle={`من ${stats?.max_capacity?.toLocaleString('ar-SA')} الطاقة الاستيعابية`}
+          subtitle={language === 'ar' ? `من ${stats?.max_capacity?.toLocaleString('ar-SA')} الطاقة الاستيعابية` : `of ${stats?.max_capacity?.toLocaleString('en-US')} max capacity`}
           icon={Activity}
           color="secondary"
         />
         <StatCard
-          title="الأبواب المفتوحة"
+          title={t('openGates')}
           value={`${stats?.open_gates || 0} / ${stats?.total_gates || 0}`}
-          subtitle="باب نشط"
+          subtitle={language === 'ar' ? 'باب نشط' : 'active gates'}
           icon={DoorOpen}
           color="primary"
         />
         <StatCard
-          title="التنبيهات النشطة"
+          title={t('activeAlerts')}
           value={stats?.alerts_count || 0}
-          subtitle={`${stats?.incidents_today || 0} حوادث اليوم`}
+          subtitle={language === 'ar' ? `${stats?.incidents_today || 0} حوادث اليوم` : `${stats?.incidents_today || 0} incidents today`}
           icon={AlertTriangle}
           color="destructive"
         />
