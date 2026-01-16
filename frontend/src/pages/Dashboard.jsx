@@ -88,7 +88,7 @@ const DepartmentCard = ({ dept, language }) => {
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-muted-foreground">نسبة الإشغال</span>
+              <span className="text-muted-foreground">{language === 'ar' ? 'نسبة الإشغال' : 'Occupancy'}</span>
               <span className="font-semibold">{dept.percentage}%</span>
             </div>
             <Progress 
@@ -103,11 +103,11 @@ const DepartmentCard = ({ dept, language }) => {
           
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
-              <p className="text-[10px] text-muted-foreground">الحشود الحالية</p>
+              <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</p>
               <p className="font-cairo font-bold text-lg">{dept.current_crowd.toLocaleString('ar-SA')}</p>
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground">الموظفون</p>
+              <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'الموظفون' : 'Staff'}</p>
               <p className="font-cairo font-bold text-lg">{dept.active_staff}</p>
             </div>
           </div>
