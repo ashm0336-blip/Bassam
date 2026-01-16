@@ -331,30 +331,27 @@ export default function DataManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاتجاه' : 'Direction'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
-                    <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الاتجاه' : 'Direction'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {gates.map((gate) => (
                     <TableRow key={gate.id}>
-                      <TableCell className="font-bold">{gate.number}</TableCell>
-                      <TableCell>{gate.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={gate.status === 'open' ? 'default' : gate.status === 'closed' ? 'destructive' : 'secondary'}>
-                          {language === 'ar' ? (gate.status === 'open' ? 'مفتوح' : gate.status === 'closed' ? 'مغلق' : 'صيانة') : gate.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {language === 'ar' ? (gate.direction === 'entry' ? 'دخول' : gate.direction === 'exit' ? 'خروج' : 'دخول/خروج') : gate.direction}
-                      </TableCell>
-                      <TableCell className="text-sm">{gate.location}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => setDeleteDialog({ open: true, type: 'gate', item: gate })}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -375,16 +372,19 @@ export default function DataManagement() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => setDeleteDialog({ open: true, type: 'gate', item: gate })}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="text-sm text-center">{gate.location}</TableCell>
+                      <TableCell className="text-sm text-center">
+                        {language === 'ar' ? (gate.direction === 'entry' ? 'دخول' : gate.direction === 'exit' ? 'خروج' : 'دخول/خروج') : gate.direction}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={gate.status === 'open' ? 'default' : gate.status === 'closed' ? 'destructive' : 'secondary'}>
+                          {language === 'ar' ? (gate.status === 'open' ? 'مفتوح' : gate.status === 'closed' ? 'مغلق' : 'صيانة') : gate.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">{gate.name}</TableCell>
+                      <TableCell className="font-bold text-center">{gate.number}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
