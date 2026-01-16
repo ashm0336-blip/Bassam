@@ -408,17 +408,16 @@ export default function DataManagement() {
           
           <Card>
             <CardContent className="p-4">
-              <div dir="ltr">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-left">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'المنطقة' : 'Zone'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'المنطقة' : 'Zone'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
+                    <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {plazas.map((plaza) => (
                     <TableRow key={plaza.id}>
