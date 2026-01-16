@@ -240,11 +240,11 @@ export default function UserManagement() {
           return (
             <Card key={key} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 justify-between">
                   <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center`}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <div>
+                  <div className="text-right">
                     <p className="text-2xl font-bold">{count}</p>
                     <p className="text-xs text-muted-foreground">{config.label[language]}</p>
                   </div>
