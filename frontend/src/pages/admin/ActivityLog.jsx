@@ -252,11 +252,11 @@ export default function ActivityLog() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'التفاصيل' : 'Details'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الهدف' : 'Target'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'المستخدم' : 'User'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الإجراء' : 'Action'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -273,31 +273,7 @@ export default function ActivityLog() {
                     
                     return (
                       <TableRow key={log.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center`}>
-                              <Icon className="w-4 h-4 text-white" />
-                            </div>
-                            <span className="text-sm">{config.label[language]}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="text-sm font-medium">{log.user_name}</p>
-                            <p className="text-xs text-muted-foreground">{log.user_email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {log.target ? (
-                            <span className="text-sm">{log.target}</span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                          {log.details}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-sm text-muted-foreground text-right">
                           {new Date(log.timestamp).toLocaleString(language === 'ar' ? 'ar-SA' : 'en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -305,6 +281,30 @@ export default function ActivityLog() {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate text-right">
+                          {log.details}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {log.target ? (
+                            <span className="text-sm">{log.target}</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div>
+                            <p className="text-sm font-medium">{log.user_name}</p>
+                            <p className="text-xs text-muted-foreground">{log.user_email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center gap-2 justify-end">
+                            <span className="text-sm">{config.label[language]}</span>
+                            <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center`}>
+                              <Icon className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
