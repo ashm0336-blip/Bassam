@@ -296,9 +296,9 @@ export default function Dashboard() {
         <Card data-testid="alerts-panel">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="font-cairo text-lg">آخر التنبيهات</CardTitle>
+              <CardTitle className="font-cairo text-lg">{t('latestAlerts')}</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs text-primary">
-                عرض الكل
+                {t('viewAll')}
               </Button>
             </div>
           </CardHeader>
@@ -315,7 +315,7 @@ export default function Dashboard() {
       {/* Departments Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-cairo font-bold text-xl">حالة الإدارات</h2>
+          <h2 className="font-cairo font-bold text-xl">{t('departmentStatus')}</h2>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
@@ -325,11 +325,11 @@ export default function Dashboard() {
               data-testid="sound-toggle"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4 ml-1" /> : <VolumeX className="w-4 h-4 ml-1" />}
-              {soundEnabled ? "تنبيهات صوتية" : "صامت"}
+              {soundEnabled ? (language === 'ar' ? 'تنبيهات صوتية' : 'Sound alerts') : (language === 'ar' ? 'صامت' : 'Muted')}
             </Button>
             <Button variant="outline" size="sm" className="text-xs">
               <TrendingUp className="w-4 h-4 ml-2" />
-              تقرير مفصل
+              {t('detailedReport')}
             </Button>
           </div>
         </div>
