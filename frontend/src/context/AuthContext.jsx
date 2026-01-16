@@ -66,7 +66,25 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.role === 'admin' || user?.role === 'manager';
+    return user?.role === 'super_admin';
+  };
+
+  const canManageDepartment = (department) => {
+    if (user?.role === 'super_admin') return true;
+    if (user?.role === 'department_manager' && user?.department === department) return true;
+    return false;
+  };
+
+  const canViewDepartment = (department) => {
+    if (user?.role === 'super_admin') return true;
+    if (user?.role === 'monitoring_team') return true;
+    if (user?.role === 'department_manager' && user?.department === department) return true;
+    if (user?.role === 'field_staff' && user?.department === department) return true;
+    return false;
+  };
+
+  const canAddAlerts = () => {
+    return user?.role === 'super_admin' || user?.role === 'department_manager' || user?.role === 'field_staff';
   };
 
   return (
@@ -77,6 +95,9 @@ export const AuthProvider = ({ children }) => {
       login, 
       logout,
       isAdmin,
+      canManageDepartment,
+      canViewDepartment,
+      canAddAlerts,
       isAuthenticated: !!user 
     }}>
       {children}
