@@ -45,16 +45,13 @@ export const CLASSIFICATIONS = [
 
 // حالة الباب
 export const GATE_STATUSES = [
-  "متاح",
-  "مغلق",
-  "متوسط",
-  "مزدحم"
+  "مفتوح",
+  "مغلق"
 ];
 
-// المؤشر الحالي
+// المؤشر الحالي (حسب الازدحام)
 export const CURRENT_INDICATORS = [
-  "مغلق",
-  "خفيف",
-  "متوسط",
-  "مزدحم"
+  { value: "خفيف", label: "خفيف", color: "#22c55e" },      // أخضر
+  { value: "متوسط", label: "متوسط", color: "#f97316" },   // برتقالي
+  { value: "مزدحم", label: "مزدحم", color: "#ef4444" }     // أحمر
 ];
