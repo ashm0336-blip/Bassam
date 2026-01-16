@@ -302,7 +302,7 @@ export default function AdminDashboard() {
       {/* Quick Stats by Role */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo text-lg">
+          <CardTitle className="font-cairo text-lg text-right">
             {language === 'ar' ? 'توزيع المستخدمين' : 'User Distribution'}
           </CardTitle>
         </CardHeader>
