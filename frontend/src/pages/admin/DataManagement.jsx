@@ -716,17 +716,28 @@ export default function DataManagement() {
                   </Select>
                 </div>
                 <div>
-                  <Label>{language === 'ar' ? 'المؤشر الحالي' : 'Current Indicator'}</Label>
-                  <Select value={gateForm.current_indicator} onValueChange={(value) => setGateForm({...gateForm, current_indicator: value})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {CURRENT_INDICATORS.map(ind => (
-                        <SelectItem key={ind} value={ind}>{ind}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>{language === 'ar' ? 'المؤشر الحالي (حسب الازدحام)' : 'Current Indicator'}</Label>
+                  <div className="mt-2 flex gap-2">
+                    {CURRENT_INDICATORS.map(ind => {
+                      const isSelected = gateForm.current_indicator === ind.value;
+                      return (
+                        <Button
+                          key={ind.value}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGateForm({...gateForm, current_indicator: ind.value})}
+                          className={isSelected ? "" : ""}
+                          style={isSelected ? { backgroundColor: ind.color, borderColor: ind.color } : {}}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ind.color }} />
+                            {ind.label}
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
