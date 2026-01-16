@@ -306,6 +306,9 @@ async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin
     
     await db.users.insert_one(user)
     
+    # Log activity
+    await log_activity("user_created", admin, user_data.name, f"تم إنشاء مستخدم جديد: {user_data.name} ({user_data.role})")
+    
     return UserResponse(
         id=user_id,
         email=user_data.email,
