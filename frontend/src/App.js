@@ -2,6 +2,8 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import PlanningDepartment from "@/pages/PlanningDepartment";
@@ -111,14 +113,16 @@ function AppRoutes() {
 
 function App() {
   return (
-    <div className="App" dir="rtl">
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-        <Toaster position="top-left" dir="rtl" />
-      </AuthProvider>
-    </div>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+          <Toaster position="top-left" />
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 
