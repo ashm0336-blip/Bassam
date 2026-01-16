@@ -111,6 +111,8 @@ export default function EmployeeManagement({ department }) {
       setFormData({
         name: employee.name,
         job_title: employee.job_title,
+        location: employee.location || "",
+        shift: employee.shift || "صباحية",
         department: employee.department,
         is_active: employee.is_active
       });
@@ -120,6 +122,8 @@ export default function EmployeeManagement({ department }) {
       setFormData({
         name: "",
         job_title: "",
+        location: "",
+        shift: "صباحية",
         department: department || user?.department || "planning",
         is_active: true
       });
