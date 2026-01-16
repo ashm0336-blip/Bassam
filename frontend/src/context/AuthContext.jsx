@@ -58,30 +58,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, role = 'user') => {
-    try {
-      const response = await axios.post(`${API}/auth/register`, { 
-        name, 
-        email, 
-        password,
-        role 
-      });
-      const { access_token, user: userData } = response.data;
-      
-      localStorage.setItem('token', access_token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      setToken(access_token);
-      setUser(userData);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'فشل إنشاء الحساب' 
-      };
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
@@ -99,7 +75,6 @@ export const AuthProvider = ({ children }) => {
       token, 
       loading, 
       login, 
-      register, 
       logout,
       isAdmin,
       isAuthenticated: !!user 
