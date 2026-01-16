@@ -98,42 +98,13 @@ export default function ActivityLog() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(`${API}/admin/activity-logs`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 100 }
       });
       setLogs(response.data);
     } catch (error) {
       console.error("Error fetching logs:", error);
-      // Mock data for now
-      const mockLogs = [
-        {
-          id: "1",
-          action: "user_created",
-          user_name: "مسؤول النظام",
-          user_email: "admin@crowd.sa",
-          target: "عبدالرحمن الشهري",
-          details: "تم إنشاء حساب المدير العام",
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: "2",
-          action: "login",
-          user_name: "عبدالرحمن الشهري",
-          user_email: "general.manager@crowd.sa",
-          target: null,
-          details: "تسجيل دخول ناجح",
-          timestamp: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: "3",
-          action: "user_updated",
-          user_name: "مسؤول النظام",
-          user_email: "admin@crowd.sa",
-          target: "فهد الدوسري",
-          details: "تم تحديث الدور إلى مدير إدارة",
-          timestamp: new Date(Date.now() - 7200000).toISOString()
-        }
-      ];
-      setLogs(mockLogs);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
