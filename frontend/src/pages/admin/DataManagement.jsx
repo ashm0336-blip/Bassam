@@ -411,26 +411,22 @@ export default function DataManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'المنطقة' : 'Zone'}</TableHead>
                     <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'المنطقة' : 'Zone'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {plazas.map((plaza) => (
                     <TableRow key={plaza.id}>
+                      <TableCell className="font-medium text-center">{plaza.name}</TableCell>
+                      <TableCell className="text-sm text-center">{plaza.zone}</TableCell>
+                      <TableCell className="text-center">{plaza.current_crowd?.toLocaleString('ar-SA')}</TableCell>
+                      <TableCell className="text-center">{plaza.max_capacity?.toLocaleString('ar-SA')}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex gap-2 justify-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => setDeleteDialog({ open: true, type: 'plaza', item: plaza })}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -448,12 +444,16 @@ export default function DataManagement() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => setDeleteDialog({ open: true, type: 'plaza', item: plaza })}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">{plaza.max_capacity?.toLocaleString('ar-SA')}</TableCell>
-                      <TableCell className="text-center">{plaza.current_crowd?.toLocaleString('ar-SA')}</TableCell>
-                      <TableCell className="text-sm text-center">{plaza.zone}</TableCell>
-                      <TableCell className="font-medium text-center">{plaza.name}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
