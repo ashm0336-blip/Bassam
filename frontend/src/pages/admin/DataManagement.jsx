@@ -485,10 +485,10 @@ export default function DataManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{language === 'ar' ? 'الطابق' : 'Level'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'متوسط الطواف' : 'Avg. Tawaf Time'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الطابق' : 'Level'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</TableHead>
+                      <TableHead className="text-left">{language === 'ar' ? 'متوسط الطواف' : 'Avg. Tawaf Time'}</TableHead>
                       <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
