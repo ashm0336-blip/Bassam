@@ -159,10 +159,10 @@ export default function ReportsPage() {
         default:
           break;
       }
-      toast.success(`تم تصدير التقرير بنجاح (${format.toUpperCase()})`);
+      toast.success(language === 'ar' ? `تم تصدير التقرير بنجاح (${format.toUpperCase()})` : `Report exported successfully (${format.toUpperCase()})`);
     } catch (error) {
       console.error("Export error:", error);
-      toast.error("حدث خطأ أثناء التصدير");
+      toast.error(language === 'ar' ? "حدث خطأ أثناء التصدير" : "Export error occurred");
     } finally {
       setExporting(null);
     }
