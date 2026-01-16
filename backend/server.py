@@ -215,6 +215,7 @@ async def log_activity(action: str, user: dict, target: str = None, details: str
         }
         await db.activity_logs.insert_one(activity)
     except Exception as e:
+        logging.error(f"Failed to log activity: {e}")
 
 # ============= Activity Log Routes =============
 @api_router.get("/admin/activity-logs")
