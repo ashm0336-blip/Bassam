@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "total_tests": 21,
+    "passed_tests": 21,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "timestamp": "2026-01-16T14:09:41.340524"
+  },
+  "results": {
+    "API Root": {
+      "success": true,
+      "details": "Status: 200, Data length: 65",
+      "timestamp": "2026-01-16T14:09:40.567104"
+    },
+    "Dashboard Stats": {
+      "success": true,
+      "details": "Status: 200, Data length: 182",
+      "timestamp": "2026-01-16T14:09:40.603984"
+    },
+    "Dashboard Departments": {
+      "success": true,
+      "details": "Status: 200, Data length: 1165",
+      "timestamp": "2026-01-16T14:09:40.639539"
+    },
+    "Hourly Crowd Data": {
+      "success": true,
+      "details": "Status: 200, Data length: 1335",
+      "timestamp": "2026-01-16T14:09:40.674882"
+    },
+    "Gates List": {
+      "success": true,
+      "details": "Status: 200, Data length: 2332",
+      "timestamp": "2026-01-16T14:09:40.707066"
+    },
+    "Gates Filtered by Status": {
+      "success": true,
+      "details": "Status: 200, Data length: 966",
+      "timestamp": "2026-01-16T14:09:40.743593"
+    },
+    "Gates Statistics": {
+      "success": true,
+      "details": "Status: 200, Data length: 111",
+      "timestamp": "2026-01-16T14:09:40.781409"
+    },
+    "Plazas List": {
+      "success": true,
+      "details": "Status: 200, Data length: 1061",
+      "timestamp": "2026-01-16T14:09:40.817434"
+    },
+    "Plazas Statistics": {
+      "success": true,
+      "details": "Status: 200, Data length: 138",
+      "timestamp": "2026-01-16T14:09:40.850677"
+    },
+    "Mataf Levels": {
+      "success": true,
+      "details": "Status: 200, Data length: 559",
+      "timestamp": "2026-01-16T14:09:40.930317"
+    },
+    "Mataf Statistics": {
+      "success": true,
+      "details": "Status: 200, Data length: 183",
+      "timestamp": "2026-01-16T14:09:40.968024"
+    },
+    "Alerts List": {
+      "success": true,
+      "details": "Status: 200, Data length: 1145",
+      "timestamp": "2026-01-16T14:09:40.999896"
+    },
+    "Alerts Filtered by Department": {
+      "success": true,
+      "details": "Status: 200, Data length: 461",
+      "timestamp": "2026-01-16T14:09:41.037239"
+    },
+    "Alerts Filtered by Type": {
+      "success": true,
+      "details": "Status: 200, Data length: 461",
+      "timestamp": "2026-01-16T14:09:41.083498"
+    },
+    "Notifications List": {
+      "success": true,
+      "details": "Status: 200, Data length: 1095",
+      "timestamp": "2026-01-16T14:09:41.122946"
+    },
+    "Unread Notifications": {
+      "success": true,
+      "details": "Status: 200, Data length: 661",
+      "timestamp": "2026-01-16T14:09:41.161886"
+    },
+    "Reports List": {
+      "success": true,
+      "details": "Status: 200, Data length: 733",
+      "timestamp": "2026-01-16T14:09:41.197863"
+    },
+    "Reports Filtered by Type": {
+      "success": true,
+      "details": "Status: 200, Data length: 359",
+      "timestamp": "2026-01-16T14:09:41.234302"
+    },
+    "Reports Filtered by Department": {
+      "success": true,
+      "details": "Status: 200, Data length: 188",
+      "timestamp": "2026-01-16T14:09:41.269674"
+    },
+    "Planning Statistics": {
+      "success": true,
+      "details": "Status: 200, Data length: 140",
+      "timestamp": "2026-01-16T14:09:41.305255"
+    },
+    "Crowd Services Statistics": {
+      "success": true,
+      "details": "Status: 200, Data length: 155",
+      "timestamp": "2026-01-16T14:09:41.339839"
+    }
+  },
+  "failures": []
+}
