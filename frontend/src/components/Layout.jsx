@@ -28,29 +28,31 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
-const navigation = [
-  { name: "لوحة التحكم", href: "/", icon: LayoutDashboard },
-  { name: "الخريطة التفاعلية", href: "/map", icon: Map },
-  { name: "تخطيط خدمات الحشود", href: "/planning", icon: ClipboardList },
-  { name: "إدارة الساحات", href: "/plazas", icon: LayoutGrid },
-  { name: "إدارة الأبواب", href: "/gates", icon: DoorOpen },
-  { name: "خدمات حشود الحرم", href: "/crowd-services", icon: Users },
-  { name: "صحن المطاف", href: "/mataf", icon: Circle },
-];
-
-const secondaryNav = [
-  { name: "التقارير", href: "/reports", icon: FileText },
-  { name: "الإشعارات", href: "/notifications", icon: Bell, badge: 5 },
-  { name: "الإعدادات", href: "/settings", icon: Settings },
-  { name: "لوحة الإدارة", href: "/admin", icon: Shield, adminOnly: true },
-];
-
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
+  const { t, language, toggleLanguage, isRTL } = useLanguage();
+
+  const navigation = [
+    { name: t('dashboard'), href: "/", icon: LayoutDashboard },
+    { name: t('interactiveMap'), href: "/map", icon: Map },
+    { name: t('crowdPlanning'), href: "/planning", icon: ClipboardList },
+    { name: t('plazasManagement'), href: "/plazas", icon: LayoutGrid },
+    { name: t('gatesManagement'), href: "/gates", icon: DoorOpen },
+    { name: t('crowdServices'), href: "/crowd-services", icon: Users },
+    { name: t('matafManagement'), href: "/mataf", icon: Circle },
+  ];
+
+  const secondaryNav = [
+    { name: t('reports'), href: "/reports", icon: FileText },
+    { name: t('notifications'), href: "/notifications", icon: Bell, badge: 5 },
+    { name: t('settings'), href: "/settings", icon: Settings },
+    { name: t('adminPanel'), href: "/admin", icon: Shield, adminOnly: true },
+  ];
 
   const handleLogout = () => {
     logout();
