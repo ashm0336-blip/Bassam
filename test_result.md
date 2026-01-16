@@ -118,6 +118,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Authentication working properly with admin@crowd.sa / admin123"
+      - working: true
+        agent: "testing"
+        comment: "Regression testing completed successfully. All authentication endpoints working: admin login (admin@crowd.sa/admin123), token generation, /auth/me endpoint, invalid login rejection (401), and admin authorization. 34/34 backend tests passed with 100% success rate."
 
   - task: "API Endpoints for Dashboard Stats"
     implemented: true
@@ -130,6 +133,9 @@ backend:
       - working: true
         agent: "main"
         comment: "All dashboard, gates, plazas, mataf endpoints working"
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive backend API testing completed. All endpoints verified: dashboard stats, departments, gates (CRUD + stats), plazas (CRUD + stats), mataf (CRUD + stats), alerts, notifications, reports, planning stats, and crowd services stats. All admin endpoints (create/update/delete) working correctly with proper authorization. 34/34 tests passed."
 
 frontend:
   - task: "Dark Mode Theme Implementation"
