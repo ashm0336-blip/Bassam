@@ -263,6 +263,28 @@ export const Layout = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-primary"
+              data-testid="theme-toggle"
+            >
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+
+            {/* Language Toggle */}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={toggleLanguage}
+              className="text-muted-foreground hover:text-primary"
+              data-testid="language-toggle"
+            >
+              <Languages className="w-5 h-5" />
+            </Button>
+
             <Button 
               variant="ghost" 
               size="icon" 
