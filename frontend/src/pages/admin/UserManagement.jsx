@@ -258,10 +258,10 @@ export default function UserManagement() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo">
+          <CardTitle className="font-cairo text-right">
             {language === 'ar' ? 'قائمة المستخدمين' : 'Users List'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-right">
             {language === 'ar' ? `إجمالي ${users.length} مستخدم` : `Total ${users.length} users`}
           </CardDescription>
         </CardHeader>
