@@ -312,7 +312,7 @@ def main():
             },
             "results": tester.results,
             "failures": tester.failed_tests
-        }, ensure_ascii=False, indent=2)
+        }, f, ensure_ascii=False, indent=2)
     
     return 0 if success else 1
 
