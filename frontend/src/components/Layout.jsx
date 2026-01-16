@@ -157,10 +157,11 @@ export const Layout = () => {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.name || 'مستخدم'}</p>
+                <p className="text-sm font-medium truncate">{user?.name || t('platformName')}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {user?.role === 'admin' ? 'مدير النظام' : 
-                   user?.role === 'manager' ? 'مشرف' : 'مستخدم'}
+                  {user?.role === 'admin' ? (language === 'ar' ? 'مدير النظام' : 'System Admin') : 
+                   user?.role === 'manager' ? (language === 'ar' ? 'مشرف' : 'Manager') : 
+                   (language === 'ar' ? 'مستخدم' : 'User')}
                 </p>
               </div>
               <Button
