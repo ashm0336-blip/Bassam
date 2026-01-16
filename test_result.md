@@ -213,12 +213,17 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "2.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: true
   testing_credentials:
     email: "admin@crowd.sa"
     password: "admin123"
     base_url: "http://localhost:3000"
+  last_backend_test:
+    timestamp: "2025-01-15"
+    tests_run: 34
+    tests_passed: 34
+    success_rate: 100.0
 
 test_plan:
   current_focus:
