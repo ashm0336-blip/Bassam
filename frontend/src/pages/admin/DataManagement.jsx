@@ -336,17 +336,50 @@ export default function DataManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الاتجاه' : 'Direction'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'المؤشر' : 'Indicator'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'إضافة المؤشر' : 'Add Indicator'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'التصنيف' : 'Classification'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'المسار' : 'Direction'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'المنطقة' : 'Plaza'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'اسم الباب' : 'Name'}</TableHead>
                     <TableHead className="text-center">{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {gates.map((gate) => (
                     <TableRow key={gate.id}>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.current_indicator}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.indicator_status}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.classification}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.category}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.direction}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm">{gate.gate_type}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center gap-2 justify-center">
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] }}
+                          />
+                          <span className="text-sm">{gate.plaza}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center font-medium">{gate.name}</TableCell>
+                      <TableCell className="text-center font-bold">{gate.number}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex gap-2 justify-center">
                           <Button
@@ -366,11 +399,15 @@ export default function DataManagement() {
                               setGateForm({
                                 name: gate.name,
                                 number: gate.number,
-                                status: gate.status,
+                                plaza: gate.plaza,
+                                gate_type: gate.gate_type,
                                 direction: gate.direction,
+                                category: gate.category,
+                                classification: gate.classification,
+                                indicator_status: gate.indicator_status,
+                                current_indicator: gate.current_indicator,
                                 current_flow: gate.current_flow,
-                                max_flow: gate.max_flow,
-                                location: gate.location
+                                max_flow: gate.max_flow
                               });
                               setGateDialogOpen(true);
                             }}
@@ -379,17 +416,6 @@ export default function DataManagement() {
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-center">{gate.location}</TableCell>
-                      <TableCell className="text-sm text-center">
-                        {language === 'ar' ? (gate.direction === 'entry' ? 'دخول' : gate.direction === 'exit' ? 'خروج' : 'دخول/خروج') : gate.direction}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={gate.status === 'open' ? 'default' : gate.status === 'closed' ? 'destructive' : 'secondary'}>
-                          {language === 'ar' ? (gate.status === 'open' ? 'مفتوح' : gate.status === 'closed' ? 'مغلق' : 'صيانة') : gate.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">{gate.name}</TableCell>
-                      <TableCell className="font-bold text-center">{gate.number}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
