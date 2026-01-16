@@ -588,6 +588,13 @@ async def get_departments():
     gates = await db.gates.find({}, {"_id": 0}).to_list(200)
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
     
+    # Get employee counts per department
+    planning_employees = await db.employees.count_documents({"department": "planning", "is_active": True})
+    plazas_employees = await db.employees.count_documents({"department": "plazas", "is_active": True})
+    gates_employees = await db.employees.count_documents({"department": "gates", "is_active": True})
+    crowd_employees = await db.employees.count_documents({"department": "crowd_services", "is_active": True})
+    mataf_employees = await db.employees.count_documents({"department": "mataf", "is_active": True})
+    
     # Calculate stats per department
     plazas_crowd = sum(p.get("current_crowd", 0) for p in plazas)
     plazas_max = sum(p.get("max_capacity", 0) for p in plazas) or 1
@@ -611,7 +618,7 @@ async def get_departments():
             "max_capacity": plazas_max // 4,
             "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0,
             "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0),
-            "active_staff": len(gates) * 3,
+            "active_staff": planning_employees,
             "incidents_today": 0
         },
         {
