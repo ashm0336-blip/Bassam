@@ -1,196 +1,187 @@
 {
   "summary": {
     "total_tests": 35,
-    "passed_tests": 33,
-    "failed_tests": 2,
-    "success_rate": 94.28571428571428,
-    "timestamp": "2026-01-16T14:58:07.566992"
+    "passed_tests": 35,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "timestamp": "2026-01-16T14:58:20.775695"
   },
   "results": {
     "User Registration": {
       "success": true,
       "details": "Status: 200, Data length: 445",
-      "timestamp": "2026-01-16T14:58:05.760814"
+      "timestamp": "2026-01-16T14:58:19.134619"
     },
     "Admin Login": {
       "success": true,
       "details": "Status: 200, Data length: 445",
-      "timestamp": "2026-01-16T14:58:06.041588"
+      "timestamp": "2026-01-16T14:58:19.399430"
     },
     "Get Current User": {
       "success": true,
       "details": "Status: 200, Data length: 167",
-      "timestamp": "2026-01-16T14:58:06.079563"
+      "timestamp": "2026-01-16T14:58:19.438718"
     },
     "Invalid Login (Should Fail)": {
       "success": true,
       "details": "Status: 401, Data length: 37",
-      "timestamp": "2026-01-16T14:58:06.121079"
+      "timestamp": "2026-01-16T14:58:19.479388"
     },
     "Create Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 81",
-      "timestamp": "2026-01-16T14:58:06.183123"
+      "timestamp": "2026-01-16T14:58:19.518293"
     },
     "Create Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 82",
-      "timestamp": "2026-01-16T14:58:06.250879"
+      "timestamp": "2026-01-16T14:58:19.553071"
     },
     "Create Alert (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 83",
-      "timestamp": "2026-01-16T14:58:06.307470"
+      "timestamp": "2026-01-16T14:58:19.628602"
     },
     "Get Users (Admin)": {
       "success": true,
-      "details": "Status: 200, Data length: 505",
-      "timestamp": "2026-01-16T14:58:06.351678"
+      "details": "Status: 200, Data length: 673",
+      "timestamp": "2026-01-16T14:58:19.666607"
     },
     "Update Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 35",
-      "timestamp": "2026-01-16T14:58:06.396550"
+      "timestamp": "2026-01-16T14:58:19.703527"
     },
     "Delete Gate (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 33",
-      "timestamp": "2026-01-16T14:58:06.438539"
+      "timestamp": "2026-01-16T14:58:19.741495"
     },
     "Update Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-16T14:58:06.476552"
+      "timestamp": "2026-01-16T14:58:19.781790"
     },
     "Delete Plaza (Admin)": {
       "success": true,
       "details": "Status: 200, Data length: 34",
-      "timestamp": "2026-01-16T14:58:06.519748"
+      "timestamp": "2026-01-16T14:58:19.819217"
     },
     "Unauthorized Gate Creation": {
-      "success": false,
-      "details": "Expected 401, got 403",
-      "timestamp": "2026-01-16T14:58:06.555906"
+      "success": true,
+      "details": "Status: 403, Data length: 31",
+      "timestamp": "2026-01-16T14:58:19.853188"
     },
     "Unauthorized Users Access": {
-      "success": false,
-      "details": "Expected 401, got 403",
-      "timestamp": "2026-01-16T14:58:06.592742"
+      "success": true,
+      "details": "Status: 403, Data length: 31",
+      "timestamp": "2026-01-16T14:58:19.885926"
     },
     "API Root": {
       "success": true,
       "details": "Status: 200, Data length: 65",
-      "timestamp": "2026-01-16T14:58:06.629514"
+      "timestamp": "2026-01-16T14:58:19.919413"
     },
     "Dashboard Stats": {
       "success": true,
       "details": "Status: 200, Data length: 161",
-      "timestamp": "2026-01-16T14:58:06.712929"
+      "timestamp": "2026-01-16T14:58:19.955066"
     },
     "Dashboard Departments": {
       "success": true,
       "details": "Status: 200, Data length: 1103",
-      "timestamp": "2026-01-16T14:58:06.757382"
+      "timestamp": "2026-01-16T14:58:19.993964"
     },
     "Hourly Crowd Data": {
       "success": true,
       "details": "Status: 200, Data length: 1152",
-      "timestamp": "2026-01-16T14:58:06.797282"
+      "timestamp": "2026-01-16T14:58:20.029532"
     },
     "Gates List": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T14:58:06.833079"
+      "timestamp": "2026-01-16T14:58:20.064046"
     },
     "Gates Filtered by Status": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T14:58:06.871019"
+      "timestamp": "2026-01-16T14:58:20.097791"
     },
     "Gates Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 106",
-      "timestamp": "2026-01-16T14:58:06.907572"
+      "timestamp": "2026-01-16T14:58:20.136925"
     },
     "Plazas List": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T14:58:06.947113"
+      "timestamp": "2026-01-16T14:58:20.171536"
     },
     "Plazas Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 127",
-      "timestamp": "2026-01-16T14:58:07.030746"
+      "timestamp": "2026-01-16T14:58:20.246984"
     },
     "Mataf Levels": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-16T14:58:07.073772"
+      "timestamp": "2026-01-16T14:58:20.289786"
     },
     "Mataf Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 172",
-      "timestamp": "2026-01-16T14:58:07.109273"
+      "timestamp": "2026-01-16T14:58:20.325807"
     },
     "Alerts List": {
       "success": true,
-      "details": "Status: 200, Data length: 291",
-      "timestamp": "2026-01-16T14:58:07.146518"
+      "details": "Status: 200, Data length: 582",
+      "timestamp": "2026-01-16T14:58:20.360809"
     },
     "Alerts Filtered by Department": {
       "success": true,
-      "details": "Status: 200, Data length: 291",
-      "timestamp": "2026-01-16T14:58:07.197851"
+      "details": "Status: 200, Data length: 582",
+      "timestamp": "2026-01-16T14:58:20.437818"
     },
     "Alerts Filtered by Type": {
       "success": true,
-      "details": "Status: 200, Data length: 291",
-      "timestamp": "2026-01-16T14:58:07.236600"
+      "details": "Status: 200, Data length: 582",
+      "timestamp": "2026-01-16T14:58:20.473668"
     },
     "Notifications List": {
       "success": true,
-      "details": "Status: 200, Data length: 291",
-      "timestamp": "2026-01-16T14:58:07.290383"
+      "details": "Status: 200, Data length: 582",
+      "timestamp": "2026-01-16T14:58:20.513388"
     },
     "Unread Notifications": {
       "success": true,
-      "details": "Status: 200, Data length: 291",
-      "timestamp": "2026-01-16T14:58:07.324853"
+      "details": "Status: 200, Data length: 582",
+      "timestamp": "2026-01-16T14:58:20.553150"
     },
     "Reports List": {
       "success": true,
       "details": "Status: 200, Data length: 659",
-      "timestamp": "2026-01-16T14:58:07.369551"
+      "timestamp": "2026-01-16T14:58:20.590127"
     },
     "Reports Filtered by Type": {
       "success": true,
       "details": "Status: 200, Data length: 659",
-      "timestamp": "2026-01-16T14:58:07.406402"
+      "timestamp": "2026-01-16T14:58:20.623288"
     },
     "Reports Filtered by Department": {
       "success": true,
       "details": "Status: 200, Data length: 163",
-      "timestamp": "2026-01-16T14:58:07.444889"
+      "timestamp": "2026-01-16T14:58:20.701761"
     },
     "Planning Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 140",
-      "timestamp": "2026-01-16T14:58:07.527584"
+      "timestamp": "2026-01-16T14:58:20.740414"
     },
     "Crowd Services Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 151",
-      "timestamp": "2026-01-16T14:58:07.566085"
+      "timestamp": "2026-01-16T14:58:20.774845"
     }
   },
-  "failures": [
-    {
-      "test": "Unauthorized Gate Creation",
-      "details": "Expected 401, got 403"
-    },
-    {
-      "test": "Unauthorized Users Access",
-      "details": "Expected 401, got 403"
-    }
-  ]
+  "failures": []
 }
