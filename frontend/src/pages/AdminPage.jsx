@@ -812,8 +812,12 @@ export default function AdminPage() {
         {/* Users Tab */}
         <TabsContent value="users" className="mt-4">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="font-cairo text-lg">إدارة المستخدمين</CardTitle>
+              <Button onClick={() => setUserDialog(true)} data-testid="add-user-btn">
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة مستخدم
+              </Button>
             </CardHeader>
             <CardContent>
               <Table>
