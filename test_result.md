@@ -121,6 +121,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Regression testing completed successfully. All authentication endpoints working: admin login (admin@crowd.sa/admin123), token generation, /auth/me endpoint, invalid login rejection (401), and admin authorization. 34/34 backend tests passed with 100% success rate."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE USER MANAGEMENT & PERMISSIONS TESTING COMPLETED (2025-01-16). All 63 tests passed with 100% success rate. ✅ USER CRUD OPERATIONS: POST /api/users creates users with all roles (field_staff, dept_manager, monitoring_team, super_admin) with proper validation. GET /api/users lists all users (super_admin only). PUT /api/users/{user_id} updates name, role, department, and password. DELETE /api/users/{user_id} deletes users and correctly prevents self-deletion (400 error). ✅ DEPARTMENT VALIDATION: Field staff and dept_manager roles correctly require department field (400 error if missing). Monitoring team and super_admin roles work without department. ✅ PERMISSION VALIDATION: Non-admin users (dept_manager, field_staff) correctly receive 403 Forbidden when accessing /api/users endpoints. Super_admin has full access to all user management operations. ✅ AUTH TOKEN WITH DEPARTMENT: Login response includes department field in user object for dept_manager (plazas) and field_staff (mataf). GET /api/auth/me correctly returns department field for all user roles. All test credentials working: admin@crowd.sa/admin123, manager.plazas@crowd.sa/manager123, staff.mataf@crowd.sa/staff123."
 
   - task: "API Endpoints for Dashboard Stats"
     implemented: true
