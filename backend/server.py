@@ -71,11 +71,12 @@ class GateCreate(BaseModel):
     name: str
     number: int
     plaza: str  # الساحة الشرقية، الشمالية، الجنوبية، الغربية
+    plaza_color: str  # Color code
     gate_type: str  # رئيسي، فرعي، سلم كهربائي، مصعد، درج، جسر، مشابة، عبارة، مزلقان
-    direction: str = "both"  # دخول، خروج، دخول وخروج
-    category: str = "محرمين"  # محرمين، مصلين، عربات، عريات ومصلين، إلخ
-    classification: str = "عام"  # عام، رجال، نساء، طوارئ، خدمات، جنائز
-    indicator_status: str = "متاح"  # متاح، مغلق، متوسط، مزدحم
+    direction: str  # دخول، خروج، دخول وخروج
+    category: List[str]  # محرمين، مصلين، عربات (multiple selection)
+    classification: str  # عام، رجال، نساء، طوارئ، خدمات، جنائز
+    status: str = "متاح"  # متاح، مغلق، متوسط، مزدحم
     current_indicator: str = "مغلق"  # مغلق، خفيف، متوسط، مزدحم
     current_flow: int = 0
     max_flow: int = 5000
@@ -83,11 +84,12 @@ class GateCreate(BaseModel):
 class GateUpdate(BaseModel):
     name: Optional[str] = None
     plaza: Optional[str] = None
+    plaza_color: Optional[str] = None
     gate_type: Optional[str] = None
     direction: Optional[str] = None
-    category: Optional[str] = None
+    category: Optional[List[str]] = None
     classification: Optional[str] = None
-    indicator_status: Optional[str] = None
+    status: Optional[str] = None
     current_indicator: Optional[str] = None
     current_flow: Optional[int] = None
     max_flow: Optional[int] = None
