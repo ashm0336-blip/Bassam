@@ -398,6 +398,95 @@ async def update_mataf_level(mataf_id: str, mataf: MatafLevelUpdate, user: dict 
 
 # ============= Admin Routes - Alerts =============
 @api_router.post("/admin/alerts")
+
+# ============= Employee Management Routes =============
+@api_router.get("/employees")
+async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get all employees or filter by department based on user permissions"""
+    query = {}
+    
+    # Filter based on user role
+    if user["role"] == "department_manager":
+        query["department"] = user.get("department")
+    elif department and user["role"] in ["system_admin", "general_manager", "monitoring_team"]:
+        query["department"] = department
+    
+    employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
+    return employees
+
+@api_router.post("/employees")
+async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_current_user)):
+    """Create new employee - only managers can add to their department"""
+    # Check permission
+    if user["role"] == "department_manager" and employee.department != user.get("department"):
+        raise HTTPException(status_code=403, detail="يمكنك إضافة موظفين لقسمك فقط")
+    
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    
+    employee_id = str(uuid.uuid4())
+    employee_doc = {
+        "id": employee_id,
+        **employee.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.employees.insert_one(employee_doc)
+    return {"message": "تم إضافة الموظف بنجاح", "id": employee_id}
+
+@api_router.put("/employees/{employee_id}")
+async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict = Depends(get_current_user)):
+    """Update employee - only managers can update their department employees"""
+    existing = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Check permission
+    if user["role"] == "department_manager" and existing["department"] != user.get("department"):
+        raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي قسمك فقط")
+    
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    
+    update_data = {k: v for k, v in employee.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.employees.update_one({"id": employee_id}, {"$set": update_data})
+    return {"message": "تم تحديث الموظف بنجاح"}
+
+@api_router.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: str, user: dict = Depends(get_current_user)):
+    """Delete employee - only managers can delete their department employees"""
+    existing = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Check permission
+    if user["role"] == "department_manager" and existing["department"] != user.get("department"):
+        raise HTTPException(status_code=403, detail="يمكنك حذف موظفي قسمك فقط")
+    
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    
+    await db.employees.delete_one({"id": employee_id})
+    return {"message": "تم حذف الموظف بنجاح"}
+
+@api_router.get("/employees/stats/{department}")
+async def get_employee_stats(department: str, user: dict = Depends(get_current_user)):
+    """Get employee statistics for a department"""
+    # Check permission
+    if not check_department_access(user, department):
+        raise HTTPException(status_code=403, detail="لا يمكنك الوصول لبيانات هذه الإدارة")
+    
+    total = await db.employees.count_documents({"department": department})
+    active = await db.employees.count_documents({"department": department, "is_active": True})
+    
+    return {
+        "total_employees": total,
+        "active_employees": active,
+        "inactive_employees": total - active
+    }
+
 async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
     alert_id = str(uuid.uuid4())
     alert_doc = {
