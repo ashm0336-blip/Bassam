@@ -60,9 +60,9 @@ export default function DataManagement() {
     plaza: "الساحة الشرقية",
     gate_type: "رئيسي",
     direction: "دخول",
-    category: "محرمين",
+    category: [],  // Multi-select
     classification: "عام",
-    indicator_status: "متاح",
+    status: "متاح",
     current_indicator: "مغلق",
     current_flow: 0,
     max_flow: 5000
