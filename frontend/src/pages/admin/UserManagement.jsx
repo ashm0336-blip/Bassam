@@ -217,7 +217,11 @@ export default function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
+        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+          <Plus className="w-4 h-4 ml-2" />
+          {language === 'ar' ? 'مستخدم جديد' : 'New User'}
+        </Button>
         <div className="text-right flex-1">
           <h2 className="font-cairo font-bold text-xl text-right">
             {language === 'ar' ? 'إدارة المستخدمين' : 'User Management'}
@@ -226,10 +230,6 @@ export default function UserManagement() {
             {language === 'ar' ? 'إضافة وإدارة مستخدمي المنصة' : 'Add and manage platform users'}
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 ml-2" />
-          {language === 'ar' ? 'مستخدم جديد' : 'New User'}
-        </Button>
       </div>
 
       {/* Stats Cards */}
