@@ -485,10 +485,20 @@ async def get_employee_stats(department: str, user: dict = Depends(get_current_u
     total = await db.employees.count_documents({"department": department})
     active = await db.employees.count_documents({"department": department, "is_active": True})
     
+    # Get shift distribution
+    morning_shift = await db.employees.count_documents({"department": department, "shift": "صباحية", "is_active": True})
+    evening_shift = await db.employees.count_documents({"department": department, "shift": "مسائية", "is_active": True})
+    night_shift = await db.employees.count_documents({"department": department, "shift": "ليلية", "is_active": True})
+    
     return {
         "total_employees": total,
         "active_employees": active,
-        "inactive_employees": total - active
+        "inactive_employees": total - active,
+        "shifts": {
+            "morning": morning_shift,
+            "evening": evening_shift,
+            "night": night_shift
+        }
     }
 
 async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
