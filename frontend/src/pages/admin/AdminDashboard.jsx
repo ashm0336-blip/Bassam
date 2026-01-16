@@ -249,11 +249,11 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="font-cairo text-lg text-left">
+              <CardTitle className="font-cairo text-lg">
                 {language === 'ar' ? 'آخر المستخدمين المضافين' : 'Recently Added Users'}
               </CardTitle>
               <Badge variant="outline" className="text-xs">
-                <Clock className="w-3 h-3 mr-1" />
+                <Clock className="w-3 h-3 ml-1" />
                 {language === 'ar' ? 'الأحدث' : 'Latest'}
               </Badge>
             </div>
