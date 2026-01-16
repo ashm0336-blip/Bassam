@@ -281,8 +281,8 @@ export default function UserManagement() {
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 justify-end">
+                    <TableCell className="text-center">
+                      <div className="flex items-center gap-2 justify-center">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -304,19 +304,19 @@ export default function UserManagement() {
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground text-right">
+                    <TableCell className="text-sm text-muted-foreground text-center">
                       {new Date(user.created_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {user.department ? (
                         <span className="text-sm">{DEPARTMENTS[user.department]?.[language] || user.department}</span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">{getRoleBadge(user.role)}</TableCell>
-                    <TableCell className="font-mono text-sm text-right">{user.email}</TableCell>
-                    <TableCell className="font-medium text-right">{user.name}</TableCell>
+                    <TableCell className="text-center">{getRoleBadge(user.role)}</TableCell>
+                    <TableCell className="font-mono text-sm text-center">{user.email}</TableCell>
+                    <TableCell className="font-medium text-center">{user.name}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
