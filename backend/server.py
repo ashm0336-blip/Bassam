@@ -495,6 +495,10 @@ async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_cur
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     await db.employees.insert_one(employee_doc)
+    
+    # Log activity
+    await log_activity("employee_created", user, employee.name, f"تم إضافة موظف جديد: {employee.name} - {employee.job_title} ({employee.department})")
+    
     return {"message": "تم إضافة الموظف بنجاح", "id": employee_id}
 
 @api_router.put("/employees/{employee_id}")
