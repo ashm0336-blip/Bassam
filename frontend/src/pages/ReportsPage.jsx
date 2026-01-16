@@ -169,10 +169,10 @@ export default function ReportsPage() {
   };
 
   const quickStats = [
-    { label: "التقارير اليومية", value: 28, icon: Calendar, color: "bg-primary/10 text-primary" },
-    { label: "التقارير الأسبوعية", value: 12, icon: BarChart3, color: "bg-secondary/20 text-secondary" },
-    { label: "التقارير الشهرية", value: 4, icon: PieChart, color: "bg-blue-100 text-blue-600" },
-    { label: "التحليلات المقارنة", value: 8, icon: TrendingUp, color: "bg-green-100 text-green-600" }
+    { label: language === 'ar' ? "التقارير اليومية" : "Daily Reports", value: 28, icon: Calendar, color: "bg-primary/10 text-primary" },
+    { label: language === 'ar' ? "التقارير الأسبوعية" : "Weekly Reports", value: 12, icon: BarChart3, color: "bg-secondary/20 text-secondary" },
+    { label: language === 'ar' ? "التقارير الشهرية" : "Monthly Reports", value: 4, icon: PieChart, color: "bg-blue-100 text-blue-600" },
+    { label: language === 'ar' ? "التحليلات المقارنة" : "Comparative Analysis", value: 8, icon: TrendingUp, color: "bg-green-100 text-green-600" }
   ];
 
   if (loading) {
