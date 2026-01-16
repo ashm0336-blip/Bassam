@@ -1,15 +1,17 @@
-from fastapi import FastAPI, APIRouter, Query, HTTPException
+from fastapi import FastAPI, APIRouter, Query, HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
-import random
+from datetime import datetime, timezone, timedelta
+import jwt
+import bcrypt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,13 +21,90 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# JWT Settings
+JWT_SECRET = os.environ.get('JWT_SECRET', 'al-haram-os-secret-key-2024')
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
 # Create the main app
 app = FastAPI(title="Al-Haram OS API", description="منصة خدمات الحشود API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# ============= Models =============
+# Security
+security = HTTPBearer()
+
+# ============= Auth Models =============
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: str = "user"  # admin, manager, supervisor, user
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    created_at: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+# ============= Data Models =============
+class GateCreate(BaseModel):
+    name: str
+    number: int
+    status: str = "open"  # open, closed, maintenance
+    direction: str = "both"  # entry, exit, both
+    current_flow: int = 0
+    max_flow: int = 5000
+    location: str = "الجهة الشمالية"
+
+class GateUpdate(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+    direction: Optional[str] = None
+    current_flow: Optional[int] = None
+    max_flow: Optional[int] = None
+    location: Optional[str] = None
+
+class PlazaCreate(BaseModel):
+    name: str
+    zone: str  # north, south, east, west, masa, ajyad
+    current_crowd: int = 0
+    max_capacity: int = 40000
+
+class PlazaUpdate(BaseModel):
+    name: Optional[str] = None
+    current_crowd: Optional[int] = None
+    max_capacity: Optional[int] = None
+
+class MatafLevelCreate(BaseModel):
+    level: str  # الطابق الأرضي, الطابق الأول, سطح الحرم
+    current_crowd: int = 0
+    max_capacity: int = 50000
+    average_tawaf_time: int = 45
+
+class MatafLevelUpdate(BaseModel):
+    current_crowd: Optional[int] = None
+    max_capacity: Optional[int] = None
+    average_tawaf_time: Optional[int] = None
+
+class AlertCreate(BaseModel):
+    type: str  # emergency, warning, info
+    title: str
+    message: str
+    department: str
+    priority: str = "medium"  # critical, high, medium, low
+
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -35,357 +114,459 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-class DepartmentStats(BaseModel):
-    id: str
-    name: str
-    name_en: str
-    icon: str
-    current_crowd: int
-    max_capacity: int
-    percentage: float
-    status: str  # normal, warning, critical
-    active_staff: int
-    incidents_today: int
+# ============= Auth Functions =============
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-class CrowdData(BaseModel):
-    timestamp: str
-    count: int
-    department: str
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-class Alert(BaseModel):
-    id: str
-    type: str  # emergency, warning, info
-    title: str
-    message: str
-    department: str
-    timestamp: str
-    is_read: bool = False
+def create_token(user_id: str, email: str, role: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "role": role,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-class DashboardStats(BaseModel):
-    total_visitors_today: int
-    current_crowd: int
-    max_capacity: int
-    active_staff: int
-    open_gates: int
-    total_gates: int
-    incidents_today: int
-    alerts_count: int
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="المستخدم غير موجود")
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="انتهت صلاحية الجلسة")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="رمز غير صالح")
 
-class GateInfo(BaseModel):
-    id: str
-    name: str
-    number: int
-    status: str  # open, closed, maintenance
-    direction: str  # entry, exit, both
-    current_flow: int
-    max_flow: int
-    location: str
+async def require_admin(user: dict = Depends(get_current_user)):
+    if user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    return user
 
-class PlazaInfo(BaseModel):
-    id: str
-    name: str
-    current_crowd: int
-    max_capacity: int
-    percentage: float
-    status: str
-    zone: str
-
-class MatafInfo(BaseModel):
-    id: str
-    level: str
-    current_crowd: int
-    max_capacity: int
-    percentage: float
-    average_tawaf_time: int  # minutes
-    status: str
-
-class Report(BaseModel):
-    id: str
-    title: str
-    type: str
-    date: str
-    department: str
-    summary: str
-
-class Notification(BaseModel):
-    id: str
-    type: str
-    title: str
-    message: str
-    timestamp: str
-    is_read: bool
-    priority: str
-
-# ============= Mock Data Generators =============
-def generate_department_stats() -> List[DepartmentStats]:
-    departments = [
-        {"id": "planning", "name": "إدارة تخطيط خدمات الحشود", "name_en": "Crowd Planning", "icon": "ClipboardList", "max": 50000},
-        {"id": "plazas", "name": "إدارة الساحات", "name_en": "Plazas Management", "icon": "LayoutGrid", "max": 150000},
-        {"id": "gates", "name": "إدارة الأبواب", "name_en": "Gates Management", "icon": "DoorOpen", "max": 80000},
-        {"id": "crowd_services", "name": "إدارة خدمات حشود الحرم", "name_en": "Haram Crowd Services", "icon": "Users", "max": 200000},
-        {"id": "mataf", "name": "إدارة صحن المطاف", "name_en": "Mataf Management", "icon": "Circle", "max": 100000},
-    ]
+# ============= Auth Routes =============
+@api_router.post("/auth/register", response_model=TokenResponse)
+async def register(user_data: UserCreate):
+    # Check if email exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل مسبقاً")
     
-    result = []
-    for dept in departments:
-        current = random.randint(int(dept["max"] * 0.4), int(dept["max"] * 0.95))
-        percentage = (current / dept["max"]) * 100
-        status = "normal" if percentage < 70 else ("warning" if percentage < 85 else "critical")
-        
-        result.append(DepartmentStats(
-            id=dept["id"],
-            name=dept["name"],
-            name_en=dept["name_en"],
-            icon=dept["icon"],
-            current_crowd=current,
-            max_capacity=dept["max"],
-            percentage=round(percentage, 1),
-            status=status,
-            active_staff=random.randint(50, 200),
-            incidents_today=random.randint(0, 15)
-        ))
+    user_id = str(uuid.uuid4())
+    user = {
+        "id": user_id,
+        "email": user_data.email,
+        "password": hash_password(user_data.password),
+        "name": user_data.name,
+        "role": user_data.role,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
-    return result
-
-def generate_hourly_crowd_data() -> List[dict]:
-    hours = []
-    base_crowd = 80000
-    for hour in range(24):
-        # Simulate crowd patterns
-        if 4 <= hour <= 6:  # Fajr
-            multiplier = 1.8
-        elif 12 <= hour <= 14:  # Dhuhr
-            multiplier = 1.5
-        elif 15 <= hour <= 17:  # Asr
-            multiplier = 1.4
-        elif 18 <= hour <= 20:  # Maghrib/Isha
-            multiplier = 2.0
-        elif 21 <= hour <= 23:  # Night
-            multiplier = 1.6
-        else:
-            multiplier = 0.8 + random.uniform(0, 0.4)
-        
-        count = int(base_crowd * multiplier * (0.9 + random.uniform(0, 0.2)))
-        hours.append({
-            "hour": f"{hour:02d}:00",
-            "count": count,
-            "percentage": round((count / 200000) * 100, 1)
-        })
-    return hours
-
-def generate_alerts() -> List[Alert]:
-    alerts_data = [
-        {"type": "warning", "title": "ازدحام في باب الملك عبدالعزيز", "message": "نسبة الإشغال وصلت 85%", "department": "gates"},
-        {"type": "info", "title": "صيانة مجدولة", "message": "صيانة المصاعد في الساحة الشرقية", "department": "plazas"},
-        {"type": "emergency", "title": "حالة طوارئ طبية", "message": "حالة إسعافية في صحن المطاف", "department": "mataf"},
-        {"type": "warning", "title": "تدفق عالي", "message": "زيادة في تدفق الزوار من الباب 79", "department": "gates"},
-        {"type": "info", "title": "تغيير المسارات", "message": "تم تحويل مسار الخروج إلى الباب 94", "department": "planning"},
-    ]
+    await db.users.insert_one(user)
     
-    return [
-        Alert(
-            id=str(uuid.uuid4()),
-            type=a["type"],
-            title=a["title"],
-            message=a["message"],
-            department=a["department"],
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            is_read=random.choice([True, False])
-        ) for a in alerts_data
-    ]
-
-def generate_gates() -> List[GateInfo]:
-    gates = []
-    gate_names = [
-        "باب الملك عبدالعزيز", "باب الفتح", "باب العمرة", "باب الملك فهد",
-        "باب السلام", "باب إبراهيم", "باب الحجون", "باب علي",
-        "باب العباس", "باب النبي", "باب جبريل", "باب الصفا"
-    ]
-    locations = ["الجهة الشمالية", "الجهة الجنوبية", "الجهة الشرقية", "الجهة الغربية"]
+    token = create_token(user_id, user_data.email, user_data.role)
     
-    for i, name in enumerate(gate_names):
-        max_flow = random.randint(3000, 8000)
-        current_flow = random.randint(int(max_flow * 0.3), max_flow)
-        gates.append(GateInfo(
-            id=str(uuid.uuid4()),
-            name=name,
-            number=i + 1,
-            status=random.choice(["open", "open", "open", "closed", "maintenance"]),
-            direction=random.choice(["entry", "exit", "both"]),
-            current_flow=current_flow,
-            max_flow=max_flow,
-            location=random.choice(locations)
-        ))
-    return gates
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user_id,
+            email=user_data.email,
+            name=user_data.name,
+            role=user_data.role,
+            created_at=user["created_at"]
+        )
+    )
 
-def generate_plazas() -> List[PlazaInfo]:
-    plazas_data = [
-        {"name": "الساحة الشمالية", "zone": "north", "max": 40000},
-        {"name": "الساحة الجنوبية", "zone": "south", "max": 35000},
-        {"name": "الساحة الشرقية", "zone": "east", "max": 45000},
-        {"name": "الساحة الغربية", "zone": "west", "max": 38000},
-        {"name": "ساحة المسعى", "zone": "masa", "max": 50000},
-        {"name": "ساحة أجياد", "zone": "ajyad", "max": 30000},
-    ]
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(credentials: UserLogin):
+    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     
-    plazas = []
-    for p in plazas_data:
-        current = random.randint(int(p["max"] * 0.4), int(p["max"] * 0.95))
-        percentage = (current / p["max"]) * 100
-        status = "normal" if percentage < 70 else ("warning" if percentage < 85 else "critical")
-        plazas.append(PlazaInfo(
-            id=str(uuid.uuid4()),
-            name=p["name"],
-            current_crowd=current,
-            max_capacity=p["max"],
-            percentage=round(percentage, 1),
-            status=status,
-            zone=p["zone"]
-        ))
-    return plazas
-
-def generate_mataf_levels() -> List[MatafInfo]:
-    levels = [
-        {"level": "الطابق الأرضي", "max": 50000},
-        {"level": "الطابق الأول", "max": 40000},
-        {"level": "سطح الحرم", "max": 35000},
-    ]
+    token = create_token(user["id"], user["email"], user["role"])
     
-    mataf = []
-    for l in levels:
-        current = random.randint(int(l["max"] * 0.5), int(l["max"] * 0.9))
-        percentage = (current / l["max"]) * 100
-        status = "normal" if percentage < 70 else ("warning" if percentage < 85 else "critical")
-        mataf.append(MatafInfo(
-            id=str(uuid.uuid4()),
-            level=l["level"],
-            current_crowd=current,
-            max_capacity=l["max"],
-            percentage=round(percentage, 1),
-            average_tawaf_time=random.randint(25, 55),
-            status=status
-        ))
-    return mataf
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user["id"],
+            email=user["email"],
+            name=user["name"],
+            role=user["role"],
+            created_at=user["created_at"]
+        )
+    )
 
-def generate_notifications() -> List[Notification]:
-    notifications_data = [
-        {"type": "alert", "title": "تنبيه ازدحام", "message": "ازدحام شديد في الساحة الشمالية", "priority": "high"},
-        {"type": "system", "title": "تحديث النظام", "message": "تم تحديث بيانات الحشود", "priority": "low"},
-        {"type": "alert", "title": "حالة طوارئ", "message": "حالة طبية طارئة في صحن المطاف", "priority": "critical"},
-        {"type": "info", "title": "إشعار إداري", "message": "اجتماع المشرفين الساعة 3 عصراً", "priority": "medium"},
-        {"type": "system", "title": "صيانة مجدولة", "message": "صيانة نظام الكاميرات غداً", "priority": "low"},
-    ]
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(user: dict = Depends(get_current_user)):
+    return UserResponse(
+        id=user["id"],
+        email=user["email"],
+        name=user["name"],
+        role=user["role"],
+        created_at=user["created_at"]
+    )
+
+# ============= Admin Routes - Gates =============
+@api_router.post("/admin/gates")
+async def create_gate(gate: GateCreate, user: dict = Depends(require_admin)):
+    gate_id = str(uuid.uuid4())
+    gate_doc = {
+        "id": gate_id,
+        **gate.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.gates.insert_one(gate_doc)
+    return {"message": "تم إضافة الباب بنجاح", "id": gate_id}
+
+@api_router.put("/admin/gates/{gate_id}")
+async def update_gate(gate_id: str, gate: GateUpdate, user: dict = Depends(require_admin)):
+    update_data = {k: v for k, v in gate.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
-    return [
-        Notification(
-            id=str(uuid.uuid4()),
-            type=n["type"],
-            title=n["title"],
-            message=n["message"],
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            is_read=random.choice([True, False]),
-            priority=n["priority"]
-        ) for n in notifications_data
-    ]
+    result = await db.gates.update_one({"id": gate_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="الباب غير موجود")
+    return {"message": "تم تحديث الباب بنجاح"}
 
-# ============= API Routes =============
+@api_router.delete("/admin/gates/{gate_id}")
+async def delete_gate(gate_id: str, user: dict = Depends(require_admin)):
+    result = await db.gates.delete_one({"id": gate_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الباب غير موجود")
+    return {"message": "تم حذف الباب بنجاح"}
+
+# ============= Admin Routes - Plazas =============
+@api_router.post("/admin/plazas")
+async def create_plaza(plaza: PlazaCreate, user: dict = Depends(require_admin)):
+    plaza_id = str(uuid.uuid4())
+    plaza_doc = {
+        "id": plaza_id,
+        **plaza.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.plazas.insert_one(plaza_doc)
+    return {"message": "تم إضافة الساحة بنجاح", "id": plaza_id}
+
+@api_router.put("/admin/plazas/{plaza_id}")
+async def update_plaza(plaza_id: str, plaza: PlazaUpdate, user: dict = Depends(require_admin)):
+    update_data = {k: v for k, v in plaza.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.plazas.update_one({"id": plaza_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="الساحة غير موجودة")
+    return {"message": "تم تحديث الساحة بنجاح"}
+
+@api_router.delete("/admin/plazas/{plaza_id}")
+async def delete_plaza(plaza_id: str, user: dict = Depends(require_admin)):
+    result = await db.plazas.delete_one({"id": plaza_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الساحة غير موجودة")
+    return {"message": "تم حذف الساحة بنجاح"}
+
+# ============= Admin Routes - Mataf =============
+@api_router.post("/admin/mataf")
+async def create_mataf_level(mataf: MatafLevelCreate, user: dict = Depends(require_admin)):
+    mataf_id = str(uuid.uuid4())
+    mataf_doc = {
+        "id": mataf_id,
+        **mataf.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.mataf.insert_one(mataf_doc)
+    return {"message": "تم إضافة طابق المطاف بنجاح", "id": mataf_id}
+
+@api_router.put("/admin/mataf/{mataf_id}")
+async def update_mataf_level(mataf_id: str, mataf: MatafLevelUpdate, user: dict = Depends(require_admin)):
+    update_data = {k: v for k, v in mataf.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.mataf.update_one({"id": mataf_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="طابق المطاف غير موجود")
+    return {"message": "تم تحديث طابق المطاف بنجاح"}
+
+# ============= Admin Routes - Alerts =============
+@api_router.post("/admin/alerts")
+async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
+    alert_id = str(uuid.uuid4())
+    alert_doc = {
+        "id": alert_id,
+        **alert.model_dump(),
+        "is_read": False,
+        "created_by": user["id"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.alerts.insert_one(alert_doc)
+    return {"message": "تم إنشاء التنبيه بنجاح", "id": alert_id}
+
+@api_router.delete("/admin/alerts/{alert_id}")
+async def delete_alert(alert_id: str, user: dict = Depends(require_admin)):
+    result = await db.alerts.delete_one({"id": alert_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="التنبيه غير موجود")
+    return {"message": "تم حذف التنبيه بنجاح"}
+
+# ============= Admin - Bulk Update =============
+@api_router.put("/admin/gates/bulk-update")
+async def bulk_update_gates(updates: List[dict], user: dict = Depends(require_admin)):
+    for update in updates:
+        gate_id = update.pop("id", None)
+        if gate_id:
+            update["updated_at"] = datetime.now(timezone.utc).isoformat()
+            await db.gates.update_one({"id": gate_id}, {"$set": update})
+    return {"message": f"تم تحديث {len(updates)} باب"}
+
+@api_router.put("/admin/plazas/bulk-update")
+async def bulk_update_plazas(updates: List[dict], user: dict = Depends(require_admin)):
+    for update in updates:
+        plaza_id = update.pop("id", None)
+        if plaza_id:
+            update["updated_at"] = datetime.now(timezone.utc).isoformat()
+            await db.plazas.update_one({"id": plaza_id}, {"$set": update})
+    return {"message": f"تم تحديث {len(updates)} ساحة"}
+
+# ============= Admin - Users Management =============
+@api_router.get("/admin/users")
+async def get_users(user: dict = Depends(require_admin)):
+    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(100)
+    return users
+
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role: str, user: dict = Depends(require_admin)):
+    if role not in ["admin", "manager", "supervisor", "user"]:
+        raise HTTPException(status_code=400, detail="صلاحية غير صالحة")
+    result = await db.users.update_one({"id": user_id}, {"$set": {"role": role}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    return {"message": "تم تحديث صلاحيات المستخدم"}
+
+# ============= Public API Routes =============
 @api_router.get("/")
 async def root():
     return {"message": "مرحباً بك في منصة خدمات الحشود", "version": "1.0.0"}
 
-@api_router.get("/dashboard/stats", response_model=DashboardStats)
+@api_router.get("/dashboard/stats")
 async def get_dashboard_stats():
-    """Get main dashboard statistics"""
-    departments = generate_department_stats()
-    total_current = sum(d.current_crowd for d in departments)
-    total_max = sum(d.max_capacity for d in departments)
+    """Get main dashboard statistics from database"""
+    gates = await db.gates.find({}, {"_id": 0}).to_list(200)
+    plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
+    mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
+    alerts = await db.alerts.find({"is_read": False}, {"_id": 0}).to_list(100)
     
-    return DashboardStats(
-        total_visitors_today=random.randint(800000, 1200000),
-        current_crowd=total_current,
-        max_capacity=total_max,
-        active_staff=sum(d.active_staff for d in departments),
-        open_gates=random.randint(80, 100),
-        total_gates=105,
-        incidents_today=sum(d.incidents_today for d in departments),
-        alerts_count=random.randint(3, 12)
-    )
+    # If no data in DB, return zeros
+    if not gates and not plazas:
+        return {
+            "total_visitors_today": 0,
+            "current_crowd": 0,
+            "max_capacity": 0,
+            "active_staff": 0,
+            "open_gates": 0,
+            "total_gates": 0,
+            "incidents_today": 0,
+            "alerts_count": 0
+        }
+    
+    total_crowd = sum(p.get("current_crowd", 0) for p in plazas) + sum(m.get("current_crowd", 0) for m in mataf)
+    total_max = sum(p.get("max_capacity", 0) for p in plazas) + sum(m.get("max_capacity", 0) for m in mataf)
+    open_gates = len([g for g in gates if g.get("status") == "open"])
+    
+    return {
+        "total_visitors_today": total_crowd * 3,  # Estimate
+        "current_crowd": total_crowd,
+        "max_capacity": total_max,
+        "active_staff": len(gates) * 10,  # Estimate
+        "open_gates": open_gates,
+        "total_gates": len(gates),
+        "incidents_today": len([a for a in alerts if a.get("type") == "emergency"]),
+        "alerts_count": len(alerts)
+    }
 
-@api_router.get("/dashboard/departments", response_model=List[DepartmentStats])
+@api_router.get("/dashboard/departments")
 async def get_departments():
-    """Get all departments statistics"""
-    return generate_department_stats()
+    """Get all departments statistics from database"""
+    plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
+    gates = await db.gates.find({}, {"_id": 0}).to_list(200)
+    mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
+    
+    # Calculate stats per department
+    plazas_crowd = sum(p.get("current_crowd", 0) for p in plazas)
+    plazas_max = sum(p.get("max_capacity", 0) for p in plazas) or 1
+    gates_flow = sum(g.get("current_flow", 0) for g in gates)
+    gates_max = sum(g.get("max_flow", 0) for g in gates) or 1
+    mataf_crowd = sum(m.get("current_crowd", 0) for m in mataf)
+    mataf_max = sum(m.get("max_capacity", 0) for m in mataf) or 1
+    
+    def get_status(pct):
+        if pct < 70: return "normal"
+        if pct < 85: return "warning"
+        return "critical"
+    
+    return [
+        {
+            "id": "planning",
+            "name": "إدارة تخطيط خدمات الحشود",
+            "name_en": "Crowd Planning",
+            "icon": "ClipboardList",
+            "current_crowd": plazas_crowd // 4,
+            "max_capacity": plazas_max // 4,
+            "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0,
+            "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0),
+            "active_staff": len(gates) * 3,
+            "incidents_today": 0
+        },
+        {
+            "id": "plazas",
+            "name": "إدارة الساحات",
+            "name_en": "Plazas Management",
+            "icon": "LayoutGrid",
+            "current_crowd": plazas_crowd,
+            "max_capacity": plazas_max,
+            "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0,
+            "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0),
+            "active_staff": len(plazas) * 20,
+            "incidents_today": 0
+        },
+        {
+            "id": "gates",
+            "name": "إدارة الأبواب",
+            "name_en": "Gates Management",
+            "icon": "DoorOpen",
+            "current_crowd": gates_flow,
+            "max_capacity": gates_max,
+            "percentage": round((gates_flow / gates_max) * 100, 1) if gates_max else 0,
+            "status": get_status((gates_flow / gates_max) * 100 if gates_max else 0),
+            "active_staff": len(gates) * 5,
+            "incidents_today": 0
+        },
+        {
+            "id": "crowd_services",
+            "name": "إدارة خدمات حشود الحرم",
+            "name_en": "Haram Crowd Services",
+            "icon": "Users",
+            "current_crowd": plazas_crowd + mataf_crowd,
+            "max_capacity": plazas_max + mataf_max,
+            "percentage": round(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100, 1) if (plazas_max + mataf_max) else 0,
+            "status": get_status(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100 if (plazas_max + mataf_max) else 0),
+            "active_staff": 150,
+            "incidents_today": 0
+        },
+        {
+            "id": "mataf",
+            "name": "إدارة صحن المطاف",
+            "name_en": "Mataf Management",
+            "icon": "Circle",
+            "current_crowd": mataf_crowd,
+            "max_capacity": mataf_max,
+            "percentage": round((mataf_crowd / mataf_max) * 100, 1) if mataf_max else 0,
+            "status": get_status((mataf_crowd / mataf_max) * 100 if mataf_max else 0),
+            "active_staff": len(mataf) * 50,
+            "incidents_today": 0
+        }
+    ]
 
 @api_router.get("/dashboard/crowd-hourly")
 async def get_hourly_crowd():
-    """Get hourly crowd data for charts"""
-    return generate_hourly_crowd_data()
+    """Get hourly crowd data - placeholder for real data"""
+    hours = []
+    for hour in range(24):
+        hours.append({
+            "hour": f"{hour:02d}:00",
+            "count": 0,
+            "percentage": 0
+        })
+    return hours
 
-@api_router.get("/alerts", response_model=List[Alert])
-async def get_alerts(department: Optional[str] = None, type: Optional[str] = None):
-    """Get all alerts with optional filtering"""
-    alerts = generate_alerts()
-    if department:
-        alerts = [a for a in alerts if a.department == department]
-    if type:
-        alerts = [a for a in alerts if a.type == type]
-    return alerts
-
-@api_router.get("/gates", response_model=List[GateInfo])
+@api_router.get("/gates")
 async def get_gates(status: Optional[str] = None):
-    """Get all gates information"""
-    gates = generate_gates()
+    """Get all gates from database"""
+    query = {}
     if status:
-        gates = [g for g in gates if g.status == status]
+        query["status"] = status
+    gates = await db.gates.find(query, {"_id": 0}).to_list(200)
+    
+    # Calculate percentage for each gate
+    for gate in gates:
+        max_flow = gate.get("max_flow", 1)
+        current_flow = gate.get("current_flow", 0)
+        gate["percentage"] = round((current_flow / max_flow) * 100, 1) if max_flow else 0
+    
     return gates
 
 @api_router.get("/gates/stats")
 async def get_gates_stats():
     """Get gates summary statistics"""
-    gates = generate_gates()
+    gates = await db.gates.find({}, {"_id": 0}).to_list(200)
     return {
         "total": len(gates),
-        "open": len([g for g in gates if g.status == "open"]),
-        "closed": len([g for g in gates if g.status == "closed"]),
-        "maintenance": len([g for g in gates if g.status == "maintenance"]),
-        "total_flow": sum(g.current_flow for g in gates),
-        "entry_gates": len([g for g in gates if g.direction in ["entry", "both"]]),
-        "exit_gates": len([g for g in gates if g.direction in ["exit", "both"]])
+        "open": len([g for g in gates if g.get("status") == "open"]),
+        "closed": len([g for g in gates if g.get("status") == "closed"]),
+        "maintenance": len([g for g in gates if g.get("status") == "maintenance"]),
+        "total_flow": sum(g.get("current_flow", 0) for g in gates),
+        "entry_gates": len([g for g in gates if g.get("direction") in ["entry", "both"]]),
+        "exit_gates": len([g for g in gates if g.get("direction") in ["exit", "both"]])
     }
 
-@api_router.get("/plazas", response_model=List[PlazaInfo])
+@api_router.get("/plazas")
 async def get_plazas():
-    """Get all plazas information"""
-    return generate_plazas()
+    """Get all plazas from database"""
+    plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
+    
+    for plaza in plazas:
+        max_cap = plaza.get("max_capacity", 1)
+        current = plaza.get("current_crowd", 0)
+        pct = (current / max_cap) * 100 if max_cap else 0
+        plaza["percentage"] = round(pct, 1)
+        plaza["status"] = "normal" if pct < 70 else ("warning" if pct < 85 else "critical")
+    
+    return plazas
 
 @api_router.get("/plazas/stats")
 async def get_plazas_stats():
     """Get plazas summary statistics"""
-    plazas = generate_plazas()
-    total_current = sum(p.current_crowd for p in plazas)
-    total_max = sum(p.max_capacity for p in plazas)
+    plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
+    total_current = sum(p.get("current_crowd", 0) for p in plazas)
+    total_max = sum(p.get("max_capacity", 0) for p in plazas) or 1
+    overall_pct = (total_current / total_max) * 100
+    
     return {
         "total_plazas": len(plazas),
         "current_crowd": total_current,
         "max_capacity": total_max,
-        "overall_percentage": round((total_current / total_max) * 100, 1),
-        "normal": len([p for p in plazas if p.status == "normal"]),
-        "warning": len([p for p in plazas if p.status == "warning"]),
-        "critical": len([p for p in plazas if p.status == "critical"])
+        "overall_percentage": round(overall_pct, 1),
+        "normal": len([p for p in plazas if (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 < 70]),
+        "warning": len([p for p in plazas if 70 <= (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 < 85]),
+        "critical": len([p for p in plazas if (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 >= 85])
     }
 
-@api_router.get("/mataf", response_model=List[MatafInfo])
+@api_router.get("/mataf")
 async def get_mataf():
-    """Get Mataf levels information"""
-    return generate_mataf_levels()
+    """Get Mataf levels from database"""
+    mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
+    
+    for level in mataf:
+        max_cap = level.get("max_capacity", 1)
+        current = level.get("current_crowd", 0)
+        pct = (current / max_cap) * 100 if max_cap else 0
+        level["percentage"] = round(pct, 1)
+        level["status"] = "normal" if pct < 70 else ("warning" if pct < 85 else "critical")
+    
+    return mataf
 
 @api_router.get("/mataf/stats")
 async def get_mataf_stats():
     """Get Mataf summary statistics"""
-    mataf = generate_mataf_levels()
-    total_current = sum(m.current_crowd for m in mataf)
-    total_max = sum(m.max_capacity for m in mataf)
-    avg_time = sum(m.average_tawaf_time for m in mataf) // len(mataf)
+    mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
+    total_current = sum(m.get("current_crowd", 0) for m in mataf)
+    total_max = sum(m.get("max_capacity", 0) for m in mataf) or 1
+    avg_time = sum(m.get("average_tawaf_time", 45) for m in mataf) // max(len(mataf), 1)
+    
     return {
         "total_levels": len(mataf),
         "current_crowd": total_current,
@@ -393,28 +574,42 @@ async def get_mataf_stats():
         "overall_percentage": round((total_current / total_max) * 100, 1),
         "average_tawaf_time": avg_time,
         "status_summary": {
-            "normal": len([m for m in mataf if m.status == "normal"]),
-            "warning": len([m for m in mataf if m.status == "warning"]),
-            "critical": len([m for m in mataf if m.status == "critical"])
+            "normal": len([m for m in mataf if (m.get("current_crowd", 0) / (m.get("max_capacity", 1) or 1)) * 100 < 70]),
+            "warning": len([m for m in mataf if 70 <= (m.get("current_crowd", 0) / (m.get("max_capacity", 1) or 1)) * 100 < 85]),
+            "critical": len([m for m in mataf if (m.get("current_crowd", 0) / (m.get("max_capacity", 1) or 1)) * 100 >= 85])
         }
     }
 
-@api_router.get("/notifications", response_model=List[Notification])
+@api_router.get("/alerts")
+async def get_alerts(department: Optional[str] = None, type: Optional[str] = None):
+    """Get all alerts from database"""
+    query = {}
+    if department:
+        query["department"] = department
+    if type:
+        query["type"] = type
+    
+    alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(100)
+    return alerts
+
+@api_router.get("/notifications")
 async def get_notifications(unread_only: bool = False):
     """Get all notifications"""
-    notifications = generate_notifications()
+    query = {}
     if unread_only:
-        notifications = [n for n in notifications if not n.is_read]
+        query["is_read"] = False
+    
+    notifications = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(100)
     return notifications
 
 @api_router.get("/reports")
 async def get_reports(type: Optional[str] = None, department: Optional[str] = None):
     """Get available reports"""
     reports = [
-        {"id": str(uuid.uuid4()), "title": "التقرير اليومي للحشود", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "all", "summary": "إجمالي الزوار: 950,000"},
-        {"id": str(uuid.uuid4()), "title": "تقرير الأبواب الأسبوعي", "type": "weekly", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "gates", "summary": "متوسط التدفق اليومي: 85,000"},
-        {"id": str(uuid.uuid4()), "title": "تقرير صحن المطاف", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "mataf", "summary": "متوسط وقت الطواف: 42 دقيقة"},
-        {"id": str(uuid.uuid4()), "title": "التقرير الشهري للساحات", "type": "monthly", "date": datetime.now(timezone.utc).strftime("%Y-%m"), "department": "plazas", "summary": "نسبة الإشغال المتوسطة: 72%"},
+        {"id": str(uuid.uuid4()), "title": "التقرير اليومي للحشود", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "all", "summary": "تقرير شامل"},
+        {"id": str(uuid.uuid4()), "title": "تقرير الأبواب", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "gates", "summary": "حالة الأبواب"},
+        {"id": str(uuid.uuid4()), "title": "تقرير صحن المطاف", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "mataf", "summary": "حركة الطواف"},
+        {"id": str(uuid.uuid4()), "title": "تقرير الساحات", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "plazas", "summary": "حالة الساحات"},
     ]
     
     if type:
@@ -425,26 +620,24 @@ async def get_reports(type: Optional[str] = None, department: Optional[str] = No
 
 @api_router.get("/planning/stats")
 async def get_planning_stats():
-    """Get planning department statistics"""
     return {
-        "active_plans": random.randint(5, 15),
-        "pending_approvals": random.randint(2, 8),
-        "completed_today": random.randint(10, 25),
-        "scheduled_events": random.randint(3, 10),
-        "resource_utilization": random.randint(70, 95),
-        "staff_deployed": random.randint(150, 300)
+        "active_plans": 5,
+        "pending_approvals": 2,
+        "completed_today": 10,
+        "scheduled_events": 3,
+        "resource_utilization": 75,
+        "staff_deployed": 200
     }
 
 @api_router.get("/crowd-services/stats")
 async def get_crowd_services_stats():
-    """Get crowd services department statistics"""
     return {
-        "service_requests_today": random.randint(50, 150),
-        "resolved_requests": random.randint(40, 120),
-        "pending_requests": random.randint(5, 30),
-        "average_response_time": random.randint(5, 15),
-        "satisfaction_rate": random.randint(85, 98),
-        "active_teams": random.randint(20, 40)
+        "service_requests_today": 50,
+        "resolved_requests": 45,
+        "pending_requests": 5,
+        "average_response_time": 8,
+        "satisfaction_rate": 95,
+        "active_teams": 25
     }
 
 # Legacy endpoints
