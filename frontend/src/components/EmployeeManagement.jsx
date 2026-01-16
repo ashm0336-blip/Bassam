@@ -391,6 +391,37 @@ export default function EmployeeManagement({ department }) {
                 />
               </div>
               
+              <div>
+                <Label htmlFor="location">{language === 'ar' ? 'موقع التغطية' : 'Coverage Location'}</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  required
+                  className="mt-1"
+                  placeholder={language === 'ar' ? 'مثال: الساحة الشمالية، باب الملك فهد' : 'e.g., North Plaza, King Fahd Gate'}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="shift">{language === 'ar' ? 'الوردية' : 'Shift'}</Label>
+                <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {SHIFTS.map(shift => (
+                      <SelectItem key={shift.value} value={shift.value}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${shift.color}`} />
+                          {shift.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <Label className="font-medium">{language === 'ar' ? 'الحالة' : 'Status'}</Label>
