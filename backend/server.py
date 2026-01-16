@@ -253,6 +253,9 @@ async def login(credentials: UserLogin):
     if not user or not verify_password(credentials.password, user["password"]):
         raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     
+    # Log activity
+    await log_activity("login", user, None, f"تسجيل دخول ناجح من {credentials.email}")
+    
     token = create_token(user["id"], user["email"], user["role"], user.get("department"))
     
     return TokenResponse(
