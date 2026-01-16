@@ -270,40 +270,19 @@ export default function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
-                  <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الإدارة' : 'Department'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الدور' : 'Role'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="font-mono text-sm">{user.email}</TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>
-                      {user.department ? (
-                        <span className="text-sm">{DEPARTMENTS[user.department]?.[language] || user.department}</span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(user)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                      <div className="flex items-center gap-2 justify-end">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -315,8 +294,29 @@ export default function UserManagement() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(user)}
+                          className="h-8 w-8"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground text-right">
+                      {new Date(user.created_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {user.department ? (
+                        <span className="text-sm">{DEPARTMENTS[user.department]?.[language] || user.department}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">{getRoleBadge(user.role)}</TableCell>
+                    <TableCell className="font-mono text-sm text-right">{user.email}</TableCell>
+                    <TableCell className="font-medium text-right">{user.name}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
