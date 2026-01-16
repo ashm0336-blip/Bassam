@@ -40,7 +40,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
-    role: str = "field_staff"  # super_admin, department_manager, field_staff, monitoring_team
+    role: str = "field_staff"  # system_admin, general_manager, department_manager, field_staff, monitoring_team
     department: Optional[str] = None  # planning, plazas, gates, crowd_services, mataf
 
 class UserUpdate(BaseModel):
