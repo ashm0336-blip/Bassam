@@ -292,3 +292,5 @@ export default function GatesDepartment() {
     </div>
   );
 }
+
+export default GatesDepartment;
