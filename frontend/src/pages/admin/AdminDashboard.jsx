@@ -276,20 +276,20 @@ export default function AdminDashboard() {
                     key={user.id}
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
-                    <div className={`w-10 h-10 rounded-full ${roleConfig.color} flex items-center justify-center`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{user.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                    </div>
-                    <div className="text-left">
+                    <div className="text-right flex-1">
                       <p className="text-xs text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
                           month: 'short',
                           day: 'numeric'
                         })}
                       </p>
+                    </div>
+                    <div className="flex-1 min-w-0 text-right">
+                      <p className="font-medium text-sm truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <div className={`w-10 h-10 rounded-full ${roleConfig.color} flex items-center justify-center`}>
+                      <Icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
                 );
