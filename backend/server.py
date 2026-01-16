@@ -540,6 +540,10 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     
     await db.employees.delete_one({"id": employee_id})
+    
+    # Log activity
+    await log_activity("employee_deleted", user, existing["name"], f"تم حذف الموظف: {existing['name']} من {existing['department']}")
+    
     return {"message": "تم حذف الموظف بنجاح"}
 
 @api_router.get("/employees/stats/{department}")
