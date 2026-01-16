@@ -46,10 +46,15 @@ import { toast } from "sonner";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ROLES = {
-  super_admin: { 
-    label: { ar: "المدير العام", en: "Super Admin" }, 
-    color: "bg-purple-500", 
+  system_admin: { 
+    label: { ar: "مسؤول النظام", en: "System Admin" }, 
+    color: "bg-red-600", 
     icon: Shield 
+  },
+  general_manager: { 
+    label: { ar: "المدير العام", en: "General Manager" }, 
+    color: "bg-purple-500", 
+    icon: Briefcase 
   },
   department_manager: { 
     label: { ar: "مدير إدارة", en: "Department Manager" }, 
