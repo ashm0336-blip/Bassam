@@ -20,7 +20,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div className="space-y-6" data-testid="admin-page">
+    <div className="space-y-6" data-testid="admin-page" dir="ltr">
       {/* Header */}
       <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-6 text-white">
         <div className="flex items-center gap-3 mb-2">
