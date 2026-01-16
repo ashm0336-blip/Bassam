@@ -233,12 +233,12 @@ export default function UserManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {Object.entries(ROLES).reverse().map(([key, config]) => {
+      <div className="flex flex-wrap gap-4 justify-end">
+        {Object.entries(ROLES).map(([key, config]) => {
           const count = users.filter(u => u.role === key).length;
           const Icon = config.icon;
           return (
-            <Card key={key} className="hover:shadow-md transition-shadow">
+            <Card key={key} className="hover:shadow-md transition-shadow w-[calc(20%-0.8rem)] min-w-[180px]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 justify-between">
                   <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center`}>
