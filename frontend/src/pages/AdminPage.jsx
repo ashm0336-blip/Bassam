@@ -387,7 +387,7 @@ export default function AdminPage() {
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" sideOffset={5}>
                     {Object.entries(ROLES).map(([key, config]) => (
                       <SelectItem key={key} value={key}>
                         {config.label[language]}
@@ -404,7 +404,7 @@ export default function AdminPage() {
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder={language === 'ar' ? 'اختر الإدارة' : 'Select department'} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={5}>
                       {Object.entries(DEPARTMENTS).map(([key, labels]) => (
                         <SelectItem key={key} value={key}>
                           {labels[language]}
