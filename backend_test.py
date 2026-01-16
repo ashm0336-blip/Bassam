@@ -254,6 +254,216 @@ class AlHaramAPITester:
             required_fields=["service_requests_today", "resolved_requests", "pending_requests", "average_response_time", "satisfaction_rate", "active_teams"]
         )
 
+    def test_authentication_endpoints(self):
+        """Test JWT authentication endpoints"""
+        print("\n🔐 Testing Authentication Endpoints...")
+        
+        # Test user registration
+        test_user_data = {
+            "name": "Test User",
+            "email": f"test_{datetime.now().strftime('%H%M%S')}@test.com",
+            "password": "testpass123",
+            "role": "user"
+        }
+        
+        success, data = self.test_endpoint(
+            "User Registration",
+            "auth/register",
+            method="POST",
+            data=test_user_data,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        # Test admin login with provided credentials
+        admin_login_data = {
+            "email": "admin@haram.gov.sa",
+            "password": "admin123"
+        }
+        
+        success, data = self.test_endpoint(
+            "Admin Login",
+            "auth/login",
+            method="POST",
+            data=admin_login_data,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        if success and "access_token" in data:
+            self.auth_token = data["access_token"]
+            self.admin_user = data["user"]
+            print(f"🔑 Admin token acquired for user: {self.admin_user.get('name', 'Unknown')}")
+        
+        # Test /auth/me endpoint with token
+        if self.auth_token:
+            success, data = self.test_endpoint(
+                "Get Current User",
+                "auth/me",
+                auth_required=True,
+                required_fields=["id", "email", "name", "role", "created_at"]
+            )
+        
+        # Test invalid login
+        invalid_login_data = {
+            "email": "invalid@test.com",
+            "password": "wrongpassword"
+        }
+        
+        success, data = self.test_endpoint(
+            "Invalid Login (Should Fail)",
+            "auth/login",
+            method="POST",
+            data=invalid_login_data,
+            expected_status=401
+        )
+
+    def test_admin_endpoints(self):
+        """Test admin-only endpoints"""
+        print("\n👑 Testing Admin Endpoints...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping admin tests")
+            return
+        
+        # Test admin gates endpoints
+        test_gate_data = {
+            "name": "Test Gate",
+            "number": 999,
+            "status": "open",
+            "direction": "both",
+            "current_flow": 100,
+            "max_flow": 5000,
+            "location": "الجهة الشمالية"
+        }
+        
+        success, data = self.test_endpoint(
+            "Create Gate (Admin)",
+            "admin/gates",
+            method="POST",
+            data=test_gate_data,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        gate_id = None
+        if success and "id" in data:
+            gate_id = data["id"]
+        
+        # Test admin plazas endpoints
+        test_plaza_data = {
+            "name": "Test Plaza",
+            "zone": "north",
+            "current_crowd": 1000,
+            "max_capacity": 40000
+        }
+        
+        success, data = self.test_endpoint(
+            "Create Plaza (Admin)",
+            "admin/plazas",
+            method="POST",
+            data=test_plaza_data,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        plaza_id = None
+        if success and "id" in data:
+            plaza_id = data["id"]
+        
+        # Test admin alerts endpoints
+        test_alert_data = {
+            "type": "warning",
+            "title": "Test Alert",
+            "message": "This is a test alert",
+            "department": "gates",
+            "priority": "medium"
+        }
+        
+        success, data = self.test_endpoint(
+            "Create Alert (Admin)",
+            "admin/alerts",
+            method="POST",
+            data=test_alert_data,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        # Test admin users endpoint
+        success, data = self.test_endpoint(
+            "Get Users (Admin)",
+            "admin/users",
+            auth_required=True,
+            required_fields=["id", "email", "name", "role", "created_at"]
+        )
+        
+        # Test update operations if we created items
+        if gate_id:
+            update_gate_data = {"current_flow": 200}
+            success, data = self.test_endpoint(
+                "Update Gate (Admin)",
+                f"admin/gates/{gate_id}",
+                method="PUT",
+                data=update_gate_data,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            # Clean up - delete test gate
+            success, data = self.test_endpoint(
+                "Delete Gate (Admin)",
+                f"admin/gates/{gate_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+        
+        if plaza_id:
+            update_plaza_data = {"current_crowd": 1500}
+            success, data = self.test_endpoint(
+                "Update Plaza (Admin)",
+                f"admin/plazas/{plaza_id}",
+                method="PUT",
+                data=update_plaza_data,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            # Clean up - delete test plaza
+            success, data = self.test_endpoint(
+                "Delete Plaza (Admin)",
+                f"admin/plazas/{plaza_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+
+    def test_unauthorized_access(self):
+        """Test that admin endpoints reject unauthorized access"""
+        print("\n🚫 Testing Unauthorized Access...")
+        
+        # Temporarily clear token
+        temp_token = self.auth_token
+        self.auth_token = None
+        
+        # Test admin endpoints without auth (should fail)
+        success, data = self.test_endpoint(
+            "Unauthorized Gate Creation",
+            "admin/gates",
+            method="POST",
+            data={"name": "Test"},
+            expected_status=401
+        )
+        
+        success, data = self.test_endpoint(
+            "Unauthorized Users Access",
+            "admin/users",
+            expected_status=401
+        )
+        
+        # Restore token
+        self.auth_token = temp_token
+
     def test_root_endpoint(self):
         """Test root API endpoint"""
         print("\n🌐 Testing Root Endpoint...")
