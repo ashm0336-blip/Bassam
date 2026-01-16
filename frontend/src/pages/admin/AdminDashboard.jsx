@@ -212,12 +212,18 @@ export default function AdminDashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pie Chart - Users by Role */}
+        {/* Recent Users */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-cairo text-lg text-right">
-              {language === 'ar' ? 'المستخدمون حسب الدور' : 'Users by Role'}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="font-cairo text-lg text-right">
+                {language === 'ar' ? 'آخر المستخدمين المضافين' : 'Recently Added Users'}
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">
+                <Clock className="w-3 h-3 ml-1" />
+                {language === 'ar' ? 'الأحدث' : 'Latest'}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
