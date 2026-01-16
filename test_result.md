@@ -101,3 +101,145 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  منصة خدمات الحشود - Comprehensive management platform for crowd services at Al-Haram in Makkah.
+  Current focus: Complete implementation of Dark Mode, Language Switching (Arabic/English), and PDF/Excel Export features.
+
+backend:
+  - task: "JWT Authentication & User Management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Authentication working properly with admin@crowd.sa / admin123"
+
+  - task: "API Endpoints for Dashboard Stats"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "All dashboard, gates, plazas, mataf endpoints working"
+
+frontend:
+  - task: "Dark Mode Theme Implementation"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/context/ThemeContext.jsx, /app/frontend/src/components/Layout.jsx, /app/frontend/src/pages/SettingsPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Dark mode fully implemented with ThemeContext, toggle buttons in header and settings page, CSS variables configured in index.css"
+
+  - task: "Language Switching (Arabic/English)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/context/LanguageContext.jsx, /app/frontend/src/components/Layout.jsx, /app/frontend/src/pages/Dashboard.jsx, /app/frontend/src/pages/ReportsPage.jsx, /app/frontend/src/pages/SettingsPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Language switching fully implemented with comprehensive translations, RTL/LTR direction handling, toggle in header and settings page. Dashboard, Reports, Settings, and Layout all support bilingual display"
+
+  - task: "PDF & Excel Export Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/utils/exportUtils.js, /app/frontend/src/pages/ReportsPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Export functionality implemented using jspdf, jspdf-autotable, xlsx, and file-saver. Users can export Gates, Plazas, Mataf, and Daily Summary reports in both PDF and Excel formats. Manual testing confirms exports are working correctly with success toasts"
+
+  - task: "Interactive Dashboard with Stats"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Dashboard displays stats, department status, crowd charts, and alerts. Now includes language support for all text elements"
+
+  - task: "Admin Panel for User Creation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/AdminPage.jsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "previous"
+        comment: "Admin can create users via /admin page. Not testing in this session"
+
+  - task: "Interactive Map of Haram"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/MapPage.jsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "previous"
+        comment: "Interactive map displaying Haram layout with crowd indicators. Not testing in this session"
+
+metadata:
+  created_by: "main_agent"
+  version: "2.0"
+  test_sequence: 1
+  run_ui: true
+  testing_credentials:
+    email: "admin@crowd.sa"
+    password: "admin123"
+    base_url: "http://localhost:3000"
+
+test_plan:
+  current_focus:
+    - "Dark Mode Theme Implementation"
+    - "Language Switching (Arabic/English)"
+    - "PDF & Excel Export Functionality"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Successfully implemented the three main features:
+      1. Dark Mode: ThemeContext with toggle in header & settings, full CSS variables support
+      2. Language Switching: LanguageContext with Arabic/English translations across Dashboard, Reports, Settings, and Layout. RTL/LTR support included
+      3. Export Functionality: PDF and Excel export working for all report types (Gates, Plazas, Mataf, Daily Summary)
+      
+      Manual testing via screenshots confirms:
+      - Dashboard displays correctly in both Arabic and English
+      - Dark mode applies proper styling
+      - Settings page theme and language toggles work
+      - Export buttons trigger downloads with success notifications
+      
+      Please run comprehensive automated tests focusing on:
+      1. Theme toggle functionality (light/dark switching)
+      2. Language toggle functionality (Arabic/English switching with proper RTL/LTR)
+      3. Export button clicks and download triggers
+      4. Navigation between pages maintains theme and language state
+      5. Login flow still works correctly
