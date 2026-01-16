@@ -73,6 +73,8 @@ const DepartmentCard = ({ dept, language }) => {
     critical: language === 'ar' ? "حرج" : "Critical"
   };
 
+  const employeeStats = dept.employee_stats || {};
+
   return (
     <Card className="card-hover" data-testid={`dept-card-${dept.id}`}>
       <CardContent className="p-5">
@@ -101,14 +103,37 @@ const DepartmentCard = ({ dept, language }) => {
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-2 gap-3 pt-2 text-[10px]">
             <div>
-              <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</p>
-              <p className="font-cairo font-bold text-lg">{dept.current_crowd.toLocaleString('ar-SA')}</p>
+              <p className="text-muted-foreground">{language === 'ar' ? 'الموظفون' : 'Staff'}</p>
+              <p className="font-cairo font-bold text-base">{dept.active_staff}</p>
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'الموظفون' : 'Staff'}</p>
-              <p className="font-cairo font-bold text-lg">{dept.active_staff}</p>
+              <p className="text-muted-foreground">{language === 'ar' ? 'المواقع' : 'Locations'}</p>
+              <p className="font-cairo font-bold text-base">{employeeStats.locations_count || 0}</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-1 pt-2 border-t border-gray-100">
+            <div className="text-center">
+              <div className="w-2 h-2 rounded-full bg-blue-500 mx-auto mb-1" />
+              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و1' : 'S1'}</p>
+              <p className="font-bold text-xs">{employeeStats.shifts?.['الأولى'] || 0}</p>
+            </div>
+            <div className="text-center">
+              <div className="w-2 h-2 rounded-full bg-green-500 mx-auto mb-1" />
+              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و2' : 'S2'}</p>
+              <p className="font-bold text-xs">{employeeStats.shifts?.['الثانية'] || 0}</p>
+            </div>
+            <div className="text-center">
+              <div className="w-2 h-2 rounded-full bg-orange-500 mx-auto mb-1" />
+              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و3' : 'S3'}</p>
+              <p className="font-bold text-xs">{employeeStats.shifts?.['الثالثة'] || 0}</p>
+            </div>
+            <div className="text-center">
+              <div className="w-2 h-2 rounded-full bg-purple-500 mx-auto mb-1" />
+              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و4' : 'S4'}</p>
+              <p className="font-bold text-xs">{employeeStats.shifts?.['الرابعة'] || 0}</p>
             </div>
           </div>
         </div>
