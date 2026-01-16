@@ -199,7 +199,7 @@ export const Layout = () => {
               <span className="text-white font-cairo font-bold text-lg">ح</span>
             </div>
             <div>
-              <h1 className="font-cairo font-bold text-primary text-sm">خدمات الحشود</h1>
+              <h1 className="font-cairo font-bold text-primary text-sm">{language === 'ar' ? 'خدمات الحشود' : 'Crowd Services'}</h1>
               <p className="text-[10px] text-muted-foreground">Al-Haram OS</p>
             </div>
           </div>
