@@ -309,6 +309,359 @@ class AlHaramAPITester:
             expected_status=401
         )
 
+    def test_user_management_endpoints(self):
+        """Test comprehensive user management and permissions"""
+        print("\n👥 Testing User Management & Permissions...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping user management tests")
+            return
+        
+        # Test 1: GET /api/users - List all users (super_admin only)
+        success, users_data = self.test_endpoint(
+            "GET /api/users - List All Users (super_admin)",
+            "users",
+            auth_required=True,
+            required_fields=["id", "email", "name", "role", "created_at"]
+        )
+        
+        initial_user_count = len(users_data) if success and isinstance(users_data, list) else 0
+        print(f"  📊 Initial user count: {initial_user_count}")
+        
+        # Test 2: POST /api/users - Create user with field_staff role (requires department)
+        test_user_field_staff = {
+            "name": "Ahmed Al-Mataf",
+            "email": "ahmed.test@crowd.sa",
+            "password": "test123456",
+            "role": "field_staff",
+            "department": "mataf"
+        }
+        
+        success, created_user = self.test_endpoint(
+            "POST /api/users - Create Field Staff with Department",
+            "users",
+            method="POST",
+            data=test_user_field_staff,
+            auth_required=True,
+            expected_status=200,
+            required_fields=["id", "email", "name", "role", "department"]
+        )
+        
+        field_staff_user_id = None
+        if success and "id" in created_user:
+            field_staff_user_id = created_user["id"]
+            if created_user.get("department") != "mataf":
+                self.log_result("Verify Field Staff Department", False, f"Expected department 'mataf', got '{created_user.get('department')}'")
+            else:
+                self.log_result("Verify Field Staff Department", True, "Department correctly set to 'mataf'")
+        
+        # Test 3: POST /api/users - Create dept_manager (requires department)
+        test_user_dept_manager = {
+            "name": "Fatima Al-Plazas",
+            "email": "fatima.test@crowd.sa",
+            "password": "test123456",
+            "role": "department_manager",
+            "department": "plazas"
+        }
+        
+        success, created_manager = self.test_endpoint(
+            "POST /api/users - Create Dept Manager with Department",
+            "users",
+            method="POST",
+            data=test_user_dept_manager,
+            auth_required=True,
+            expected_status=200,
+            required_fields=["id", "email", "name", "role", "department"]
+        )
+        
+        dept_manager_user_id = None
+        if success and "id" in created_manager:
+            dept_manager_user_id = created_manager["id"]
+            if created_manager.get("department") != "plazas":
+                self.log_result("Verify Dept Manager Department", False, f"Expected department 'plazas', got '{created_manager.get('department')}'")
+            else:
+                self.log_result("Verify Dept Manager Department", True, "Department correctly set to 'plazas'")
+        
+        # Test 4: POST /api/users - Create monitoring_team (no department required)
+        test_user_monitoring = {
+            "name": "Omar Monitoring",
+            "email": "omar.test@crowd.sa",
+            "password": "test123456",
+            "role": "monitoring_team"
+        }
+        
+        success, created_monitoring = self.test_endpoint(
+            "POST /api/users - Create Monitoring Team (no department)",
+            "users",
+            method="POST",
+            data=test_user_monitoring,
+            auth_required=True,
+            expected_status=200,
+            required_fields=["id", "email", "name", "role"]
+        )
+        
+        monitoring_user_id = None
+        if success and "id" in created_monitoring:
+            monitoring_user_id = created_monitoring["id"]
+        
+        # Test 5: POST /api/users - Try to create field_staff WITHOUT department (should fail)
+        test_user_no_dept = {
+            "name": "Invalid User",
+            "email": "invalid.test@crowd.sa",
+            "password": "test123456",
+            "role": "field_staff"
+            # Missing department
+        }
+        
+        success, error_response = self.test_endpoint(
+            "POST /api/users - Field Staff without Department (should fail)",
+            "users",
+            method="POST",
+            data=test_user_no_dept,
+            auth_required=True,
+            expected_status=400
+        )
+        
+        # Test 6: POST /api/users - Try to create dept_manager WITHOUT department (should fail)
+        test_manager_no_dept = {
+            "name": "Invalid Manager",
+            "email": "invalid.manager@crowd.sa",
+            "password": "test123456",
+            "role": "department_manager"
+            # Missing department
+        }
+        
+        success, error_response = self.test_endpoint(
+            "POST /api/users - Dept Manager without Department (should fail)",
+            "users",
+            method="POST",
+            data=test_manager_no_dept,
+            auth_required=True,
+            expected_status=400
+        )
+        
+        # Test 7: PUT /api/users/{user_id} - Update user
+        if field_staff_user_id:
+            update_data = {
+                "name": "Ahmed Al-Mataf Updated",
+                "department": "gates"
+            }
+            
+            success, updated_user = self.test_endpoint(
+                "PUT /api/users/{user_id} - Update User Name and Department",
+                f"users/{field_staff_user_id}",
+                method="PUT",
+                data=update_data,
+                auth_required=True,
+                expected_status=200,
+                required_fields=["id", "email", "name", "role", "department"]
+            )
+            
+            if success and updated_user.get("name") == "Ahmed Al-Mataf Updated" and updated_user.get("department") == "gates":
+                self.log_result("Verify User Update", True, "User name and department updated correctly")
+            elif success:
+                self.log_result("Verify User Update", False, f"Update failed: name={updated_user.get('name')}, dept={updated_user.get('department')}")
+        
+        # Test 8: PUT /api/users/{user_id} - Update password
+        if dept_manager_user_id:
+            update_password = {
+                "password": "newpassword123"
+            }
+            
+            success, updated_user = self.test_endpoint(
+                "PUT /api/users/{user_id} - Update User Password",
+                f"users/{dept_manager_user_id}",
+                method="PUT",
+                data=update_password,
+                auth_required=True,
+                expected_status=200
+            )
+        
+        # Test 9: DELETE /api/users/{user_id} - Try to delete self (should fail)
+        if self.admin_user and "id" in self.admin_user:
+            success, error_response = self.test_endpoint(
+                "DELETE /api/users/{user_id} - Delete Self (should fail)",
+                f"users/{self.admin_user['id']}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=400
+            )
+        
+        # Test 10: DELETE /api/users/{user_id} - Delete created test users
+        if field_staff_user_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/users/{user_id} - Delete Field Staff User",
+                f"users/{field_staff_user_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+        
+        if dept_manager_user_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/users/{user_id} - Delete Dept Manager User",
+                f"users/{dept_manager_user_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+        
+        if monitoring_user_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/users/{user_id} - Delete Monitoring User",
+                f"users/{monitoring_user_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+        
+        # Test 11: Verify user count is back to initial
+        success, final_users_data = self.test_endpoint(
+            "GET /api/users - Verify User Count After Cleanup",
+            "users",
+            auth_required=True
+        )
+        
+        final_user_count = len(final_users_data) if success and isinstance(final_users_data, list) else 0
+        if final_user_count == initial_user_count:
+            self.log_result("Verify User Cleanup", True, f"User count back to {initial_user_count}")
+        else:
+            self.log_result("Verify User Cleanup", False, f"Expected {initial_user_count} users, got {final_user_count}")
+    
+    def test_permission_validation(self):
+        """Test permission validation with non-admin users"""
+        print("\n🔒 Testing Permission Validation...")
+        
+        # Test with dept_manager credentials
+        dept_manager_login = {
+            "email": "manager.plazas@crowd.sa",
+            "password": "manager123"
+        }
+        
+        success, manager_data = self.test_endpoint(
+            "Login as Dept Manager",
+            "auth/login",
+            method="POST",
+            data=dept_manager_login,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        manager_token = None
+        if success and "access_token" in manager_data:
+            manager_token = manager_data["access_token"]
+            manager_user = manager_data.get("user", {})
+            
+            # Verify department field in login response
+            if "department" in manager_user:
+                self.log_result("Verify Department in Login Response (Dept Manager)", True, f"Department: {manager_user['department']}")
+            else:
+                self.log_result("Verify Department in Login Response (Dept Manager)", False, "Department field missing in user object")
+            
+            # Test /auth/me includes department
+            temp_token = self.auth_token
+            self.auth_token = manager_token
+            
+            success, me_data = self.test_endpoint(
+                "GET /api/auth/me - Verify Department Field (Dept Manager)",
+                "auth/me",
+                auth_required=True,
+                required_fields=["id", "email", "name", "role", "department"]
+            )
+            
+            if success and me_data.get("department") == "plazas":
+                self.log_result("Verify Department in /auth/me", True, f"Department: {me_data.get('department')}")
+            elif success:
+                self.log_result("Verify Department in /auth/me", False, f"Expected 'plazas', got '{me_data.get('department')}'")
+            
+            # Test that dept_manager CANNOT access /api/users (should get 403)
+            success, error_response = self.test_endpoint(
+                "GET /api/users - Dept Manager Access (should fail with 403)",
+                "users",
+                auth_required=True,
+                expected_status=403
+            )
+            
+            # Test that dept_manager CANNOT create users (should get 403)
+            test_user = {
+                "name": "Unauthorized User",
+                "email": "unauthorized@crowd.sa",
+                "password": "test123",
+                "role": "field_staff",
+                "department": "gates"
+            }
+            
+            success, error_response = self.test_endpoint(
+                "POST /api/users - Dept Manager Create User (should fail with 403)",
+                "users",
+                method="POST",
+                data=test_user,
+                auth_required=True,
+                expected_status=403
+            )
+            
+            self.auth_token = temp_token
+        
+        # Test with field_staff credentials
+        field_staff_login = {
+            "email": "staff.mataf@crowd.sa",
+            "password": "staff123"
+        }
+        
+        success, staff_data = self.test_endpoint(
+            "Login as Field Staff",
+            "auth/login",
+            method="POST",
+            data=field_staff_login,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        if success and "access_token" in staff_data:
+            staff_token = staff_data["access_token"]
+            staff_user = staff_data.get("user", {})
+            
+            # Verify department field in login response
+            if "department" in staff_user:
+                self.log_result("Verify Department in Login Response (Field Staff)", True, f"Department: {staff_user['department']}")
+            else:
+                self.log_result("Verify Department in Login Response (Field Staff)", False, "Department field missing in user object")
+            
+            # Test /auth/me includes department
+            temp_token = self.auth_token
+            self.auth_token = staff_token
+            
+            success, me_data = self.test_endpoint(
+                "GET /api/auth/me - Verify Department Field (Field Staff)",
+                "auth/me",
+                auth_required=True,
+                required_fields=["id", "email", "name", "role", "department"]
+            )
+            
+            if success and me_data.get("department") == "mataf":
+                self.log_result("Verify Department in /auth/me (Field Staff)", True, f"Department: {me_data.get('department')}")
+            elif success:
+                self.log_result("Verify Department in /auth/me (Field Staff)", False, f"Expected 'mataf', got '{me_data.get('department')}'")
+            
+            # Test that field_staff CANNOT access /api/users (should get 403)
+            success, error_response = self.test_endpoint(
+                "GET /api/users - Field Staff Access (should fail with 403)",
+                "users",
+                auth_required=True,
+                expected_status=403
+            )
+            
+            # Test that field_staff CANNOT delete users (should get 403)
+            success, error_response = self.test_endpoint(
+                "DELETE /api/users/{user_id} - Field Staff Delete (should fail with 403)",
+                "users/dummy-id",
+                method="DELETE",
+                auth_required=True,
+                expected_status=403
+            )
+            
+            self.auth_token = temp_token
+    
     def test_admin_endpoints(self):
         """Test admin-only endpoints"""
         print("\n👑 Testing Admin Endpoints...")
