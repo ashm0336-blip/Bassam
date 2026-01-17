@@ -43,7 +43,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-7 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -55,6 +55,10 @@ export default function AdminPage() {
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity Log'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="maps" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <MapIcon className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الخرائط' : 'Maps'}</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
@@ -80,6 +84,10 @@ export default function AdminPage() {
 
         <TabsContent value="activity" className="mt-6">
           <ActivityLog />
+        </TabsContent>
+
+        <TabsContent value="maps" className="mt-6">
+          <MapManager />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
