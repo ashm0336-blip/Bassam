@@ -690,3 +690,53 @@ agent_communication:
       
       SYSTEM STATUS: PRODUCTION READY
       All user management and permissions APIs are fully functional and secure.
+---
+
+## Testing Session - 2026-01-17 - Filtered Reports Feature
+
+### Feature Implemented
+✅ **Department-based Report Filtering (RBAC)**
+
+### Backend Changes
+- Modified `/api/reports` endpoint to apply automatic filtering based on user role and department
+- Department managers see only their department's reports + "all" reports
+- Admins, General Managers, and Monitoring Team see all reports
+
+### Frontend Changes
+- Added `useAuth()` hook to ReportsPage component
+- Department filter dropdown now only shows for users with `canAccessAllDepartments` 
+- Department managers see a badge showing their department
+- Export section dynamically shows/hides cards based on user permissions
+- Data fetching filters gates/plazas/mataf based on user department
+
+### Test Results
+
+#### ✅ Backend API Tests
+1. **System Admin**: Can see all 9 reports ✓
+2. **Gates Manager** (`test.gates@crowd.sa`): Sees only 4 reports (gates + all) ✓
+3. **Mataf Manager** (`test.mataf@crowd.sa`): Sees only 4 reports (mataf + all) ✓
+4. **General Manager** (`test.general@crowd.sa`): Can see all 9 reports ✓
+
+#### ✅ Frontend UI Tests
+1. **Gates Manager View**:
+   - Badge displays "عرض تقارير: إدارة الأبواب" ✓
+   - 4 report cards visible ✓
+   - Department filter dropdown is hidden ✓
+   - Export section shows only "Gates" export card ✓
+
+2. **Admin View**:
+   - No department badge (can see all) ✓
+   - 9 report cards visible ✓
+   - Department filter dropdown is visible ✓
+   - Export section shows all 4 export cards ✓
+
+### Test Credentials Created
+- `test.gates@crowd.sa` / `test123` - Department Manager (Gates)
+- `test.mataf@crowd.sa` / `test123` - Department Manager (Mataf)
+- `test.general@crowd.sa` / `test123` - General Manager
+
+### Status
+**✅ FEATURE COMPLETE & TESTED**
+
+All tests passed successfully. The RBAC filtering is working correctly on both backend and frontend.
+
