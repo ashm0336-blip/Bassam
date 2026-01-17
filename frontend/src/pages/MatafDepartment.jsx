@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { useSidebar } from "@/context/SidebarContext";
+import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import { 
