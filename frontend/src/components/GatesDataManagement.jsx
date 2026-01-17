@@ -233,53 +233,52 @@ export default function GatesDataManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {gates.map((gate) => (
-                  <TableRow key={gate.id}>
-                    <TableCell className="text-center">
-                      {gate.current_indicator && (
+                {gates.map((gate) => {
+                  const gateEmployees = getEmployeesAtGate(gate.name);
+                  
+                  return (
+                    <TableRow key={gate.id}>
+                      <TableCell className="text-right font-bold">{gate.number}</TableCell>
+                      <TableCell className="text-right font-medium">{gate.name}</TableCell>
+                      <TableCell className="text-center">
                         <div className="flex items-center gap-2 justify-center">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ 
-                              backgroundColor: 
-                                gate.current_indicator === 'خفيف' ? '#22c55e' :
-                                gate.current_indicator === 'متوسط' ? '#f97316' :
-                                gate.current_indicator === 'مزدحم' ? '#ef4444' : '#gray'
-                            }}
-                          />
-                          <span className="text-sm">{gate.current_indicator}</span>
+                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] }} />
+                          <span className="text-sm">{gate.plaza}</span>
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={gate.status === 'مفتوح' ? 'default' : 'destructive'}>
-                        {gate.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center text-sm">{gate.classification}</TableCell>
-                    <TableCell className="text-center text-sm">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</TableCell>
-                    <TableCell className="text-center text-sm">{gate.direction}</TableCell>
-                    <TableCell className="text-center text-sm">{gate.gate_type}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center gap-2 justify-center">
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] }} />
-                        <span className="text-sm">{gate.plaza}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center font-medium">{gate.name}</TableCell>
-                    <TableCell className="text-center font-bold">{gate.number}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(gate)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">{gate.gate_type}</TableCell>
+                      <TableCell className="text-center text-sm">{gate.direction}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={gate.status === 'مفتوح' ? 'default' : 'destructive'}>
+                          {gate.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={gateEmployees.length > 0 ? "default" : "secondary"} className="text-xs">
+                            {gateEmployees.length} {language === 'ar' ? 'موظف' : 'staff'}
+                          </Badge>
+                          {gateEmployees.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {gateEmployees.slice(0, 2).map(emp => emp.name.split(' ')[0]).join(', ')}
+                              {gateEmployees.length > 2 && ` +${gateEmployees.length - 2}`}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(gate)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
