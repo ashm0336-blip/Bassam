@@ -494,99 +494,46 @@ export default function SidebarManager() {
       ) : menuItems.length > 0 ? (
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {menuItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.order}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {language === 'ar' ? item.name_en : item.name_ar}
-                        </div>
-                        {item.parent_id && (
-                          <Badge variant="outline" className="text-xs mt-1">
-                            {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs font-mono">{item.href}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.icon}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {item.is_public && (
-                          <Badge variant="default" className="text-xs">
-                            {language === 'ar' ? 'عام' : 'Public'}
-                          </Badge>
-                        )}
-                        {item.admin_only && (
-                          <Badge variant="destructive" className="text-xs">
-                            <Shield className="w-3 h-3 ml-1" />
-                            {language === 'ar' ? 'أدمن' : 'Admin'}
-                          </Badge>
-                        )}
-                        {item.department && (
-                          <Badge variant="secondary" className="text-xs">
-                            {DEPARTMENTS.find(d => d.value === item.department)?.[`label_${language}`]}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleToggleActive(item)}
-                        className="h-7 w-7 p-0"
-                      >
-                        {item.is_active ? (
-                          <Eye className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <EyeOff className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleOpenDialog(item)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-12">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  <SortableContext
+                    items={menuItems.map(item => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {menuItems.map((item) => (
+                      <SortableRow
+                        key={item.id}
+                        item={item}
+                        language={language}
+                        onEdit={handleOpenDialog}
+                        onDelete={(item) => {
+                          setSelectedItem(item);
+                          setDeleteDialogOpen(true);
+                        }}
+                        onToggleActive={handleToggleActive}
+                      />
+                    ))}
+                  </SortableContext>
+                </TableBody>
+              </Table>
+            </DndContext>
           </CardContent>
         </Card>
       ) : null}
