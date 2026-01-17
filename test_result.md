@@ -331,8 +331,7 @@ metadata:
     success_rate: 90.9
 
 test_plan:
-  current_focus:
-    - "PDF & Excel Export Functionality"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -345,6 +344,12 @@ test_plan:
     - "Dashboard & Stats with Employee Stats"
     - "Activity Logs with Filters"
     - "Alerts and Notifications"
+    - "PDF & Excel Export Functionality"
+    - "System Admin Panel - All 4 Tabs (Dashboard, Users, Activity Log, Settings)"
+    - "Department Manager - Gates (Dashboard, Gates Data, Employees tabs)"
+    - "General Manager - Dashboard with Department Cards"
+    - "Notifications Page - Stat Cards and Filters"
+    - "Reports Page - Export Buttons (PDF and Excel)"
 
 agent_communication:
   - agent: "main"
