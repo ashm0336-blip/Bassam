@@ -178,116 +178,206 @@ export default function SystemSettings() {
             title={language === 'ar' ? 'إعدادات شاشة الدخول' : 'Login Page Settings'}
             description={language === 'ar' ? 'تخصيص شاشة الدخول والشعار' : 'Customize login page and branding'}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'اسم الموقع (عربي)' : 'Site Name (Arabic)'}</Label>
-                  <Input 
-                    value={loginSettings.site_name_ar}
-                    onChange={(e) => setLoginSettings({...loginSettings, site_name_ar: e.target.value})}
-                    className="mt-1"
-                    placeholder="خدمات الحشود"
-                  />
+            <div className="space-y-6">
+              {/* Logo Section */}
+              <div>
+                <Label className="font-medium mb-3 block">{language === 'ar' ? 'شعار شخصي' : 'Custom Logo'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'نحن نعرض شعار مخصص بدلا من الشعار الافتراضي' : 'Display custom logo instead of default'}
+                </p>
+                
+                {/* Logo Preview */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                    {loginSettings.logo_url ? (
+                      <img src={loginSettings.logo_url} alt="Logo" className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="w-12 h-12 mx-auto mb-2" />
+                        <p className="text-xs">{language === 'ar' ? 'لا يوجد شعار' : 'No logo'}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-destructive text-destructive hover:bg-destructive/10"
+                      onClick={() => setLoginSettings({...loginSettings, logo_url: ""})}
+                    >
+                      {language === 'ar' ? 'إزالة' : 'Remove'}
+                    </Button>
+                    <Button variant="default">
+                      {language === 'ar' ? 'رفع' : 'Upload'}
+                    </Button>
+                  </div>
                 </div>
 
+                {/* Logo URL Input */}
                 <div>
-                  <Label className="text-sm">{language === 'ar' ? 'اسم الموقع (إنجليزي)' : 'Site Name (English)'}</Label>
-                  <Input 
-                    value={loginSettings.site_name_en}
-                    onChange={(e) => setLoginSettings({...loginSettings, site_name_en: e.target.value})}
-                    className="mt-1"
-                    placeholder="Crowd Services"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'النص الترحيبي (عربي)' : 'Welcome Text (Arabic)'}</Label>
-                  <Input 
-                    value={loginSettings.welcome_text_ar}
-                    onChange={(e) => setLoginSettings({...loginSettings, welcome_text_ar: e.target.value})}
-                    className="mt-1"
-                    placeholder="مرحباً بك"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'النص الترحيبي (إنجليزي)' : 'Welcome Text (English)'}</Label>
-                  <Input 
-                    value={loginSettings.welcome_text_en}
-                    onChange={(e) => setLoginSettings({...loginSettings, welcome_text_en: e.target.value})}
-                    className="mt-1"
-                    placeholder="Welcome"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'الوصف (عربي)' : 'Subtitle (Arabic)'}</Label>
-                  <Textarea 
-                    value={loginSettings.subtitle_ar}
-                    onChange={(e) => setLoginSettings({...loginSettings, subtitle_ar: e.target.value})}
-                    className="mt-1"
-                    rows={2}
-                    placeholder="منصة إدارة الحشود..."
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'الوصف (إنجليزي)' : 'Subtitle (English)'}</Label>
-                  <Textarea 
-                    value={loginSettings.subtitle_en}
-                    onChange={(e) => setLoginSettings({...loginSettings, subtitle_en: e.target.value})}
-                    className="mt-1"
-                    rows={2}
-                    placeholder="Crowd Management Platform..."
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'رابط الشعار (Logo URL)' : 'Logo URL'}</Label>
+                  <Label className="text-sm">{language === 'ar' ? 'رابط الشعار' : 'Logo URL'}</Label>
                   <Input 
                     value={loginSettings.logo_url || ""}
                     onChange={(e) => setLoginSettings({...loginSettings, logo_url: e.target.value})}
                     className="mt-1"
                     placeholder="https://example.com/logo.png"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {language === 'ar' ? 'رابط مباشر للصورة' : 'Direct image URL'}
-                  </p>
                 </div>
+              </div>
 
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'رابط صورة الخلفية' : 'Background Image URL'}</Label>
+              <Separator />
+
+              {/* Welcome Text */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'نص الترحيب' : 'Welcome Text'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'تعيين نص الترحيب في شاشة الدخول' : 'Set welcome text on login screen'}
+                </p>
+                <Input 
+                  value={loginSettings.welcome_text_ar}
+                  onChange={(e) => setLoginSettings({...loginSettings, welcome_text_ar: e.target.value})}
+                  placeholder={language === 'ar' ? 'مرحباً بك' : 'Welcome'}
+                />
+              </div>
+
+              <Separator />
+
+              {/* Site Name */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'اسم الموقع' : 'Site Name'}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{language === 'ar' ? 'عربي' : 'Arabic'}</Label>
+                    <Input 
+                      value={loginSettings.site_name_ar}
+                      onChange={(e) => setLoginSettings({...loginSettings, site_name_ar: e.target.value})}
+                      className="mt-1"
+                      placeholder="خدمات الحشود"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{language === 'ar' ? 'إنجليزي' : 'English'}</Label>
+                    <Input 
+                      value={loginSettings.site_name_en}
+                      onChange={(e) => setLoginSettings({...loginSettings, site_name_en: e.target.value})}
+                      className="mt-1"
+                      placeholder="Crowd Services"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Background Image Section */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'صورة الخلفية' : 'Background Image'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'تعرض صورة خلفية مخصصة بنصف عرض الشاشة' : 'Display custom background image at half screen width'}
+                </p>
+                <div className="space-y-3">
                   <Input 
                     value={loginSettings.background_url || ""}
                     onChange={(e) => setLoginSettings({...loginSettings, background_url: e.target.value})}
-                    className="mt-1"
                     placeholder="https://example.com/background.jpg"
                   />
+                  <Button variant="outline" className="w-full">
+                    <Upload className="w-4 h-4 ml-2" />
+                    {language === 'ar' ? 'رفع صورة' : 'Upload Image'}
+                  </Button>
                 </div>
+              </div>
 
-                <div>
-                  <Label className="text-sm">{language === 'ar' ? 'اللون الأساسي' : 'Primary Color'}</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input 
-                      type="color"
-                      value={loginSettings.primary_color}
-                      onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
-                      className="w-16 h-10"
-                    />
-                    <Input 
-                      value={loginSettings.primary_color}
-                      onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
-                      placeholder="#DC2626"
-                      className="flex-1"
-                    />
+              <Separator />
+
+              {/* Custom Title (Subtitle) */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'عنوان مخصص' : 'Custom Title'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'تعرض عنوان مخصص فوق صورة الخلفية' : 'Display custom title above background image'}
+                </p>
+                <Textarea 
+                  value={loginSettings.subtitle_ar}
+                  onChange={(e) => setLoginSettings({...loginSettings, subtitle_ar: e.target.value})}
+                  rows={3}
+                  placeholder={language === 'ar' ? 'منصة إدارة الحشود في الحرم المكي الشريف' : 'Platform description...'}
+                />
+              </div>
+
+              <Separator />
+
+              {/* Custom Text (Additional description) */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'نص متخصص' : 'Specialist Text'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'تعرض نص متخصص فوق صورة الخلفية' : 'Display specialist text above background image'}
+                </p>
+                <Textarea 
+                  value={loginSettings.subtitle_en}
+                  onChange={(e) => setLoginSettings({...loginSettings, subtitle_en: e.target.value})}
+                  rows={4}
+                  placeholder={language === 'ar' ? 'نص إضافي للوصف...' : 'Additional description text...'}
+                />
+              </div>
+
+              <Separator />
+
+              {/* Transparency/Opacity */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'الشفافية' : 'Transparency'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'تعيين تعتيم التراكب' : 'Set overlay opacity'}
+                </p>
+                <div className="flex items-center gap-4">
+                  <Input 
+                    type="number"
+                    min="0"
+                    max="100"
+                    defaultValue="20"
+                    className="w-20"
+                  />
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    defaultValue="20"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {language === 'ar' ? 'قيمة بين 0 و 100%' : 'Value between 0 and 100%'}
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Primary Color */}
+              <div>
+                <Label className="font-medium mb-2 block">{language === 'ar' ? 'لون العنوان المخصص' : 'Custom Title Color'}</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ar' ? 'حدد لون النص الخاص بك لقسم العنوان المخصص' : 'Set your text color for the custom title section'}
+                </p>
+                <div className="flex gap-2">
+                  <Input 
+                    type="color"
+                    value={loginSettings.primary_color}
+                    onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
+                    className="w-16 h-10"
+                  />
+                  <Input 
+                    value={loginSettings.primary_color}
+                    onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
+                    placeholder="#DC2626"
+                    className="flex-1"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="transparent" className="rounded" />
+                    <Label htmlFor="transparent" className="text-sm">Transparent</Label>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Separator className="my-4" />
+            <Separator className="my-6" />
 
             <div className="flex justify-end">
               <Button 
