@@ -176,6 +176,8 @@ export default function MapPage() {
                   {/* Markers Overlay */}
                   {filteredMarkers.map((marker) => {
                     const Icon = getMarkerIcon(marker.type);
+                    const staffCount = marker.type === 'gate' ? getStaffCountAtLocation(language === 'ar' ? marker.label_ar : marker.label_en) : 0;
+                    
                     return (
                       <button
                         key={marker.id}
@@ -187,16 +189,29 @@ export default function MapPage() {
                         }}
                       >
                         <div 
-                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white relative ${
                             selectedMarker?.id === marker.id ? 'ring-4 ring-primary scale-125' : ''
                           }`}
                           style={{ backgroundColor: marker.color }}
                         >
                           <Icon className="w-5 h-5 text-white" />
+                          {marker.type === 'gate' && staffCount > 0 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                              {staffCount}
+                            </div>
+                          )}
+                          {marker.type === 'gate' && staffCount === 0 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                              ⚠️
+                            </div>
+                          )}
                         </div>
                         {marker.show_label && (
                           <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg">
                             {language === 'ar' ? marker.label_ar : marker.label_en}
+                            {marker.type === 'gate' && staffCount > 0 && (
+                              <span className="ml-2 text-green-400">👥 {staffCount}</span>
+                            )}
                           </div>
                         )}
                       </button>
