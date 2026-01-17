@@ -266,58 +266,43 @@ export default function Dashboard() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Crowd Chart */}
-        <Card className="lg:col-span-2" data-testid="crowd-chart">
+        {/* Employee Distribution by Shift */}
+        <Card>
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="font-cairo text-lg">{t('crowdMovement')}</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                <Clock className="w-3 h-3 ml-1" />
-                {t('liveUpdate')}
-              </Badge>
-            </div>
+            <CardTitle className="font-cairo text-lg text-right">{language === 'ar' ? 'توزيع الموظفين حسب الوردية' : 'Staff Distribution by Shift'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={crowdData}>
-                  <defs>
-                    <linearGradient id="crowdGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#004D38" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#004D38" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E0" />
-                  <XAxis 
-                    dataKey="hour" 
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                    axisLine={{ stroke: '#E5E5E0' }}
-                    reversed
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                    axisLine={{ stroke: '#E5E5E0' }}
-                    tickFormatter={(v) => `${(v/1000).toFixed(0)}k`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white',
-                      border: '1px solid #E5E5E0',
-                      borderRadius: '8px',
-                      direction: 'rtl'
-                    }}
-                    formatter={(value) => [value.toLocaleString('ar-SA'), 'الحشود']}
-                    labelFormatter={(label) => `الساعة ${label}`}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#004D38" 
-                    strokeWidth={2}
-                    fill="url(#crowdGradient)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="space-y-3">
+              {departments.map((dept) => {
+                const shifts = dept.employee_stats?.shifts || {};
+                const total = Object.values(shifts).reduce((a, b) => a + b, 0);
+                
+                if (total === 0) return null;
+                
+                return (
+                  <div key={dept.id} className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-sm font-medium mb-2 text-right">{dept.name}</p>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div>
+                        <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-1" />
+                        <p className="text-xs font-bold">{shifts['الأولى'] || 0}</p>
+                      </div>
+                      <div>
+                        <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-1" />
+                        <p className="text-xs font-bold">{shifts['الثانية'] || 0}</p>
+                      </div>
+                      <div>
+                        <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-1" />
+                        <p className="text-xs font-bold">{shifts['الثالثة'] || 0}</p>
+                      </div>
+                      <div>
+                        <div className="w-3 h-3 rounded-full bg-purple-500 mx-auto mb-1" />
+                        <p className="text-xs font-bold">{shifts['الرابعة'] || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
