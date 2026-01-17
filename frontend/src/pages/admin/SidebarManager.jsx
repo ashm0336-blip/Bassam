@@ -186,6 +186,7 @@ export default function SidebarManager() {
       
       const submitData = {
         ...formData,
+        parent_id: formData.parent_id === "none" ? null : formData.parent_id,
         department: formData.department === "none" ? null : formData.department
       };
       
