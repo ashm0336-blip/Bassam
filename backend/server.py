@@ -601,18 +601,6 @@ async def get_employee_stats(department: str, user: dict = Depends(get_current_u
         "employees_with_location": employees_with_location
     }
 
-async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
-    alert_id = str(uuid.uuid4())
-    alert_doc = {
-        "id": alert_id,
-        **alert.model_dump(),
-        "is_read": False,
-        "created_by": user["id"],
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
-    await db.alerts.insert_one(alert_doc)
-    return {"message": "تم إنشاء التنبيه بنجاح", "id": alert_id}
-
 @api_router.delete("/admin/alerts/{alert_id}")
 async def delete_alert(alert_id: str, user: dict = Depends(require_admin)):
     result = await db.alerts.delete_one({"id": alert_id})
