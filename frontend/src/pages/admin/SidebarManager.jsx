@@ -86,6 +86,105 @@ const DEPARTMENTS = [
   { value: "mataf", label_ar: "صحن المطاف", label_en: "Mataf Management" }
 ];
 
+// Sortable Row Component
+function SortableRow({ item, language, onEdit, onDelete, onToggleActive }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell className="w-12">
+        <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded">
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">{item.order}</TableCell>
+      <TableCell>
+        <div>
+          <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
+          <div className="text-xs text-muted-foreground">
+            {language === 'ar' ? item.name_en : item.name_ar}
+          </div>
+          {item.parent_id && (
+            <Badge variant="outline" className="text-xs mt-1">
+              {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="text-xs font-mono">{item.href}</TableCell>
+      <TableCell>
+        <Badge variant="outline">{item.icon}</Badge>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {item.is_public && (
+            <Badge variant="default" className="text-xs">
+              {language === 'ar' ? 'عام' : 'Public'}
+            </Badge>
+          )}
+          {item.admin_only && (
+            <Badge variant="destructive" className="text-xs">
+              <Shield className="w-3 h-3 ml-1" />
+              {language === 'ar' ? 'أدمن' : 'Admin'}
+            </Badge>
+          )}
+          {item.department && (
+            <Badge variant="secondary" className="text-xs">
+              {DEPARTMENTS.find(d => d.value === item.department)?.[`label_${language}`]}
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onToggleActive(item)}
+          className="h-7 w-7 p-0"
+        >
+          {item.is_active ? (
+            <Eye className="w-4 h-4 text-green-600" />
+          ) : (
+            <EyeOff className="w-4 h-4 text-muted-foreground" />
+          )}
+        </Button>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onEdit(item)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={() => onDelete(item)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function SidebarManager() {
   const { language } = useLanguage();
   const { refreshMenu } = useSidebar();
