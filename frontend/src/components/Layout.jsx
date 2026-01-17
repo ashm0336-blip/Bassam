@@ -70,17 +70,31 @@ export const Layout = () => {
 
   // Convert menu items from API to navigation format
   const allMenuItems = menuItems.map(item => ({
+    ...item,
     name: language === 'ar' ? item.name_ar : item.name_en,
-    href: item.href,
     icon: ICON_MAP[item.icon] || LayoutDashboard,
-    isActive: item.is_active,
-    isSecondary: item.is_secondary,
-    adminOnly: item.admin_only
-  })).filter(item => item.isActive); // Only show active items
+  })).filter(item => item.is_active); // Only show active items
+
+  // Organize into parent and children
+  const parentItems = allMenuItems.filter(item => !item.parent_id);
+  const childrenMap = {};
+  allMenuItems.filter(item => item.parent_id).forEach(child => {
+    if (!childrenMap[child.parent_id]) {
+      childrenMap[child.parent_id] = [];
+    }
+    childrenMap[child.parent_id].push(child);
+  });
 
   // Split into primary and secondary navigation
-  const navigation = allMenuItems.filter(item => !item.isSecondary);
-  const secondaryNav = allMenuItems.filter(item => item.isSecondary);
+  const navigation = parentItems.filter(item => !item.is_secondary);
+  const secondaryNav = parentItems.filter(item => item.is_secondary);
+
+  const toggleMenu = (menuId) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
 
   const handleLogout = () => {
     logout();
