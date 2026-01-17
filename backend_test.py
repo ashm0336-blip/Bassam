@@ -239,6 +239,191 @@ class AlHaramAPITester:
             "Reports Filtered by Department",
             "reports?department=gates"
         )
+    
+    def test_rbac_report_filtering(self):
+        """Test department-based report filtering with RBAC"""
+        print("\n🔐 Testing RBAC Report Filtering Feature...")
+        
+        # Test 1: Unauthorized Access - No authentication token
+        temp_token = self.auth_token
+        self.auth_token = None
+        
+        success, data = self.test_endpoint(
+            "GET /api/reports - Unauthorized Access (should fail with 401)",
+            "reports",
+            auth_required=False,
+            expected_status=401
+        )
+        
+        self.auth_token = temp_token
+        
+        # Test 2: System Admin - Should see ALL 9 reports
+        admin_login = {
+            "email": "admin@crowd.sa",
+            "password": "admin123"
+        }
+        
+        success, admin_data = self.test_endpoint(
+            "Login as System Admin",
+            "auth/login",
+            method="POST",
+            data=admin_login,
+            expected_status=200
+        )
+        
+        if success and "access_token" in admin_data:
+            admin_token = admin_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = admin_token
+            
+            success, reports = self.test_endpoint(
+                "GET /api/reports - System Admin (should see all 9 reports)",
+                "reports",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(reports, list):
+                if len(reports) == 9:
+                    self.log_result("System Admin - Report Count", True, f"Correctly sees all 9 reports")
+                else:
+                    self.log_result("System Admin - Report Count", False, f"Expected 9 reports, got {len(reports)}")
+            
+            self.auth_token = temp_token
+        
+        # Test 3: General Manager - Should see ALL 9 reports
+        general_manager_login = {
+            "email": "test.general@crowd.sa",
+            "password": "test123"
+        }
+        
+        success, gm_data = self.test_endpoint(
+            "Login as General Manager (test.general@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=general_manager_login,
+            expected_status=200
+        )
+        
+        if success and "access_token" in gm_data:
+            gm_token = gm_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = gm_token
+            
+            success, reports = self.test_endpoint(
+                "GET /api/reports - General Manager (should see all 9 reports)",
+                "reports",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(reports, list):
+                if len(reports) == 9:
+                    self.log_result("General Manager - Report Count", True, f"Correctly sees all 9 reports")
+                else:
+                    self.log_result("General Manager - Report Count", False, f"Expected 9 reports, got {len(reports)}")
+            
+            self.auth_token = temp_token
+        
+        # Test 4: Department Manager (Gates) - Should see only gates + all reports (4 total)
+        gates_manager_login = {
+            "email": "test.gates@crowd.sa",
+            "password": "test123"
+        }
+        
+        success, gates_data = self.test_endpoint(
+            "Login as Gates Manager (test.gates@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=gates_manager_login,
+            expected_status=200
+        )
+        
+        if success and "access_token" in gates_data:
+            gates_token = gates_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = gates_token
+            
+            success, reports = self.test_endpoint(
+                "GET /api/reports - Gates Manager (should see 4 reports: gates + all)",
+                "reports",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(reports, list):
+                # Count reports by department
+                departments = [r.get("department") for r in reports]
+                gates_count = departments.count("gates")
+                all_count = departments.count("all")
+                other_depts = [d for d in departments if d not in ["gates", "all"]]
+                
+                # Should have 2 "gates" reports and 2 "all" reports = 4 total
+                if len(reports) == 4 and gates_count == 2 and all_count == 2 and len(other_depts) == 0:
+                    self.log_result("Gates Manager - Report Filtering", True, f"Correctly sees 4 reports (2 gates + 2 all)")
+                else:
+                    self.log_result("Gates Manager - Report Filtering", False, 
+                                  f"Expected 4 reports (2 gates + 2 all), got {len(reports)} reports: {departments}")
+                
+                # Verify NO reports from other departments
+                forbidden_depts = ["plazas", "mataf", "planning", "crowd_services"]
+                has_forbidden = any(d in forbidden_depts for d in departments)
+                if not has_forbidden:
+                    self.log_result("Gates Manager - No Other Departments", True, "Correctly filtered out other departments")
+                else:
+                    self.log_result("Gates Manager - No Other Departments", False, f"Should not see: {other_depts}")
+            
+            self.auth_token = temp_token
+        
+        # Test 5: Department Manager (Mataf) - Should see only mataf + all reports (4 total)
+        mataf_manager_login = {
+            "email": "test.mataf@crowd.sa",
+            "password": "test123"
+        }
+        
+        success, mataf_data = self.test_endpoint(
+            "Login as Mataf Manager (test.mataf@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=mataf_manager_login,
+            expected_status=200
+        )
+        
+        if success and "access_token" in mataf_data:
+            mataf_token = mataf_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = mataf_token
+            
+            success, reports = self.test_endpoint(
+                "GET /api/reports - Mataf Manager (should see 4 reports: mataf + all)",
+                "reports",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(reports, list):
+                # Count reports by department
+                departments = [r.get("department") for r in reports]
+                mataf_count = departments.count("mataf")
+                all_count = departments.count("all")
+                other_depts = [d for d in departments if d not in ["mataf", "all"]]
+                
+                # Should have 2 "mataf" reports and 2 "all" reports = 4 total
+                if len(reports) == 4 and mataf_count == 2 and all_count == 2 and len(other_depts) == 0:
+                    self.log_result("Mataf Manager - Report Filtering", True, f"Correctly sees 4 reports (2 mataf + 2 all)")
+                else:
+                    self.log_result("Mataf Manager - Report Filtering", False, 
+                                  f"Expected 4 reports (2 mataf + 2 all), got {len(reports)} reports: {departments}")
+                
+                # Verify NO reports from other departments
+                forbidden_depts = ["plazas", "gates", "planning", "crowd_services"]
+                has_forbidden = any(d in forbidden_depts for d in departments)
+                if not has_forbidden:
+                    self.log_result("Mataf Manager - No Other Departments", True, "Correctly filtered out other departments")
+                else:
+                    self.log_result("Mataf Manager - No Other Departments", False, f"Should not see: {other_depts}")
+            
+            self.auth_token = temp_token
 
     def test_planning_endpoints(self):
         """Test planning department endpoints"""
