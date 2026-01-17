@@ -43,6 +43,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function GatesDataManagement() {
   const { language } = useLanguage();
   const [gates, setGates] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -66,7 +67,20 @@ export default function GatesDataManagement() {
 
   useEffect(() => {
     fetchGates();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/employees?department=gates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmployees(response.data);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
 
   const fetchGates = async () => {
     try {
