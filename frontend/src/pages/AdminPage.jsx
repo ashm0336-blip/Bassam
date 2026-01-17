@@ -39,7 +39,11 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+          <TabsTrigger value="dropdowns" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <List className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'القوائم' : 'Dropdowns'}</span>
+          </TabsTrigger>
           <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
@@ -72,6 +76,10 @@ export default function AdminPage() {
 
         <TabsContent value="settings" className="mt-6">
           <SystemSettings />
+        </TabsContent>
+
+        <TabsContent value="dropdowns" className="mt-6">
+          <DropdownManager />
         </TabsContent>
       </Tabs>
     </div>
