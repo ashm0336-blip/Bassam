@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import axios from "axios";
 import { 
   Settings,
   Shield,
@@ -10,7 +11,10 @@ import {
   Key,
   AlertTriangle,
   Save,
-  Trash2
+  Trash2,
+  LogIn,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,6 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SettingSection = ({ icon: Icon, title, description, children }) => (
   <Card className="card-hover">
