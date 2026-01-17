@@ -1457,6 +1457,9 @@ class AlHaramAPITester:
         # Category 8: RBAC Report Filtering (NEW FEATURE)
         self.test_rbac_report_filtering()
         
+        # Category 9: Sidebar Submenu Functionality (NEW FEATURE)
+        self.test_sidebar_submenu_functionality()
+        
         # Additional tests
         self.test_admin_endpoints()
         self.test_unauthorized_access()
