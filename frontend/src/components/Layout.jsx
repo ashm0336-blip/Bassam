@@ -101,37 +101,98 @@ export const Layout = () => {
     navigate('/login');
   };
 
-  const NavItem = ({ item, mobile = false }) => {
+  const NavItem = ({ item, mobile = false, children = [] }) => {
     const isActive = location.pathname === item.href;
     const Icon = item.icon;
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedMenus[item.id];
     
     return (
-      <NavLink
-        to={item.href}
-        onClick={() => mobile && setMobileMenuOpen(false)}
-        className={`
-          flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
-          transition-colors duration-200 relative
-          ${isActive 
-            ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
-            : "text-muted-foreground hover:bg-muted hover:text-primary"
-          }
-          ${language === 'ar' ? 'flex-row-reverse' : ''}
-        `}
-        data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
-      >
-        <Icon className="w-5 h-5 flex-shrink-0" />
-        {(sidebarOpen || mobile) && (
-          <>
-            <span className="flex-1 text-right">{item.name}</span>
-            {item.badge && (
-              <Badge variant="destructive" className="text-xs px-2 py-0.5">
-                {item.badge}
-              </Badge>
-            )}
-          </>
+      <div>
+        <div className="relative">
+          {hasChildren ? (
+            <div
+              onClick={() => toggleMenu(item.id)}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                transition-colors duration-200 relative cursor-pointer
+                ${isActive 
+                  ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+                }
+                ${language === 'ar' ? 'flex-row-reverse' : ''}
+              `}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {(sidebarOpen || mobile) && (
+                <>
+                  <span className="flex-1 text-right">{item.name}</span>
+                  <ChevronLeft 
+                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''} ${language === 'ar' ? 'mr-auto' : 'ml-auto'}`} 
+                  />
+                </>
+              )}
+            </div>
+          ) : (
+            <NavLink
+              to={item.href}
+              onClick={() => mobile && setMobileMenuOpen(false)}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                transition-colors duration-200 relative
+                ${isActive 
+                  ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
+                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+                }
+                ${language === 'ar' ? 'flex-row-reverse' : ''}
+              `}
+              data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {(sidebarOpen || mobile) && (
+                <>
+                  <span className="flex-1 text-right">{item.name}</span>
+                  {item.badge && (
+                    <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </NavLink>
+          )}
+        </div>
+
+        {/* Submenu items */}
+        {hasChildren && isExpanded && (sidebarOpen || mobile) && (
+          <div className={`mt-1 space-y-1 ${language === 'ar' ? 'pr-4' : 'pl-4'}`}>
+            {children.map((child) => {
+              const ChildIcon = child.icon;
+              const isChildActive = location.pathname === child.href;
+              return (
+                <NavLink
+                  key={child.id}
+                  to={child.href}
+                  onClick={() => mobile && setMobileMenuOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                    transition-colors duration-200
+                    ${isChildActive 
+                      ? "bg-primary/10 text-primary" 
+                      : "text-muted-foreground hover:bg-muted hover:text-primary"
+                    }
+                    ${language === 'ar' ? 'flex-row-reverse' : ''}
+                  `}
+                  data-testid={`nav-${child.href.replace("/", "")}`}
+                >
+                  <ChildIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 text-right">{child.name}</span>
+                </NavLink>
+              );
+            })}
+          </div>
         )}
-      </NavLink>
+      </div>
     );
   };
 
