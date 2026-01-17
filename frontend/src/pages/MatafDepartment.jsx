@@ -194,6 +194,40 @@ export default function MatafDepartment() {
             </CardContent>
           </Card>
           
+          {/* Haramain Live Density Data */}
+          {haramainData && haramainData.mataf_levels && haramainData.mataf_levels.length > 0 && (
+            <Card className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-cairo text-base text-right flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-green-600" />
+                    بيانات حية من هيئة الحرمين
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    <Clock className="w-3 h-3 ml-1" />
+                    {haramainData.overall_density}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {haramainData.mataf_levels.map((level, idx) => (
+                    <div key={idx} className="p-3 bg-white dark:bg-card rounded-lg border border-green-200">
+                      <p className="text-xs text-muted-foreground mb-1 text-center">{level.level}</p>
+                      <p className="text-xl font-cairo font-bold text-center text-green-600">{level.code}</p>
+                      <Badge variant="outline" className="w-full mt-2 justify-center text-xs">
+                        {level.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  المصدر: {haramainData.source} | آخر تحديث: {new Date(haramainData.last_updated).toLocaleString('ar-SA')}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card className="card-hover">
               <CardContent className="p-3">
