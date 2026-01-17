@@ -150,8 +150,8 @@ export default function GatesDepartment() {
 
   return (
     <div className="space-y-6" data-testid="gates-page">
-      <Tabs defaultValue="gates" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="employees">
             <Users className="w-4 h-4 ml-2" />
             الموظفون
@@ -160,7 +160,128 @@ export default function GatesDepartment() {
             <DoorOpen className="w-4 h-4 ml-2" />
             الأبواب
           </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <Activity className="w-4 h-4 ml-2" />
+            لوحة التحكم
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
+          <div>
+            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة الأبواب</h2>
+            <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على حالة الأبواب والموظفين</p>
+          </div>
+
+          {/* Main Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <DoorOpen className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">إجمالي الأبواب</p>
+                    <p className="text-2xl font-cairo font-bold">{gates.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                    <DoorOpen className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">أبواب مفتوحة</p>
+                    <p className="text-2xl font-cairo font-bold text-green-600">{gates.filter(g => g.status === 'مفتوح').length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                    <DoorClosed className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">أبواب مغلقة</p>
+                    <p className="text-2xl font-cairo font-bold text-red-600">{gates.filter(g => g.status === 'مغلق').length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">التدفق الكلي</p>
+                    <p className="text-2xl font-cairo font-bold">{gates.reduce((sum, g) => sum + (g.current_flow || 0), 0).toLocaleString('ar-SA')}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gates by Plaza */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">الأبواب حسب المنطقة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {['الساحة الشرقية', 'الساحة الشمالية', 'الساحة الجنوبية', 'الساحة الغربية'].map((plaza, idx) => {
+                  const plazaGates = gates.filter(g => g.plaza === plaza);
+                  const colors = ['#BC9661', '#1A4782', '#0E573A', '#700D21'];
+                  return (
+                    <div key={plaza} className="p-4 rounded-lg border border-border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: colors[idx] }} />
+                        <p className="text-sm font-medium">{plaza}</p>
+                      </div>
+                      <p className="text-2xl font-bold">{plazaGates.length}</p>
+                      <p className="text-xs text-muted-foreground">باب</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Congestion Indicators */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">مؤشرات الازدحام</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-green-600">{gates.filter(g => g.current_indicator === 'خفيف').length}</p>
+                  <p className="text-sm text-muted-foreground">خفيف</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                  <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-orange-600">{gates.filter(g => g.current_indicator === 'متوسط').length}</p>
+                  <p className="text-sm text-muted-foreground">متوسط</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <div className="w-3 h-3 rounded-full bg-red-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-red-600">{gates.filter(g => g.current_indicator === 'مزدحم').length}</p>
+                  <p className="text-sm text-muted-foreground">مزدحم</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="gates" className="space-y-6 mt-6">
       {/* Header */}
