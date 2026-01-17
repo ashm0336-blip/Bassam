@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
+import { useHeader } from "@/context/HeaderContext";
 import axios from "axios";
 import { 
   LayoutDashboard, 
