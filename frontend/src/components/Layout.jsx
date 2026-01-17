@@ -128,8 +128,8 @@ export const Layout = () => {
               {(sidebarOpen || mobile) && (
                 <>
                   <span className="flex-1 text-right">{item.name}</span>
-                  <ChevronLeft 
-                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''} ${language === 'ar' ? 'mr-auto' : 'ml-auto'}`} 
+                  <ChevronDown 
+                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                   />
                 </>
               )}
