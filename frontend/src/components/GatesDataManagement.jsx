@@ -251,15 +251,40 @@ export default function GatesDataManagement() {
                       </TableCell>
                       <TableCell className="text-center text-sm">{gate.gate_type}</TableCell>
                       <TableCell className="text-center text-sm">{gate.direction}</TableCell>
+                      <TableCell className="text-center text-sm">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</TableCell>
+                      <TableCell className="text-center text-sm">{gate.classification}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={gate.status === 'مفتوح' ? 'default' : 'destructive'}>
                           {gate.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
+                        {gate.current_indicator && (
+                          <div className="flex items-center gap-2 justify-center">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ 
+                                backgroundColor: 
+                                  gate.current_indicator === 'خفيف' ? '#22c55e' :
+                                  gate.current_indicator === 'متوسط' ? '#f97316' :
+                                  gate.current_indicator === 'مزدحم' ? '#ef4444' : '#gray'
+                              }}
+                            />
+                            <span className="text-sm">{gate.current_indicator}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <div className="flex flex-col gap-1">
-                          <Badge variant={gateEmployees.length > 0 ? "default" : "secondary"} className="text-xs">
-                            {gateEmployees.length} {language === 'ar' ? 'موظف' : 'staff'}
+                          <Badge 
+                            variant={
+                              gateEmployees.length === 0 ? "destructive" :
+                              gateEmployees.length <= 2 ? "secondary" :
+                              "default"
+                            }
+                            className="text-xs"
+                          >
+                            {gateEmployees.length === 0 ? '⚠️ ' : ''}{gateEmployees.length} {language === 'ar' ? 'موظف' : 'staff'}
                           </Badge>
                           {gateEmployees.length > 0 && (
                             <div className="text-xs text-muted-foreground">
