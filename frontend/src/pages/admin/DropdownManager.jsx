@@ -61,7 +61,7 @@ const CATEGORY_NAMES = {
 export default function DropdownManager() {
   const { language } = useLanguage();
   const [options, setOptions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(" ");  // Use space instead of empty string
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
