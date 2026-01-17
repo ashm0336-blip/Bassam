@@ -1425,6 +1425,466 @@ class AlHaramAPITester:
             required_fields=["message", "version"]
         )
 
+    def test_dropdown_options_management(self):
+        """Test dropdown options CRUD operations"""
+        print("\n📋 Testing Dropdown Options Management...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping dropdown options tests")
+            return
+        
+        # Test 1: GET /api/admin/dropdown-options/categories - Get available categories
+        success, categories_data = self.test_endpoint(
+            "GET /api/admin/dropdown-options/categories - Get Categories",
+            "admin/dropdown-options/categories",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and "available_categories" in categories_data:
+            self.log_result("Verify Available Categories", True, f"Found {len(categories_data['available_categories'])} categories")
+        
+        # Test 2: GET /api/admin/dropdown-options - Get all options
+        success, all_options = self.test_endpoint(
+            "GET /api/admin/dropdown-options - Get All Options",
+            "admin/dropdown-options",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        initial_count = len(all_options) if success and isinstance(all_options, list) else 0
+        print(f"  📊 Initial dropdown options count: {initial_count}")
+        
+        # Test 3: GET /api/admin/dropdown-options?category=shifts - Filter by category
+        success, shifts_options = self.test_endpoint(
+            "GET /api/admin/dropdown-options?category=shifts - Filter by Category",
+            "admin/dropdown-options?category=shifts",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(shifts_options, list):
+            expected_shifts = ["الأولى", "الثانية", "الثالثة", "الرابعة"]
+            shift_values = [opt.get("value") for opt in shifts_options]
+            if all(shift in shift_values for shift in expected_shifts):
+                self.log_result("Verify Shifts Options", True, f"All 4 shifts present: {shift_values}")
+            else:
+                self.log_result("Verify Shifts Options", False, f"Missing shifts. Found: {shift_values}")
+        
+        # Test 4: POST /api/admin/dropdown-options - Create new option
+        test_option = {
+            "category": "gate_types",
+            "value": "نفق اختباري",
+            "label": "نفق اختباري",
+            "color": "#FF0000",
+            "order": 10
+        }
+        
+        success, created_option = self.test_endpoint(
+            "POST /api/admin/dropdown-options - Create Option",
+            "admin/dropdown-options",
+            method="POST",
+            data=test_option,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        option_id = None
+        if success and "id" in created_option:
+            option_id = created_option["id"]
+            self.log_result("Verify Option Creation", True, f"Option created with ID: {option_id}")
+        
+        # Test 5: PUT /api/admin/dropdown-options/{id} - Update option
+        if option_id:
+            update_data = {
+                "label": "نفق اختباري محدث",
+                "color": "#00FF00",
+                "order": 11
+            }
+            
+            success, updated_option = self.test_endpoint(
+                "PUT /api/admin/dropdown-options/{id} - Update Option",
+                f"admin/dropdown-options/{option_id}",
+                method="PUT",
+                data=update_data,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and updated_option.get("label") == "نفق اختباري محدث":
+                self.log_result("Verify Option Update", True, "Option updated successfully")
+        
+        # Test 6: DELETE /api/admin/dropdown-options/{id} - Delete option
+        if option_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/admin/dropdown-options/{id} - Delete Option",
+                f"admin/dropdown-options/{option_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+        
+        # Test 7: GET /api/dropdown-options - Public access (for forms)
+        success, public_options = self.test_endpoint(
+            "GET /api/dropdown-options - Public Access",
+            "dropdown-options",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success and isinstance(public_options, dict):
+            self.log_result("Verify Public Options Grouped", True, f"Options grouped by {len(public_options)} categories")
+    
+    def test_login_page_customization(self):
+        """Test login page settings save/load"""
+        print("\n🎨 Testing Login Page Customization...")
+        
+        # Test 1: GET /api/settings/login-page - Get current settings (public)
+        success, current_settings = self.test_endpoint(
+            "GET /api/settings/login-page - Get Settings",
+            "settings/login-page",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success:
+            required_fields = ["site_name_ar", "site_name_en", "subtitle_ar", "subtitle_en", "logo_size", "primary_color"]
+            missing_fields = [field for field in required_fields if field not in current_settings]
+            if not missing_fields:
+                self.log_result("Verify Login Settings Structure", True, "All required fields present")
+            else:
+                self.log_result("Verify Login Settings Structure", False, f"Missing fields: {missing_fields}")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping login settings update tests")
+            return
+        
+        # Test 2: PUT /api/admin/settings/login-page - Update settings
+        update_settings = {
+            "site_name_ar": "خدمات الحشود - اختبار",
+            "site_name_en": "Crowd Services - Test",
+            "logo_size": 200,
+            "primary_color": "#FF5733",
+            "welcome_text_ar": "مرحباً بك في الاختبار",
+            "welcome_text_en": "Welcome to Test"
+        }
+        
+        success, updated_settings = self.test_endpoint(
+            "PUT /api/admin/settings/login-page - Update Settings",
+            "admin/settings/login-page",
+            method="PUT",
+            data=update_settings,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success:
+            if updated_settings.get("logo_size") == 200 and updated_settings.get("primary_color") == "#FF5733":
+                self.log_result("Verify Login Settings Update", True, "Settings updated correctly")
+            else:
+                self.log_result("Verify Login Settings Update", False, f"Update failed: logo_size={updated_settings.get('logo_size')}, color={updated_settings.get('primary_color')}")
+        
+        # Test 3: Restore original settings
+        if current_settings:
+            restore_settings = {
+                "site_name_ar": current_settings.get("site_name_ar"),
+                "site_name_en": current_settings.get("site_name_en"),
+                "logo_size": current_settings.get("logo_size"),
+                "primary_color": current_settings.get("primary_color"),
+                "welcome_text_ar": current_settings.get("welcome_text_ar"),
+                "welcome_text_en": current_settings.get("welcome_text_en")
+            }
+            
+            success, restored = self.test_endpoint(
+                "PUT /api/admin/settings/login-page - Restore Original",
+                "admin/settings/login-page",
+                method="PUT",
+                data=restore_settings,
+                auth_required=True,
+                expected_status=200
+            )
+    
+    def test_header_customization(self):
+        """Test header settings save/load and show/hide toggles"""
+        print("\n🎨 Testing Header Customization...")
+        
+        # Test 1: GET /api/settings/header - Get current settings
+        success, current_settings = self.test_endpoint(
+            "GET /api/settings/header - Get Settings",
+            "settings/header",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success:
+            required_fields = ["background_color", "text_color", "show_shadow", "show_date", "show_page_name", 
+                             "show_user_name", "show_language_toggle", "show_theme_toggle", "show_logout_button", 
+                             "show_notifications_bell"]
+            missing_fields = [field for field in required_fields if field not in current_settings]
+            if not missing_fields:
+                self.log_result("Verify Header Settings Structure", True, "All required fields present")
+            else:
+                self.log_result("Verify Header Settings Structure", False, f"Missing fields: {missing_fields}")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping header settings update tests")
+            return
+        
+        # Test 2: PUT /api/admin/settings/header - Update settings with toggles
+        update_settings = {
+            "background_color": "#1E40AF",
+            "text_color": "#FFFFFF",
+            "show_shadow": False,
+            "show_date": True,
+            "show_page_name": True,
+            "show_user_name": True,
+            "show_language_toggle": True,
+            "show_theme_toggle": True,
+            "show_logout_button": True,
+            "show_notifications_bell": False,
+            "header_height": 72
+        }
+        
+        success, updated_settings = self.test_endpoint(
+            "PUT /api/admin/settings/header - Update Settings",
+            "admin/settings/header",
+            method="PUT",
+            data=update_settings,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success:
+            checks = [
+                updated_settings.get("background_color") == "#1E40AF",
+                updated_settings.get("show_shadow") == False,
+                updated_settings.get("show_notifications_bell") == False,
+                updated_settings.get("header_height") == 72
+            ]
+            if all(checks):
+                self.log_result("Verify Header Settings Update", True, "All settings updated correctly")
+            else:
+                self.log_result("Verify Header Settings Update", False, f"Some settings not updated correctly")
+        
+        # Test 3: Restore original settings
+        if current_settings:
+            restore_settings = {
+                "background_color": current_settings.get("background_color"),
+                "text_color": current_settings.get("text_color"),
+                "show_shadow": current_settings.get("show_shadow"),
+                "show_date": current_settings.get("show_date"),
+                "show_page_name": current_settings.get("show_page_name"),
+                "show_user_name": current_settings.get("show_user_name"),
+                "show_language_toggle": current_settings.get("show_language_toggle"),
+                "show_theme_toggle": current_settings.get("show_theme_toggle"),
+                "show_logout_button": current_settings.get("show_logout_button"),
+                "show_notifications_bell": current_settings.get("show_notifications_bell"),
+                "header_height": current_settings.get("header_height")
+            }
+            
+            success, restored = self.test_endpoint(
+                "PUT /api/admin/settings/header - Restore Original",
+                "admin/settings/header",
+                method="PUT",
+                data=restore_settings,
+                auth_required=True,
+                expected_status=200
+            )
+    
+    def test_interactive_maps(self):
+        """Test interactive maps API endpoints and markers"""
+        print("\n🗺️ Testing Interactive Maps...")
+        
+        # Test 1: GET /api/maps - Get all maps
+        success, maps_data = self.test_endpoint(
+            "GET /api/maps - Get All Maps",
+            "maps",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        initial_maps_count = len(maps_data) if success and isinstance(maps_data, list) else 0
+        print(f"  📊 Initial maps count: {initial_maps_count}")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping maps creation tests")
+            return
+        
+        # Test 2: POST /api/admin/maps - Create new map
+        test_map = {
+            "name_ar": "خريطة الأبواب - اختبار",
+            "name_en": "Gates Map - Test",
+            "department": "gates",
+            "image_url": "https://example.com/map.jpg",
+            "width": 1920,
+            "height": 1080
+        }
+        
+        success, created_map = self.test_endpoint(
+            "POST /api/admin/maps - Create Map",
+            "admin/maps",
+            method="POST",
+            data=test_map,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        map_id = None
+        if success and "id" in created_map:
+            map_id = created_map["id"]
+            self.log_result("Verify Map Creation", True, f"Map created with ID: {map_id}")
+        
+        # Test 3: POST /api/admin/maps/markers - Create marker
+        if map_id:
+            test_marker = {
+                "map_id": map_id,
+                "type": "gate",
+                "entity_id": None,
+                "x": 45.5,
+                "y": 60.2,
+                "label_ar": "باب اختباري",
+                "label_en": "Test Gate",
+                "icon": "MapPin",
+                "color": "#DC2626",
+                "show_label": True
+            }
+            
+            success, created_marker = self.test_endpoint(
+                "POST /api/admin/maps/markers - Create Marker",
+                "admin/maps/markers",
+                method="POST",
+                data=test_marker,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            marker_id = None
+            if success and "id" in created_marker:
+                marker_id = created_marker["id"]
+                self.log_result("Verify Marker Creation", True, f"Marker created with ID: {marker_id}")
+            
+            # Test 4: GET /api/maps/{map_id}/markers - Get markers with live data enrichment
+            success, markers_data = self.test_endpoint(
+                "GET /api/maps/{map_id}/markers - Get Markers with Live Data",
+                f"maps/{map_id}/markers",
+                auth_required=False,
+                expected_status=200
+            )
+            
+            if success and isinstance(markers_data, list) and len(markers_data) > 0:
+                first_marker = markers_data[0]
+                if "live_data" in first_marker:
+                    self.log_result("Verify Live Data Enrichment", True, "Markers include live_data field")
+                else:
+                    self.log_result("Verify Live Data Enrichment", False, "live_data field missing")
+            
+            # Test 5: DELETE /api/admin/maps/markers/{marker_id} - Delete marker
+            if marker_id:
+                success, delete_response = self.test_endpoint(
+                    "DELETE /api/admin/maps/markers/{id} - Delete Marker",
+                    f"admin/maps/markers/{marker_id}",
+                    method="DELETE",
+                    auth_required=True,
+                    expected_status=200
+                )
+        
+        # Test 6: GET /api/maps?department=gates - Filter by department
+        success, gates_maps = self.test_endpoint(
+            "GET /api/maps?department=gates - Filter by Department",
+            "maps?department=gates",
+            auth_required=False,
+            expected_status=200
+        )
+    
+    def test_employee_gate_relationship(self):
+        """Test employee-gate relationship: location dropdown and staff count"""
+        print("\n👷🚪 Testing Employee-Gate Relationship...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping employee-gate relationship tests")
+            return
+        
+        # Test 1: GET /api/gates?status=open - Get only open gates for employee location dropdown
+        success, open_gates = self.test_endpoint(
+            "GET /api/gates?status=open - Get Open Gates for Location Dropdown",
+            "gates?status=open",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success and isinstance(open_gates, list):
+            # Verify all returned gates have status "open" or "متاح"
+            all_open = all(gate.get("status") in ["open", "متاح"] for gate in open_gates)
+            if all_open:
+                self.log_result("Verify Open Gates Filter", True, f"All {len(open_gates)} gates are open")
+            else:
+                self.log_result("Verify Open Gates Filter", False, "Some gates are not open")
+        
+        # Test 2: Create employee with gate location
+        test_employee_with_gate = {
+            "name": "علي محمد الحارثي",
+            "job_title": "مشرف باب",
+            "department": "gates",
+            "location": "باب الملك عبدالعزيز - الساحة الشرقية",
+            "shift": "الأولى",
+            "is_active": True
+        }
+        
+        success, created_employee = self.test_endpoint(
+            "POST /api/employees - Create Employee with Gate Location",
+            "employees",
+            method="POST",
+            data=test_employee_with_gate,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        employee_id = None
+        if success and "id" in created_employee:
+            employee_id = created_employee["id"]
+            self.log_result("Verify Employee with Gate Location", True, f"Employee created with location: {test_employee_with_gate['location']}")
+        
+        # Test 3: GET /api/employees/stats/gates - Verify staff count includes employees with locations
+        success, gates_stats = self.test_endpoint(
+            "GET /api/employees/stats/gates - Verify Staff Count",
+            "employees/stats/gates",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success:
+            if "employees_with_location" in gates_stats and "locations_count" in gates_stats:
+                self.log_result("Verify Staff Count in Stats", True, 
+                              f"Employees with location: {gates_stats['employees_with_location']}, Unique locations: {gates_stats['locations_count']}")
+            else:
+                self.log_result("Verify Staff Count in Stats", False, "Missing location statistics")
+        
+        # Test 4: GET /api/gates/stats - Verify gate stats (should show staff count indirectly)
+        success, gate_stats = self.test_endpoint(
+            "GET /api/gates/stats - Get Gate Statistics",
+            "gates/stats",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success:
+            required_fields = ["total", "open", "closed", "total_flow", "entry_gates", "exit_gates"]
+            missing_fields = [field for field in required_fields if field not in gate_stats]
+            if not missing_fields:
+                self.log_result("Verify Gate Stats Structure", True, "All required fields present")
+            else:
+                self.log_result("Verify Gate Stats Structure", False, f"Missing fields: {missing_fields}")
+        
+        # Cleanup: Delete test employee
+        if employee_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/employees/{id} - Delete Test Employee",
+                f"employees/{employee_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+
     def run_all_tests(self):
         """Run all API tests - Comprehensive Testing for Review Request"""
         print("🚀 Starting Crowd Services Platform Comprehensive Testing...")
@@ -1454,11 +1914,26 @@ class AlHaramAPITester:
         # Category 7: Alerts/Notifications
         self.test_alerts_comprehensive()
         
-        # Category 8: RBAC Report Filtering (NEW FEATURE)
+        # Category 8: RBAC Report Filtering (TODAY'S FEATURE)
         self.test_rbac_report_filtering()
         
-        # Category 9: Sidebar Submenu Functionality (NEW FEATURE)
+        # Category 9: Sidebar Submenu Functionality (TODAY'S FEATURE)
         self.test_sidebar_submenu_functionality()
+        
+        # Category 10: Dropdown Options Management (TODAY'S FEATURE)
+        self.test_dropdown_options_management()
+        
+        # Category 11: Login Page Customization (TODAY'S FEATURE)
+        self.test_login_page_customization()
+        
+        # Category 12: Header Customization (TODAY'S FEATURE)
+        self.test_header_customization()
+        
+        # Category 13: Interactive Maps (TODAY'S FEATURE)
+        self.test_interactive_maps()
+        
+        # Category 14: Employee-Gate Relationship (TODAY'S FEATURE)
+        self.test_employee_gate_relationship()
         
         # Additional tests
         self.test_admin_endpoints()
