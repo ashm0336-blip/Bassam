@@ -143,6 +143,7 @@ export default function SidebarManager() {
         icon: item.icon,
         order: item.order,
         is_public: item.is_public,
+        is_secondary: item.is_secondary || false,
         admin_only: item.admin_only,
         department: item.department || "none"
       });
