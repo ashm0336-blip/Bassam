@@ -213,6 +213,31 @@ class SidebarMenuItemUpdate(BaseModel):
     department: Optional[str] = None
     admin_only: Optional[bool] = None
 
+# ============= Settings Models =============
+class LoginPageSettings(BaseModel):
+    id: str = "login_settings"  # Single document
+    site_name_ar: str = "خدمات الحشود"
+    site_name_en: str = "Crowd Services"
+    subtitle_ar: str = "منصة إدارة الحشود في الحرم المكي الشريف"
+    subtitle_en: str = "Crowd Management Platform at Al-Haram"
+    logo_url: Optional[str] = None
+    background_url: Optional[str] = None
+    primary_color: str = "#DC2626"
+    welcome_text_ar: str = "مرحباً بك"
+    welcome_text_en: str = "Welcome"
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class LoginPageSettingsUpdate(BaseModel):
+    site_name_ar: Optional[str] = None
+    site_name_en: Optional[str] = None
+    subtitle_ar: Optional[str] = None
+    subtitle_en: Optional[str] = None
+    logo_url: Optional[str] = None
+    background_url: Optional[str] = None
+    primary_color: Optional[str] = None
+    welcome_text_ar: Optional[str] = None
+    welcome_text_en: Optional[str] = None
+
 # ============= Auth Functions =============
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
