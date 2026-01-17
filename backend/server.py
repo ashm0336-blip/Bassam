@@ -1559,6 +1559,90 @@ async def seed_sidebar_menu(admin: dict = Depends(require_admin)):
     
     return {"message": "تم تهيئة القائمة بنجاح", "count": len(items_to_insert)}
 
+# ============= Interactive Maps Routes =============
+@api_router.get("/maps")
+async def get_maps(department: Optional[str] = None):
+    """Get all maps or filter by department"""
+    query = {"is_active": True}
+    if department:
+        query["department"] = department
+    
+    maps = await db.maps.find(query, {"_id": 0}).to_list(100)
+    return maps
+
+@api_router.get("/maps/{map_id}/markers")
+async def get_map_markers(map_id: str, type: Optional[str] = None):
+    """Get markers for a specific map"""
+    query = {"map_id": map_id}
+    if type:
+        query["type"] = type
+    
+    markers = await db.map_markers.find(query, {"_id": 0}).to_list(1000)
+    
+    # Enrich markers with live data
+    enriched_markers = []
+    for marker in markers:
+        enriched = marker.copy()
+        
+        # If linked to entity, get live data
+        if marker.get("entity_id"):
+            if marker["type"] == "gate":
+                gate = await db.gates.find_one({"id": marker["entity_id"]}, {"_id": 0})
+                if gate:
+                    enriched["live_data"] = {
+                        "status": gate.get("status"),
+                        "current_flow": gate.get("current_flow", 0),
+                        "max_flow": gate.get("max_flow", 0),
+                        "current_indicator": gate.get("current_indicator")
+                    }
+            elif marker["type"] == "employee":
+                employee = await db.employees.find_one({"id": marker["entity_id"]}, {"_id": 0})
+                if employee:
+                    enriched["live_data"] = {
+                        "name": employee.get("name"),
+                        "job_title": employee.get("job_title"),
+                        "shift": employee.get("shift"),
+                        "is_active": employee.get("is_active")
+                    }
+        
+        enriched_markers.append(enriched)
+    
+    return enriched_markers
+
+@api_router.post("/admin/maps")
+async def create_map(map_data: InteractiveMapCreate, admin: dict = Depends(require_admin)):
+    """Create new map (admin only)"""
+    map_dict = map_data.model_dump()
+    map_obj = InteractiveMap(**map_dict)
+    doc = map_obj.model_dump()
+    
+    await db.maps.insert_one(doc)
+    await log_activity("إضافة خريطة", admin, map_obj.id, f"خريطة {map_data.name_ar}")
+    
+    return map_obj
+
+@api_router.post("/admin/maps/markers")
+async def create_marker(marker: MapMarkerCreate, admin: dict = Depends(require_admin)):
+    """Create new marker (admin only)"""
+    marker_dict = marker.model_dump()
+    marker_obj = MapMarker(**marker_dict)
+    doc = marker_obj.model_dump()
+    
+    await db.map_markers.insert_one(doc)
+    await log_activity("إضافة علامة على الخريطة", admin, marker_obj.id, f"{marker.label_ar}")
+    
+    return marker_obj
+
+@api_router.delete("/admin/maps/markers/{marker_id}")
+async def delete_marker(marker_id: str, admin: dict = Depends(require_admin)):
+    """Delete marker (admin only)"""
+    result = await db.map_markers.delete_one({"id": marker_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="العلامة غير موجودة")
+    
+    await log_activity("حذف علامة من الخريطة", admin, marker_id, "تم الحذف")
+    return {"message": "تم حذف العلامة بنجاح"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
