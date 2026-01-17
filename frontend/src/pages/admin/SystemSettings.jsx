@@ -106,6 +106,7 @@ export default function SystemSettings() {
     show_language_toggle: true,
     show_theme_toggle: true,
     show_logout_button: true,
+    show_notifications_bell: true,
     custom_greeting_ar: "أهلاً",
     custom_greeting_en: "Hello",
     show_logo: false,
