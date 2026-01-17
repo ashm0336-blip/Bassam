@@ -1328,6 +1328,9 @@ class AlHaramAPITester:
         # Category 7: Alerts/Notifications
         self.test_alerts_comprehensive()
         
+        # Category 8: RBAC Report Filtering (NEW FEATURE)
+        self.test_rbac_report_filtering()
+        
         # Additional tests
         self.test_admin_endpoints()
         self.test_unauthorized_access()
