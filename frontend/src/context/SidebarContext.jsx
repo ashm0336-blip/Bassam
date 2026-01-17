@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -16,16 +17,17 @@ export const useSidebar = () => {
 export const SidebarProvider = ({ children }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const fetchMenuItems = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user) {
+      setMenuItems([]);
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setMenuItems([]);
-        setLoading(false);
-        return;
-      }
-      
       const response = await axios.get(`${API}/sidebar-menu`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -37,15 +39,17 @@ export const SidebarProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const refreshMenu = useCallback(() => {
     fetchMenuItems();
   }, [fetchMenuItems]);
 
   useEffect(() => {
-    fetchMenuItems();
-  }, [fetchMenuItems]);
+    if (user) {
+      fetchMenuItems();
+    }
+  }, [user, fetchMenuItems]);
 
   const value = {
     menuItems,
