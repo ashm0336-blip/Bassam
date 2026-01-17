@@ -71,10 +71,6 @@ export default function AdminPage() {
           <ActivityLog />
         </TabsContent>
 
-        <TabsContent value="data" className="mt-6">
-          <DataManagement />
-        </TabsContent>
-
         <TabsContent value="settings" className="mt-6">
           <SystemSettings />
         </TabsContent>
