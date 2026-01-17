@@ -568,6 +568,239 @@ export default function SystemSettings() {
           </SettingSection>
         </TabsContent>
 
+        {/* Header Settings Tab */}
+        <TabsContent value="header" className="mt-6">
+          <SettingSection
+            icon={Settings}
+            title={language === 'ar' ? 'إعدادات Header' : 'Header Settings'}
+            description={language === 'ar' ? 'تخصيص شريط العلوي للمنصة' : 'Customize platform header bar'}
+          >
+            <div className="space-y-6" dir="rtl">
+              {/* Colors Section */}
+              <div>
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'الألوان' : 'Colors'}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-right block mb-2">{language === 'ar' ? 'لون الخلفية' : 'Background Color'}</Label>
+                    <div className="flex gap-2 flex-row-reverse">
+                      <Input 
+                        value={headerSettings.background_color}
+                        onChange={(e) => setHeaderSettings({...headerSettings, background_color: e.target.value})}
+                        className="flex-1 text-right"
+                      />
+                      <Input 
+                        type="color"
+                        value={headerSettings.background_color}
+                        onChange={(e) => setHeaderSettings({...headerSettings, background_color: e.target.value})}
+                        className="w-16"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-right block mb-2">{language === 'ar' ? 'لون النص' : 'Text Color'}</Label>
+                    <div className="flex gap-2 flex-row-reverse">
+                      <Input 
+                        value={headerSettings.text_color}
+                        onChange={(e) => setHeaderSettings({...headerSettings, text_color: e.target.value})}
+                        className="flex-1 text-right"
+                      />
+                      <Input 
+                        type="color"
+                        value={headerSettings.text_color}
+                        onChange={(e) => setHeaderSettings({...headerSettings, text_color: e.target.value})}
+                        className="w-16"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Appearance Section */}
+              <div>
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'المظهر' : 'Appearance'}</Label>
+                <div className="space-y-3">
+                  <SettingItem label={language === 'ar' ? 'إظهار الظل' : 'Show Shadow'}>
+                    <Switch checked={headerSettings.show_shadow} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_shadow: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <Label className="text-sm text-right block mb-2">{language === 'ar' ? 'ارتفاع Header (بكسل)' : 'Header Height (px)'}</Label>
+                    <div className="flex gap-4 items-center flex-row-reverse">
+                      <span className="text-sm text-muted-foreground w-16 text-right">{headerSettings.header_height}px</span>
+                      <input 
+                        type="range" 
+                        min="48" 
+                        max="96" 
+                        value={headerSettings.header_height}
+                        onChange={(e) => setHeaderSettings({...headerSettings, header_height: parseInt(e.target.value)})}
+                        className="flex-1"
+                        dir="rtl"
+                      />
+                      <Input 
+                        type="number"
+                        min="48"
+                        max="96"
+                        value={headerSettings.header_height}
+                        onChange={(e) => setHeaderSettings({...headerSettings, header_height: parseInt(e.target.value) || 64})}
+                        className="w-20"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-right">
+                      {language === 'ar' ? 'بين 48 و 96 بكسل (الافتراضي: 64)' : '48-96 pixels (default: 64)'}
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <Label className="text-sm text-right block mb-2">{language === 'ar' ? 'الشفافية' : 'Transparency'}</Label>
+                    <div className="flex gap-4 items-center flex-row-reverse">
+                      <span className="text-sm text-muted-foreground w-16 text-right">{headerSettings.transparency}%</span>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={headerSettings.transparency}
+                        onChange={(e) => setHeaderSettings({...headerSettings, transparency: parseInt(e.target.value)})}
+                        className="flex-1"
+                        dir="rtl"
+                      />
+                      <Input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={headerSettings.transparency}
+                        onChange={(e) => setHeaderSettings({...headerSettings, transparency: parseInt(e.target.value) || 100})}
+                        className="w-20"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Display Elements */}
+              <div>
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'عناصر العرض' : 'Display Elements'}</Label>
+                <div className="space-y-3">
+                  <SettingItem label={language === 'ar' ? 'إظهار التاريخ' : 'Show Date'}>
+                    <Switch checked={headerSettings.show_date} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_date: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'إظهار اسم الصفحة' : 'Show Page Name'}>
+                    <Switch checked={headerSettings.show_page_name} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_page_name: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'إظهار اسم المستخدم' : 'Show User Name'}>
+                    <Switch checked={headerSettings.show_user_name} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_user_name: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'زر تبديل اللغة' : 'Language Toggle'}>
+                    <Switch checked={headerSettings.show_language_toggle} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_language_toggle: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'زر تبديل الثيم' : 'Theme Toggle'}>
+                    <Switch checked={headerSettings.show_theme_toggle} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_theme_toggle: v})} />
+                  </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'زر تسجيل الخروج' : 'Logout Button'}>
+                    <Switch checked={headerSettings.show_logout_button} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_logout_button: v})} />
+                  </SettingItem>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Custom Text */}
+              <div>
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'النص المخصص' : 'Custom Text'}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground text-right block mb-2">{language === 'ar' ? 'نص الترحيب (عربي)' : 'Greeting (Arabic)'}</Label>
+                    <Input 
+                      value={headerSettings.custom_greeting_ar}
+                      onChange={(e) => setHeaderSettings({...headerSettings, custom_greeting_ar: e.target.value})}
+                      className="text-right"
+                      placeholder="أهلاً"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground text-right block mb-2">{language === 'ar' ? 'نص الترحيب (إنجليزي)' : 'Greeting (English)'}</Label>
+                    <Input 
+                      value={headerSettings.custom_greeting_en}
+                      onChange={(e) => setHeaderSettings({...headerSettings, custom_greeting_en: e.target.value})}
+                      className="text-right"
+                      placeholder="Hello"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-right">
+                  {language === 'ar' ? 'سيظهر: "أهلاً، اسم المستخدم"' : 'Will display: "Hello, User Name"'}
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Logo in Header */}
+              <div>
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'شعار Header' : 'Header Logo'}</Label>
+                <SettingItem label={language === 'ar' ? 'إظهار الشعار في Header' : 'Show Logo in Header'}>
+                  <Switch checked={headerSettings.show_logo} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_logo: v})} />
+                </SettingItem>
+                
+                {headerSettings.show_logo && (
+                  <div className="mt-3">
+                    <Label className="text-sm text-right block mb-2">{language === 'ar' ? 'رابط الشعار' : 'Logo URL'}</Label>
+                    <Input 
+                      value={headerSettings.header_logo_url || ""}
+                      onChange={(e) => setHeaderSettings({...headerSettings, header_logo_url: e.target.value})}
+                      className="text-right"
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSaveHeaderSettings} 
+                className="bg-primary hover:bg-primary/90"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    {language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 ml-2" />
+                    {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </SettingSection>
+        </TabsContent>
+
         {/* General Settings Tab */}
         <TabsContent value="general" className="mt-6">
           <SettingSection
