@@ -1254,6 +1254,125 @@ class AlHaramAPITester:
                 expected_status=200
             )
     
+    def test_sidebar_submenu_functionality(self):
+        """Test sidebar menu with expandable submenus"""
+        print("\n📋 Testing Sidebar Submenu Functionality...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping sidebar menu tests")
+            return
+        
+        # Test 1: GET /api/sidebar-menu - Get sidebar menu for authenticated user
+        success, menu_items = self.test_endpoint(
+            "GET /api/sidebar-menu - Get User Sidebar Menu",
+            "sidebar-menu",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(menu_items, list):
+            self.log_result("Sidebar Menu Returns List", True, f"Returned {len(menu_items)} menu items")
+            
+            # Verify menu items have required fields
+            if len(menu_items) > 0:
+                first_item = menu_items[0]
+                required_fields = ["id", "name_ar", "name_en", "href", "icon", "order"]
+                missing_fields = [field for field in required_fields if field not in first_item]
+                if not missing_fields:
+                    self.log_result("Sidebar Menu Item Structure", True, "All required fields present")
+                else:
+                    self.log_result("Sidebar Menu Item Structure", False, f"Missing fields: {missing_fields}")
+            
+            # Check for items with parent_id (submenus)
+            submenu_items = [item for item in menu_items if item.get("parent_id")]
+            parent_items = [item for item in menu_items if not item.get("parent_id")]
+            
+            if submenu_items:
+                self.log_result("Submenu Items Present", True, f"Found {len(submenu_items)} submenu items")
+            else:
+                self.log_result("Submenu Items Present", False, "No submenu items found with parent_id")
+            
+            # Verify parent items don't have parent_id set
+            invalid_parents = [item for item in parent_items if "parent_id" in item and item["parent_id"] is not None]
+            if not invalid_parents:
+                self.log_result("Parent Items Validation", True, f"{len(parent_items)} parent items have no parent_id")
+            else:
+                self.log_result("Parent Items Validation", False, f"{len(invalid_parents)} parent items have invalid parent_id")
+            
+            # Verify submenu items have valid parent_id
+            if submenu_items:
+                parent_ids = set(item["id"] for item in parent_items)
+                orphaned_submenus = [item for item in submenu_items if item.get("parent_id") not in parent_ids]
+                
+                if not orphaned_submenus:
+                    self.log_result("Submenu Parent Validation", True, "All submenus have valid parent_id")
+                else:
+                    self.log_result("Submenu Parent Validation", False, f"{len(orphaned_submenus)} orphaned submenus found")
+            
+            # Check for Gates menu and its children
+            gates_menu_id = "53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19"
+            gates_menu = next((item for item in menu_items if item.get("id") == gates_menu_id), None)
+            
+            if gates_menu:
+                self.log_result("Gates Menu Found", True, f"Gates menu: {gates_menu.get('name_ar', 'N/A')}")
+                
+                # Count children of Gates menu
+                gates_children = [item for item in submenu_items if item.get("parent_id") == gates_menu_id]
+                if len(gates_children) == 3:
+                    self.log_result("Gates Menu Children Count", True, f"Gates menu has exactly 3 children")
+                    # List the children
+                    child_names = [child.get("name_ar", "N/A") for child in gates_children]
+                    print(f"  📌 Gates submenu items: {', '.join(child_names)}")
+                else:
+                    self.log_result("Gates Menu Children Count", False, f"Expected 3 children, found {len(gates_children)}")
+            else:
+                self.log_result("Gates Menu Found", False, f"Gates menu with ID {gates_menu_id} not found")
+            
+            # Verify total count (should be ~16 items: 13 parents + 3 children)
+            total_items = len(menu_items)
+            if 15 <= total_items <= 17:  # Allow some flexibility
+                self.log_result("Total Menu Items Count", True, f"Total items: {total_items} (expected ~16)")
+            else:
+                self.log_result("Total Menu Items Count", False, f"Expected ~16 items, found {total_items}")
+        else:
+            self.log_result("Sidebar Menu Returns List", False, "Response is not a list")
+        
+        # Test 2: GET /api/admin/sidebar-menu - Get all sidebar menu items (admin only)
+        success, admin_menu_items = self.test_endpoint(
+            "GET /api/admin/sidebar-menu - Get Admin Sidebar Menu",
+            "admin/sidebar-menu",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(admin_menu_items, list):
+            self.log_result("Admin Sidebar Menu Returns List", True, f"Returned {len(admin_menu_items)} menu items")
+            
+            # Verify parent-child relationships
+            parent_items_admin = [item for item in admin_menu_items if not item.get("parent_id")]
+            submenu_items_admin = [item for item in admin_menu_items if item.get("parent_id")]
+            
+            print(f"  📊 Admin view: {len(parent_items_admin)} parent items, {len(submenu_items_admin)} submenu items")
+            
+            # Verify children are properly linked to parents
+            if submenu_items_admin:
+                parent_ids_admin = set(item["id"] for item in parent_items_admin)
+                properly_linked = all(item.get("parent_id") in parent_ids_admin for item in submenu_items_admin)
+                
+                if properly_linked:
+                    self.log_result("Admin Menu Parent-Child Links", True, "All children properly linked to parents")
+                else:
+                    orphaned = [item for item in submenu_items_admin if item.get("parent_id") not in parent_ids_admin]
+                    self.log_result("Admin Menu Parent-Child Links", False, f"{len(orphaned)} orphaned items found")
+            
+            # Compare admin view vs user view
+            if len(admin_menu_items) >= len(menu_items):
+                self.log_result("Admin View Completeness", True, f"Admin sees all items ({len(admin_menu_items)} >= {len(menu_items)})")
+            else:
+                self.log_result("Admin View Completeness", False, f"Admin sees fewer items than user ({len(admin_menu_items)} < {len(menu_items)})")
+        else:
+            self.log_result("Admin Sidebar Menu Returns List", False, "Response is not a list")
+    
     def test_admin_endpoints(self):
         """Test admin-only endpoints"""
         print("\n👑 Testing Admin Endpoints...")
