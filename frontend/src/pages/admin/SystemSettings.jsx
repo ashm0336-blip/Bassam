@@ -79,6 +79,54 @@ export default function SystemSettings() {
     backupFrequency: "daily"
   });
 
+  const [loginSettings, setLoginSettings] = useState({
+    site_name_ar: "خدمات الحشود",
+    site_name_en: "Crowd Services",
+    subtitle_ar: "منصة إدارة الحشود في الحرم المكي الشريف",
+    subtitle_en: "Crowd Management Platform at Al-Haram",
+    logo_url: "",
+    background_url: "",
+    primary_color: "#DC2626",
+    welcome_text_ar: "مرحباً بك",
+    welcome_text_en: "Welcome"
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchLoginSettings();
+  }, []);
+
+  const fetchLoginSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/login-page`);
+      setLoginSettings(response.data);
+    } catch (error) {
+      console.error("Error fetching login settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveLoginSettings = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem("token");
+      
+      await axios.put(`${API}/admin/settings/login-page`, loginSettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(language === 'ar' ? "تم حفظ إعدادات شاشة الدخول بنجاح" : "Login page settings saved successfully");
+    } catch (error) {
+      console.error("Error saving login settings:", error);
+      toast.error(language === 'ar' ? "فشل حفظ الإعدادات" : "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = () => {
     toast.success(language === 'ar' ? "تم حفظ الإعدادات بنجاح" : "Settings saved successfully");
   };
