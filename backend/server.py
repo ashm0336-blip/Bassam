@@ -96,6 +96,16 @@ class GateUpdate(BaseModel):
     area: Optional[str] = None
     operational_seasons: Optional[List[str]] = None
 
+# ============= Season Models =============
+class Season(BaseModel):
+    id: str = "active_season"
+    current_season: str = "normal"  # normal, umrah, ramadan, hajj
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    active_gates_count: int = 0
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ============= Plazas Models =============
 class PlazaCreate(BaseModel):
     name: str
     zone: str  # north, south, east, west, masa, ajyad
