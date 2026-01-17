@@ -1267,6 +1267,41 @@ async def get_public_dropdown_options(category: Optional[str] = None):
     
     return options
 
+# ============= Login Page Settings Routes =============
+@api_router.get("/settings/login-page")
+async def get_login_page_settings():
+    """Get login page settings (public access)"""
+    settings = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    
+    if not settings:
+        # Return defaults
+        default_settings = LoginPageSettings()
+        return default_settings.model_dump()
+    
+    return settings
+
+@api_router.put("/admin/settings/login-page")
+async def update_login_page_settings(
+    settings: LoginPageSettingsUpdate,
+    admin: dict = Depends(require_admin)
+):
+    """Update login page settings (admin only)"""
+    update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.login_settings.update_one(
+            {"id": "login_settings"},
+            {"$set": update_data},
+            upsert=True
+        )
+        
+        await log_activity("تحديث إعدادات شاشة الدخول", admin, "login_settings", "تم تحديث الإعدادات")
+    
+    updated = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    return updated
+
 # ============= Sidebar Menu Routes (Admin Only) =============
 @api_router.get("/admin/sidebar-menu")
 async def get_sidebar_menu_items(admin: dict = Depends(require_admin)):
