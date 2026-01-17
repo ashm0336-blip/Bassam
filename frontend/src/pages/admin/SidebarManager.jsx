@@ -311,6 +311,8 @@ export default function SidebarManager() {
       setFormData({
         name_ar: item.name_ar,
         name_en: item.name_en,
+        subtitle_ar: item.subtitle_ar || "",
+        subtitle_en: item.subtitle_en || "",
         href: item.href,
         icon: item.icon,
         order: item.order,
