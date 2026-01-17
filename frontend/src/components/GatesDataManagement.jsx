@@ -227,7 +227,10 @@ export default function GatesDataManagement() {
                   <TableHead className="text-center">{language === 'ar' ? 'المنطقة' : 'Plaza'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'المسار' : 'Direction'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'التصنيف' : 'Classification'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'المؤشر' : 'Indicator'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الموظفين' : 'Staff'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
