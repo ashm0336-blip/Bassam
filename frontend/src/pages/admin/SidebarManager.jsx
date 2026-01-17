@@ -86,6 +86,7 @@ export default function SidebarManager() {
     icon: "LayoutDashboard",
     order: 0,
     is_public: false,
+    is_secondary: false,
     admin_only: false,
     department: "none"
   });
