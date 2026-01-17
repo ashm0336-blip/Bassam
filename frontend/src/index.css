@@ -153,6 +153,57 @@ code {
 
 /* Glass effect */
 .glass {
+
+/* Mobile Responsive Utilities */
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+  }
+  
+  /* Smaller text on mobile */
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+  
+  /* Stack columns on mobile */
+  .mobile-stack {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Scrollable tables on mobile */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Compact cards on mobile */
+  .card-compact-mobile .p-6 {
+    padding: 1rem !important;
+  }
+  
+  .card-compact-mobile .p-5 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Smaller gaps on mobile */
+  .gap-mobile-sm {
+    gap: 0.5rem !important;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-2-col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
   backdrop-filter: blur(16px);
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.2);
