@@ -1345,6 +1345,40 @@ async def update_login_page_settings(
     updated = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
     return updated
 
+# ============= Header Settings Routes =============
+@api_router.get("/settings/header")
+async def get_header_settings():
+    """Get header settings (public access for authenticated users)"""
+    settings = await db.header_settings.find_one({"id": "header_settings"}, {"_id": 0})
+    
+    if not settings:
+        default_settings = HeaderSettings()
+        return default_settings.model_dump()
+    
+    return settings
+
+@api_router.put("/admin/settings/header")
+async def update_header_settings(
+    settings: HeaderSettingsUpdate,
+    admin: dict = Depends(require_admin)
+):
+    """Update header settings (admin only)"""
+    update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.header_settings.update_one(
+            {"id": "header_settings"},
+            {"$set": update_data},
+            upsert=True
+        )
+        
+        await log_activity("تحديث إعدادات Header", admin, "header_settings", "تم تحديث الإعدادات")
+    
+    updated = await db.header_settings.find_one({"id": "header_settings"}, {"_id": 0})
+    return updated
+
 # ============= Sidebar Menu Routes (Admin Only) =============
 @api_router.get("/admin/sidebar-menu")
 async def get_sidebar_menu_items(admin: dict = Depends(require_admin)):
