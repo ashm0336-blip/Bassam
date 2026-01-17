@@ -85,6 +85,7 @@ export default function MatafDepartment() {
   const activeTab = searchParams.get('tab') || 'dashboard';
   
   const [matafLevels, setMatafLevels] = useState([]);
+  const [haramainData, setHaramainData] = useState(null);
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,16 +94,20 @@ export default function MatafDepartment() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const [matafRes, statsRes, empStatsRes] = await Promise.all([
+        const [matafRes, statsRes, empStatsRes, haramainRes] = await Promise.all([
           axios.get(`${API}/mataf`),
           axios.get(`${API}/mataf/stats`),
           axios.get(`${API}/employees/stats/mataf`, {
             headers: { Authorization: `Bearer ${token}` }
-          })
+          }),
+          axios.get(`${API}/external/haramain-density`).catch(() => null)
         ]);
         setMatafLevels(matafRes.data);
         setStats(statsRes.data);
         setEmployeeStats(empStatsRes.data);
+        if (haramainRes) {
+          setHaramainData(haramainRes.data);
+        }
       } catch (error) {
         console.error("Error fetching mataf data:", error);
       } finally {
