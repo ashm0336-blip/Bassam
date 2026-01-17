@@ -108,15 +108,15 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
 
   return (
     <TableRow ref={setNodeRef} style={style} className={isChild ? 'bg-muted/30' : ''}>
-      <TableCell className="w-12 text-left">
-        <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded">
+      <TableCell className="w-12 text-center">
+        <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded inline-block">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
       </TableCell>
-      <TableCell className="font-medium text-left">{item.order}</TableCell>
-      <TableCell className="text-left">
-        <div className={`flex items-center gap-2 flex-row-reverse ${isChild ? 'pl-6' : ''}`}>
-          <div>
+      <TableCell className="font-medium text-center">{item.order}</TableCell>
+      <TableCell className="text-right">
+        <div className={`flex items-center gap-2 flex-row-reverse justify-end ${isChild ? 'pl-6' : ''}`}>
+          <div className="text-right">
             <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
             <div className="text-xs text-muted-foreground">
               {language === 'ar' ? item.name_en : item.name_ar}
@@ -139,12 +139,12 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </div>
       </TableCell>
-      <TableCell className="text-left text-xs font-mono">{item.href}</TableCell>
-      <TableCell className="text-left">
+      <TableCell className="text-center text-xs">{item.href}</TableCell>
+      <TableCell className="text-center">
         <Badge variant="outline">{item.icon}</Badge>
       </TableCell>
-      <TableCell className="text-left">
-        <div className="flex flex-wrap gap-1 justify-start">
+      <TableCell className="text-center">
+        <div className="flex flex-wrap gap-1 justify-center">
           {item.is_public && (
             <Badge variant="default" className="text-xs">
               {language === 'ar' ? 'عام' : 'Public'}
@@ -163,12 +163,12 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </div>
       </TableCell>
-      <TableCell className="text-left">
+      <TableCell className="text-center">
         <Button
           size="sm"
           variant="ghost"
           onClick={() => onToggleActive(item)}
-          className="h-7 w-7 p-0"
+          className="h-7 w-7 p-0 mx-auto"
         >
           {item.is_active ? (
             <Eye className="w-4 h-4 text-green-600" />
@@ -177,8 +177,8 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </Button>
       </TableCell>
-      <TableCell className="text-left">
-        <div className="flex items-center justify-start gap-2">
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-2">
           <Button
             size="sm"
             variant="ghost"
