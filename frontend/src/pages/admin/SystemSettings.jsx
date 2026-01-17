@@ -301,13 +301,42 @@ export default function SystemSettings() {
               >
                 {saving ? (
                   <>
-                    <Save className="w-4 h-4 ml-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                     {language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 ml-2" />
-                    {language === 'ar' ? 'حفظ إعدادات شاشة الدخول' : 'Save Login Page Settings'}
+                    {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </SettingSection>
+        </TabsContent>
+
+        {/* General Settings Tab */}
+        <TabsContent value="general" className="mt-6">
+          <SettingSection
+            icon={Settings}
+            title={language === 'ar' ? 'الإعدادات العامة' : 'General Settings'}
+            description={language === 'ar' ? 'إعدادات المنصة الأساسية' : 'Basic platform settings'}
+          >
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm">{language === 'ar' ? 'اسم المنصة' : 'Platform Name'}</Label>
+                <Input 
+                  value={settings.platformName}
+                  onChange={(e) => setSettings({...settings, platformName: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </SettingSection>
+        </TabsContent>
+
+        {/* Security Settings Tab */}
+        <TabsContent value="security" className="mt-6">
                   </>
                 )}
               </Button>
