@@ -31,7 +31,8 @@ import {
   Eye,
   EyeOff,
   Shield,
-  AlertCircle
+  AlertCircle,
+  GripVertical
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
