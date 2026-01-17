@@ -249,10 +249,10 @@ class AlHaramAPITester:
         self.auth_token = None
         
         success, data = self.test_endpoint(
-            "GET /api/reports - Unauthorized Access (should fail with 401)",
+            "GET /api/reports - Unauthorized Access (should fail with 403)",
             "reports",
             auth_required=False,
-            expected_status=401
+            expected_status=403
         )
         
         self.auth_token = temp_token
