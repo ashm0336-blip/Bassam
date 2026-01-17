@@ -441,6 +441,21 @@ export const Layout = () => {
               </Button>
             )}
 
+            {/* Notifications Bell */}
+            {headerSettings.show_notifications_bell && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative hover:text-primary"
+                style={{ color: headerSettings.text_color }}
+                onClick={() => navigate('/notifications')}
+                data-testid="header-notifications"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+              </Button>
+            )}
+
             {headerSettings.show_logout_button && (
               <Button 
                 variant="ghost" 
