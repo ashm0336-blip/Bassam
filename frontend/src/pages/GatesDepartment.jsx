@@ -174,8 +174,8 @@ export default function GatesDepartment() {
       {activeTab === 'dashboard' && (
         <>
           <div>
-            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة الأبواب</h2>
-            <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على حالة الأبواب والموظفين</p>
+            <h2 className="font-cairo font-bold text-xl text-right">{pageTitle}</h2>
+            {pageSubtitle && <p className="text-sm text-muted-foreground mt-1 text-right">{pageSubtitle}</p>}
           </div>
 
           {/* Employee Stats */}
