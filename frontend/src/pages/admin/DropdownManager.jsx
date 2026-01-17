@@ -86,7 +86,7 @@ export default function DropdownManager() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const url = selectedCategory 
+      const url = selectedCategory && selectedCategory.trim()
         ? `${API}/admin/dropdown-options?category=${selectedCategory}`
         : `${API}/admin/dropdown-options`;
       
