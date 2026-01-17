@@ -415,18 +415,37 @@ export default function ReportsPage() {
                 <SelectItem value="monthly">شهري</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterDept} onValueChange={setFilterDept}>
-              <SelectTrigger className="w-48" data-testid="dept-filter">
-                <SelectValue placeholder="الإدارة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الإدارات</SelectItem>
-                <SelectItem value="gates">إدارة الأبواب</SelectItem>
-                <SelectItem value="plazas">إدارة الساحات</SelectItem>
-                <SelectItem value="mataf">صحن المطاف</SelectItem>
-                <SelectItem value="planning">التخطيط</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Show department filter only for users who can access all departments */}
+            {canAccessAllDepartments && (
+              <Select value={filterDept} onValueChange={setFilterDept}>
+                <SelectTrigger className="w-48" data-testid="dept-filter">
+                  <SelectValue placeholder="الإدارة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الإدارات</SelectItem>
+                  <SelectItem value="gates">إدارة الأبواب</SelectItem>
+                  <SelectItem value="plazas">إدارة الساحات</SelectItem>
+                  <SelectItem value="mataf">صحن المطاف</SelectItem>
+                  <SelectItem value="planning">التخطيط</SelectItem>
+                  <SelectItem value="crowd_services">خدمات الحشود</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            
+            {/* Show info badge for department managers */}
+            {!canAccessAllDepartments && userDepartment && (
+              <Badge variant="secondary" className="text-xs">
+                عرض تقارير: {
+                  userDepartment === "gates" ? "إدارة الأبواب" :
+                  userDepartment === "plazas" ? "إدارة الساحات" :
+                  userDepartment === "mataf" ? "صحن المطاف" :
+                  userDepartment === "planning" ? "التخطيط" :
+                  userDepartment === "crowd_services" ? "خدمات الحشود" :
+                  userDepartment
+                }
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
