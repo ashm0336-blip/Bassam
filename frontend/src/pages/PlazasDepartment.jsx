@@ -81,7 +81,15 @@ const PlazaCard = ({ plaza }) => {
 
 export default function PlazasDepartment() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { menuItems } = useSidebar();
+  const { language } = useLanguage();
   const activeTab = searchParams.get('tab') || 'dashboard';
+  
+  // Get page title and subtitle from sidebar menu
+  const pageInfo = menuItems.find(item => location.pathname.startsWith(item.href.split('?')[0]) && item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'لوحة تحكم إدارة الساحات' : 'Plazas Dashboard');
+  const pageSubtitle = pageInfo ? (language === 'ar' ? pageInfo.subtitle_ar : pageInfo.subtitle_en) : (language === 'ar' ? 'نظرة شاملة على حالة الساحات والموظفين' : 'Overview of plazas and employees');
   
   const [plazas, setPlazas] = useState([]);
   const [stats, setStats] = useState(null);
