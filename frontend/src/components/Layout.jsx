@@ -198,11 +198,12 @@ export const Layout = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - Fixed */}
       <aside 
         className={`
           hidden lg:flex flex-col bg-card border-l border-border 
           transition-all duration-300 ease-in-out
+          fixed right-0 top-0 h-screen z-40
           ${sidebarOpen ? "w-64" : "w-20"}
         `}
       >
