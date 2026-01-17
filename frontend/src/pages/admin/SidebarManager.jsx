@@ -149,6 +149,7 @@ export default function SidebarManager() {
         is_public: item.is_public,
         is_secondary: item.is_secondary || false,
         admin_only: item.admin_only,
+        parent_id: item.parent_id || "none",
         department: item.department || "none"
       });
     } else {
