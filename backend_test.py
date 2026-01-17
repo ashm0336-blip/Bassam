@@ -263,20 +263,20 @@ class AlHaramAPITester:
         )
 
     def test_authentication_endpoints(self):
-        """Test JWT authentication endpoints"""
-        print("\n🔐 Testing Authentication Endpoints...")
+        """Test JWT authentication endpoints with all user roles"""
+        print("\n🔐 Testing Authentication & Authorization...")
         
-        # Test admin login with correct credentials from frontend
-        admin_login_data = {
+        # Test 1: System Admin Login
+        system_admin_login = {
             "email": "admin@crowd.sa",
             "password": "admin123"
         }
         
         success, data = self.test_endpoint(
-            "Admin Login",
+            "Login - System Admin (admin@crowd.sa)",
             "auth/login",
             method="POST",
-            data=admin_login_data,
+            data=system_admin_login,
             expected_status=200,
             required_fields=["access_token", "token_type", "user"]
         )
@@ -284,30 +284,83 @@ class AlHaramAPITester:
         if success and "access_token" in data:
             self.auth_token = data["access_token"]
             self.admin_user = data["user"]
-            print(f"🔑 Admin token acquired for user: {self.admin_user.get('name', 'Unknown')}")
+            print(f"🔑 System Admin token acquired for user: {self.admin_user.get('name', 'Unknown')}")
+            
+            # Verify token includes department field (should be None for system_admin)
+            if "user" in data and "role" in data["user"]:
+                self.log_result("Verify System Admin Role", True, f"Role: {data['user']['role']}")
         
-        # Test /auth/me endpoint with token
+        # Test 2: General Manager Login
+        general_manager_login = {
+            "email": "general.manager@crowd.sa",
+            "password": "manager123"
+        }
+        
+        success, gm_data = self.test_endpoint(
+            "Login - General Manager (general.manager@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=general_manager_login,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        if success and "user" in gm_data:
+            self.log_result("Verify General Manager Role", True, f"Role: {gm_data['user'].get('role')}")
+        
+        # Test 3: Department Manager Login (Gates)
+        gates_manager_login = {
+            "email": "manager.gates@crowd.sa",
+            "password": "manager123"
+        }
+        
+        success, gates_data = self.test_endpoint(
+            "Login - Gates Manager (manager.gates@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=gates_manager_login,
+            expected_status=200,
+            required_fields=["access_token", "token_type", "user"]
+        )
+        
+        if success and "user" in gates_data:
+            user = gates_data["user"]
+            if "department" in user and user["department"] == "gates":
+                self.log_result("Verify Department Manager Department Field", True, f"Department: {user['department']}")
+            else:
+                self.log_result("Verify Department Manager Department Field", False, f"Expected 'gates', got: {user.get('department')}")
+        
+        # Test 4: /auth/me endpoint with token
         if self.auth_token:
-            success, data = self.test_endpoint(
-                "Get Current User",
+            success, me_data = self.test_endpoint(
+                "GET /api/auth/me - Get Current User",
                 "auth/me",
                 auth_required=True,
                 required_fields=["id", "email", "name", "role", "created_at"]
             )
         
-        # Test invalid login
+        # Test 5: Invalid login
         invalid_login_data = {
             "email": "invalid@test.com",
             "password": "wrongpassword"
         }
         
         success, data = self.test_endpoint(
-            "Invalid Login (Should Fail)",
+            "Invalid Login (Should Fail with 401)",
             "auth/login",
             method="POST",
             data=invalid_login_data,
             expected_status=401
         )
+        
+        # Test 6: Permission checks - Verify system_admin can access admin endpoints
+        if self.auth_token:
+            success, users_data = self.test_endpoint(
+                "Permission Check - System Admin Access to /api/users",
+                "users",
+                auth_required=True,
+                expected_status=200
+            )
 
     def test_user_management_endpoints(self):
         """Test comprehensive user management and permissions"""
