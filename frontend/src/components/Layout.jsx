@@ -355,7 +355,16 @@ export const Layout = () => {
       {/* Main content */}
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? "mr-64" : "mr-20"}`}>
         {/* Top bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        <header 
+          className={`flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 border-b transition-all duration-200 ${headerSettings.show_shadow ? 'shadow-md' : ''}`}
+          style={{
+            height: `${headerSettings.header_height || 64}px`,
+            backgroundColor: headerSettings.background_color || '#FFFFFF',
+            color: headerSettings.text_color || '#000000',
+            opacity: (headerSettings.transparency || 100) / 100,
+            borderColor: 'var(--border)'
+          }}
+        >
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -363,59 +372,87 @@ export const Layout = () => {
               className="lg:hidden"
               onClick={() => setMobileMenuOpen(true)}
               data-testid="mobile-menu-open"
+              style={{ color: headerSettings.text_color }}
             >
               <Menu className="w-5 h-5" />
             </Button>
             
+            {headerSettings.show_logo && headerSettings.header_logo_url && (
+              <img 
+                src={headerSettings.header_logo_url} 
+                alt="Logo" 
+                className="h-8 object-contain"
+              />
+            )}
+            
             <div>
-              <h2 className="font-cairo font-bold text-lg text-foreground">
-                {navigation.find(n => n.href === location.pathname)?.name || 
-                 secondaryNav.find(n => n.href === location.pathname)?.name || 
-                 "لوحة التحكم"}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {new Date().toLocaleDateString('ar-SA', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
+              {headerSettings.show_page_name && (
+                <h2 className="font-cairo font-bold text-lg" style={{ color: headerSettings.text_color }}>
+                  {navigation.find(n => n.href === location.pathname)?.name || 
+                   secondaryNav.find(n => n.href === location.pathname)?.name || 
+                   "لوحة التحكم"}
+                </h2>
+              )}
+              {headerSettings.show_date && (
+                <p className="text-xs" style={{ color: headerSettings.text_color, opacity: 0.7 }}>
+                  {new Date().toLocaleDateString('ar-SA', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {headerSettings.show_user_name && user && (
+              <span className="text-sm font-medium mr-2" style={{ color: headerSettings.text_color }}>
+                {language === 'ar' ? headerSettings.custom_greeting_ar : headerSettings.custom_greeting_en}، {user.name}
+              </span>
+            )}
+            
             {/* Theme Toggle */}
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggleTheme}
-              className="text-muted-foreground hover:text-primary"
-              data-testid="theme-toggle"
-            >
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
+            {headerSettings.show_theme_toggle && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={toggleTheme}
+                className="hover:text-primary"
+                style={{ color: headerSettings.text_color }}
+                data-testid="theme-toggle"
+              >
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </Button>
+            )}
 
             {/* Language Toggle */}
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggleLanguage}
-              className="text-muted-foreground hover:text-primary"
-              data-testid="language-toggle"
-            >
-              <Languages className="w-5 h-5" />
-            </Button>
+            {headerSettings.show_language_toggle && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={toggleLanguage}
+                className="hover:text-primary"
+                style={{ color: headerSettings.text_color }}
+                data-testid="language-toggle"
+              >
+                <Languages className="w-5 h-5" />
+              </Button>
+            )}
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="relative"
-              data-testid="header-notifications"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-            </Button>
+            {headerSettings.show_logout_button && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleLogout}
+                className="hover:text-destructive"
+                style={{ color: headerSettings.text_color }}
+                data-testid="logout-header"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </header>
 
