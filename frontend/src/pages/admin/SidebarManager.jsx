@@ -574,13 +574,13 @@ export default function SidebarManager() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
-                    <TableHead className="w-12">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    <TableHead className="w-16 text-right">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
+                    <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
