@@ -211,6 +211,26 @@ export default function EmployeeManagement({ department }) {
     }
   };
 
+  const handleQuickMove = async (employeeId, newLocation) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      await axios.put(
+        `${API}/employees/${employeeId}`,
+        { location: newLocation },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === 'ar' ? `تم نقل الموظف إلى ${newLocation}` : `Employee moved to ${newLocation}`);
+      fetchEmployees();
+      fetchStats();
+    } catch (error) {
+      console.error("Error moving employee:", error);
+      toast.error(language === 'ar' ? "فشل نقل الموظف" : "Failed to move employee");
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
