@@ -85,15 +85,34 @@ export default function LoginPage() {
               <img 
                 src={pageSettings.logo_url} 
                 alt="Logo" 
-                className="w-20 h-20 mx-auto mb-5 object-contain"
+                className="mx-auto mb-5 object-contain"
+                style={{ 
+                  width: `${pageSettings.logo_size || 150}px`,
+                  height: `${pageSettings.logo_size || 150}px`
+                }}
               />
             ) : (
               <div 
-                className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` }}
+                className="rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg"
+                style={{ 
+                  width: `${pageSettings.logo_size || 150}px`,
+                  height: `${pageSettings.logo_size || 150}px`,
+                  background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` 
+                }}
               >
-                <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center">
-                  <span className="text-white font-cairo font-bold text-2xl">ح</span>
+                <div 
+                  className="rounded-full bg-white/30 flex items-center justify-center"
+                  style={{
+                    width: `${(pageSettings.logo_size || 150) * 0.7}px`,
+                    height: `${(pageSettings.logo_size || 150) * 0.7}px`
+                  }}
+                >
+                  <span 
+                    className="text-white font-cairo font-bold"
+                    style={{ fontSize: `${(pageSettings.logo_size || 150) * 0.35}px` }}
+                  >
+                    ح
+                  </span>
                 </div>
               </div>
             )}
