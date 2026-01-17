@@ -254,6 +254,7 @@ class HeaderSettings(BaseModel):
     show_language_toggle: bool = True
     show_theme_toggle: bool = True
     show_logout_button: bool = True
+    show_notifications_bell: bool = True
     custom_greeting_ar: str = "أهلاً"
     custom_greeting_en: str = "Hello"
     show_logo: bool = False
