@@ -138,7 +138,7 @@ export default function DropdownManager() {
       setEditMode(false);
       setSelectedOption(null);
       setFormData({
-        category: selectedCategory || "",
+        category: selectedCategory && selectedCategory.trim() ? selectedCategory.trim() : "",
         value: "",
         label: "",
         color: "",
