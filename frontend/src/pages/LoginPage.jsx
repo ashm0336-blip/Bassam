@@ -81,41 +81,43 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-10">
-            {pageSettings.logo_url ? (
-              <img 
-                src={pageSettings.logo_url} 
-                alt="Logo" 
-                className="mx-auto mb-5 object-contain"
-                style={{ 
-                  width: `${pageSettings.logo_size || 150}px`,
-                  height: `${pageSettings.logo_size || 150}px`
-                }}
-              />
-            ) : (
-              <div 
-                className="rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg"
-                style={{ 
-                  width: `${pageSettings.logo_size || 150}px`,
-                  height: `${pageSettings.logo_size || 150}px`,
-                  background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` 
-                }}
-              >
+            <a href={pageSettings.logo_link || "/"} className="inline-block">
+              {pageSettings.logo_url ? (
+                <img 
+                  src={pageSettings.logo_url} 
+                  alt="Logo" 
+                  className="mx-auto mb-5 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{ 
+                    width: `${pageSettings.logo_size || 150}px`,
+                    height: `${pageSettings.logo_size || 150}px`
+                  }}
+                />
+              ) : (
                 <div 
-                  className="rounded-full bg-white/30 flex items-center justify-center"
-                  style={{
-                    width: `${(pageSettings.logo_size || 150) * 0.7}px`,
-                    height: `${(pageSettings.logo_size || 150) * 0.7}px`
+                  className="rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{ 
+                    width: `${pageSettings.logo_size || 150}px`,
+                    height: `${pageSettings.logo_size || 150}px`,
+                    background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` 
                   }}
                 >
-                  <span 
-                    className="text-white font-cairo font-bold"
-                    style={{ fontSize: `${(pageSettings.logo_size || 150) * 0.35}px` }}
+                  <div 
+                    className="rounded-full bg-white/30 flex items-center justify-center"
+                    style={{
+                      width: `${(pageSettings.logo_size || 150) * 0.7}px`,
+                      height: `${(pageSettings.logo_size || 150) * 0.7}px`
+                    }}
                   >
-                    ح
-                  </span>
+                    <span 
+                      className="text-white font-cairo font-bold"
+                      style={{ fontSize: `${(pageSettings.logo_size || 150) * 0.35}px` }}
+                    >
+                      ح
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </a>
             <h1 className="font-cairo font-bold text-2xl text-gray-800 mb-2">
               {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
             </h1>
