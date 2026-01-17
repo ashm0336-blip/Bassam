@@ -269,9 +269,11 @@ export default function PlazasDepartment() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>
+      )}
 
-        <TabsContent value="plazas" className="space-y-6 mt-6">
+      {activeTab === 'plazas' && (
+        <>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-cairo font-bold text-2xl">إدارة الساحات</h1>
@@ -290,12 +292,12 @@ export default function PlazasDepartment() {
               </div>
             ))}
           </div>
-        </TabsContent>
+        </>
+      )}
 
-        <TabsContent value="employees" className="mt-6">
-          <EmployeeManagement department="plazas" />
-        </TabsContent>
-      </Tabs>
+      {activeTab === 'employees' && (
+        <EmployeeManagement department="plazas" />
+      )}
     </div>
   );
 }
