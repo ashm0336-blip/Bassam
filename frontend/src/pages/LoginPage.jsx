@@ -198,48 +198,22 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Background Image */}
+      {/* Right Side - Branding */}
       <div 
-        className="hidden lg:flex lg:w-[55%] relative bg-cover bg-center"
+        className="hidden lg:flex lg:w-[55%] bg-cover bg-center relative"
         style={{ 
-          backgroundImage: `url(${BACKGROUND_IMAGE})`,
+          backgroundImage: `url(${pageSettings.background_url})`,
+          backgroundColor: pageSettings.primary_color 
         }}
       >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-l from-black/70 via-black/50 to-black/30" />
-        
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-center">
-          <div className="max-w-lg">
-            {/* Decorative Line */}
-            <div className="w-20 h-1 bg-secondary mx-auto mb-8 rounded-full" />
-            
-            <h2 className="font-cairo font-bold text-4xl text-white mb-4 leading-tight">
-              منصة خدمات الحشود
-            </h2>
-            <p className="text-lg text-white/80 leading-relaxed">
-              نظام إداري متكامل للحرم المكي الشريف
-            </p>
-            
-            {/* Decorative Line */}
-            <div className="w-20 h-1 bg-secondary mx-auto mt-8 rounded-full" />
-            
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 mt-12">
-              <div className="text-center">
-                <p className="text-3xl font-cairo font-bold text-white">5</p>
-                <p className="text-sm text-white/60 mt-1">إدارات</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-cairo font-bold text-white">105</p>
-                <p className="text-sm text-white/60 mt-1">باب</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-cairo font-bold text-white">24/7</p>
-                <p className="text-sm text-white/60 mt-1">مراقبة</p>
-              </div>
-            </div>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+        <div className="relative z-10 flex flex-col items-center justify-center text-white p-12 text-center w-full">
+          <h1 className="font-cairo font-bold text-5xl mb-6">
+            {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
+          </h1>
+          <p className="text-lg max-w-lg leading-relaxed text-white/90">
+            {language === 'ar' ? pageSettings.subtitle_ar : pageSettings.subtitle_en}
+          </p>
         </div>
       </div>
     </div>
