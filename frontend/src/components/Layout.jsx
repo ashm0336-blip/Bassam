@@ -103,7 +103,8 @@ export const Layout = () => {
   };
 
   const NavItem = ({ item, mobile = false, children = [] }) => {
-    const isActive = location.pathname === item.href;
+    const isActive = location.pathname === item.href || 
+                     (item.href.includes('?') && location.pathname + location.search === item.href);
     const Icon = item.icon;
     const hasChildren = children.length > 0;
     const isExpanded = expandedMenus[item.id];
@@ -169,7 +170,7 @@ export const Layout = () => {
           <div className={`mt-1 space-y-1 ${language === 'ar' ? 'pr-4' : 'pl-4'}`}>
             {children.map((child) => {
               const ChildIcon = child.icon;
-              const isChildActive = location.pathname === child.href;
+              const isChildActive = location.pathname + location.search === child.href;
               return (
                 <NavLink
                   key={child.id}
