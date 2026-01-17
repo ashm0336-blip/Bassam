@@ -497,47 +497,50 @@ export default function SidebarManager() {
       {/* Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo text-xl flex items-center gap-2">
-            <Menu className="w-5 h-5" />
-            {language === 'ar' ? 'إدارة القائمة الجانبية' : 'Sidebar Menu Management'}
-          </CardTitle>
-          <CardDescription>
-            {language === 'ar' 
-              ? 'إضافة، تعديل، وحذف أقسام القائمة الجانبية للمنصة'
-              : 'Add, edit, and delete sidebar menu items for the platform'
-            }
-          </CardDescription>
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-right flex-1">
+              <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
+                <Menu className="w-5 h-5" />
+                {language === 'ar' ? 'إدارة القائمة الجانبية' : 'Sidebar Menu Management'}
+              </CardTitle>
+              <CardDescription className="text-right mt-1">
+                {language === 'ar' 
+                  ? 'إضافة، تعديل، وحذف أقسام القائمة الجانبية للمنصة'
+                  : 'Add, edit, and delete sidebar menu items for the platform'
+                }
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => handleOpenDialog()} className="bg-primary">
+                <Plus className="w-4 h-4 ml-2" />
+                {language === 'ar' ? 'إضافة قسم جديد' : 'Add New Item'}
+              </Button>
+              
+              {menuItems.length === 0 && (
+                <Button 
+                  onClick={handleSeedData} 
+                  variant="outline"
+                  disabled={seeding}
+                >
+                  {seeding ? (
+                    <>
+                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                      {language === 'ar' ? 'جاري التهيئة...' : 'Seeding...'}
+                    </>
+                  ) : (
+                    <>
+                      <Menu className="w-4 h-4 ml-2" />
+                      {language === 'ar' ? 'تهيئة القائمة الافتراضية' : 'Seed Default Menu'}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button onClick={() => handleOpenDialog()} className="bg-primary">
-              <Plus className="w-4 h-4 ml-2" />
-              {language === 'ar' ? 'إضافة قسم جديد' : 'Add New Item'}
-            </Button>
-            
-            {menuItems.length === 0 && (
-              <Button 
-                onClick={handleSeedData} 
-                variant="outline"
-                disabled={seeding}
-              >
-                {seeding ? (
-                  <>
-                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    {language === 'ar' ? 'جاري التهيئة...' : 'Seeding...'}
-                  </>
-                ) : (
-                  <>
-                    <Menu className="w-4 h-4 ml-2" />
-                    {language === 'ar' ? 'تهيئة القائمة الافتراضية' : 'Seed Default Menu'}
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-
           {menuItems.length === 0 && !loading && (
-            <Alert className="mt-4">
+            <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {language === 'ar' 
