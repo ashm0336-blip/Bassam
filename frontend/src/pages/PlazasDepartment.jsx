@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LayoutGrid, 
   Users, 
@@ -78,6 +78,9 @@ const PlazaCard = ({ plaza }) => {
 };
 
 export default function PlazasDepartment() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  
   const [plazas, setPlazas] = useState([]);
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
