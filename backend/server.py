@@ -584,8 +584,30 @@ async def create_gate(gate: GateCreate, user: dict = Depends(require_admin)):
 
 @api_router.put("/admin/gates/{gate_id}")
 async def update_gate(gate_id: str, gate: GateUpdate, user: dict = Depends(require_admin)):
+    # Get old gate data first
+    old_gate = await db.gates.find_one({"id": gate_id}, {"_id": 0})
+    if not old_gate:
+        raise HTTPException(status_code=404, detail="الباب غير موجود")
+    
     update_data = {k: v for k, v in gate.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Check if status changed to "مغلق"
+    if update_data.get("status") == "مغلق" and old_gate.get("status") != "مغلق":
+        # Remove all employees from this gate
+        gate_name = old_gate.get("name")
+        result = await db.employees.update_many(
+            {"location": gate_name, "department": "gates"},
+            {"$set": {"location": ""}}
+        )
+        
+        if result.modified_count > 0:
+            await log_activity(
+                "إزالة الموظفين من باب مغلق", 
+                user, 
+                gate_id, 
+                f"تم إزالة {result.modified_count} موظف من {gate_name}"
+            )
     
     result = await db.gates.update_one({"id": gate_id}, {"$set": update_data})
     if result.modified_count == 0:
