@@ -582,22 +582,30 @@ export default function SidebarManager() {
                 </TableHeader>
                 <TableBody>
                   <SortableContext
-                    items={menuItems.map(item => item.id)}
+                    items={displayItems.map(item => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {menuItems.map((item) => (
-                      <SortableRow
-                        key={item.id}
-                        item={item}
-                        language={language}
-                        onEdit={handleOpenDialog}
-                        onDelete={(item) => {
-                          setSelectedItem(item);
-                          setDeleteDialogOpen(true);
-                        }}
-                        onToggleActive={handleToggleActive}
-                      />
-                    ))}
+                    {displayItems.map((item) => {
+                      const children = menuItems.filter(child => child.parent_id === item.id);
+                      const isExpanded = expandedItems[item.id];
+                      
+                      return (
+                        <SortableRow
+                          key={item.id}
+                          item={item}
+                          language={language}
+                          onEdit={handleOpenDialog}
+                          onDelete={(item) => {
+                            setSelectedItem(item);
+                            setDeleteDialogOpen(true);
+                          }}
+                          onToggleActive={handleToggleActive}
+                          isExpanded={isExpanded}
+                          onToggleExpand={toggleExpand}
+                          hasChildren={children.length > 0}
+                        />
+                      );
+                    })}
                   </SortableContext>
                 </TableBody>
               </Table>
