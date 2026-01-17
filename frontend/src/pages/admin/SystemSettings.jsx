@@ -724,6 +724,12 @@ export default function SystemSettings() {
                   <SettingItem label={language === 'ar' ? 'زر تسجيل الخروج' : 'Logout Button'}>
                     <Switch checked={headerSettings.show_logout_button} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_logout_button: v})} />
                   </SettingItem>
+                  
+                  <Separator />
+                  
+                  <SettingItem label={language === 'ar' ? 'جرس التنبيهات' : 'Notifications Bell'}>
+                    <Switch checked={headerSettings.show_notifications_bell} onCheckedChange={(v) => setHeaderSettings({...headerSettings, show_notifications_bell: v})} />
+                  </SettingItem>
                 </div>
               </div>
 
