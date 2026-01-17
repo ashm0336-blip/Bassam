@@ -272,7 +272,7 @@ export default function PlazasDepartment() {
         </>
       )}
 
-      {activeTab === 'plazas' && (
+      {activeTab === 'data' && (
         <>
           <div className="flex items-center justify-between">
             <div>
