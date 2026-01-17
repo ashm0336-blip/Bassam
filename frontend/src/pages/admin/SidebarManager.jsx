@@ -380,6 +380,50 @@ export default function SidebarManager() {
     }
   };
 
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const oldIndex = menuItems.findIndex((item) => item.id === active.id);
+      const newIndex = menuItems.findIndex((item) => item.id === over.id);
+
+      // Reorder locally for instant feedback
+      const reorderedItems = arrayMove(menuItems, oldIndex, newIndex);
+      
+      // Update order numbers
+      const updatedItems = reorderedItems.map((item, index) => ({
+        ...item,
+        order: index + 1
+      }));
+      
+      setMenuItems(updatedItems);
+
+      // Update in database
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Update all affected items
+        await Promise.all(
+          updatedItems.map((item) =>
+            axios.put(
+              `${API}/admin/sidebar-menu/${item.id}`,
+              { order: item.order },
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+          )
+        );
+        
+        toast.success(language === 'ar' ? "تم تحديث الترتيب بنجاح" : "Order updated successfully");
+        refreshMenu(); // Refresh sidebar immediately
+      } catch (error) {
+        console.error("Error updating order:", error);
+        toast.error(language === 'ar' ? "فشل تحديث الترتيب" : "Failed to update order");
+        // Revert on error
+        fetchMenuItems();
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
