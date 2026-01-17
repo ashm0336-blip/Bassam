@@ -154,10 +154,12 @@ function App() {
       <LanguageProvider>
         <AuthProvider>
           <SidebarProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-            <Toaster position="top-left" />
+            <HeaderProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+              <Toaster position="top-left" />
+            </HeaderProvider>
           </SidebarProvider>
         </AuthProvider>
       </LanguageProvider>
