@@ -223,21 +223,28 @@ class AlHaramAPITester:
         """Test reports endpoints"""
         print("\n📊 Testing Reports Endpoints...")
         
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping reports tests")
+            return
+        
         # Test reports list
         success, data = self.test_endpoint(
             "Reports List",
-            "reports"
+            "reports",
+            auth_required=True
         )
         
         # Test reports with filters
         success, data = self.test_endpoint(
             "Reports Filtered by Type",
-            "reports?type=daily"
+            "reports?type=daily",
+            auth_required=True
         )
         
         success, data = self.test_endpoint(
             "Reports Filtered by Department",
-            "reports?department=gates"
+            "reports?department=gates",
+            auth_required=True
         )
     
     def test_rbac_report_filtering(self):
