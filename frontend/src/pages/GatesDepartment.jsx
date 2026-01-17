@@ -443,16 +443,18 @@ export default function GatesDepartment() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </>
+      )}
 
-        <TabsContent value="data" className="mt-6">
-          <GatesDataManagement />
-        </TabsContent>
+      {/* Data Management Tab */}
+      {activeTab === 'data' && (
+        <GatesDataManagement />
+      )}
 
-        <TabsContent value="employees" className="mt-6">
-          <EmployeeManagement department="gates" />
-        </TabsContent>
-      </Tabs>
+      {/* Employees Management Tab */}
+      {activeTab === 'employees' && (
+        <EmployeeManagement department="gates" />
+      )}
     </div>
   );
 }
