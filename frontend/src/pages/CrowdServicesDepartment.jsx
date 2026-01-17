@@ -20,6 +20,9 @@ import { Button } from "@/components/ui/button";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function CrowdServicesDepartment() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
   const [loading, setLoading] = useState(true);

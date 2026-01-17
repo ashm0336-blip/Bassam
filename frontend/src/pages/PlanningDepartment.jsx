@@ -36,6 +36,9 @@ const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
 );
 
 export default function PlanningDepartment() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
   const [loading, setLoading] = useState(true);

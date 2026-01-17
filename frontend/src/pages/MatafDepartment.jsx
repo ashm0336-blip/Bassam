@@ -79,6 +79,9 @@ const LevelCard = ({ level }) => {
 };
 
 export default function MatafDepartment() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  
   const [matafLevels, setMatafLevels] = useState([]);
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
