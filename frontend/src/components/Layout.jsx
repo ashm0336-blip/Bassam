@@ -353,7 +353,7 @@ export const Layout = () => {
       </aside>
 
       {/* Main content */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? "mr-64" : "mr-20"}`}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 lg:${sidebarOpen ? "mr-64" : "mr-20"}`}>
         {/* Top bar */}
         <header 
           className={`flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 border-b transition-all duration-200 ${headerSettings.show_shadow ? 'shadow-md' : ''}`}
