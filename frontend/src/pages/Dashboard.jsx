@@ -342,6 +342,27 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* Gates Without Staff Warning */}
+            {gatesWithoutStaff.length > 0 && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-destructive">
+                      {language === 'ar' ? '⚠️ أبواب مفتوحة بدون موظفين' : '⚠️ Open gates without staff'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {gatesWithoutStaff.slice(0, 3).map(g => g.name).join(', ')}
+                      {gatesWithoutStaff.length > 3 && ` +${gatesWithoutStaff.length - 3}`}
+                    </p>
+                    <p className="text-xs font-medium mt-1 text-destructive">
+                      {language === 'ar' ? `إجمالي ${gatesWithoutStaff.length} باب يحتاج موظفين` : `${gatesWithoutStaff.length} gates need staff`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {alerts.map((alert, index) => (
               <div key={alert.id} className={`stagger-${index + 1}`}>
                 <AlertItem alert={alert} />
