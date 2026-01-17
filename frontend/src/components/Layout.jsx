@@ -105,7 +105,7 @@ export const Layout = () => {
                      (item.href.includes('?') && location.pathname + location.search === item.href);
     const Icon = item.icon;
     const hasChildren = children.length > 0;
-    const isExpanded = expandedMenus[item.id];
+    const isExpanded = expandedMenuId === item.id; // Check if THIS menu is the expanded one
     
     return (
       <div>
