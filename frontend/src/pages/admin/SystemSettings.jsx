@@ -238,15 +238,27 @@ export default function SystemSettings() {
                   </div>
                   <div className="flex gap-2">
                     <Button 
+                      type="button"
                       variant="outline" 
                       className="border-destructive text-destructive hover:bg-destructive/10"
                       onClick={() => setLoginSettings({...loginSettings, logo_url: ""})}
                     >
                       {language === 'ar' ? 'إزالة' : 'Remove'}
                     </Button>
-                    <Button variant="default">
+                    <Button 
+                      type="button"
+                      variant="default"
+                      onClick={() => document.getElementById('logo-upload').click()}
+                    >
                       {language === 'ar' ? 'رفع' : 'Upload'}
                     </Button>
+                    <input 
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
                   </div>
                 </div>
 
