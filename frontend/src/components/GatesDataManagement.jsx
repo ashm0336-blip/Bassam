@@ -93,6 +93,10 @@ export default function GatesDataManagement() {
     }
   };
 
+  const getEmployeesAtGate = (gateName) => {
+    return employees.filter(emp => emp.location === gateName && emp.is_active);
+  };
+
   const handleOpenDialog = (gate = null) => {
     if (gate) {
       setEditMode(true);
