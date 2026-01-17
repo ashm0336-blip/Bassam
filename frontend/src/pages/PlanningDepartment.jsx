@@ -8,13 +8,10 @@ import {
   Users, 
   CheckCircle2, 
   Clock,
-  AlertCircle,
-  FileText,
-  TrendingUp,
+  Activity,
   Target
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 
@@ -23,11 +20,11 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
   <Card className="card-hover">
     <CardContent className="p-5">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 justify-between">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-6 h-6" />
         </div>
-        <div>
+        <div className="text-right">
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="text-2xl font-cairo font-bold">{value}</p>
           {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
@@ -70,28 +67,26 @@ export default function PlanningDepartment() {
 
   return (
     <div className="space-y-6" data-testid="planning-page">
-      <Tabs defaultValue="planning" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="employees">
             <Users className="w-4 h-4 ml-2" />
             الموظفون
           </TabsTrigger>
           <TabsTrigger value="planning">
             <ClipboardList className="w-4 h-4 ml-2" />
-            التخطيط
+            الخطط
+          </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <Activity className="w-4 h-4 ml-2" />
+            لوحة التحكم
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="planning" className="space-y-6 mt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-cairo font-bold text-2xl">إدارة تخطيط خدمات الحشود</h1>
-              <p className="text-sm text-muted-foreground mt-1">إدارة الخطط والجداول والموارد البشرية</p>
-            </div>
-            <Button className="bg-primary hover:bg-primary/90" data-testid="create-plan-btn">
-              <ClipboardList className="w-4 h-4 ml-2" />
-              خطة جديدة
-            </Button>
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
+          <div>
+            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة التخطيط</h2>
+            <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على الخطط والموارد</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -119,6 +114,34 @@ export default function PlanningDepartment() {
               icon={Users}
               color="bg-blue-100 text-blue-700"
             />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">استخدام الموارد</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>الموظفون الميدانيون</span>
+                  <span className="font-semibold">{stats?.resource_utilization || 0}%</span>
+                </div>
+                <Progress value={stats?.resource_utilization || 0} className="h-2 [&>div]:bg-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="planning" className="space-y-6 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-cairo font-bold text-2xl">إدارة تخطيط خدمات الحشود</h1>
+              <p className="text-sm text-muted-foreground mt-1">إدارة الخطط والجداول والموارد البشرية</p>
+            </div>
+            <Button className="bg-primary hover:bg-primary/90" data-testid="create-plan-btn">
+              <ClipboardList className="w-4 h-4 ml-2" />
+              خطة جديدة
+            </Button>
           </div>
         </TabsContent>
 

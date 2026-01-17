@@ -115,8 +115,8 @@ export default function MatafDepartment() {
 
   return (
     <div className="space-y-6" data-testid="mataf-page">
-      <Tabs defaultValue="mataf" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="employees">
             <Users className="w-4 h-4 ml-2" />
             الموظفون
@@ -125,7 +125,101 @@ export default function MatafDepartment() {
             <Circle className="w-4 h-4 ml-2" />
             المطاف
           </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <Activity className="w-4 h-4 ml-2" />
+            لوحة التحكم
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
+          <div>
+            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة المطاف</h2>
+            <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على حركة الطواف</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">إجمالي الحشود</p>
+                    <p className="text-2xl font-cairo font-bold">{stats?.current_crowd?.toLocaleString('ar-SA') || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-secondary" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">نسبة الإشغال</p>
+                    <p className="text-2xl font-cairo font-bold">{stats?.overall_percentage || 0}%</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">متوسط الطواف</p>
+                    <p className="text-2xl font-cairo font-bold">{stats?.average_tawaf_time || 0} <span className="text-sm font-normal">دقيقة</span></p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4 justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-destructive" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">مناطق حرجة</p>
+                    <p className="text-2xl font-cairo font-bold text-destructive">{stats?.status_summary?.critical || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">توزيع الحالة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="w-3 h-3 rounded-full bg-primary mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-primary">{stats?.status_summary?.normal || 0}</p>
+                  <p className="text-sm text-muted-foreground">طبيعي</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-secondary/10 border border-secondary/20">
+                  <div className="w-3 h-3 rounded-full bg-secondary mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-secondary">{stats?.status_summary?.warning || 0}</p>
+                  <p className="text-sm text-muted-foreground">مرتفع</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-destructive/5 border border-destructive/10">
+                  <div className="w-3 h-3 rounded-full bg-destructive mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-destructive">{stats?.status_summary?.critical || 0}</p>
+                  <p className="text-sm text-muted-foreground">حرج</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="mataf" className="space-y-6 mt-6">
           <div className="flex items-center justify-between">
@@ -142,64 +236,6 @@ export default function MatafDepartment() {
                 <RotateCw className="w-4 h-4" />
               </Button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">إجمالي الحشود</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.current_crowd?.toLocaleString('ar-SA') || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">نسبة الإشغال</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.overall_percentage || 0}%</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">متوسط الطواف</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.average_tawaf_time || 0} <span className="text-sm font-normal">دقيقة</span></p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">مناطق حرجة</p>
-                    <p className="text-2xl font-cairo font-bold text-destructive">{stats?.status_summary?.critical || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
