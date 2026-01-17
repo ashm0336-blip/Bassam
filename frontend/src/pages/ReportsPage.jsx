@@ -103,6 +103,7 @@ const ReportCard = ({ report }) => {
 
 export default function ReportsPage() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [gates, setGates] = useState([]);
   const [plazas, setPlazas] = useState([]);
@@ -113,6 +114,14 @@ export default function ReportsPage() {
   const [filterDept, setFilterDept] = useState("all");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(null);
+
+  // Check if user can access all departments
+  const canAccessAllDepartments = user?.role === "system_admin" || 
+                                    user?.role === "general_manager" || 
+                                    user?.role === "monitoring_team";
+
+  // Get user's department for filtering
+  const userDepartment = user?.department;
 
   useEffect(() => {
     const fetchData = async () => {
