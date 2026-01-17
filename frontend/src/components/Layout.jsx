@@ -234,7 +234,11 @@ export const Layout = () => {
         <ScrollArea className="flex-1 py-4">
           <nav className="space-y-1 px-3">
             {navigation.map((item) => (
-              <NavItem key={item.href} item={item} />
+              <NavItem 
+                key={item.id} 
+                item={item} 
+                children={childrenMap[item.id] || []}
+              />
             ))}
           </nav>
           
@@ -242,7 +246,11 @@ export const Layout = () => {
           
           <nav className="space-y-1 px-3">
             {secondaryNav.map((item) => (
-              <NavItem key={item.href} item={item} />
+              <NavItem 
+                key={item.id} 
+                item={item}
+                children={childrenMap[item.id] || []}
+              />
             ))}
           </nav>
         </ScrollArea>
