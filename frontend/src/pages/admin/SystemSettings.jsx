@@ -65,6 +65,7 @@ const SettingItem = ({ label, description, children }) => (
 
 export default function SystemSettings() {
   const { language } = useLanguage();
+  const [activeTab, setActiveTab] = useState("login");
   
   const [settings, setSettings] = useState({
     platformName: "منصة خدمات الحشود",
@@ -145,14 +146,38 @@ export default function SystemSettings() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Login Page Settings */}
-        <div className="lg:col-span-2">
-          <SettingSection
-            icon={LogIn}
-            title={language === 'ar' ? 'إعدادات شاشة الدخول' : 'Login Page Settings'}
-            description={language === 'ar' ? 'تخصيص شاشة الدخول والشعار' : 'Customize login page and branding'}
-          >
+      {/* Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+          <TabsTrigger value="login" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <LogIn className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'شاشة الدخول' : 'Login Page'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="general" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Settings className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'عامة' : 'General'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Shield className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الأمان' : 'Security'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="session" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Clock className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الجلسة' : 'Session'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Bell className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الإشعارات' : 'Notifications'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="data" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Database className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'البيانات' : 'Data'}</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Login Page Settings Tab */}
+        <TabsContent value="login" className="mt-6 space-y-6"
+>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
