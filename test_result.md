@@ -296,20 +296,30 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.1"
-  test_sequence: 5
+  version: "2.2"
+  test_sequence: 6
   run_ui: true
   testing_credentials:
-    super_admin: "admin@crowd.sa / admin123"
-    dept_manager: "manager.plazas@crowd.sa / manager123"
+    system_admin: "admin@crowd.sa / admin123"
+    general_manager: "general.manager@crowd.sa / manager123"
+    dept_manager_gates: "manager.gates@crowd.sa / manager123"
+    dept_manager_plazas: "manager.plazas@crowd.sa / manager123"
     field_staff: "staff.mataf@crowd.sa / staff123"
     monitoring: "monitoring@crowd.sa / monitor123"
     base_url: "https://mecca-crowd.preview.emergentagent.com"
   last_backend_test:
-    timestamp: "2025-01-16"
-    tests_run: 63
-    tests_passed: 63
+    timestamp: "2026-01-17"
+    tests_run: 87
+    tests_passed: 87
     success_rate: 100.0
+    categories_tested:
+      - "Authentication & Authorization (all user roles)"
+      - "User Management (System Admin only)"
+      - "Employee Management (with location and shift)"
+      - "Gates Management (all 9 fields, plaza_color, multi-category)"
+      - "Dashboard & Stats (including employee_stats)"
+      - "Activity Logs (with filters)"
+      - "Alerts/Notifications"
   last_frontend_test:
     timestamp: "2025-01-16"
     tests_run: 11
