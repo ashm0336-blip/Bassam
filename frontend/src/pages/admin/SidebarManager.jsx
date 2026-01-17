@@ -158,6 +158,7 @@ export default function SidebarManager() {
         icon: "LayoutDashboard",
         order: maxOrder + 1,
         is_public: false,
+        is_secondary: false,
         admin_only: false,
         department: "none"
       });
