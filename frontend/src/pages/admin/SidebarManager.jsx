@@ -523,6 +523,34 @@ export default function SidebarManager() {
               </Select>
             </div>
 
+            <div>
+              <Label htmlFor="parent">{language === 'ar' ? 'قائمة رئيسية (اختياري)' : 'Parent Menu (Optional)'}</Label>
+              <Select
+                value={formData.parent_id}
+                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'ar' ? 'لا يوجد (قائمة رئيسية)' : 'None (Main Menu)'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    {language === 'ar' ? 'لا يوجد (قائمة رئيسية)' : 'None (Main Menu)'}
+                  </SelectItem>
+                  {menuItems.filter(item => !item.parent_id).map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {language === 'ar' ? item.name_ar : item.name_en}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'ar' 
+                  ? 'إذا اخترت قائمة رئيسية، سيظهر هذا القسم كقائمة فرعية تحتها'
+                  : 'If you select a parent menu, this item will appear as a submenu under it'
+                }
+              </p>
+            </div>
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="is_public">{language === 'ar' ? 'متاح للجميع' : 'Public Access'}</Label>
