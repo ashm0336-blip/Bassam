@@ -575,14 +575,14 @@ export default function SidebarManager() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 text-left"></TableHead>
-                      <TableHead className="w-16 text-left">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                      <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                      <TableHead className="w-12 text-center"></TableHead>
+                      <TableHead className="w-16 text-center">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
                 <TableBody>
