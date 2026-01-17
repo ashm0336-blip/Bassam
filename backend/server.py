@@ -93,6 +93,8 @@ class GateUpdate(BaseModel):
     current_indicator: Optional[str] = None
     current_flow: Optional[int] = None
     max_flow: Optional[int] = None
+    area: Optional[str] = None
+    operational_seasons: Optional[List[str]] = None
 
 class PlazaCreate(BaseModel):
     name: str
