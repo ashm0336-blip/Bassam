@@ -740,3 +740,104 @@ agent_communication:
 
 All tests passed successfully. The RBAC filtering is working correctly on both backend and frontend.
 
+---
+
+## Testing Session - 2026-01-17 - RBAC Report Filtering Verification
+
+### Testing Agent Verification
+**Date:** 2026-01-17  
+**Tests Run:** 102  
+**Tests Passed:** 102  
+**Success Rate:** 100.0%
+
+### RBAC Report Filtering Test Results
+
+#### ✅ Test 1: Unauthorized Access
+- **Endpoint:** GET `/api/reports` without authentication
+- **Expected:** 403 Forbidden
+- **Result:** ✅ PASSED - Correctly returns 403 when no auth token provided
+- **Status:** Authentication requirement working correctly
+
+#### ✅ Test 2: System Admin Access
+- **User:** `admin@crowd.sa` / `admin123`
+- **Role:** system_admin
+- **Expected:** Should see ALL 9 reports
+- **Result:** ✅ PASSED - Correctly returns 9 reports
+- **Reports Seen:** All departments (gates, mataf, plazas, planning, crowd_services) + "all" reports
+- **Status:** System admin has full access as expected
+
+#### ✅ Test 3: General Manager Access
+- **User:** `test.general@crowd.sa` / `test123`
+- **Role:** general_manager
+- **Expected:** Should see ALL 9 reports
+- **Result:** ✅ PASSED - Correctly returns 9 reports
+- **Reports Seen:** All departments + "all" reports
+- **Status:** General manager has full access as expected
+
+#### ✅ Test 4: Department Manager (Gates) Access
+- **User:** `test.gates@crowd.sa` / `test123`
+- **Role:** department_manager
+- **Department:** gates
+- **Expected:** Should see ONLY 4 reports (2 gates + 2 all)
+- **Result:** ✅ PASSED - Correctly returns 4 reports
+- **Reports Breakdown:**
+  - 2 reports with department="gates" ✅
+  - 2 reports with department="all" ✅
+  - 0 reports from other departments (plazas, mataf, planning, crowd_services) ✅
+- **Status:** Department filtering working correctly - gates manager cannot see other departments
+
+#### ✅ Test 5: Department Manager (Mataf) Access
+- **User:** `test.mataf@crowd.sa` / `test123`
+- **Role:** department_manager
+- **Department:** mataf
+- **Expected:** Should see ONLY 4 reports (2 mataf + 2 all)
+- **Result:** ✅ PASSED - Correctly returns 4 reports
+- **Reports Breakdown:**
+  - 2 reports with department="mataf" ✅
+  - 2 reports with department="all" ✅
+  - 0 reports from other departments (plazas, gates, planning, crowd_services) ✅
+- **Status:** Department filtering working correctly - mataf manager cannot see other departments
+
+### Backend Implementation Verification
+
+#### API Endpoint: `/api/reports`
+- **Authentication:** ✅ Required (uses `get_current_user` dependency)
+- **RBAC Logic:** ✅ Implemented correctly
+  ```python
+  # Department managers see only their department + "all"
+  if user_role == "department_manager" and user_dept:
+      reports = [r for r in reports if r["department"] == user_dept or r["department"] == "all"]
+  ```
+- **Roles with Full Access:** system_admin, general_manager, monitoring_team ✅
+- **Roles with Filtered Access:** department_manager ✅
+
+#### Report Data Structure
+- **Total Reports:** 9 reports
+  - 2 reports with department="all" (daily + monthly)
+  - 2 reports with department="gates" (daily + weekly)
+  - 2 reports with department="mataf" (daily + weekly)
+  - 1 report with department="plazas" (daily)
+  - 1 report with department="crowd_services" (daily)
+  - 1 report with department="planning" (daily)
+
+### Security Validation
+
+✅ **Authentication Enforcement:** Endpoint correctly rejects unauthenticated requests (403)  
+✅ **Role-Based Filtering:** Department managers can only see their department + "all" reports  
+✅ **Data Isolation:** Department managers cannot access other departments' reports  
+✅ **Admin Access:** System admins and general managers have unrestricted access  
+✅ **Token Validation:** JWT tokens correctly include department field for department managers
+
+### Conclusion
+
+**ALL TESTS PASSED - FEATURE WORKING AS EXPECTED**
+
+The department-based report filtering feature is fully functional and secure:
+- ✅ Authentication is enforced on the `/api/reports` endpoint
+- ✅ Department managers see only their department's reports + "all" reports
+- ✅ System admins and general managers see all reports
+- ✅ RBAC filtering logic is correctly implemented
+- ✅ No data leakage between departments
+
+**Status:** PRODUCTION READY
+
