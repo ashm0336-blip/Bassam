@@ -524,6 +524,15 @@ export default function SidebarManager() {
               </div>
 
               <div className="flex items-center justify-between">
+                <Label htmlFor="is_secondary">{language === 'ar' ? 'قائمة ثانوية (تحت الخط)' : 'Secondary Menu (Below Line)'}</Label>
+                <Switch
+                  id="is_secondary"
+                  checked={formData.is_secondary}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_secondary: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
                 <Label htmlFor="admin_only">{language === 'ar' ? 'للمسؤولين فقط' : 'Admin Only'}</Label>
                 <Switch
                   id="admin_only"
