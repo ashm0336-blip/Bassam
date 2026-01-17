@@ -252,6 +252,8 @@ export default function SidebarManager() {
   const [formData, setFormData] = useState({
     name_ar: "",
     name_en: "",
+    subtitle_ar: "",
+    subtitle_en: "",
     href: "",
     icon: "LayoutDashboard",
     order: 0,
