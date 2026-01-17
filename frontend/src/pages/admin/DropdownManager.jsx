@@ -218,39 +218,8 @@ export default function DropdownManager() {
       {/* Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-cairo text-xl flex items-center gap-2">
-            <List className="w-5 h-5" />
-            {language === 'ar' ? 'إدارة القوائم المنسدلة' : 'Dropdown Options Management'}
-          </CardTitle>
-          <CardDescription>
-            {language === 'ar' 
-              ? 'إدارة خيارات القوائم المستخدمة في النماذج (أنواع الأبواب، الحالات، الورديات، إلخ)'
-              : 'Manage dropdown options used in forms (gate types, statuses, shifts, etc.)'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <Label>{language === 'ar' ? 'تصفية حسب الفئة' : 'Filter by Category'}</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder={language === 'ar' ? 'جميع الفئات' : 'All Categories'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value=" ">
-                    {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
-                  </SelectItem>
-                  {Object.entries(CATEGORY_NAMES).map(([key, names]) => (
-                    <SelectItem key={key} value={key}>
-                      {names[language]} ({options.filter(o => o.category === key).length})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex gap-2 items-end">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex gap-2 items-start">
               <Button onClick={() => handleOpenDialog()} className="bg-primary">
                 <Plus className="w-4 h-4 ml-2" />
                 {language === 'ar' ? 'إضافة خيار جديد' : 'Add New Option'}
@@ -275,6 +244,41 @@ export default function DropdownManager() {
                   )}
                 </Button>
               )}
+            </div>
+            
+            <div className="text-right">
+              <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
+                <List className="w-5 h-5" />
+                {language === 'ar' ? 'إدارة القوائم المنسدلة' : 'Dropdown Options Management'}
+              </CardTitle>
+              <CardDescription className="text-right mt-1">
+                {language === 'ar' 
+                  ? 'إدارة خيارات القوائم المستخدمة في النماذج (أنواع الأبواب، الحالات، الورديات، إلخ)'
+                  : 'Manage dropdown options used in forms (gate types, statuses, shifts, etc.)'
+                }
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex-1 min-w-[200px]">
+              <Label>{language === 'ar' ? 'تصفية حسب الفئة' : 'Filter by Category'}</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'ar' ? 'جميع الفئات' : 'All Categories'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=" ">
+                    {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
+                  </SelectItem>
+                  {Object.entries(CATEGORY_NAMES).map(([key, names]) => (
+                    <SelectItem key={key} value={key}>
+                      {names[language]} ({options.filter(o => o.category === key).length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
