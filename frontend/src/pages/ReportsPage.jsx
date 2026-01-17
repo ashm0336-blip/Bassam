@@ -286,145 +286,153 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Gates Report */}
-            <div className="p-4 rounded-lg border border-gray-200 hover:border-primary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-primary" />
+            {/* Gates Report - Show for gates dept or admins */}
+            {(canAccessAllDepartments || userDepartment === "gates") && gates.length > 0 && (
+              <div className="p-4 rounded-lg border border-gray-200 hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">تقرير الأبواب</h3>
+                    <p className="text-xs text-muted-foreground">{gates.length} باب</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">تقرير الأبواب</h3>
-                  <p className="text-xs text-muted-foreground">{gates.length} باب</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('gates', 'pdf')}
+                    disabled={exporting === 'gates-pdf'}
+                    data-testid="export-gates-pdf"
+                  >
+                    {exporting === 'gates-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('gates', 'excel')}
+                    disabled={exporting === 'gates-excel'}
+                    data-testid="export-gates-excel"
+                  >
+                    {exporting === 'gates-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('gates', 'pdf')}
-                  disabled={exporting === 'gates-pdf'}
-                  data-testid="export-gates-pdf"
-                >
-                  {exporting === 'gates-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('gates', 'excel')}
-                  disabled={exporting === 'gates-excel'}
-                  data-testid="export-gates-excel"
-                >
-                  {exporting === 'gates-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
-                </Button>
-              </div>
-            </div>
+            )}
 
-            {/* Plazas Report */}
-            <div className="p-4 rounded-lg border border-gray-200 hover:border-secondary/30 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-secondary" />
+            {/* Plazas Report - Show for plazas dept or admins */}
+            {(canAccessAllDepartments || userDepartment === "plazas") && plazas.length > 0 && (
+              <div className="p-4 rounded-lg border border-gray-200 hover:border-secondary/30 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-secondary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">تقرير الساحات</h3>
+                    <p className="text-xs text-muted-foreground">{plazas.length} ساحة</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">تقرير الساحات</h3>
-                  <p className="text-xs text-muted-foreground">{plazas.length} ساحة</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('plazas', 'pdf')}
+                    disabled={exporting === 'plazas-pdf'}
+                    data-testid="export-plazas-pdf"
+                  >
+                    {exporting === 'plazas-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('plazas', 'excel')}
+                    disabled={exporting === 'plazas-excel'}
+                    data-testid="export-plazas-excel"
+                  >
+                    {exporting === 'plazas-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('plazas', 'pdf')}
-                  disabled={exporting === 'plazas-pdf'}
-                  data-testid="export-plazas-pdf"
-                >
-                  {exporting === 'plazas-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('plazas', 'excel')}
-                  disabled={exporting === 'plazas-excel'}
-                  data-testid="export-plazas-excel"
-                >
-                  {exporting === 'plazas-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
-                </Button>
-              </div>
-            </div>
+            )}
 
-            {/* Mataf Report */}
-            <div className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-blue-600" />
+            {/* Mataf Report - Show for mataf dept or admins */}
+            {(canAccessAllDepartments || userDepartment === "mataf") && mataf.length > 0 && (
+              <div className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">تقرير المطاف</h3>
+                    <p className="text-xs text-muted-foreground">{mataf.length} طوابق</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">تقرير المطاف</h3>
-                  <p className="text-xs text-muted-foreground">{mataf.length} طوابق</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('mataf', 'pdf')}
+                    disabled={exporting === 'mataf-pdf'}
+                    data-testid="export-mataf-pdf"
+                  >
+                    {exporting === 'mataf-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('mataf', 'excel')}
+                    disabled={exporting === 'mataf-excel'}
+                    data-testid="export-mataf-excel"
+                  >
+                    {exporting === 'mataf-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('mataf', 'pdf')}
-                  disabled={exporting === 'mataf-pdf'}
-                  data-testid="export-mataf-pdf"
-                >
-                  {exporting === 'mataf-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('mataf', 'excel')}
-                  disabled={exporting === 'mataf-excel'}
-                  data-testid="export-mataf-excel"
-                >
-                  {exporting === 'mataf-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
-                </Button>
-              </div>
-            </div>
+            )}
 
-            {/* Daily Summary */}
-            <div className="p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
+            {/* Daily Summary - Show for all roles */}
+            {canAccessAllDepartments && (
+              <div className="p-4 rounded-lg border border-gray-200 hover:border-green-300 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">التقرير الشامل</h3>
+                    <p className="text-xs text-muted-foreground">ملخص يومي</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">التقرير الشامل</h3>
-                  <p className="text-xs text-muted-foreground">ملخص يومي</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('daily', 'pdf')}
+                    disabled={exporting === 'daily-pdf'}
+                    data-testid="export-summary-pdf"
+                  >
+                    {exporting === 'daily-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport('daily', 'excel')}
+                    disabled={exporting === 'daily-excel'}
+                    data-testid="export-summary-excel"
+                  >
+                    {exporting === 'daily-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('daily', 'pdf')}
-                  disabled={exporting === 'daily-pdf'}
-                  data-testid="export-summary-pdf"
-                >
-                  {exporting === 'daily-pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleExport('daily', 'excel')}
-                  disabled={exporting === 'daily-excel'}
-                  data-testid="export-summary-excel"
-                >
-                  {exporting === 'daily-excel' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excel'}
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
