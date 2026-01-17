@@ -183,7 +183,7 @@ export default function SystemSettings() {
       </div>
 
       {/* Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
         <TabsList className="grid w-full grid-cols-6 h-auto p-1">
           <TabsTrigger value="login" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LogIn className="w-5 h-5" />
