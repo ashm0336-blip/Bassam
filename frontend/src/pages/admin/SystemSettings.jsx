@@ -235,26 +235,14 @@ export default function SystemSettings() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-7 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
           <TabsTrigger value="login" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LogIn className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'شاشة الدخول' : 'Login'}</span>
+            <span className="text-xs">{language === 'ar' ? 'شاشة الدخول' : 'Login Page'}</span>
           </TabsTrigger>
           <TabsTrigger value="header" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'الهيدر' : 'Header'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="general" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Settings className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'عامة' : 'General'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الأمان' : 'Security'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="session" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Clock className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الجلسة' : 'Session'}</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Bell className="w-5 h-5" />
