@@ -336,6 +336,12 @@ test_plan:
   completed_tests:
     - "Admin Panel - User Management (CRUD Operations)"
     - "Role-Based Access Control & Permissions System"
+    - "JWT Authentication & User Management (all roles)"
+    - "Employee Management with Location and Shift"
+    - "Gates Management with All 9 Fields"
+    - "Dashboard & Stats with Employee Stats"
+    - "Activity Logs with Filters"
+    - "Alerts and Notifications"
 
 agent_communication:
   - agent: "main"
