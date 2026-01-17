@@ -65,6 +65,7 @@ export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
+  const [gates, setGates] = useState([]);
   const [stats, setStats] = useState({ total_employees: 0, active_employees: 0, inactive_employees: 0 });
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -85,7 +86,19 @@ export default function EmployeeManagement({ department }) {
   useEffect(() => {
     fetchEmployees();
     fetchStats();
+    if (department === 'gates') {
+      fetchGates();
+    }
   }, [department]);
+
+  const fetchGates = async () => {
+    try {
+      const response = await axios.get(`${API}/gates`);
+      setGates(response.data);
+    } catch (error) {
+      console.error("Error fetching gates:", error);
+    }
+  };
 
   const fetchEmployees = async () => {
     try {
