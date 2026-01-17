@@ -362,14 +362,34 @@ export default function EmployeeManagement({ department }) {
               
               <div>
                 <Label htmlFor="location">{language === 'ar' ? 'موقع التغطية' : 'Coverage Location'}</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  required
-                  className="mt-1"
-                  placeholder={language === 'ar' ? 'مثال: الساحة الشمالية، باب الملك فهد' : 'e.g., North Plaza, King Fahd Gate'}
-                />
+                {department === 'gates' && gates.length > 0 ? (
+                  <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر باب...' : 'Select gate...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gates.filter(g => g.status === 'مفتوح').map((gate) => (
+                        <SelectItem key={gate.id} value={gate.name}>
+                          {gate.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    required
+                    className="mt-1"
+                    placeholder={language === 'ar' ? 'مثال: الساحة الشمالية، باب الملك فهد' : 'e.g., North Plaza, King Fahd Gate'}
+                  />
+                )}
+                {department === 'gates' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar' ? 'يعرض فقط الأبواب المفتوحة' : 'Shows only open gates'}
+                  </p>
+                )}
               </div>
               
               <div>
