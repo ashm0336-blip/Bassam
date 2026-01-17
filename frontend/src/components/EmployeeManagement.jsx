@@ -239,40 +239,19 @@ export default function EmployeeManagement({ department }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employees.map((employee) => (
                   <TableRow key={employee.id}>
-                    <TableCell className="text-center">
-                      <div className="flex items-center gap-2 justify-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedEmployee(employee);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(employee)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableCell className="text-right font-medium">{employee.name}</TableCell>
+                    <TableCell className="text-center">{employee.job_title}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant={employee.is_active ? "default" : "secondary"}>
                         {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
