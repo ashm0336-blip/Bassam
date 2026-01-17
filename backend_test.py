@@ -662,6 +662,353 @@ class AlHaramAPITester:
             
             self.auth_token = temp_token
     
+    def test_employee_management(self):
+        """Test employee management endpoints with location and shift"""
+        print("\n👷 Testing Employee Management...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping employee tests")
+            return
+        
+        # Test 1: GET /api/employees - List all employees
+        success, employees_data = self.test_endpoint(
+            "GET /api/employees - List All Employees",
+            "employees",
+            auth_required=True
+        )
+        
+        initial_employee_count = len(employees_data) if success and isinstance(employees_data, list) else 0
+        print(f"  📊 Initial employee count: {initial_employee_count}")
+        
+        # Test 2: GET /api/employees?department=gates - Filter by department
+        success, gates_employees = self.test_endpoint(
+            "GET /api/employees?department=gates - Filter by Department",
+            "employees?department=gates",
+            auth_required=True
+        )
+        
+        # Test 3: POST /api/employees - Create employee with location and shift
+        test_employee = {
+            "name": "محمد أحمد السعيد",
+            "job_title": "مشرف أبواب",
+            "department": "gates",
+            "location": "الباب الرئيسي - الساحة الشرقية",
+            "shift": "الأولى",
+            "is_active": True
+        }
+        
+        success, created_employee = self.test_endpoint(
+            "POST /api/employees - Create Employee with Location and Shift",
+            "employees",
+            method="POST",
+            data=test_employee,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        employee_id = None
+        if success and "id" in created_employee:
+            employee_id = created_employee["id"]
+            self.log_result("Verify Employee Creation", True, f"Employee created with ID: {employee_id}")
+        
+        # Test 4: PUT /api/employees/{id} - Update employee
+        if employee_id:
+            update_data = {
+                "location": "الباب الفرعي - الساحة الغربية",
+                "shift": "الثانية"
+            }
+            
+            success, updated_employee = self.test_endpoint(
+                "PUT /api/employees/{id} - Update Employee Location and Shift",
+                f"employees/{employee_id}",
+                method="PUT",
+                data=update_data,
+                auth_required=True,
+                expected_status=200
+            )
+        
+        # Test 5: GET /api/employees/stats/{department} - Get stats with shifts and locations
+        success, stats_data = self.test_endpoint(
+            "GET /api/employees/stats/gates - Get Employee Stats",
+            "employees/stats/gates",
+            auth_required=True,
+            required_fields=["total_employees", "active_employees", "shifts", "locations_count"]
+        )
+        
+        if success and "shifts" in stats_data:
+            shifts = stats_data["shifts"]
+            if all(key in shifts for key in ["shift_1", "shift_2", "shift_3", "shift_4"]):
+                self.log_result("Verify Shift Distribution in Stats", True, f"All shifts present: {shifts}")
+            else:
+                self.log_result("Verify Shift Distribution in Stats", False, f"Missing shift data: {shifts}")
+        
+        if success and "locations_count" in stats_data:
+            self.log_result("Verify Locations Count in Stats", True, f"Locations count: {stats_data['locations_count']}")
+        
+        # Test 6: DELETE /api/employees/{id} - Delete employee
+        if employee_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/employees/{id} - Delete Employee",
+                f"employees/{employee_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+    
+    def test_gates_management_comprehensive(self):
+        """Test gates management with all 9 fields including plaza_color and multi-category"""
+        print("\n🚪 Testing Gates Management (All 9 Fields)...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping gates tests")
+            return
+        
+        # Test 1: GET /api/gates - List all gates
+        success, gates_data = self.test_endpoint(
+            "GET /api/gates - List All Gates",
+            "gates",
+            auth_required=False
+        )
+        
+        # Test 2: POST /api/admin/gates - Create gate with all 9 fields
+        test_gate_comprehensive = {
+            "name": "باب الملك عبدالعزيز",
+            "number": 101,
+            "plaza": "الساحة الشرقية",
+            "plaza_color": "#FF5733",
+            "gate_type": "رئيسي",
+            "direction": "دخول وخروج",
+            "category": ["محرمين", "مصلين", "عربات"],  # Multi-category support
+            "classification": "عام",
+            "status": "متاح",
+            "current_indicator": "متوسط",
+            "current_flow": 2500,
+            "max_flow": 5000
+        }
+        
+        success, created_gate = self.test_endpoint(
+            "POST /api/admin/gates - Create Gate with All 9 Fields",
+            "admin/gates",
+            method="POST",
+            data=test_gate_comprehensive,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        gate_id = None
+        if success and "id" in created_gate:
+            gate_id = created_gate["id"]
+            self.log_result("Verify Gate Creation with All Fields", True, f"Gate created with ID: {gate_id}")
+        
+        # Test 3: Verify plaza_color is stored
+        if gate_id:
+            success, gate_details = self.test_endpoint(
+                "GET /api/gates - Verify Plaza Color",
+                "gates",
+                auth_required=False
+            )
+            
+            if success and isinstance(gate_details, list):
+                created_gate_data = next((g for g in gate_details if g.get("id") == gate_id), None)
+                if created_gate_data and "plaza_color" in created_gate_data:
+                    self.log_result("Verify Plaza Color Field", True, f"Plaza color: {created_gate_data['plaza_color']}")
+                else:
+                    self.log_result("Verify Plaza Color Field", False, "Plaza color field missing")
+                
+                # Verify multi-category support
+                if created_gate_data and "category" in created_gate_data:
+                    categories = created_gate_data["category"]
+                    if isinstance(categories, list) and len(categories) == 3:
+                        self.log_result("Verify Multi-Category Support", True, f"Categories: {categories}")
+                    else:
+                        self.log_result("Verify Multi-Category Support", False, f"Expected list of 3 categories, got: {categories}")
+        
+        # Test 4: PUT /api/admin/gates/{id} - Update gate
+        if gate_id:
+            update_gate_data = {
+                "current_flow": 3500,
+                "current_indicator": "مزدحم",
+                "plaza_color": "#00FF00"
+            }
+            
+            success, updated_gate = self.test_endpoint(
+                "PUT /api/admin/gates/{id} - Update Gate",
+                f"admin/gates/{gate_id}",
+                method="PUT",
+                data=update_gate_data,
+                auth_required=True,
+                expected_status=200
+            )
+        
+        # Test 5: DELETE /api/admin/gates/{id} - Delete gate
+        if gate_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/admin/gates/{id} - Delete Gate",
+                f"admin/gates/{gate_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+    
+    def test_activity_logs(self):
+        """Test activity logs with filters"""
+        print("\n📋 Testing Activity Logs...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping activity logs tests")
+            return
+        
+        # Test 1: GET /api/admin/activity-logs - Get all activity logs
+        success, logs_data = self.test_endpoint(
+            "GET /api/admin/activity-logs - Get All Activity Logs",
+            "admin/activity-logs",
+            auth_required=True
+        )
+        
+        if success and isinstance(logs_data, list) and len(logs_data) > 0:
+            # Verify log structure
+            first_log = logs_data[0]
+            required_fields = ["id", "action", "user_id", "user_name", "user_email", "timestamp"]
+            missing_fields = [field for field in required_fields if field not in first_log]
+            if not missing_fields:
+                self.log_result("Verify Activity Log Structure", True, f"All required fields present")
+            else:
+                self.log_result("Verify Activity Log Structure", False, f"Missing fields: {missing_fields}")
+            
+            # Check for specific action types
+            actions = set(log.get("action") for log in logs_data)
+            expected_actions = ["login", "user_created", "employee_created"]
+            found_actions = [action for action in expected_actions if action in actions]
+            if found_actions:
+                self.log_result("Verify Activity Log Actions", True, f"Found actions: {found_actions}")
+            else:
+                self.log_result("Verify Activity Log Actions", False, f"Expected actions not found. Available: {actions}")
+        
+        # Test 2: GET /api/admin/activity-logs?action=login - Filter by action
+        success, login_logs = self.test_endpoint(
+            "GET /api/admin/activity-logs?action=login - Filter by Action",
+            "admin/activity-logs?action=login",
+            auth_required=True
+        )
+        
+        if success and isinstance(login_logs, list):
+            if all(log.get("action") == "login" for log in login_logs):
+                self.log_result("Verify Action Filter", True, f"All logs have action='login' ({len(login_logs)} logs)")
+            else:
+                self.log_result("Verify Action Filter", False, "Some logs have different actions")
+        
+        # Test 3: GET /api/admin/activity-logs?user_email=admin@crowd.sa - Filter by user email
+        success, user_logs = self.test_endpoint(
+            "GET /api/admin/activity-logs?user_email=admin@crowd.sa - Filter by User Email",
+            "admin/activity-logs?user_email=admin@crowd.sa",
+            auth_required=True
+        )
+        
+        if success and isinstance(user_logs, list):
+            if all("admin@crowd.sa" in log.get("user_email", "") for log in user_logs):
+                self.log_result("Verify User Email Filter", True, f"All logs from admin@crowd.sa ({len(user_logs)} logs)")
+            else:
+                self.log_result("Verify User Email Filter", False, "Some logs from different users")
+        
+        # Test 4: GET /api/admin/activity-logs?date=YYYY-MM-DD - Filter by date
+        from datetime import datetime
+        today = datetime.now().strftime("%Y-%m-%d")
+        success, date_logs = self.test_endpoint(
+            f"GET /api/admin/activity-logs?date={today} - Filter by Date",
+            f"admin/activity-logs?date={today}",
+            auth_required=True
+        )
+    
+    def test_dashboard_with_employee_stats(self):
+        """Test dashboard departments endpoint includes employee_stats with shifts and locations"""
+        print("\n📊 Testing Dashboard with Employee Stats...")
+        
+        # Test GET /api/dashboard/departments - Verify employee_stats
+        success, departments_data = self.test_endpoint(
+            "GET /api/dashboard/departments - Verify Employee Stats",
+            "dashboard/departments",
+            auth_required=False
+        )
+        
+        if success and isinstance(departments_data, list) and len(departments_data) > 0:
+            first_dept = departments_data[0]
+            
+            # Check for employee_stats field
+            if "employee_stats" in first_dept:
+                employee_stats = first_dept["employee_stats"]
+                
+                # Verify employee_stats structure
+                required_fields = ["total", "shifts", "locations_count", "employees_with_location"]
+                missing_fields = [field for field in required_fields if field not in employee_stats]
+                
+                if not missing_fields:
+                    self.log_result("Verify Employee Stats in Dashboard", True, f"All fields present: {list(employee_stats.keys())}")
+                    
+                    # Verify shifts structure
+                    if "shifts" in employee_stats and isinstance(employee_stats["shifts"], dict):
+                        shifts = employee_stats["shifts"]
+                        expected_shifts = ["الأولى", "الثانية", "الثالثة", "الرابعة"]
+                        if all(shift in shifts for shift in expected_shifts):
+                            self.log_result("Verify Shifts in Employee Stats", True, f"All shifts present: {shifts}")
+                        else:
+                            self.log_result("Verify Shifts in Employee Stats", False, f"Missing shifts. Found: {list(shifts.keys())}")
+                    
+                    # Verify locations_count
+                    if "locations_count" in employee_stats:
+                        self.log_result("Verify Locations Count", True, f"Locations count: {employee_stats['locations_count']}")
+                else:
+                    self.log_result("Verify Employee Stats in Dashboard", False, f"Missing fields: {missing_fields}")
+            else:
+                self.log_result("Verify Employee Stats in Dashboard", False, "employee_stats field missing")
+    
+    def test_alerts_comprehensive(self):
+        """Test alerts/notifications endpoints"""
+        print("\n🔔 Testing Alerts/Notifications...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping alerts tests")
+            return
+        
+        # Test 1: GET /api/alerts - List alerts
+        success, alerts_data = self.test_endpoint(
+            "GET /api/alerts - List All Alerts",
+            "alerts",
+            auth_required=False
+        )
+        
+        # Test 2: POST /api/admin/alerts - Create alert
+        test_alert = {
+            "type": "emergency",
+            "title": "تنبيه طوارئ - اختبار",
+            "message": "هذا تنبيه اختباري للطوارئ",
+            "department": "gates",
+            "priority": "critical"
+        }
+        
+        success, created_alert = self.test_endpoint(
+            "POST /api/admin/alerts - Create Alert",
+            "admin/alerts",
+            method="POST",
+            data=test_alert,
+            auth_required=True,
+            expected_status=200
+        )
+        
+        alert_id = None
+        if success and "id" in created_alert:
+            alert_id = created_alert["id"]
+            self.log_result("Verify Alert Creation", True, f"Alert created with ID: {alert_id}")
+        
+        # Test 3: DELETE /api/admin/alerts/{id} - Delete alert
+        if alert_id:
+            success, delete_response = self.test_endpoint(
+                "DELETE /api/admin/alerts/{id} - Delete Alert",
+                f"admin/alerts/{alert_id}",
+                method="DELETE",
+                auth_required=True,
+                expected_status=200
+            )
+    
     def test_admin_endpoints(self):
         """Test admin-only endpoints"""
         print("\n👑 Testing Admin Endpoints...")
@@ -670,69 +1017,6 @@ class AlHaramAPITester:
             print("⚠️ No auth token available, skipping admin tests")
             return
         
-        # Test admin gates endpoints
-        test_gate_data = {
-            "name": "Test Gate",
-            "number": 999,
-            "status": "open",
-            "direction": "both",
-            "current_flow": 100,
-            "max_flow": 5000,
-            "location": "الجهة الشمالية"
-        }
-        
-        success, data = self.test_endpoint(
-            "Create Gate (Admin)",
-            "admin/gates",
-            method="POST",
-            data=test_gate_data,
-            auth_required=True,
-            expected_status=200
-        )
-        
-        gate_id = None
-        if success and "id" in data:
-            gate_id = data["id"]
-        
-        # Test admin plazas endpoints
-        test_plaza_data = {
-            "name": "Test Plaza",
-            "zone": "north",
-            "current_crowd": 1000,
-            "max_capacity": 40000
-        }
-        
-        success, data = self.test_endpoint(
-            "Create Plaza (Admin)",
-            "admin/plazas",
-            method="POST",
-            data=test_plaza_data,
-            auth_required=True,
-            expected_status=200
-        )
-        
-        plaza_id = None
-        if success and "id" in data:
-            plaza_id = data["id"]
-        
-        # Test admin alerts endpoints
-        test_alert_data = {
-            "type": "warning",
-            "title": "Test Alert",
-            "message": "This is a test alert",
-            "department": "gates",
-            "priority": "medium"
-        }
-        
-        success, data = self.test_endpoint(
-            "Create Alert (Admin)",
-            "admin/alerts",
-            method="POST",
-            data=test_alert_data,
-            auth_required=True,
-            expected_status=200
-        )
-        
         # Test admin users endpoint
         success, data = self.test_endpoint(
             "Get Users (Admin)",
@@ -740,47 +1024,6 @@ class AlHaramAPITester:
             auth_required=True,
             required_fields=["id", "email", "name", "role", "created_at"]
         )
-        
-        # Test update operations if we created items
-        if gate_id:
-            update_gate_data = {"current_flow": 200}
-            success, data = self.test_endpoint(
-                "Update Gate (Admin)",
-                f"admin/gates/{gate_id}",
-                method="PUT",
-                data=update_gate_data,
-                auth_required=True,
-                expected_status=200
-            )
-            
-            # Clean up - delete test gate
-            success, data = self.test_endpoint(
-                "Delete Gate (Admin)",
-                f"admin/gates/{gate_id}",
-                method="DELETE",
-                auth_required=True,
-                expected_status=200
-            )
-        
-        if plaza_id:
-            update_plaza_data = {"current_crowd": 1500}
-            success, data = self.test_endpoint(
-                "Update Plaza (Admin)",
-                f"admin/plazas/{plaza_id}",
-                method="PUT",
-                data=update_plaza_data,
-                auth_required=True,
-                expected_status=200
-            )
-            
-            # Clean up - delete test plaza
-            success, data = self.test_endpoint(
-                "Delete Plaza (Admin)",
-                f"admin/plazas/{plaza_id}",
-                method="DELETE",
-                auth_required=True,
-                expected_status=200
-            )
 
     def test_unauthorized_access(self):
         """Test that admin endpoints reject unauthorized access"""
