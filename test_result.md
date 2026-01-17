@@ -1027,3 +1027,61 @@ The department-based report filtering feature is fully functional and secure:
 
 **Status:** DOCUMENTED - Non-blocking issue
 
+
+
+---
+
+## Testing Session - 2026-01-17 - Sidebar Submenu Functionality
+
+### Feature Tested
+**Sidebar Menu with Expandable Submenus**
+
+### Test Cases Executed
+
+#### ✅ Test 1: Get Sidebar Menu with Submenus
+- **Endpoint:** GET `/api/sidebar-menu`
+- **Authentication:** admin@crowd.sa / admin123
+- **Result:** ✅ PASSED
+- **Details:**
+  - Returns all menu items including submenus
+  - Items with `parent_id` are properly returned
+  - Gates menu (id: 53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19) has exactly 3 children:
+    1. لوحة التحكم (Dashboard)
+    2. الأبواب (Gates)
+    3. الموظفين (Employees)
+
+#### ✅ Test 2: Menu Structure Validation
+- **Result:** ✅ PASSED
+- **Validations:**
+  - ✅ Parent items don't have `parent_id` set (13 parent items validated)
+  - ✅ Submenu items have valid `parent_id` (3 submenu items validated)
+  - ✅ Total count: 16 items (13 parents + 3 children) - matches expected ~16 items
+  - ✅ No orphaned submenu items - all children properly linked to existing parents
+
+#### ✅ Test 3: Get Admin Sidebar Menu
+- **Endpoint:** GET `/api/admin/sidebar-menu`
+- **Result:** ✅ PASSED
+- **Details:**
+  - Returns all items including parent-child relationships
+  - Admin view shows: 13 parent items, 3 submenu items
+  - All children are properly linked to parents
+  - No orphaned items found
+
+### Success Criteria Met
+✅ API returns correct menu structure  
+✅ Submenus are properly linked to parent menus via `parent_id`  
+✅ No orphaned submenu items (all parent_id values point to existing items)  
+✅ Gates menu has exactly 3 children as specified  
+✅ Total item count matches expected (~16 items)
+
+### Test Results Summary
+- **Total Tests:** 115 (increased from 87)
+- **Tests Passed:** 115
+- **Tests Failed:** 0
+- **Success Rate:** 100.0%
+
+### Status
+**✅ FEATURE FULLY FUNCTIONAL**
+
+All test cases from the review request passed successfully. The sidebar submenu functionality is working correctly with proper parent-child relationships and no data integrity issues.
+
