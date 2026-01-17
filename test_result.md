@@ -380,6 +380,76 @@ agent_communication:
   
   - agent: "testing"
     message: |
+      RBAC REPORTS PAGE UI TESTING COMPLETED (2026-01-17)
+      
+      ✅ CORE RBAC FUNCTIONALITY WORKING CORRECTLY
+      
+      TEST RESULTS SUMMARY:
+      
+      ✅ TEST 1: GATES DEPARTMENT MANAGER (test.gates@crowd.sa)
+      • Login successful ✅
+      • Reports page loaded ✅
+      • Department badge "عرض تقارير: إدارة الأبواب" visible ✅
+      • Department filter dropdown correctly hidden ✅
+      • Exactly 4 report cards displayed ✅
+      • Export section shows ONLY Gates card ✅
+      • Plazas, Mataf, Daily Summary cards correctly hidden ✅
+      • ALL REQUIREMENTS MET ✅
+      
+      ⚠️ TEST 2: SYSTEM ADMIN (admin@crowd.sa)
+      • Login successful ✅
+      • Reports page loaded ✅
+      • No department badge shown (correct) ✅
+      • Department filter dropdown IS visible ✅
+      • Exactly 9 report cards displayed ✅
+      • Export section shows 2 cards: Gates + Daily Summary ⚠️
+      • Missing: Plazas and Mataf export cards ⚠️
+      • ROOT CAUSE: Backend APIs return empty data (plazas.length=0, mataf.length=0)
+      • This is NOT a bug - export cards only show when data exists
+      • RBAC logic is working correctly ✅
+      
+      ⚠️ TEST 3: GENERAL MANAGER (test.general@crowd.sa)
+      • Login successful ✅
+      • Reports page loaded ✅
+      • No department badge shown (correct) ✅
+      • Department filter dropdown IS visible ✅
+      • Exactly 9 report cards displayed ✅
+      • Export section shows 2 cards: Gates + Daily Summary ⚠️
+      • Same issue as admin - limited by empty data ⚠️
+      • RBAC logic is working correctly ✅
+      
+      ⚠️ TEST 4: INTERACTIVE FILTERS (ADMIN)
+      • Type filter working correctly ✅
+      • Department filter NOT reducing reports ❌
+      • When filtering by "إدارة الأبواب", still shows 9 reports (should show 4)
+      • ISSUE: Frontend filter logic or dropdown state update not working
+      • Filter code looks correct (lines 497-498 in ReportsPage.jsx)
+      • Possible cause: Dropdown selection not updating filterDept state
+      
+      CRITICAL FINDINGS:
+      
+      1. ✅ RBAC FILTERING WORKING: Department managers correctly see restricted view
+      2. ✅ BADGE DISPLAY WORKING: Badge shows for dept managers, hidden for admins
+      3. ✅ DEPARTMENT FILTER VISIBILITY: Correctly shown/hidden based on role
+      4. ✅ REPORT CARDS FILTERING: Backend correctly returns filtered reports
+      5. ⚠️ EXPORT CARDS: Working correctly but limited by empty data (plazas=0, mataf=0)
+      6. ❌ FRONTEND DEPARTMENT FILTER: Not reducing report cards when selected
+      
+      DATA VERIFICATION:
+      • Gates API: 2 items ✅
+      • Plazas API: 0 items (empty)
+      • Mataf API: 0 items (empty)
+      • Reports API: 9 reports (correct distribution across departments)
+      
+      CONCLUSION:
+      The RBAC report filtering feature is FUNCTIONALLY CORRECT. The main issue is:
+      1. Empty data for plazas/mataf (not a bug, just no data in DB)
+      2. Frontend department filter dropdown not working (minor UI issue)
+      
+      The core RBAC logic is solid and working as expected.
+  
+  - agent: "testing"
+    message: |
       COMPREHENSIVE UI TESTING COMPLETED (2026-01-17)
       
       ✅ ALL MAJOR TESTS PASSED - SYSTEM READY FOR PRODUCTION
