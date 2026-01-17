@@ -218,16 +218,16 @@ export default function SystemSettings() {
             title={language === 'ar' ? 'إعدادات شاشة الدخول' : 'Login Page Settings'}
             description={language === 'ar' ? 'تخصيص شاشة الدخول والشعار' : 'Customize login page and branding'}
           >
-            <div className="space-y-6">
+            <div className="space-y-6" dir="rtl">
               {/* Logo Section */}
               <div>
-                <Label className="font-medium mb-3 block">{language === 'ar' ? 'شعار شخصي' : 'Custom Logo'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-3 block text-right">{language === 'ar' ? 'شعار شخصي' : 'Custom Logo'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'نحن نعرض شعار مخصص بدلا من الشعار الافتراضي' : 'Display custom logo instead of default'}
                 </p>
                 
                 {/* Logo Preview */}
-                <div className="flex items-start gap-4 mb-4">
+                <div className="flex items-start gap-4 mb-4 flex-row-reverse">
                   <div 
                     className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50"
                     style={{ width: '192px', height: '192px' }}
@@ -279,11 +279,21 @@ export default function SystemSettings() {
 
                 {/* Logo Size Control */}
                 <div className="mb-4">
-                  <Label className="font-medium mb-2 block">{language === 'ar' ? 'حجم الشعار' : 'Logo Size'}</Label>
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'حجم الشعار' : 'Logo Size'}</Label>
+                  <p className="text-xs text-muted-foreground mb-3 text-right">
                     {language === 'ar' ? 'تعيين حجم عرض الشعار في شاشة الدخول' : 'Set logo display size on login screen'}
                   </p>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-row-reverse">
+                    <span className="text-sm text-muted-foreground w-20 text-right">{loginSettings.logo_size}px</span>
+                    <input 
+                      type="range" 
+                      min="50" 
+                      max="300" 
+                      value={loginSettings.logo_size}
+                      onChange={(e) => setLoginSettings({...loginSettings, logo_size: parseInt(e.target.value)})}
+                      className="flex-1"
+                      dir="rtl"
+                    />
                     <Input 
                       type="number"
                       min="50"
@@ -292,30 +302,24 @@ export default function SystemSettings() {
                       onChange={(e) => setLoginSettings({...loginSettings, logo_size: parseInt(e.target.value) || 150})}
                       className="w-24"
                     />
-                    <input 
-                      type="range" 
-                      min="50" 
-                      max="300" 
-                      value={loginSettings.logo_size}
-                      onChange={(e) => setLoginSettings({...loginSettings, logo_size: parseInt(e.target.value)})}
-                      className="flex-1"
-                    />
-                    <span className="text-sm text-muted-foreground w-20">{loginSettings.logo_size}px</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-2 text-right">
                     {language === 'ar' ? 'قيمة بين 50 و 300 بكسل (المثالي: 150 بكسل)' : 'Value between 50 and 300 pixels (Ideal: 150px)'}
                   </p>
                 </div>
 
-                {/* Logo URL Input */}
+                {/* Logo Link */}
                 <div>
-                  <Label className="text-sm">{language === 'ar' ? 'رابط الشعار' : 'Logo URL'}</Label>
+                  <Label className="text-sm text-right block">{language === 'ar' ? 'رابط الشعار' : 'Logo Link'}</Label>
                   <Input 
-                    value={loginSettings.logo_url || ""}
-                    onChange={(e) => setLoginSettings({...loginSettings, logo_url: e.target.value})}
+                    value={loginSettings.logo_link || "/"}
+                    onChange={(e) => setLoginSettings({...loginSettings, logo_link: e.target.value})}
                     className="mt-1"
-                    placeholder="https://example.com/logo.png"
+                    placeholder="/"
                   />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">
+                    {language === 'ar' ? 'الرابط الذي يتم التوجيه إليه عند النقر على الشعار' : 'Link to redirect when clicking logo'}
+                  </p>
                 </div>
               </div>
 
@@ -323,14 +327,15 @@ export default function SystemSettings() {
 
               {/* Welcome Text */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'نص الترحيب' : 'Welcome Text'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'نص الترحيب' : 'Welcome Text'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'تعيين نص الترحيب في شاشة الدخول' : 'Set welcome text on login screen'}
                 </p>
                 <Input 
                   value={loginSettings.welcome_text_ar}
                   onChange={(e) => setLoginSettings({...loginSettings, welcome_text_ar: e.target.value})}
                   placeholder={language === 'ar' ? 'مرحباً بك' : 'Welcome'}
+                  className="text-right"
                 />
               </div>
 
@@ -338,23 +343,23 @@ export default function SystemSettings() {
 
               {/* Site Name */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'اسم الموقع' : 'Site Name'}</Label>
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'اسم الموقع' : 'Site Name'}</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs text-muted-foreground">{language === 'ar' ? 'عربي' : 'Arabic'}</Label>
+                    <Label className="text-xs text-muted-foreground text-right block">{language === 'ar' ? 'عربي' : 'Arabic'}</Label>
                     <Input 
                       value={loginSettings.site_name_ar}
                       onChange={(e) => setLoginSettings({...loginSettings, site_name_ar: e.target.value})}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       placeholder="خدمات الحشود"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">{language === 'ar' ? 'إنجليزي' : 'English'}</Label>
+                    <Label className="text-xs text-muted-foreground text-right block">{language === 'ar' ? 'إنجليزي' : 'English'}</Label>
                     <Input 
                       value={loginSettings.site_name_en}
                       onChange={(e) => setLoginSettings({...loginSettings, site_name_en: e.target.value})}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       placeholder="Crowd Services"
                     />
                   </div>
@@ -365,16 +370,11 @@ export default function SystemSettings() {
 
               {/* Background Image Section */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'صورة الخلفية' : 'Background Image'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'صورة الخلفية' : 'Background Image'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'تعرض صورة خلفية مخصصة بنصف عرض الشاشة' : 'Display custom background image at half screen width'}
                 </p>
                 <div className="space-y-3">
-                  <Input 
-                    value={loginSettings.background_url || ""}
-                    onChange={(e) => setLoginSettings({...loginSettings, background_url: e.target.value})}
-                    placeholder="https://example.com/background.jpg"
-                  />
                   <Button 
                     type="button"
                     variant="outline" 
@@ -391,6 +391,11 @@ export default function SystemSettings() {
                     onChange={handleBackgroundUpload}
                     className="hidden"
                   />
+                  {loginSettings.background_url && (
+                    <div className="text-xs text-muted-foreground text-right">
+                      ✓ {language === 'ar' ? 'تم رفع صورة الخلفية' : 'Background uploaded'}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -398,8 +403,8 @@ export default function SystemSettings() {
 
               {/* Custom Title (Subtitle) */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'عنوان مخصص' : 'Custom Title'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'عنوان مخصص' : 'Custom Title'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'تعرض عنوان مخصص فوق صورة الخلفية' : 'Display custom title above background image'}
                 </p>
                 <Textarea 
@@ -407,6 +412,7 @@ export default function SystemSettings() {
                   onChange={(e) => setLoginSettings({...loginSettings, subtitle_ar: e.target.value})}
                   rows={3}
                   placeholder={language === 'ar' ? 'منصة إدارة الحشود في الحرم المكي الشريف' : 'Platform description...'}
+                  className="text-right"
                 />
               </div>
 
@@ -414,8 +420,8 @@ export default function SystemSettings() {
 
               {/* Custom Text (Additional description) */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'نص متخصص' : 'Specialist Text'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'نص متخصص' : 'Specialist Text'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'تعرض نص متخصص فوق صورة الخلفية' : 'Display specialist text above background image'}
                 </p>
                 <Textarea 
@@ -423,6 +429,7 @@ export default function SystemSettings() {
                   onChange={(e) => setLoginSettings({...loginSettings, subtitle_en: e.target.value})}
                   rows={4}
                   placeholder={language === 'ar' ? 'نص إضافي للوصف...' : 'Additional description text...'}
+                  className="text-right"
                 />
               </div>
 
@@ -430,11 +437,11 @@ export default function SystemSettings() {
 
               {/* Transparency/Opacity */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'الشفافية' : 'Transparency'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'الشفافية' : 'Transparency'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'تعيين تعتيم التراكب' : 'Set overlay opacity'}
                 </p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-row-reverse">
                   <Input 
                     type="number"
                     min="0"
@@ -448,9 +455,10 @@ export default function SystemSettings() {
                     max="100" 
                     defaultValue="20"
                     className="flex-1"
+                    dir="rtl"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-2 text-right">
                   {language === 'ar' ? 'قيمة بين 0 و 100%' : 'Value between 0 and 100%'}
                 </p>
               </div>
@@ -459,27 +467,27 @@ export default function SystemSettings() {
 
               {/* Primary Color */}
               <div>
-                <Label className="font-medium mb-2 block">{language === 'ar' ? 'لون العنوان المخصص' : 'Custom Title Color'}</Label>
-                <p className="text-xs text-muted-foreground mb-3">
+                <Label className="font-medium mb-2 block text-right">{language === 'ar' ? 'لون العنوان المخصص' : 'Custom Title Color'}</Label>
+                <p className="text-xs text-muted-foreground mb-3 text-right">
                   {language === 'ar' ? 'حدد لون النص الخاص بك لقسم العنوان المخصص' : 'Set your text color for the custom title section'}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-row-reverse">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="transparent" className="text-sm">Transparent</Label>
+                    <input type="checkbox" id="transparent" className="rounded" />
+                  </div>
+                  <Input 
+                    value={loginSettings.primary_color}
+                    onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
+                    placeholder="#DC2626"
+                    className="flex-1 text-right"
+                  />
                   <Input 
                     type="color"
                     value={loginSettings.primary_color}
                     onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
                     className="w-16 h-10"
                   />
-                  <Input 
-                    value={loginSettings.primary_color}
-                    onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
-                    placeholder="#DC2626"
-                    className="flex-1"
-                  />
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="transparent" className="rounded" />
-                    <Label htmlFor="transparent" className="text-sm">Transparent</Label>
-                  </div>
                 </div>
               </div>
             </div>
