@@ -283,7 +283,7 @@ export const Layout = () => {
           <Separator className="my-4 mx-3" />
           
           <nav className="space-y-1 px-3">
-            {filteredSecondaryNav.map((item) => (
+            {secondaryNav.map((item) => (
               <NavItem key={item.href} item={item} mobile />
             ))}
           </nav>
