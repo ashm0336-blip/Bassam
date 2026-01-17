@@ -142,7 +142,7 @@ export default function SystemSettings() {
       });
       
       toast.success(language === 'ar' ? "تم حفظ إعدادات Header بنجاح" : "Header settings saved successfully");
-      window.location.reload(); // Reload to apply changes
+      refreshHeader(); // Refresh header immediately
     } catch (error) {
       console.error("Error saving header settings:", error);
       toast.error(language === 'ar' ? "فشل حفظ الإعدادات" : "Failed to save settings");
