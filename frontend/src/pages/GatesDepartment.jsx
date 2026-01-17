@@ -114,6 +114,18 @@ export default function GatesDepartment() {
   const [employeeStats, setEmployeeStats] = useState(null);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  
+  // Get active tab from URL query params
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(urlTab);
+
+  // Update tab when URL changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') || 'dashboard';
+    setActiveTab(tab);
+  }, [window.location.search]);
 
   useEffect(() => {
     const fetchData = async () => {
