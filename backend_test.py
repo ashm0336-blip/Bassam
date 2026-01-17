@@ -1115,40 +1115,48 @@ class AlHaramAPITester:
         )
 
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Al-Haram OS API Testing...")
+        """Run all API tests - Comprehensive Testing for Review Request"""
+        print("🚀 Starting Crowd Services Platform Comprehensive Testing...")
         print(f"📡 Testing API at: {self.api_url}")
-        print("=" * 60)
+        print("=" * 80)
         
-        # Test authentication first
+        # Category 1: Authentication & Authorization (all user roles)
         self.test_authentication_endpoints()
         
-        # Test user management and permissions (NEW - comprehensive tests)
+        # Category 2: User Management (System Admin only)
         self.test_user_management_endpoints()
         self.test_permission_validation()
         
-        # Test admin endpoints (requires auth)
-        self.test_admin_endpoints()
+        # Category 3: Employee Management (with location and shift)
+        self.test_employee_management()
         
-        # Test unauthorized access
-        self.test_unauthorized_access()
+        # Category 4: Gates Management (all 9 fields, plaza_color, multi-category)
+        self.test_gates_management_comprehensive()
         
-        # Test all public endpoints
-        self.test_root_endpoint()
+        # Category 5: Dashboard & Stats (including employee_stats with shifts and locations)
+        self.test_dashboard_with_employee_stats()
         self.test_dashboard_endpoints()
-        self.test_gates_endpoints()
+        
+        # Category 6: Activity Logs (with filters)
+        self.test_activity_logs()
+        
+        # Category 7: Alerts/Notifications
+        self.test_alerts_comprehensive()
+        
+        # Additional tests
+        self.test_admin_endpoints()
+        self.test_unauthorized_access()
+        self.test_root_endpoint()
         self.test_plazas_endpoints()
         self.test_mataf_endpoints()
-        self.test_alerts_endpoints()
-        self.test_notifications_endpoints()
         self.test_reports_endpoints()
         self.test_planning_endpoints()
         self.test_crowd_services_endpoints()
         
         # Print summary
-        print("\n" + "=" * 60)
-        print("📊 TEST SUMMARY")
-        print("=" * 60)
+        print("\n" + "=" * 80)
+        print("📊 COMPREHENSIVE TEST SUMMARY")
+        print("=" * 80)
         print(f"✅ Tests Passed: {self.tests_passed}")
         print(f"❌ Tests Failed: {len(self.failed_tests)}")
         print(f"📈 Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
