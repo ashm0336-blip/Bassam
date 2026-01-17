@@ -878,15 +878,18 @@ async def get_dashboard_stats():
             "alerts_count": 0
         }
     
+    # Get REAL active employees count
+    active_employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
     total_crowd = sum(p.get("current_crowd", 0) for p in plazas) + sum(m.get("current_crowd", 0) for m in mataf)
     total_max = sum(p.get("max_capacity", 0) for p in plazas) + sum(m.get("max_capacity", 0) for m in mataf)
-    open_gates = len([g for g in gates if g.get("status") == "open"])
+    open_gates = len([g for g in gates if g.get("status") == "مفتوح"])
     
     return {
-        "total_visitors_today": total_crowd * 3,  # Estimate
+        "total_visitors_today": 0,  # Not tracked yet
         "current_crowd": total_crowd,
         "max_capacity": total_max,
-        "active_staff": len(gates) * 10,  # Estimate
+        "active_staff": len(active_employees),  # REAL count
         "open_gates": open_gates,
         "total_gates": len(gates),
         "incidents_today": len([a for a in alerts if a.get("type") == "emergency"]),
