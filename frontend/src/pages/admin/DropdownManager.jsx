@@ -238,7 +238,7 @@ export default function DropdownManager() {
                   <SelectValue placeholder={language === 'ar' ? 'جميع الفئات' : 'All Categories'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value=" ">
                     {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
                   </SelectItem>
                   {Object.entries(CATEGORY_NAMES).map(([key, names]) => (
