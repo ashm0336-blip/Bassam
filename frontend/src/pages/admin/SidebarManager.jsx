@@ -614,6 +614,7 @@ export default function SidebarManager() {
                   </SortableContext>
                 </TableBody>
               </Table>
+              </div>
             </DndContext>
           </CardContent>
         </Card>
