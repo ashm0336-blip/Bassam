@@ -669,6 +669,28 @@ export default function SidebarManager() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="subtitle_ar">{language === 'ar' ? 'العنوان الفرعي (عربي)' : 'Subtitle (Arabic)'}</Label>
+                <Input
+                  id="subtitle_ar"
+                  value={formData.subtitle_ar}
+                  onChange={(e) => setFormData({ ...formData, subtitle_ar: e.target.value })}
+                  placeholder="مثال: نظرة شاملة على..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="subtitle_en">{language === 'ar' ? 'العنوان الفرعي (إنجليزي)' : 'Subtitle (English)'}</Label>
+                <Input
+                  id="subtitle_en"
+                  value={formData.subtitle_en}
+                  onChange={(e) => setFormData({ ...formData, subtitle_en: e.target.value })}
+                  placeholder="Example: Overview of..."
+                />
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="href">{language === 'ar' ? 'الرابط' : 'URL Path'} *</Label>
               <Input
