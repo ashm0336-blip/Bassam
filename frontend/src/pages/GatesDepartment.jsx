@@ -282,6 +282,104 @@ export default function GatesDepartment() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Gates by Type */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">التوزيع حسب النوع</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {['رئيسي', 'فرعي', 'سلم كهربائي', 'مصعد', 'درج', 'جسر'].map((type, idx) => {
+                  const count = gates.filter(g => g.gate_type === type).length;
+                  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500'];
+                  return count > 0 && (
+                    <div key={type} className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-lg ${colors[idx]} flex items-center justify-center`}>
+                        <span className="text-white font-bold text-sm">{count}</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{type}</p>
+                        <Progress value={(count / gates.length) * 100} className={`h-2 mt-1 [&>div]:${colors[idx]}`} />
+                      </div>
+                      <span className="text-sm text-muted-foreground">{((count / gates.length) * 100).toFixed(0)}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gates by Direction */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">التوزيع حسب المسار</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
+                  <p className="text-2xl font-bold text-blue-600">{gates.filter(g => g.direction === 'دخول').length}</p>
+                  <p className="text-sm text-muted-foreground">دخول</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200">
+                  <p className="text-2xl font-bold text-purple-600">{gates.filter(g => g.direction === 'خروج').length}</p>
+                  <p className="text-sm text-muted-foreground">خروج</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200">
+                  <p className="text-2xl font-bold text-green-600">{gates.filter(g => g.direction === 'دخول وخروج').length}</p>
+                  <p className="text-sm text-muted-foreground">دخول وخروج</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gates by Category */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">التوزيع حسب الفئة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                {['محرمين', 'مصلين', 'عربات'].map((cat, idx) => {
+                  const count = gates.filter(g => Array.isArray(g.category) ? g.category.includes(cat) : g.category === cat).length;
+                  const colors = ['text-primary', 'text-secondary', 'text-blue-600'];
+                  const bgColors = ['bg-primary/5 border-primary/20', 'bg-secondary/10 border-secondary/20', 'bg-blue-50 border-blue-200'];
+                  return (
+                    <div key={cat} className={`text-center p-4 rounded-lg border ${bgColors[idx]}`}>
+                      <p className={`text-2xl font-bold ${colors[idx]}`}>{count}</p>
+                      <p className="text-sm text-muted-foreground">{cat}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gates by Classification */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-cairo text-right">التوزيع حسب التصنيف</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {['عام', 'رجال', 'نساء', 'طوارئ', 'خدمات', 'جنائز'].map((cls, idx) => {
+                  const count = gates.filter(g => g.classification === cls).length;
+                  const colors = ['bg-gray-500', 'bg-blue-500', 'bg-pink-500', 'bg-red-500', 'bg-green-500', 'bg-purple-500'];
+                  return count > 0 && (
+                    <div key={cls} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                      <div className={`w-8 h-8 rounded-full ${colors[idx]} flex items-center justify-center`}>
+                        <span className="text-white font-bold text-sm">{count}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{cls}</p>
+                        <p className="text-xs text-muted-foreground">{((count / gates.length) * 100).toFixed(0)}%</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="gates" className="mt-6">
