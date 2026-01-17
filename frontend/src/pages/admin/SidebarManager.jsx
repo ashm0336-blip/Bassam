@@ -331,6 +331,8 @@ export default function SidebarManager() {
       setFormData({
         name_ar: "",
         name_en: "",
+        subtitle_ar: "",
+        subtitle_en: "",
         href: "",
         icon: "LayoutDashboard",
         order: maxOrder + 1,
