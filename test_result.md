@@ -207,6 +207,18 @@ backend:
         comment: "SIDEBAR SUBMENU FUNCTIONALITY FULLY TESTED (2026-01-17). ✅ GET /api/sidebar-menu returns all menu items including submenus with proper parent-child relationships. ✅ Menu structure validated: Parent items have no parent_id, submenu items have valid parent_id pointing to existing parents. ✅ Gates menu (id: 53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19) has exactly 3 children as expected: لوحة التحكم, الأبواب, الموظفين. ✅ Total menu count: 16 items (13 parents + 3 children). ✅ GET /api/admin/sidebar-menu returns all items with proper parent-child links verified. ✅ No orphaned submenu items found - all children properly linked to parents. All 115 backend tests passed with 100% success rate."
 
 frontend:
+  - task: "Sidebar Menu with Expandable Submenus - UI"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/context/SidebarContext.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE FOUND (2026-01-17): Sidebar menu items are NOT rendering in the UI. EVIDENCE: (1) Backend API /api/sidebar-menu returns 16 menu items correctly including Gates menu with 3 submenu items ✅. (2) RBAC filtering working correctly ✅. (3) Sidebar is expanded (256px width) ✅. (4) BUT: Nav elements have 0 children - menu items not rendered to DOM ❌. (5) React state check: Could not find menuItems in React state ❌. (6) User info missing from localStorage ❌. ROOT CAUSE: The useSidebar() hook or Layout component is not properly rendering the menu items even though the API returns them successfully. IMPACT: Cannot test submenu expand/collapse, chevron icons, RTL layout, or navigation because NO menu items are visible. CODE REVIEW: Layout.jsx lines 70-91 show correct implementation for organizing parent/child menu items and rendering with NavItem component. SidebarContext.jsx lines 20-40 show correct API fetching logic. BLOCKING ISSUE: This prevents all UI testing of the submenu functionality."
+
   - task: "Dark Mode Theme Implementation"
     implemented: true
     working: true
