@@ -126,6 +126,7 @@ export default function SidebarManager() {
         : `Seeded ${response.data.count} items successfully`
       );
       fetchMenuItems();
+      refreshMenu(); // ✨ تحديث القائمة الجانبية فوراً
     } catch (error) {
       console.error("Error seeding data:", error);
       toast.error(error.response?.data?.message || (language === 'ar' ? "فشلت التهيئة" : "Seeding failed"));
