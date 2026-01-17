@@ -557,6 +557,98 @@ export default function SystemSettings() {
               </Button>
             </div>
           </SettingSection>
+
+          {/* Security Settings Section */}
+          <SettingSection
+            icon={Shield}
+            title={language === 'ar' ? 'إعدادات الأمان' : 'Security Settings'}
+            description={language === 'ar' ? 'إدارة أمان النظام' : 'Manage system security'}
+          >
+            <div className="space-y-1" dir="rtl">
+              <SettingItem 
+                label={language === 'ar' ? 'طول كلمة المرور الأدنى' : 'Minimum Password Length'}
+              >
+                <Input 
+                  type="number"
+                  value={settings.passwordMinLength}
+                  onChange={(e) => setSettings({...settings, passwordMinLength: e.target.value})}
+                  className="w-20"
+                />
+              </SettingItem>
+              
+              <Separator />
+              
+              <SettingItem 
+                label={language === 'ar' ? 'طلب رموز خاصة' : 'Require Special Characters'}
+                description={language === 'ar' ? 'فرض استخدام رموز خاصة في كلمات المرور' : 'Enforce special characters in passwords'}
+              >
+                <Switch 
+                  checked={settings.requireSpecialChars}
+                  onCheckedChange={(checked) => setSettings({...settings, requireSpecialChars: checked})}
+                />
+              </SettingItem>
+              
+              <Separator />
+              
+              <SettingItem 
+                label={language === 'ar' ? 'المصادقة الثنائية' : 'Two-Factor Authentication'}
+                description={language === 'ar' ? 'تفعيل 2FA للمستخدمين' : 'Enable 2FA for users'}
+              >
+                <Switch 
+                  checked={settings.require2FA}
+                  onCheckedChange={(checked) => setSettings({...settings, require2FA: checked})}
+                />
+              </SettingItem>
+            </div>
+          </SettingSection>
+
+          {/* Session Settings Section */}
+          <SettingSection
+            icon={Clock}
+            title={language === 'ar' ? 'إعدادات الجلسة' : 'Session Settings'}
+            description={language === 'ar' ? 'إدارة جلسات المستخدمين' : 'Manage user sessions'}
+          >
+            <div className="space-y-1" dir="rtl">
+              <SettingItem 
+                label={language === 'ar' ? 'مدة الجلسة (ساعات)' : 'Session Duration (hours)'}
+              >
+                <Input 
+                  type="number"
+                  value={settings.sessionDuration}
+                  onChange={(e) => setSettings({...settings, sessionDuration: e.target.value})}
+                  className="w-20"
+                />
+              </SettingItem>
+              
+              <Separator />
+              
+              <SettingItem 
+                label={language === 'ar' ? 'تسجيل خروج تلقائي' : 'Auto Logout'}
+                description={language === 'ar' ? 'عند عدم النشاط' : 'On inactivity'}
+              >
+                <Switch 
+                  checked={settings.autoLogout}
+                  onCheckedChange={(checked) => setSettings({...settings, autoLogout: checked})}
+                />
+              </SettingItem>
+              
+              {settings.autoLogout && (
+                <>
+                  <Separator />
+                  <SettingItem 
+                    label={language === 'ar' ? 'مدة عدم النشاط (دقائق)' : 'Inactivity Duration (minutes)'}
+                  >
+                    <Input 
+                      type="number"
+                      value={settings.autoLogoutMinutes}
+                      onChange={(e) => setSettings({...settings, autoLogoutMinutes: e.target.value})}
+                      className="w-20"
+                    />
+                  </SettingItem>
+                </>
+              )}
+            </div>
+          </SettingSection>
         </TabsContent>
 
         {/* Header Settings Tab */}
