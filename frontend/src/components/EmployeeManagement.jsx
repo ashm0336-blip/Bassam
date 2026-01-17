@@ -253,11 +253,6 @@ export default function EmployeeManagement({ department }) {
                     <TableCell className="text-right font-medium">{employee.name}</TableCell>
                     <TableCell className="text-center">{employee.job_title}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={employee.is_active ? "default" : "secondary"}>
-                        {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
                       {employee.shift && (
                         <Badge 
                           className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
@@ -267,13 +262,39 @@ export default function EmployeeManagement({ department }) {
                       )}
                     </TableCell>
                     <TableCell className="text-center text-sm">{employee.location || '-'}</TableCell>
-                    <TableCell className="text-center">{employee.job_title}</TableCell>
-                    <TableCell className="font-medium text-center">{employee.name}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={employee.is_active ? "default" : "secondary"}>
+                        {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-left">
+                      <div className="flex items-center gap-2 justify-start">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(employee)}
+                          className="h-8 w-8"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {employees.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {language === 'ar' ? 'لا يوجد موظفين' : 'No employees found'}
                     </TableCell>
                   </TableRow>
