@@ -1236,6 +1236,132 @@ async def get_public_dropdown_options(category: Optional[str] = None):
     
     return options
 
+# ============= Sidebar Menu Routes (Admin Only) =============
+@api_router.get("/admin/sidebar-menu")
+async def get_sidebar_menu_items(admin: dict = Depends(require_admin)):
+    """Get all sidebar menu items"""
+    items = await db.sidebar_menu.find({}, {"_id": 0}).sort("order", 1).to_list(1000)
+    return items
+
+@api_router.get("/sidebar-menu")
+async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
+    """Get sidebar menu items for current user based on permissions"""
+    items = await db.sidebar_menu.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(1000)
+    
+    # Filter based on user permissions
+    user_role = user.get("role")
+    user_dept = user.get("department")
+    
+    filtered_items = []
+    for item in items:
+        # Admin-only items
+        if item.get("admin_only") and user_role != "system_admin":
+            continue
+        
+        # Public items accessible to all
+        if item.get("is_public"):
+            filtered_items.append(item)
+            continue
+        
+        # Department-specific items
+        if item.get("department"):
+            # Check if user can access this department
+            if user_role == "system_admin":
+                filtered_items.append(item)
+            elif user_role == "general_manager":
+                filtered_items.append(item)
+            elif user_role == "monitoring_team":
+                filtered_items.append(item)
+            elif user_role == "department_manager" and user_dept == item.get("department"):
+                filtered_items.append(item)
+        else:
+            # No department restriction
+            filtered_items.append(item)
+    
+    return filtered_items
+
+@api_router.post("/admin/sidebar-menu")
+async def create_sidebar_menu_item(
+    item: SidebarMenuItemCreate,
+    admin: dict = Depends(require_admin)
+):
+    """Create a new sidebar menu item"""
+    item_dict = item.model_dump()
+    item_obj = SidebarMenuItem(**item_dict)
+    doc = item_obj.model_dump()
+    
+    await db.sidebar_menu.insert_one(doc)
+    await log_activity("إضافة قسم للقائمة", admin, item_obj.id, f"تم إضافة: {item.name_ar}")
+    
+    return item_obj
+
+@api_router.put("/admin/sidebar-menu/{item_id}")
+async def update_sidebar_menu_item(
+    item_id: str,
+    item: SidebarMenuItemUpdate,
+    admin: dict = Depends(require_admin)
+):
+    """Update a sidebar menu item"""
+    existing = await db.sidebar_menu.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="القسم غير موجود")
+    
+    update_data = {k: v for k, v in item.model_dump().items() if v is not None}
+    if update_data:
+        await db.sidebar_menu.update_one({"id": item_id}, {"$set": update_data})
+        await log_activity("تعديل قسم في القائمة", admin, item_id, f"تم تعديل: {existing.get('name_ar')}")
+    
+    updated = await db.sidebar_menu.find_one({"id": item_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/sidebar-menu/{item_id}")
+async def delete_sidebar_menu_item(
+    item_id: str,
+    admin: dict = Depends(require_admin)
+):
+    """Delete a sidebar menu item"""
+    existing = await db.sidebar_menu.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="القسم غير موجود")
+    
+    await db.sidebar_menu.delete_one({"id": item_id})
+    await log_activity("حذف قسم من القائمة", admin, item_id, f"تم حذف: {existing.get('name_ar')}")
+    
+    return {"message": "تم حذف القسم بنجاح"}
+
+@api_router.post("/admin/sidebar-menu/seed")
+async def seed_sidebar_menu(admin: dict = Depends(require_admin)):
+    """Seed initial sidebar menu from current configuration"""
+    # Check if already seeded
+    count = await db.sidebar_menu.count_documents({})
+    if count > 0:
+        return {"message": "القائمة موجودة مسبقاً", "count": count}
+    
+    default_items = [
+        {"name_ar": "لوحة التحكم", "name_en": "Dashboard", "href": "/", "icon": "LayoutDashboard", "order": 1, "is_public": True},
+        {"name_ar": "الخريطة التفاعلية", "name_en": "Interactive Map", "href": "/map", "icon": "Map", "order": 2, "is_public": True},
+        {"name_ar": "تخطيط خدمات الحشود", "name_en": "Crowd Planning", "href": "/planning", "icon": "ClipboardList", "order": 3, "department": "planning"},
+        {"name_ar": "إدارة الساحات", "name_en": "Plazas Management", "href": "/plazas", "icon": "LayoutGrid", "order": 4, "department": "plazas"},
+        {"name_ar": "إدارة الأبواب", "name_en": "Gates Management", "href": "/gates", "icon": "DoorOpen", "order": 5, "department": "gates"},
+        {"name_ar": "خدمات الحشود", "name_en": "Crowd Services", "href": "/crowd-services", "icon": "Users", "order": 6, "department": "crowd_services"},
+        {"name_ar": "صحن المطاف", "name_en": "Mataf Management", "href": "/mataf", "icon": "Circle", "order": 7, "department": "mataf"},
+        {"name_ar": "التقارير", "name_en": "Reports", "href": "/reports", "icon": "FileText", "order": 8, "is_public": False},
+        {"name_ar": "الإشعارات", "name_en": "Notifications", "href": "/notifications", "icon": "Bell", "order": 9, "is_public": False},
+        {"name_ar": "الإعدادات", "name_en": "Settings", "href": "/settings", "icon": "Settings", "order": 10, "is_public": False},
+        {"name_ar": "لوحة الأدمن", "name_en": "Admin Panel", "href": "/admin", "icon": "Shield", "order": 11, "admin_only": True},
+    ]
+    
+    # Insert all items
+    items_to_insert = []
+    for item_data in default_items:
+        item = SidebarMenuItem(**item_data)
+        items_to_insert.append(item.model_dump())
+    
+    await db.sidebar_menu.insert_many(items_to_insert)
+    await log_activity("تهيئة القائمة الجانبية", admin, "sidebar_menu", f"تم إضافة {len(items_to_insert)} قسم")
+    
+    return {"message": "تم تهيئة القائمة بنجاح", "count": len(items_to_insert)}
+
 # Include the router in the main app
 app.include_router(api_router)
 
