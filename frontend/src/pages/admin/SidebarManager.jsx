@@ -245,6 +245,7 @@ export default function SidebarManager() {
       );
       toast.success(language === 'ar' ? "تم تحديث الحالة" : "Status updated");
       fetchMenuItems();
+      refreshMenu(); // ✨ تحديث القائمة الجانبية فوراً
     } catch (error) {
       console.error("Error toggling status:", error);
       toast.error(language === 'ar' ? "فشل تحديث الحالة" : "Failed to update status");
