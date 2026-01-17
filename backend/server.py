@@ -274,6 +274,7 @@ class HeaderSettingsUpdate(BaseModel):
     show_language_toggle: Optional[bool] = None
     show_theme_toggle: Optional[bool] = None
     show_logout_button: Optional[bool] = None
+    show_notifications_bell: Optional[bool] = None
     custom_greeting_ar: Optional[str] = None
     custom_greeting_en: Optional[str] = None
     show_logo: Optional[bool] = None
