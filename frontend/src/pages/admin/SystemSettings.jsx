@@ -86,6 +86,7 @@ export default function SystemSettings() {
     subtitle_ar: "منصة إدارة الحشود في الحرم المكي الشريف",
     subtitle_en: "Crowd Management Platform at Al-Haram",
     logo_url: "",
+    logo_link: "/",
     logo_size: 150,
     background_url: "",
     primary_color: "#DC2626",
