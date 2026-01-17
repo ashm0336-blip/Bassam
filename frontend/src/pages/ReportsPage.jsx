@@ -126,29 +126,62 @@ export default function ReportsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        
+        // Fetch all data
         const [reportsRes, gatesRes, plazasRes, matafRes, statsRes, deptsRes] = await Promise.all([
-          axios.get(`${API}/reports`),
-          axios.get(`${API}/gates`),
-          axios.get(`${API}/plazas`),
-          axios.get(`${API}/mataf`),
-          axios.get(`${API}/dashboard/stats`),
-          axios.get(`${API}/dashboard/departments`)
+          axios.get(`${API}/reports`, { headers }),
+          axios.get(`${API}/gates`, { headers }),
+          axios.get(`${API}/plazas`, { headers }),
+          axios.get(`${API}/mataf`, { headers }),
+          axios.get(`${API}/dashboard/stats`, { headers }),
+          axios.get(`${API}/dashboard/departments`, { headers })
         ]);
+        
         setReports(reportsRes.data);
-        setGates(gatesRes.data);
-        setPlazas(plazasRes.data);
-        setMataf(matafRes.data);
+        
+        // Filter data based on user's department for department managers
+        if (!canAccessAllDepartments && userDepartment) {
+          // Filter gates, plazas, mataf based on department
+          if (userDepartment === "gates") {
+            setGates(gatesRes.data);
+            setPlazas([]);
+            setMataf([]);
+          } else if (userDepartment === "plazas") {
+            setPlazas(plazasRes.data);
+            setGates([]);
+            setMataf([]);
+          } else if (userDepartment === "mataf") {
+            setMataf(matafRes.data);
+            setGates([]);
+            setPlazas([]);
+          } else {
+            setGates([]);
+            setPlazas([]);
+            setMataf([]);
+          }
+        } else {
+          // Admin/General Manager can see all data
+          setGates(gatesRes.data);
+          setPlazas(plazasRes.data);
+          setMataf(matafRes.data);
+        }
+        
         setStats(statsRes.data);
         setDepartments(deptsRes.data);
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error(language === 'ar' ? "حدث خطأ في تحميل البيانات" : "Error loading data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user, canAccessAllDepartments, userDepartment, language]);
 
   const handleExport = async (type, format) => {
     setExporting(`${type}-${format}`);
