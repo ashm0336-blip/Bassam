@@ -330,10 +330,22 @@ export default function SystemSettings() {
                     onChange={(e) => setLoginSettings({...loginSettings, background_url: e.target.value})}
                     placeholder="https://example.com/background.jpg"
                   />
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => document.getElementById('background-upload').click()}
+                  >
                     <Upload className="w-4 h-4 ml-2" />
                     {language === 'ar' ? 'رفع صورة' : 'Upload Image'}
                   </Button>
+                  <input 
+                    id="background-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    className="hidden"
+                  />
                 </div>
               </div>
 
