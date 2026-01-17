@@ -289,6 +289,52 @@ class HeaderSettingsUpdate(BaseModel):
     border_style: Optional[str] = None
     transparency: Optional[int] = None
 
+# ============= Map Models =============
+class MapMarker(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    map_id: str  # Which map this marker belongs to
+    type: str  # 'gate', 'employee', 'plaza', 'service'
+    entity_id: Optional[str] = None  # ID of the gate/employee if linked
+    x: float  # X position (percentage 0-100)
+    y: float  # Y position (percentage 0-100)
+    label_ar: str
+    label_en: str
+    icon: str = "MapPin"
+    color: str = "#DC2626"
+    show_label: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class InteractiveMap(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name_ar: str
+    name_en: str
+    department: str  # gates, plazas, mataf, etc.
+    image_url: str
+    width: int = 1920
+    height: int = 1080
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MapMarkerCreate(BaseModel):
+    map_id: str
+    type: str
+    entity_id: Optional[str] = None
+    x: float
+    y: float
+    label_ar: str
+    label_en: str
+    icon: Optional[str] = "MapPin"
+    color: Optional[str] = "#DC2626"
+    show_label: Optional[bool] = True
+
+class InteractiveMapCreate(BaseModel):
+    name_ar: str
+    name_en: str
+    department: str
+    image_url: str
+    width: Optional[int] = 1920
+    height: Optional[int] = 1080
+
 # ============= Auth Functions =============
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
