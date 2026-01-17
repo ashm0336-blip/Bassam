@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
 import UserManagement from "./admin/UserManagement";
 import ActivityLog from "./admin/ActivityLog";
-import DataManagement from "./admin/DataManagement";
 import SystemSettings from "./admin/SystemSettings";
 
 export default function AdminPage() {
