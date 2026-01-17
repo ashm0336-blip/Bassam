@@ -299,8 +299,8 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.2"
-  test_sequence: 6
+  version: "2.3"
+  test_sequence: 7
   run_ui: true
   testing_credentials:
     system_admin: "admin@crowd.sa / admin123"
@@ -324,11 +324,17 @@ metadata:
       - "Activity Logs (with filters)"
       - "Alerts/Notifications"
   last_frontend_test:
-    timestamp: "2025-01-16"
-    tests_run: 11
-    tests_passed: 10
-    tests_failed: 1
-    success_rate: 90.9
+    timestamp: "2026-01-17"
+    tests_run: 15
+    tests_passed: 15
+    tests_failed: 0
+    success_rate: 100.0
+    categories_tested:
+      - "System Admin Panel (all 4 tabs)"
+      - "Department Manager - Gates (all 3 tabs)"
+      - "General Manager Dashboard"
+      - "Notifications Page"
+      - "Reports Page & Export Functionality"
 
 test_plan:
   current_focus: []
