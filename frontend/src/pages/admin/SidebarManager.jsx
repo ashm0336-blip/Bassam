@@ -113,8 +113,8 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
       </TableCell>
-      <TableCell className="font-medium">{item.order}</TableCell>
-      <TableCell>
+      <TableCell className="font-medium text-right">{item.order}</TableCell>
+      <TableCell className="text-right">
         <div className={`flex items-center gap-2 ${isChild ? 'pr-6' : ''}`}>
           {hasChildren && !isChild && (
             <Button
@@ -139,12 +139,12 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-xs font-mono">{item.href}</TableCell>
-      <TableCell>
+      <TableCell className="text-center text-xs font-mono">{item.href}</TableCell>
+      <TableCell className="text-center">
         <Badge variant="outline">{item.icon}</Badge>
       </TableCell>
-      <TableCell>
-        <div className="flex flex-wrap gap-1">
+      <TableCell className="text-center">
+        <div className="flex flex-wrap gap-1 justify-center">
           {item.is_public && (
             <Badge variant="default" className="text-xs">
               {language === 'ar' ? 'عام' : 'Public'}
@@ -163,7 +163,7 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <Button
           size="sm"
           variant="ghost"
@@ -177,8 +177,8 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </Button>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center justify-center gap-2">
+      <TableCell className="text-left">
+        <div className="flex items-center justify-start gap-2">
           <Button
             size="sm"
             variant="ghost"
