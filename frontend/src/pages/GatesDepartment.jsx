@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GatesDataManagement from "@/components/GatesDataManagement";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   DoorOpen, 
   DoorClosed,
