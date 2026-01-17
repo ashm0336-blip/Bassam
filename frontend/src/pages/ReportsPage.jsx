@@ -465,7 +465,7 @@ export default function ReportsPage() {
             
             {/* Show department filter only for users who can access all departments */}
             {canAccessAllDepartments && (
-              <Select value={filterDept} onValueChange={setFilterDept}>
+              <Select value={filterDept} onValueChange={handleDeptFilterChange}>
                 <SelectTrigger className="w-48" data-testid="dept-filter">
                   <SelectValue placeholder="الإدارة" />
                 </SelectTrigger>
