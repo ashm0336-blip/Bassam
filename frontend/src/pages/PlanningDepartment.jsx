@@ -79,23 +79,8 @@ export default function PlanningDepartment() {
 
   return (
     <div className="space-y-6" data-testid="planning-page">
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="employees">
-            <Users className="w-4 h-4 ml-2" />
-            الموظفون
-          </TabsTrigger>
-          <TabsTrigger value="planning">
-            <ClipboardList className="w-4 h-4 ml-2" />
-            الخطط
-          </TabsTrigger>
-          <TabsTrigger value="dashboard">
-            <Activity className="w-4 h-4 ml-2" />
-            لوحة التحكم
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="dashboard" className="space-y-4 mt-6">
+      {activeTab === 'dashboard' && (
+        <>
           <div>
             <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة التخطيط</h2>
             <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على الخطط والموارد</p>
