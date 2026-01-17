@@ -81,13 +81,30 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-10">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/80 mx-auto flex items-center justify-center mb-5 shadow-lg">
-              <div className="w-14 h-14 rounded-full bg-secondary/30 flex items-center justify-center">
-                <span className="text-white font-cairo font-bold text-2xl">ح</span>
+            {pageSettings.logo_url ? (
+              <img 
+                src={pageSettings.logo_url} 
+                alt="Logo" 
+                className="w-20 h-20 mx-auto mb-5 object-contain"
+              />
+            ) : (
+              <div 
+                className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg"
+                style={{ background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` }}
+              >
+                <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center">
+                  <span className="text-white font-cairo font-bold text-2xl">ح</span>
+                </div>
               </div>
-            </div>
-            <h1 className="font-cairo font-bold text-2xl text-gray-800 mb-2">تسجيل الدخول</h1>
-            <p className="text-sm text-gray-500">مرحباً بك في منصة خدمات الحشود</p>
+            )}
+            <h1 className="font-cairo font-bold text-2xl text-gray-800 mb-2">
+              {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {language === 'ar' ? pageSettings.welcome_text_ar : pageSettings.welcome_text_en} 
+              {' '}
+              {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
+            </p>
           </div>
 
           {/* Login Form */}
