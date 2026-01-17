@@ -9,7 +9,9 @@ import {
   MapPin,
   TrendingUp,
   Maximize2,
-  Activity
+  Activity,
+  UserCheck,
+  UserX
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,17 +80,23 @@ const PlazaCard = ({ plaza }) => {
 export default function PlazasDepartment() {
   const [plazas, setPlazas] = useState([]);
   const [stats, setStats] = useState(null);
+  const [employeeStats, setEmployeeStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [plazasRes, statsRes] = await Promise.all([
+        const token = localStorage.getItem("token");
+        const [plazasRes, statsRes, empStatsRes] = await Promise.all([
           axios.get(`${API}/plazas`),
-          axios.get(`${API}/plazas/stats`)
+          axios.get(`${API}/plazas/stats`),
+          axios.get(`${API}/employees/stats/plazas`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
         ]);
         setPlazas(plazasRes.data);
         setStats(statsRes.data);
+        setEmployeeStats(empStatsRes.data);
       } catch (error) {
         console.error("Error fetching plazas data:", error);
       } finally {
@@ -131,64 +139,118 @@ export default function PlazasDepartment() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6 mt-6">
+        <TabsContent value="dashboard" className="space-y-4 mt-6">
           <div>
             <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة الساحات</h2>
             <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على حالة الساحات والموظفين</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Employee Stats */}
+<Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end">
+                <Users className="w-5 h-5 text-primary" />
+                إحصائيات الموظفين
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+                <div className="text-center p-2 rounded-lg bg-card border border-border">
+                  <Users className="w-4 h-4 mx-auto text-primary mb-1" />
+                  <p className="text-lg font-bold">{employeeStats?.total_employees || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">إجمالي</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-card border border-border">
+                  <UserCheck className="w-4 h-4 mx-auto text-green-500 mb-1" />
+                  <p className="text-lg font-bold text-green-600">{employeeStats?.active_employees || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">نشطون</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-card border border-border">
+                  <UserX className="w-4 h-4 mx-auto text-gray-500 mb-1" />
+                  <p className="text-lg font-bold text-gray-600">{employeeStats?.inactive_employees || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">غير نشطين</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-blue-600">{employeeStats?.shifts?.shift_1 || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">الأولى</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-green-600">{employeeStats?.shifts?.shift_2 || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">الثانية</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200">
+                  <div className="w-2 h-2 rounded-full bg-orange-500 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-orange-600">{employeeStats?.shifts?.shift_3 || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">الثالثة</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-purple-600">{employeeStats?.shifts?.shift_4 || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">الرابعة</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-card border border-border">
+                  <MapPin className="w-4 h-4 mx-auto text-blue-500 mb-1" />
+                  <p className="text-lg font-bold text-blue-600">{employeeStats?.locations_count || 0}</p>
+                  <p className="text-[10px] text-muted-foreground">المواقع</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <LayoutGrid className="w-6 h-6 text-primary" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <LayoutGrid className="w-5 h-5 text-primary" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">إجمالي الساحات</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.total_plazas || 0}</p>
+                    <p className="text-xs text-muted-foreground">إجمالي</p>
+                    <p className="text-xl font-cairo font-bold">{stats?.total_plazas || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-secondary" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-secondary" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">الحشود الحالية</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.current_crowd?.toLocaleString('ar-SA') || 0}</p>
+                    <p className="text-xs text-muted-foreground">الحشود</p>
+                    <p className="text-xl font-cairo font-bold">{stats?.current_crowd?.toLocaleString('ar-SA') || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-blue-600" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">نسبة الإشغال</p>
-                    <p className="text-2xl font-cairo font-bold">{stats?.overall_percentage || 0}%</p>
+                    <p className="text-xs text-muted-foreground">الإشغال</p>
+                    <p className="text-xl font-cairo font-bold">{stats?.overall_percentage || 0}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4 justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-destructive" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">ساحات حرجة</p>
-                    <p className="text-2xl font-cairo font-bold text-destructive">{stats?.critical || 0}</p>
+                    <p className="text-xs text-muted-foreground">حرجة</p>
+                    <p className="text-xl font-cairo font-bold text-destructive">{stats?.critical || 0}</p>
                   </div>
                 </div>
               </CardContent>
@@ -196,25 +258,25 @@ export default function PlazasDepartment() {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="font-cairo text-right">توزيع الحالة</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="font-cairo text-base text-right">توزيع الحالة</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="w-3 h-3 rounded-full bg-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-primary">{stats?.normal || 0}</p>
-                  <p className="text-sm text-muted-foreground">طبيعي</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="w-3 h-3 rounded-full bg-primary mx-auto mb-1" />
+                  <p className="text-xl font-bold text-primary">{stats?.normal || 0}</p>
+                  <p className="text-xs text-muted-foreground">طبيعي</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-secondary/10 border border-secondary/20">
-                  <div className="w-3 h-3 rounded-full bg-secondary mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-secondary">{stats?.warning || 0}</p>
-                  <p className="text-sm text-muted-foreground">مرتفع</p>
+                <div className="text-center p-3 rounded-lg bg-secondary/10 border border-secondary/20">
+                  <div className="w-3 h-3 rounded-full bg-secondary mx-auto mb-1" />
+                  <p className="text-xl font-bold text-secondary">{stats?.warning || 0}</p>
+                  <p className="text-xs text-muted-foreground">مرتفع</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-destructive/5 border border-destructive/10">
-                  <div className="w-3 h-3 rounded-full bg-destructive mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-destructive">{stats?.critical || 0}</p>
-                  <p className="text-sm text-muted-foreground">حرج</p>
+                <div className="text-center p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+                  <div className="w-3 h-3 rounded-full bg-destructive mx-auto mb-1" />
+                  <p className="text-xl font-bold text-destructive">{stats?.critical || 0}</p>
+                  <p className="text-xs text-muted-foreground">حرج</p>
                 </div>
               </div>
             </CardContent>
