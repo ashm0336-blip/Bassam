@@ -1179,6 +1179,28 @@ async def seed_dropdown_options(admin: dict = Depends(require_admin)):
     
     return {"message": "تم تهيئة القوائم بنجاح", "count": len(options_to_insert)}
 
+# ============= Public Dropdown Options (For Forms) =============
+@api_router.get("/dropdown-options")
+async def get_public_dropdown_options(category: Optional[str] = None):
+    """Get active dropdown options for forms (public access)"""
+    query = {"is_active": True}
+    if category:
+        query["category"] = category
+    
+    options = await db.dropdown_options.find(query, {"_id": 0}).sort("order", 1).to_list(1000)
+    
+    # Group by category if no specific category requested
+    if not category:
+        grouped = {}
+        for opt in options:
+            cat = opt["category"]
+            if cat not in grouped:
+                grouped[cat] = []
+            grouped[cat].append(opt)
+        return grouped
+    
+    return options
+
 # Include the router in the main app
 app.include_router(api_router)
 
