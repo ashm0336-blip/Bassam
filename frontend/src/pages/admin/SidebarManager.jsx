@@ -71,6 +71,7 @@ const DEPARTMENTS = [
 
 export default function SidebarManager() {
   const { language } = useLanguage();
+  const { refreshMenu } = useSidebar();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
