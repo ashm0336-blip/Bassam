@@ -69,6 +69,7 @@ export const Layout = () => {
   const { theme, toggleTheme, isDark } = useTheme();
   const { t, language, toggleLanguage, isRTL } = useLanguage();
   const { menuItems, loading } = useSidebar();
+  const { headerSettings } = useHeader();
 
   // Convert menu items from API to navigation format
   const allMenuItems = menuItems.map(item => ({
