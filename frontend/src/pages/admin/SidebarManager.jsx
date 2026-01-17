@@ -189,6 +189,7 @@ export default function SidebarManager() {
   const { language } = useLanguage();
   const { refreshMenu } = useSidebar();
   const [menuItems, setMenuItems] = useState([]);
+  const [expandedItems, setExpandedItems] = useState({}); // Track which parent items are expanded
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -204,6 +205,34 @@ export default function SidebarManager() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Toggle expand/collapse for parent items
+  const toggleExpand = (itemId) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  // Get flat list with nested items for display
+  const getDisplayItems = () => {
+    const result = [];
+    const parentItems = menuItems.filter(item => !item.parent_id);
+    
+    parentItems.forEach(parent => {
+      result.push(parent);
+      
+      // If parent is expanded, add its children
+      if (expandedItems[parent.id]) {
+        const children = menuItems.filter(item => item.parent_id === parent.id);
+        result.push(...children);
+      }
+    });
+    
+    return result;
+  };
+
+  const displayItems = getDisplayItems();
   
   const [formData, setFormData] = useState({
     name_ar: "",
