@@ -97,25 +97,18 @@ export const Layout = () => {
   }, [user]);
 
   // Convert menu items from API to navigation format
-  const navigation = menuItems
-    .filter(item => !item.admin_only) // Filter out admin-only items
-    .map(item => ({
-      name: language === 'ar' ? item.name_ar : item.name_en,
-      href: item.href,
-      icon: ICON_MAP[item.icon] || LayoutDashboard,
-      isActive: item.is_active
-    }))
-    .filter(item => item.isActive); // Only show active items
+  const allMenuItems = menuItems.map(item => ({
+    name: language === 'ar' ? item.name_ar : item.name_en,
+    href: item.href,
+    icon: ICON_MAP[item.icon] || LayoutDashboard,
+    isActive: item.is_active,
+    isSecondary: item.is_secondary,
+    adminOnly: item.admin_only
+  })).filter(item => item.isActive); // Only show active items
 
-  const secondaryNav = menuItems
-    .filter(item => item.admin_only) // Only admin items
-    .map(item => ({
-      name: language === 'ar' ? item.name_ar : item.name_en,
-      href: item.href,
-      icon: ICON_MAP[item.icon] || Shield,
-      adminOnly: item.admin_only
-    }))
-    .filter(item => !item.adminOnly || (item.adminOnly && isAdmin()));
+  // Split into primary and secondary navigation
+  const navigation = allMenuItems.filter(item => !item.isSecondary);
+  const secondaryNav = allMenuItems.filter(item => item.isSecondary);
 
   const handleLogout = () => {
     logout();
