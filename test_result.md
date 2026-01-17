@@ -386,6 +386,62 @@ test_plan:
     - "Reports Page - Export Buttons (PDF and Excel)"
 
 agent_communication:
+  - agent: "testing"
+    message: |
+      SIDEBAR SUBMENU UI TESTING - CRITICAL ISSUE FOUND (2026-01-17)
+      
+      ❌ BLOCKING BUG: Sidebar menu items are NOT rendering in the UI
+      
+      TEST RESULTS:
+      
+      ✅ BACKEND VERIFICATION:
+      • API /api/sidebar-menu returns 16 menu items correctly
+      • Gates menu (إدارة الأبواب) exists with id: 53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19
+      • 3 submenu items found: لوحة التحكم, الأبواب, الموظفين
+      • RBAC filtering working correctly for system_admin role
+      • All menu items have correct parent_id relationships
+      
+      ❌ FRONTEND ISSUE:
+      • Sidebar element exists and is expanded (256px width)
+      • BUT: Nav elements contain 0 children
+      • Menu items are NOT being rendered to the DOM
+      • React state check: Could not find menuItems in component props
+      • User info missing from localStorage (might be related)
+      
+      ROOT CAUSE ANALYSIS:
+      1. SidebarContext.jsx (lines 20-40): Fetches menu items from API correctly
+      2. Layout.jsx (lines 70-91): Has correct logic to organize and render menu items
+      3. ISSUE: The menuItems array from useSidebar() appears to be empty or not reaching the Layout component
+      
+      POSSIBLE CAUSES:
+      1. SidebarContext not properly providing menuItems through context
+      2. Timing issue - menu items not loaded when Layout renders
+      3. User authentication state not properly set, causing permission filtering to remove all items
+      4. React rendering issue preventing menu items from appearing in DOM
+      
+      DEBUGGING EVIDENCE:
+      • Sidebar text content shows only: "حخدمات الحشودAl-Haram OSممسؤول النظاممستخدم"
+      • This is just the header and footer, no actual menu items
+      • Direct API fetch in browser console returns 16 items successfully
+      • But DOM inspection shows nav elements are empty
+      
+      IMPACT:
+      Cannot test ANY of the requested submenu functionality:
+      ❌ Chevron icon visibility
+      ❌ Submenu expand/collapse
+      ❌ RTL layout for submenu items
+      ❌ Submenu indentation
+      ❌ Navigation from submenu items
+      
+      RECOMMENDATION:
+      1. Check if SidebarContext is properly wrapped around the app
+      2. Verify that useSidebar() hook is returning menuItems correctly
+      3. Add console.log in Layout.jsx to debug menuItems value
+      4. Check if there's a race condition between auth loading and menu loading
+      5. Verify that the user object is properly set in AuthContext after login
+      
+      This is a HIGH PRIORITY bug that blocks the entire submenu feature testing.
+  
   - agent: "main"
     message: |
       Successfully implemented the three main features:
