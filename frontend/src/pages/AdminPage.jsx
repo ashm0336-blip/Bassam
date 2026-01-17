@@ -40,14 +40,10 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
           <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="data" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Database className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'البيانات' : 'Data'}</span>
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
