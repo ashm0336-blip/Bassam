@@ -221,6 +221,7 @@ class LoginPageSettings(BaseModel):
     subtitle_ar: str = "منصة إدارة الحشود في الحرم المكي الشريف"
     subtitle_en: str = "Crowd Management Platform at Al-Haram"
     logo_url: Optional[str] = None
+    logo_link: str = "/"
     logo_size: int = 150
     background_url: Optional[str] = None
     primary_color: str = "#DC2626"
@@ -234,6 +235,7 @@ class LoginPageSettingsUpdate(BaseModel):
     subtitle_ar: Optional[str] = None
     subtitle_en: Optional[str] = None
     logo_url: Optional[str] = None
+    logo_link: Optional[str] = None
     logo_size: Optional[int] = None
     background_url: Optional[str] = None
     primary_color: Optional[str] = None
