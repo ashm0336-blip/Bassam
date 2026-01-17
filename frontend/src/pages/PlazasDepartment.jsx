@@ -139,8 +139,8 @@ export default function PlazasDepartment() {
       {activeTab === 'dashboard' && (
         <>
           <div>
-            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة الساحات</h2>
-            <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على حالة الساحات والموظفين</p>
+            <h2 className="font-cairo font-bold text-xl text-right">{pageTitle}</h2>
+            {pageSubtitle && <p className="text-sm text-muted-foreground mt-1 text-right">{pageSubtitle}</p>}
           </div>
 
           {/* Employee Stats */}
