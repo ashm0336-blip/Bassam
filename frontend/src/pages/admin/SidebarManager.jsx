@@ -108,24 +108,14 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
 
   return (
     <TableRow ref={setNodeRef} style={style} className={isChild ? 'bg-muted/30' : ''}>
-      <TableCell className="w-12 text-right">
+      <TableCell className="w-12 text-left">
         <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
       </TableCell>
-      <TableCell className="font-medium text-right">{item.order}</TableCell>
-      <TableCell className="text-right">
-        <div className={`flex items-center gap-2 ${isChild ? 'pr-6' : ''}`}>
-          {hasChildren && !isChild && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onToggleExpand(item.id)}
-              className="h-6 w-6 p-0"
-            >
-              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-            </Button>
-          )}
+      <TableCell className="font-medium text-left">{item.order}</TableCell>
+      <TableCell className="text-left">
+        <div className={`flex items-center gap-2 flex-row-reverse ${isChild ? 'pl-6' : ''}`}>
           <div>
             <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
             <div className="text-xs text-muted-foreground">
@@ -137,14 +127,24 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
               </Badge>
             )}
           </div>
+          {hasChildren && !isChild && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggleExpand(item.id)}
+              className="h-6 w-6 p-0"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            </Button>
+          )}
         </div>
       </TableCell>
-      <TableCell className="text-right text-xs font-mono">{item.href}</TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-left text-xs font-mono">{item.href}</TableCell>
+      <TableCell className="text-left">
         <Badge variant="outline">{item.icon}</Badge>
       </TableCell>
-      <TableCell className="text-right">
-        <div className="flex flex-wrap gap-1 justify-end">
+      <TableCell className="text-left">
+        <div className="flex flex-wrap gap-1 justify-start">
           {item.is_public && (
             <Badge variant="default" className="text-xs">
               {language === 'ar' ? 'عام' : 'Public'}
@@ -163,7 +163,7 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </div>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-left">
         <Button
           size="sm"
           variant="ghost"
@@ -177,8 +177,8 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
           )}
         </Button>
       </TableCell>
-      <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-2">
+      <TableCell className="text-left">
+        <div className="flex items-center justify-start gap-2">
           <Button
             size="sm"
             variant="ghost"
