@@ -197,6 +197,14 @@ export default function SidebarManager() {
   const [submitting, setSubmitting] = useState(false);
   const [seeding, setSeeding] = useState(false);
   
+  // Drag & Drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
   const [formData, setFormData] = useState({
     name_ar: "",
     name_en: "",
