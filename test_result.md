@@ -324,8 +324,8 @@ metadata:
     base_url: "https://meccaops.preview.emergentagent.com"
   last_backend_test:
     timestamp: "2026-01-17"
-    tests_run: 87
-    tests_passed: 87
+    tests_run: 115
+    tests_passed: 115
     success_rate: 100.0
     categories_tested:
       - "Authentication & Authorization (all user roles)"
@@ -335,6 +335,8 @@ metadata:
       - "Dashboard & Stats (including employee_stats)"
       - "Activity Logs (with filters)"
       - "Alerts/Notifications"
+      - "RBAC Report Filtering"
+      - "Sidebar Menu with Expandable Submenus"
   last_frontend_test:
     timestamp: "2026-01-17"
     tests_run: 15
