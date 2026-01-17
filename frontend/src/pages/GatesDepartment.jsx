@@ -112,6 +112,9 @@ const GateCard = ({ gate }) => {
 
 export default function GatesDepartment() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { menuItems } = useSidebar();
+  const { language } = useLanguage();
   const activeTab = searchParams.get('tab') || 'dashboard';
   
   const [gates, setGates] = useState([]);
@@ -119,6 +122,11 @@ export default function GatesDepartment() {
   const [employeeStats, setEmployeeStats] = useState(null);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+
+  // Get page title and subtitle from sidebar menu
+  const pageInfo = menuItems.find(item => location.pathname.startsWith(item.href.split('?')[0]) && item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'لوحة تحكم إدارة الأبواب' : 'Gates Dashboard');
+  const pageSubtitle = pageInfo ? (language === 'ar' ? pageInfo.subtitle_ar : pageInfo.subtitle_en) : (language === 'ar' ? 'نظرة شاملة على حالة الأبواب والموظفين' : 'Overview of gates and employees');
 
   // Update when tab changes - no need for separate state
   useEffect(() => {
