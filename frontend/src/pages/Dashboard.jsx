@@ -80,30 +80,13 @@ const DepartmentCard = ({ dept, language }) => {
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-cairo font-semibold text-sm">{dept.name}</h3>
-          <Badge 
-            className={`${statusColors[dept.status]} text-white text-[10px] px-2 py-0.5`}
-          >
-            {statusLabels[dept.status]}
+          <Badge variant={employeeStats.total > 0 ? "default" : "secondary"} className="text-[10px] px-2 py-0.5">
+            {employeeStats.total > 0 ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
           </Badge>
         </div>
         
         <div className="space-y-3">
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-muted-foreground">{language === 'ar' ? 'نسبة الإشغال' : 'Occupancy'}</span>
-              <span className="font-semibold">{dept.percentage}%</span>
-            </div>
-            <Progress 
-              value={dept.percentage} 
-              className={`h-2 ${
-                dept.status === "normal" ? "[&>div]:bg-primary" :
-                dept.status === "warning" ? "[&>div]:bg-secondary" :
-                "[&>div]:bg-destructive"
-              }`}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3 pt-2 text-[10px]">
+          <div className="grid grid-cols-2 gap-3 text-[10px]">
             <div>
               <p className="text-muted-foreground">{language === 'ar' ? 'الموظفون' : 'Staff'}</p>
               <p className="font-cairo font-bold text-base">{dept.active_staff}</p>
