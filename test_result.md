@@ -193,6 +193,18 @@ backend:
       - working: true
         agent: "testing"
         comment: "ALERTS/NOTIFICATIONS FULLY TESTED (2026-01-17). ✅ GET /api/alerts lists all alerts. ✅ POST /api/admin/alerts creates alert with type, title, message, department, priority. ✅ DELETE /api/admin/alerts/{id} deletes alert. CRITICAL BUG FIXED: The POST /api/admin/alerts endpoint had missing function body (decorator was present but function was defined elsewhere without decorator). Fixed by properly implementing the create_alert function with the route decorator. All alert operations now working correctly."
+  
+  - task: "Sidebar Menu with Expandable Submenus"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "SIDEBAR SUBMENU FUNCTIONALITY FULLY TESTED (2026-01-17). ✅ GET /api/sidebar-menu returns all menu items including submenus with proper parent-child relationships. ✅ Menu structure validated: Parent items have no parent_id, submenu items have valid parent_id pointing to existing parents. ✅ Gates menu (id: 53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19) has exactly 3 children as expected: لوحة التحكم, الأبواب, الموظفين. ✅ Total menu count: 16 items (13 parents + 3 children). ✅ GET /api/admin/sidebar-menu returns all items with proper parent-child links verified. ✅ No orphaned submenu items found - all children properly linked to parents. All 115 backend tests passed with 100% success rate."
 
 frontend:
   - task: "Dark Mode Theme Implementation"
