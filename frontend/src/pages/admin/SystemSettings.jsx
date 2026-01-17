@@ -184,10 +184,14 @@ export default function SystemSettings() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-7 h-auto p-1">
           <TabsTrigger value="login" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LogIn className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'شاشة الدخول' : 'Login Page'}</span>
+            <span className="text-xs">{language === 'ar' ? 'شاشة الدخول' : 'Login'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="header" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Settings className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الهيدر' : 'Header'}</span>
           </TabsTrigger>
           <TabsTrigger value="general" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
