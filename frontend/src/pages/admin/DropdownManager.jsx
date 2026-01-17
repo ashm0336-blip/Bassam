@@ -308,36 +308,37 @@ export default function DropdownManager() {
       ) : filteredOptions.length > 0 ? (
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'القيمة' : 'Value'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'التسمية' : 'Label'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'اللون' : 'Color'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOptions.map((option) => (
-                  <TableRow key={option.id}>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {CATEGORY_NAMES[option.category]?.[language] || option.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{option.value}</TableCell>
-                    <TableCell>{option.label}</TableCell>
-                    <TableCell>
-                      {option.color && (
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-6 h-6 rounded border"
-                            style={{ backgroundColor: option.color }}
-                          />
-                          <span className="text-xs text-muted-foreground">{option.color}</span>
+            <div dir="rtl">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'القيمة' : 'Value'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'التسمية' : 'Label'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'اللون' : 'Color'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOptions.map((option) => (
+                    <TableRow key={option.id}>
+                      <TableCell className="text-center">
+                        <Badge variant="outline">
+                          {CATEGORY_NAMES[option.category]?.[language] || option.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium text-center">{option.value}</TableCell>
+                      <TableCell className="text-center">{option.label}</TableCell>
+                      <TableCell className="text-center">
+                        {option.color && (
+                          <div className="flex items-center gap-2 justify-center">
+                            <div 
+                              className="w-6 h-6 rounded border"
+                              style={{ backgroundColor: option.color }}
+                            />
+                            <span className="text-xs text-muted-foreground">{option.color}</span>
                         </div>
                       )}
                     </TableCell>
