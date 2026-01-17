@@ -40,31 +40,31 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
         <TabsList className="grid w-full grid-cols-6 h-auto p-1">
-          <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Menu className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'القائمة الجانبية' : 'Sidebar'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="dropdowns" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <List className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'القوائم' : 'Dropdowns'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Settings className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Activity className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity Log'}</span>
+          <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
           </TabsTrigger>
           <TabsTrigger value="users" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Users className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'المستخدمون' : 'Users'}</span>
           </TabsTrigger>
-          <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+          <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Activity className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity Log'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Settings className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="dropdowns" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <List className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'القوائم' : 'Dropdowns'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Menu className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'القائمة الجانبية' : 'Sidebar'}</span>
           </TabsTrigger>
         </TabsList>
 
