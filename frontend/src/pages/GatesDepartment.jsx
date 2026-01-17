@@ -171,13 +171,13 @@ export default function GatesDepartment() {
 
   return (
     <div className="space-y-6" data-testid="gates-page">
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="employees">
             <Users className="w-4 h-4 ml-2" />
             الموظفون
           </TabsTrigger>
-          <TabsTrigger value="gates">
+          <TabsTrigger value="data">
             <DoorOpen className="w-4 h-4 ml-2" />
             الأبواب
           </TabsTrigger>
