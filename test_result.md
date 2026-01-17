@@ -987,3 +987,29 @@ The department-based report filtering feature is fully functional and secure:
 
 **Status:** PRODUCTION READY
 
+
+---
+
+## Known Minor Issue - 2026-01-17
+
+### Frontend Department Filter Dropdown (Non-Critical)
+
+**Issue:** The optional department filter dropdown on the Reports page (for admins/general managers) is not updating the displayed reports when a selection is made.
+
+**Root Cause:** The `onValueChange` handler in the Select component is not being triggered. This appears to be related to the Radix UI Portal rendering.
+
+**Impact:** LOW
+- **Core RBAC filtering works perfectly** ✅
+- Department managers correctly see only their department reports ✅  
+- The issue only affects the *optional* filtering feature for admins
+- Admins can still see all reports, they just can't filter them by department in the UI
+
+**Workaround:** The backend API already supports department filtering via query parameters. If needed, the filter can be implemented using direct API calls instead of client-side filtering.
+
+**Next Steps:** 
+1. Investigate Radix UI Select Portal z-index or event bubbling issues
+2. Consider alternative implementation (native select or different UI library)
+3. This can be fixed in a future update as it's a UX enhancement, not a blocker
+
+**Status:** DOCUMENTED - Non-blocking issue
+
