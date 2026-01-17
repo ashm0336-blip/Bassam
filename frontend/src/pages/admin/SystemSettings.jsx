@@ -12,7 +12,9 @@ import {
   Save,
   Trash2,
   LogIn,
-  Loader2
+  Loader2,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
