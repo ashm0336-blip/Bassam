@@ -132,6 +132,42 @@ export default function SystemSettings() {
     toast.success(language === 'ar' ? "تم حفظ الإعدادات بنجاح" : "Settings saved successfully");
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error(language === 'ar' ? 'يرجى اختيار صورة صالحة' : 'Please select a valid image');
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLoginSettings({...loginSettings, logo_url: reader.result});
+      toast.success(language === 'ar' ? 'تم رفع الشعار' : 'Logo uploaded');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBackgroundUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error(language === 'ar' ? 'يرجى اختيار صورة صالحة' : 'Please select a valid image');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLoginSettings({...loginSettings, background_url: reader.result});
+      toast.success(language === 'ar' ? 'تم رفع صورة الخلفية' : 'Background uploaded');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
