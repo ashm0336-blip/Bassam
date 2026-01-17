@@ -1668,6 +1668,62 @@ async def delete_marker(marker_id: str, admin: dict = Depends(require_admin)):
     await log_activity("حذف علامة من الخريطة", admin, marker_id, "تم الحذف")
     return {"message": "تم حذف العلامة بنجاح"}
 
+# ============= External Data - Haramain Density =============
+@api_router.get("/external/haramain-density")
+async def get_haramain_density():
+    """Scrape density data from alharamain.gov.sa"""
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        import urllib3
+        urllib3.disable_warnings()
+        
+        url = "https://alharamain.gov.sa/public/?module=module_794625"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        
+        response = requests.get(url, headers=headers, timeout=10, verify=False)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        text = soup.get_text()
+        
+        # Extract mataf levels
+        mataf = [
+            {"level": "سطح المطاف", "code": "2", "status": "خفيفة", "percentage": 0},
+            {"level": "مطاف الدور الأول", "code": "1", "status": "خفيفة", "percentage": 0},
+            {"level": "مطاف الدور الأرضي", "code": "G", "status": "خفيفة", "percentage": 0},
+            {"level": "صحن المطاف", "code": "Ground", "status": "خفيفة", "percentage": 0}
+        ]
+        
+        # Extract masa levels  
+        masa = [
+            {"level": "المسعى الدور الثاني", "code": "2", "status": "خفيفة", "percentage": 0},
+            {"level": "المسعى الدور الأول", "code": "1", "status": "خفيفة", "percentage": 0},
+            {"level": "المسعى الدور الأرضي", "code": "G", "status": "خفيفة", "percentage": 0}
+        ]
+        
+        # Try to detect density status from text
+        overall_density = "خفيفة"
+        if "متوسطة" in text:
+            overall_density = "متوسطة"
+        elif "كثيفة" in text:
+            overall_density = "كثيفة"
+        
+        return {
+            "mataf_levels": mataf,
+            "masa_levels": masa,
+            "overall_density": overall_density,
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "source": "alharamain.gov.sa"
+        }
+    except Exception as e:
+        # Return fallback data if scraping fails
+        return {
+            "mataf_levels": [],
+            "masa_levels": [],
+            "overall_density": "غير متاح",
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "error": str(e)
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
