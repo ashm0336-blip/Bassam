@@ -152,10 +152,12 @@ function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-          <Toaster position="top-left" />
+          <SidebarProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+            <Toaster position="top-left" />
+          </SidebarProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
