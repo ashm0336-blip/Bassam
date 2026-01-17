@@ -284,28 +284,9 @@ export default function GatesDepartment() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="gates" className="space-y-6 mt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-cairo font-bold text-2xl">إدارة الأبواب</h1>
-          <p className="text-sm text-muted-foreground mt-1">مراقبة وإدارة أبواب الحرم المكي الشريف</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-40" data-testid="gate-filter">
-              <Filter className="w-4 h-4 ml-2" />
-              <SelectValue placeholder="تصفية" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">جميع الأبواب</SelectItem>
-              <SelectItem value="open">مفتوح</SelectItem>
-              <SelectItem value="closed">مغلق</SelectItem>
-              <SelectItem value="maintenance">صيانة</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+        <TabsContent value="gates" className="mt-6">
+          <GatesDataManagement />
+        </TabsContent>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
