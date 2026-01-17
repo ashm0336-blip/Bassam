@@ -183,6 +183,7 @@ class SidebarMenuItem(BaseModel):
     is_active: bool = True
     is_public: bool = False  # accessible to all users
     is_secondary: bool = False  # show in secondary section (below separator)
+    parent_id: Optional[str] = None  # if set, this is a submenu item
     department: Optional[str] = None  # if None, accessible to all departments
     admin_only: bool = False  # only for system_admin
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -195,6 +196,7 @@ class SidebarMenuItemCreate(BaseModel):
     order: Optional[int] = 0
     is_public: Optional[bool] = False
     is_secondary: Optional[bool] = False
+    parent_id: Optional[str] = None
     department: Optional[str] = None
     admin_only: Optional[bool] = False
 
@@ -207,6 +209,7 @@ class SidebarMenuItemUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_public: Optional[bool] = None
     is_secondary: Optional[bool] = None
+    parent_id: Optional[str] = None
     department: Optional[str] = None
     admin_only: Optional[bool] = None
 
