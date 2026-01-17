@@ -59,46 +59,68 @@ const ICON_MAP = {
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin, canViewDepartment } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const { t, language, toggleLanguage, isRTL } = useLanguage();
 
-  const allNavigation = [
-    { name: t('dashboard'), href: "/", icon: LayoutDashboard, public: true },
-    { name: t('interactiveMap'), href: "/map", icon: Map, public: true },
-    { name: t('crowdPlanning'), href: "/planning", icon: ClipboardList, department: "planning" },
-    { name: t('plazasManagement'), href: "/plazas", icon: LayoutGrid, department: "plazas" },
-    { name: t('gatesManagement'), href: "/gates", icon: DoorOpen, department: "gates" },
-    { name: t('crowdServices'), href: "/crowd-services", icon: Users, department: "crowd_services" },
-    { name: t('matafManagement'), href: "/mataf", icon: Circle, department: "mataf" },
-  ];
+  // Fetch menu items from API
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        
+        const response = await axios.get(`${API}/sidebar-menu`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setMenuItems(response.data);
+      } catch (error) {
+        console.error("Error fetching menu items:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Filter navigation based on user permissions
-  const navigation = allNavigation.filter(item => {
-    if (item.public) return true;
-    if (item.department) {
-      return canViewDepartment(item.department);
+    if (user) {
+      fetchMenuItems();
+    } else {
+      setLoading(false);
     }
-    return true;
-  });
+  }, [user]);
 
-  const secondaryNav = [
-    { name: t('reports'), href: "/reports", icon: FileText },
-    { name: t('notifications'), href: "/notifications", icon: Bell, badge: 5 },
-    { name: t('settings'), href: "/settings", icon: Settings },
-    { name: t('adminPanel'), href: "/admin", icon: Shield, adminOnly: true },
-  ];
+  // Convert menu items from API to navigation format
+  const navigation = menuItems
+    .filter(item => !item.admin_only) // Filter out admin-only items
+    .map(item => ({
+      name: language === 'ar' ? item.name_ar : item.name_en,
+      href: item.href,
+      icon: ICON_MAP[item.icon] || LayoutDashboard,
+      isActive: item.is_active
+    }))
+    .filter(item => item.isActive); // Only show active items
+
+  const secondaryNav = menuItems
+    .filter(item => item.admin_only) // Only admin items
+    .map(item => ({
+      name: language === 'ar' ? item.name_ar : item.name_en,
+      href: item.href,
+      icon: ICON_MAP[item.icon] || Shield,
+      adminOnly: item.admin_only
+    }))
+    .filter(item => !item.adminOnly || (item.adminOnly && isAdmin()));
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  const filteredSecondaryNav = secondaryNav.filter(item => 
-    !item.adminOnly || (item.adminOnly && isAdmin())
-  );
 
   const NavItem = ({ item, mobile = false }) => {
     const isActive = location.pathname === item.href;
