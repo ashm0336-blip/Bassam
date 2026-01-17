@@ -5,7 +5,8 @@ import {
   Users,
   Activity,
   Settings,
-  List
+  List,
+  Menu
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -13,6 +14,7 @@ import UserManagement from "./admin/UserManagement";
 import ActivityLog from "./admin/ActivityLog";
 import SystemSettings from "./admin/SystemSettings";
 import DropdownManager from "./admin/DropdownManager";
+import SidebarManager from "./admin/SidebarManager";
 
 export default function AdminPage() {
   const { language } = useLanguage();
