@@ -210,10 +210,6 @@ export default function EmployeeManagement({ department }) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 ml-2" />
-          {language === 'ar' ? 'موظف جديد' : 'New Employee'}
-        </Button>
         <div className="text-right flex-1">
           <h2 className="font-cairo font-bold text-xl text-right">
             {language === 'ar' ? 'إدارة الموظفين' : 'Employee Management'}
@@ -222,6 +218,10 @@ export default function EmployeeManagement({ department }) {
             {department ? DEPARTMENTS[department]?.[language] : (language === 'ar' ? 'جميع الأقسام' : 'All Departments')}
           </p>
         </div>
+        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+          <Plus className="w-4 h-4 ml-2" />
+          {language === 'ar' ? 'موظف جديد' : 'New Employee'}
+        </Button>
       </div>
 
       {/* Employees Table */}
