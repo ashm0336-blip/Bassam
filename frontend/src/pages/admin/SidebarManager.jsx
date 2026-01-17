@@ -497,19 +497,7 @@ export default function SidebarManager() {
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-right flex-1">
-              <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
-                <Menu className="w-5 h-5" />
-                {language === 'ar' ? 'إدارة القائمة الجانبية' : 'Sidebar Menu Management'}
-              </CardTitle>
-              <CardDescription className="text-right mt-1">
-                {language === 'ar' 
-                  ? 'إضافة، تعديل، وحذف أقسام القائمة الجانبية للمنصة'
-                  : 'Add, edit, and delete sidebar menu items for the platform'
-                }
-              </CardDescription>
-            </div>
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <Button onClick={() => handleOpenDialog()} className="bg-primary">
                 <Plus className="w-4 h-4 ml-2" />
@@ -535,6 +523,19 @@ export default function SidebarManager() {
                   )}
                 </Button>
               )}
+            </div>
+            
+            <div className="text-right">
+              <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
+                <Menu className="w-5 h-5" />
+                {language === 'ar' ? 'إدارة القائمة الجانبية' : 'Sidebar Menu Management'}
+              </CardTitle>
+              <CardDescription className="text-right mt-1">
+                {language === 'ar' 
+                  ? 'إضافة، تعديل، وحذف أقسام القائمة الجانبية للمنصة'
+                  : 'Add, edit, and delete sidebar menu items for the platform'
+                }
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
