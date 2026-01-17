@@ -348,6 +348,11 @@ export default function SidebarManager() {
                         <div className="text-xs text-muted-foreground">
                           {language === 'ar' ? item.name_en : item.name_ar}
                         </div>
+                        {item.parent_id && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs font-mono">{item.href}</TableCell>
