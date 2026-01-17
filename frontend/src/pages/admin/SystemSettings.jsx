@@ -94,12 +94,60 @@ export default function SystemSettings() {
     welcome_text_en: "Welcome"
   });
 
+  const [headerSettings, setHeaderSettings] = useState({
+    background_color: "#FFFFFF",
+    text_color: "#000000",
+    show_shadow: true,
+    show_date: true,
+    show_page_name: true,
+    show_user_name: true,
+    show_language_toggle: true,
+    show_theme_toggle: true,
+    show_logout_button: true,
+    custom_greeting_ar: "أهلاً",
+    custom_greeting_en: "Hello",
+    show_logo: false,
+    header_logo_url: "",
+    header_height: 64,
+    border_style: "solid",
+    transparency: 100
+  });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchLoginSettings();
+    fetchHeaderSettings();
   }, []);
+
+  const fetchHeaderSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/header`);
+      setHeaderSettings(response.data);
+    } catch (error) {
+      console.error("Error fetching header settings:", error);
+    }
+  };
+
+  const handleSaveHeaderSettings = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem("token");
+      
+      await axios.put(`${API}/admin/settings/header`, headerSettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(language === 'ar' ? "تم حفظ إعدادات Header بنجاح" : "Header settings saved successfully");
+      window.location.reload(); // Reload to apply changes
+    } catch (error) {
+      console.error("Error saving header settings:", error);
+      toast.error(language === 'ar' ? "فشل حفظ الإعدادات" : "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchLoginSettings = async () => {
     try {
