@@ -61,7 +61,7 @@ const ICON_MAP = {
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState({});
+  const [expandedMenuId, setExpandedMenuId] = useState(null); // Only one menu can be open at a time
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
