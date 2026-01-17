@@ -207,8 +207,8 @@ export default function DropdownManager() {
     }
   };
 
-  const filteredOptions = selectedCategory
-    ? options.filter(opt => opt.category === selectedCategory)
+  const filteredOptions = selectedCategory && selectedCategory.trim()
+    ? options.filter(opt => opt.category === selectedCategory.trim())
     : options;
 
   const categoriesInUse = [...new Set(options.map(opt => opt.category))];
