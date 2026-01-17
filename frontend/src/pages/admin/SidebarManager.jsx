@@ -204,6 +204,7 @@ export default function SidebarManager() {
       
       setDialogOpen(false);
       fetchMenuItems();
+      refreshMenu(); // ✨ تحديث القائمة الجانبية فوراً
     } catch (error) {
       console.error("Error saving menu item:", error);
       toast.error(language === 'ar' ? "فشل حفظ القسم" : "Failed to save menu item");
