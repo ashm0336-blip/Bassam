@@ -1033,6 +1033,152 @@ async def get_status_checks():
             check['timestamp'] = datetime.fromisoformat(check['timestamp'])
     return status_checks
 
+# ============= Dropdown Options Routes (Admin Only) =============
+@api_router.get("/admin/dropdown-options")
+async def get_dropdown_options(
+    category: Optional[str] = None,
+    admin: dict = Depends(require_admin)
+):
+    """Get all dropdown options or filter by category"""
+    query = {}
+    if category:
+        query["category"] = category
+    
+    options = await db.dropdown_options.find(query, {"_id": 0}).sort("order", 1).to_list(1000)
+    return options
+
+@api_router.get("/admin/dropdown-options/categories")
+async def get_dropdown_categories(admin: dict = Depends(require_admin)):
+    """Get list of all categories"""
+    categories = await db.dropdown_options.distinct("category")
+    return {
+        "categories": categories,
+        "available_categories": [
+            {"id": "gate_types", "name": "أنواع الأبواب", "name_en": "Gate Types"},
+            {"id": "gate_statuses", "name": "حالات الأبواب", "name_en": "Gate Statuses"},
+            {"id": "directions", "name": "الاتجاهات", "name_en": "Directions"},
+            {"id": "categories", "name": "الفئات", "name_en": "Categories"},
+            {"id": "classifications", "name": "التصنيفات", "name_en": "Classifications"},
+            {"id": "current_indicators", "name": "مؤشرات الازدحام", "name_en": "Crowd Indicators"},
+            {"id": "shifts", "name": "الورديات", "name_en": "Shifts"},
+            {"id": "plaza_zones", "name": "مناطق الساحات", "name_en": "Plaza Zones"}
+        ]
+    }
+
+@api_router.post("/admin/dropdown-options")
+async def create_dropdown_option(
+    option: DropdownOptionCreate,
+    admin: dict = Depends(require_admin)
+):
+    """Create a new dropdown option"""
+    option_dict = option.model_dump()
+    option_obj = DropdownOption(**option_dict)
+    doc = option_obj.model_dump()
+    
+    await db.dropdown_options.insert_one(doc)
+    await log_activity("إضافة خيار قائمة", admin, f"{option.category}", f"تم إضافة: {option.label}")
+    
+    return option_obj
+
+@api_router.put("/admin/dropdown-options/{option_id}")
+async def update_dropdown_option(
+    option_id: str,
+    option: DropdownOptionUpdate,
+    admin: dict = Depends(require_admin)
+):
+    """Update a dropdown option"""
+    existing = await db.dropdown_options.find_one({"id": option_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الخيار غير موجود")
+    
+    update_data = {k: v for k, v in option.model_dump().items() if v is not None}
+    if update_data:
+        await db.dropdown_options.update_one({"id": option_id}, {"$set": update_data})
+        await log_activity("تعديل خيار قائمة", admin, option_id, f"تم تعديل: {existing.get('label')}")
+    
+    updated = await db.dropdown_options.find_one({"id": option_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/dropdown-options/{option_id}")
+async def delete_dropdown_option(
+    option_id: str,
+    admin: dict = Depends(require_admin)
+):
+    """Delete a dropdown option"""
+    existing = await db.dropdown_options.find_one({"id": option_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الخيار غير موجود")
+    
+    await db.dropdown_options.delete_one({"id": option_id})
+    await log_activity("حذف خيار قائمة", admin, option_id, f"تم حذف: {existing.get('label')}")
+    
+    return {"message": "تم حذف الخيار بنجاح"}
+
+@api_router.post("/admin/dropdown-options/seed")
+async def seed_dropdown_options(admin: dict = Depends(require_admin)):
+    """Seed initial dropdown options from constants"""
+    # Check if already seeded
+    count = await db.dropdown_options.count_documents({})
+    if count > 0:
+        return {"message": "البيانات موجودة مسبقاً", "count": count}
+    
+    default_options = [
+        # Gate Types
+        {"category": "gate_types", "value": "رئيسي", "label": "رئيسي", "order": 1},
+        {"category": "gate_types", "value": "فرعي", "label": "فرعي", "order": 2},
+        {"category": "gate_types", "value": "سلم كهربائي", "label": "سلم كهربائي", "order": 3},
+        {"category": "gate_types", "value": "مصعد", "label": "مصعد", "order": 4},
+        {"category": "gate_types", "value": "درج", "label": "درج", "order": 5},
+        {"category": "gate_types", "value": "جسر", "label": "جسر", "order": 6},
+        {"category": "gate_types", "value": "مشابة", "label": "مشابة", "order": 7},
+        {"category": "gate_types", "value": "عبارة", "label": "عبارة", "order": 8},
+        {"category": "gate_types", "value": "مزلقان", "label": "مزلقان", "order": 9},
+        
+        # Directions
+        {"category": "directions", "value": "دخول", "label": "دخول", "order": 1},
+        {"category": "directions", "value": "خروج", "label": "خروج", "order": 2},
+        {"category": "directions", "value": "دخول وخروج", "label": "دخول وخروج", "order": 3},
+        
+        # Categories
+        {"category": "categories", "value": "محرمين", "label": "محرمين", "order": 1},
+        {"category": "categories", "value": "مصلين", "label": "مصلين", "order": 2},
+        {"category": "categories", "value": "عربات", "label": "عربات", "order": 3},
+        
+        # Classifications
+        {"category": "classifications", "value": "عام", "label": "عام", "order": 1},
+        {"category": "classifications", "value": "رجال", "label": "رجال", "order": 2},
+        {"category": "classifications", "value": "نساء", "label": "نساء", "order": 3},
+        {"category": "classifications", "value": "طوارئ", "label": "طوارئ", "order": 4},
+        {"category": "classifications", "value": "خدمات", "label": "خدمات", "order": 5},
+        {"category": "classifications", "value": "جنائز", "label": "جنائز", "order": 6},
+        
+        # Gate Statuses
+        {"category": "gate_statuses", "value": "مفتوح", "label": "مفتوح", "order": 1},
+        {"category": "gate_statuses", "value": "مغلق", "label": "مغلق", "order": 2},
+        
+        # Current Indicators
+        {"category": "current_indicators", "value": "خفيف", "label": "خفيف", "color": "#22c55e", "order": 1},
+        {"category": "current_indicators", "value": "متوسط", "label": "متوسط", "color": "#f97316", "order": 2},
+        {"category": "current_indicators", "value": "مزدحم", "label": "مزدحم", "color": "#ef4444", "order": 3},
+        
+        # Shifts
+        {"category": "shifts", "value": "الأولى", "label": "الأولى", "color": "#3b82f6", "order": 1},
+        {"category": "shifts", "value": "الثانية", "label": "الثانية", "color": "#22c55e", "order": 2},
+        {"category": "shifts", "value": "الثالثة", "label": "الثالثة", "color": "#f97316", "order": 3},
+        {"category": "shifts", "value": "الرابعة", "label": "الرابعة", "color": "#a855f7", "order": 4},
+    ]
+    
+    # Insert all options
+    options_to_insert = []
+    for opt_data in default_options:
+        opt = DropdownOption(**opt_data)
+        options_to_insert.append(opt.model_dump())
+    
+    await db.dropdown_options.insert_many(options_to_insert)
+    await log_activity("تهيئة القوائم", admin, "dropdown_options", f"تم إضافة {len(options_to_insert)} خيار")
+    
+    return {"message": "تم تهيئة القوائم بنجاح", "count": len(options_to_insert)}
+
 # Include the router in the main app
 app.include_router(api_router)
 
