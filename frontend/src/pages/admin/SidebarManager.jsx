@@ -165,6 +165,7 @@ export default function SidebarManager() {
         is_public: false,
         is_secondary: false,
         admin_only: false,
+        parent_id: "none",
         department: "none"
       });
     }
