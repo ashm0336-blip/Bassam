@@ -177,6 +177,8 @@ class SidebarMenuItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name_ar: str
     name_en: str
+    subtitle_ar: Optional[str] = None
+    subtitle_en: Optional[str] = None
     href: str
     icon: str  # Lucide icon name
     order: int = 0
@@ -191,6 +193,8 @@ class SidebarMenuItem(BaseModel):
 class SidebarMenuItemCreate(BaseModel):
     name_ar: str
     name_en: str
+    subtitle_ar: Optional[str] = None
+    subtitle_en: Optional[str] = None
     href: str
     icon: str
     order: Optional[int] = 0
@@ -203,6 +207,8 @@ class SidebarMenuItemCreate(BaseModel):
 class SidebarMenuItemUpdate(BaseModel):
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
+    subtitle_ar: Optional[str] = None
+    subtitle_en: Optional[str] = None
     href: Optional[str] = None
     icon: Optional[str] = None
     order: Optional[int] = None
