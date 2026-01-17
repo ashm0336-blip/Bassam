@@ -459,7 +459,7 @@ export default function GatesDepartment() {
           </div>
         </TabsContent>
 
-        <TabsContent value="gates" className="mt-6">
+        <TabsContent value="data" className="mt-6">
           <GatesDataManagement />
         </TabsContent>
 
