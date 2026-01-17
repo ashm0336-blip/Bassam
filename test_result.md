@@ -227,11 +227,11 @@ frontend:
 
   - task: "PDF & Excel Export Functionality"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/utils/exportUtils.js, /app/frontend/src/pages/ReportsPage.jsx"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -239,6 +239,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUE - PDF exports are FAILING with error: 'TypeError: doc.autoTable is not a function'. Root cause: jspdf-autotable v5.0.7 no longer auto-applies the plugin to jsPDF instances. Excel exports work perfectly (Plazas Excel ✅, Daily Summary Excel ✅). PDF exports fail (Gates PDF ❌, Mataf PDF ❌). FIX REQUIRED: In /app/frontend/src/utils/exportUtils.js, change import from 'import jsPDF from \"jspdf\"; import \"jspdf-autotable\";' to 'import { jsPDF } from \"jspdf\"; import { applyPlugin } from \"jspdf-autotable\"; applyPlugin(jsPDF);' OR use named import 'autoTable(doc, options)' instead of 'doc.autoTable(options)'. See: https://github.com/simonbengtsson/jsPDF-AutoTable documentation."
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED (2026-01-17) - PDF export issue FIXED. The exportUtils.js file now correctly imports jsPDF and applies the plugin: 'import { jsPDF } from \"jspdf\"; import { applyPlugin } from \"jspdf-autotable\"; applyPlugin(jsPDF);'. Tested all export buttons on Reports page: Gates PDF ✅, Gates Excel ✅, Plazas PDF ✅, Plazas Excel ✅. Export buttons are clickable and show success toast messages. All 4 export report cards visible with proper test IDs. Export functionality is now fully operational."
 
   - task: "Interactive Dashboard with Stats"
     implemented: true
