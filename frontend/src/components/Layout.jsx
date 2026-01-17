@@ -101,13 +101,14 @@ export const Layout = () => {
             ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
             : "text-muted-foreground hover:bg-muted hover:text-primary"
           }
+          ${language === 'ar' ? 'flex-row-reverse' : ''}
         `}
         data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
       >
         <Icon className="w-5 h-5 flex-shrink-0" />
         {(sidebarOpen || mobile) && (
           <>
-            <span className="flex-1">{item.name}</span>
+            <span className="flex-1 text-right">{item.name}</span>
             {item.badge && (
               <Badge variant="destructive" className="text-xs px-2 py-0.5">
                 {item.badge}
