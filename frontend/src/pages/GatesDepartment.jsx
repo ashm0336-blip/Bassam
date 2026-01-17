@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GatesDataManagement from "@/components/GatesDataManagement";
