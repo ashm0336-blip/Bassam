@@ -144,6 +144,146 @@ export default function SystemSettings() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Login Page Settings */}
+        <div className="lg:col-span-2">
+          <SettingSection
+            icon={LogIn}
+            title={language === 'ar' ? 'إعدادات شاشة الدخول' : 'Login Page Settings'}
+            description={language === 'ar' ? 'تخصيص شاشة الدخول والشعار' : 'Customize login page and branding'}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'اسم الموقع (عربي)' : 'Site Name (Arabic)'}</Label>
+                  <Input 
+                    value={loginSettings.site_name_ar}
+                    onChange={(e) => setLoginSettings({...loginSettings, site_name_ar: e.target.value})}
+                    className="mt-1"
+                    placeholder="خدمات الحشود"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'اسم الموقع (إنجليزي)' : 'Site Name (English)'}</Label>
+                  <Input 
+                    value={loginSettings.site_name_en}
+                    onChange={(e) => setLoginSettings({...loginSettings, site_name_en: e.target.value})}
+                    className="mt-1"
+                    placeholder="Crowd Services"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'النص الترحيبي (عربي)' : 'Welcome Text (Arabic)'}</Label>
+                  <Input 
+                    value={loginSettings.welcome_text_ar}
+                    onChange={(e) => setLoginSettings({...loginSettings, welcome_text_ar: e.target.value})}
+                    className="mt-1"
+                    placeholder="مرحباً بك"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'النص الترحيبي (إنجليزي)' : 'Welcome Text (English)'}</Label>
+                  <Input 
+                    value={loginSettings.welcome_text_en}
+                    onChange={(e) => setLoginSettings({...loginSettings, welcome_text_en: e.target.value})}
+                    className="mt-1"
+                    placeholder="Welcome"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'الوصف (عربي)' : 'Subtitle (Arabic)'}</Label>
+                  <Textarea 
+                    value={loginSettings.subtitle_ar}
+                    onChange={(e) => setLoginSettings({...loginSettings, subtitle_ar: e.target.value})}
+                    className="mt-1"
+                    rows={2}
+                    placeholder="منصة إدارة الحشود..."
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'الوصف (إنجليزي)' : 'Subtitle (English)'}</Label>
+                  <Textarea 
+                    value={loginSettings.subtitle_en}
+                    onChange={(e) => setLoginSettings({...loginSettings, subtitle_en: e.target.value})}
+                    className="mt-1"
+                    rows={2}
+                    placeholder="Crowd Management Platform..."
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'رابط الشعار (Logo URL)' : 'Logo URL'}</Label>
+                  <Input 
+                    value={loginSettings.logo_url}
+                    onChange={(e) => setLoginSettings({...loginSettings, logo_url: e.target.value})}
+                    className="mt-1"
+                    placeholder="https://example.com/logo.png"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar' ? 'رابط مباشر للصورة' : 'Direct image URL'}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'رابط صورة الخلفية' : 'Background Image URL'}</Label>
+                  <Input 
+                    value={loginSettings.background_url}
+                    onChange={(e) => setLoginSettings({...loginSettings, background_url: e.target.value})}
+                    className="mt-1"
+                    placeholder="https://example.com/background.jpg"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">{language === 'ar' ? 'اللون الأساسي' : 'Primary Color'}</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input 
+                      type="color"
+                      value={loginSettings.primary_color}
+                      onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
+                      className="w-16 h-10"
+                    />
+                    <Input 
+                      value={loginSettings.primary_color}
+                      onChange={(e) => setLoginSettings({...loginSettings, primary_color: e.target.value})}
+                      placeholder="#DC2626"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSaveLoginSettings} 
+                className="bg-primary hover:bg-primary/90"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Save className="w-4 h-4 ml-2 animate-spin" />
+                    {language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 ml-2" />
+                    {language === 'ar' ? 'حفظ إعدادات شاشة الدخول' : 'Save Login Page Settings'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </SettingSection>
+        </div>
+
         {/* General Settings */}
         <SettingSection
           icon={Settings}
