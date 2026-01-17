@@ -91,10 +91,8 @@ export const Layout = () => {
   const secondaryNav = parentItems.filter(item => item.is_secondary);
 
   const toggleMenu = (menuId) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuId]: !prev[menuId]
-    }));
+    // Close if same menu clicked, otherwise open new one (close others automatically)
+    setExpandedMenuId(prev => prev === menuId ? null : menuId);
   };
 
   const handleLogout = () => {
