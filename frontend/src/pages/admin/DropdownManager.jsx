@@ -339,44 +339,45 @@ export default function DropdownManager() {
                               style={{ backgroundColor: option.color }}
                             />
                             <span className="text-xs text-muted-foreground">{option.color}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">{option.order}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={option.is_active ? "default" : "secondary"}>
+                          {option.is_active 
+                            ? (language === 'ar' ? 'نشط' : 'Active')
+                            : (language === 'ar' ? 'غير نشط' : 'Inactive')
+                          }
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleOpenDialog(option)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setSelectedOption(option);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{option.order}</TableCell>
-                    <TableCell>
-                      <Badge variant={option.is_active ? "default" : "secondary"}>
-                        {option.is_active 
-                          ? (language === 'ar' ? 'نشط' : 'Active')
-                          : (language === 'ar' ? 'غير نشط' : 'Inactive')
-                        }
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleOpenDialog(option)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setSelectedOption(option);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       ) : null}
