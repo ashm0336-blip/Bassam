@@ -147,6 +147,31 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
+# ============= Dropdown Options Models =============
+class DropdownOption(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category: str  # gate_types, gate_statuses, directions, categories, classifications, shifts, etc.
+    value: str
+    label: str
+    color: Optional[str] = None
+    order: int = 0
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class DropdownOptionCreate(BaseModel):
+    category: str
+    value: str
+    label: str
+    color: Optional[str] = None
+    order: Optional[int] = 0
+
+class DropdownOptionUpdate(BaseModel):
+    value: Optional[str] = None
+    label: Optional[str] = None
+    color: Optional[str] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+
 # ============= Auth Functions =============
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
