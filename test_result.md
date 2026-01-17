@@ -364,7 +364,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sidebar Menu with Expandable Submenus - UI"
+    - "Responsive Design - Mobile Horizontal Scroll Fix"
   stuck_tasks:
     - "Sidebar Menu with Expandable Submenus - UI"
   test_all: false
@@ -384,6 +384,7 @@ test_plan:
     - "General Manager - Dashboard with Department Cards"
     - "Notifications Page - Stat Cards and Filters"
     - "Reports Page - Export Buttons (PDF and Excel)"
+    - "Responsive Design Testing - Comprehensive (Mobile, Tablet, Desktop)"
 
 agent_communication:
   - agent: "testing"
