@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
+import axios from "axios";
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -21,12 +22,39 @@ import {
   LogOut,
   Moon,
   Sun,
-  Languages
+  Languages,
+  Home,
+  UserCheck,
+  Building,
+  MapPin,
+  Navigation,
+  Layers,
+  List,
+  Grid,
+  Database,
+  Archive,
+  Folder,
+  Calendar,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  Activity,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Icon mapping
+const ICON_MAP = {
+  LayoutDashboard, ClipboardList, LayoutGrid, DoorOpen, Users, Circle,
+  FileText, Bell, Settings, Map, Shield, Home, UserCheck, Building,
+  MapPin, Navigation, Layers, List, Grid, Database, Archive, Folder,
+  Calendar, BarChart3, PieChart, TrendingUp, Activity, User, Menu
+};
 
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
