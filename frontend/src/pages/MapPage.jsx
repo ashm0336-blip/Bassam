@@ -23,13 +23,31 @@ export default function MapPage() {
   const [maps, setMaps] = useState([]);
   const [selectedMap, setSelectedMap] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [filterType, setFilterType] = useState("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMaps();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/employees?department=gates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmployees(response.data.filter(e => e.is_active));
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  const getStaffCountAtLocation = (location) => {
+    return employees.filter(emp => emp.location === location).length;
+  };
 
   useEffect(() => {
     if (selectedMap) {
