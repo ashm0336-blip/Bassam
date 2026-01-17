@@ -412,44 +412,68 @@ export default function SidebarManager() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
-      const oldIndex = menuItems.findIndex((item) => item.id === active.id);
-      const newIndex = menuItems.findIndex((item) => item.id === over.id);
+    if (!over || active.id === over.id) return;
 
-      // Reorder locally for instant feedback
-      const reorderedItems = arrayMove(menuItems, oldIndex, newIndex);
-      
-      // Update order numbers
-      const updatedItems = reorderedItems.map((item, index) => ({
-        ...item,
-        order: index + 1
-      }));
-      
-      setMenuItems(updatedItems);
+    const activeItem = menuItems.find(item => item.id === active.id);
+    const overItem = menuItems.find(item => item.id === over.id);
 
-      // Update in database
-      try {
-        const token = localStorage.getItem("token");
-        
-        // Update all affected items
-        await Promise.all(
-          updatedItems.map((item) =>
-            axios.put(
-              `${API}/admin/sidebar-menu/${item.id}`,
-              { order: item.order },
-              { headers: { Authorization: `Bearer ${token}` } }
-            )
-          )
-        );
-        
-        toast.success(language === 'ar' ? "تم تحديث الترتيب بنجاح" : "Order updated successfully");
-        refreshMenu(); // Refresh sidebar immediately
-      } catch (error) {
-        console.error("Error updating order:", error);
-        toast.error(language === 'ar' ? "فشل تحديث الترتيب" : "Failed to update order");
-        // Revert on error
-        fetchMenuItems();
+    if (!activeItem || !overItem) return;
+
+    // Check if both items have same parent (or both are parents)
+    if (activeItem.parent_id !== overItem.parent_id) {
+      toast.error(language === 'ar' 
+        ? 'لا يمكن نقل القائمة الفرعية لمجموعة أخرى'
+        : 'Cannot move submenu to different group'
+      );
+      return;
+    }
+
+    // Get items in the same group
+    const groupItems = menuItems.filter(item => item.parent_id === activeItem.parent_id);
+    const oldIndex = groupItems.findIndex(item => item.id === active.id);
+    const newIndex = groupItems.findIndex(item => item.id === over.id);
+
+    // Reorder within group
+    const reorderedGroup = arrayMove(groupItems, oldIndex, newIndex);
+    
+    // Update order numbers for the group
+    const updatedGroup = reorderedGroup.map((item, index) => ({
+      ...item,
+      order: index + 1
+    }));
+
+    // Merge with other items
+    const otherItems = menuItems.filter(item => item.parent_id !== activeItem.parent_id);
+    const allUpdatedItems = [...otherItems, ...updatedGroup].sort((a, b) => {
+      // Sort by parent_id first, then by order
+      if (a.parent_id === b.parent_id) {
+        return a.order - b.order;
       }
+      return (a.parent_id || '').localeCompare(b.parent_id || '');
+    });
+
+    setMenuItems(allUpdatedItems);
+
+    // Update in database
+    try {
+      const token = localStorage.getItem("token");
+      
+      await Promise.all(
+        updatedGroup.map((item) =>
+          axios.put(
+            `${API}/admin/sidebar-menu/${item.id}`,
+            { order: item.order },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+        )
+      );
+      
+      toast.success(language === 'ar' ? "تم تحديث الترتيب بنجاح" : "Order updated successfully");
+      refreshMenu();
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error(language === 'ar' ? "فشل تحديث الترتيب" : "Failed to update order");
+      fetchMenuItems();
     }
   };
 
