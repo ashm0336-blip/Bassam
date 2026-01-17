@@ -87,7 +87,7 @@ const DEPARTMENTS = [
 ];
 
 // Sortable Row Component
-function SortableRow({ item, language, onEdit, onDelete, onToggleActive }) {
+function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpanded, onToggleExpand, hasChildren }) {
   const {
     attributes,
     listeners,
@@ -103,8 +103,10 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive }) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const isChild = !!item.parent_id;
+
   return (
-    <TableRow ref={setNodeRef} style={style}>
+    <TableRow ref={setNodeRef} style={style} className={isChild ? 'bg-muted/30' : ''}>
       <TableCell className="w-12">
         <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -112,16 +114,28 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive }) {
       </TableCell>
       <TableCell className="font-medium">{item.order}</TableCell>
       <TableCell>
-        <div>
-          <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
-          <div className="text-xs text-muted-foreground">
-            {language === 'ar' ? item.name_en : item.name_ar}
-          </div>
-          {item.parent_id && (
-            <Badge variant="outline" className="text-xs mt-1">
-              {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
-            </Badge>
+        <div className={`flex items-center gap-2 ${isChild ? 'pr-6' : ''}`}>
+          {hasChildren && !isChild && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggleExpand(item.id)}
+              className="h-6 w-6 p-0"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            </Button>
           )}
+          <div>
+            <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
+            <div className="text-xs text-muted-foreground">
+              {language === 'ar' ? item.name_en : item.name_ar}
+            </div>
+            {item.parent_id && (
+              <Badge variant="outline" className="text-xs mt-1">
+                {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
+              </Badge>
+            )}
+          </div>
         </div>
       </TableCell>
       <TableCell className="text-xs font-mono">{item.href}</TableCell>
