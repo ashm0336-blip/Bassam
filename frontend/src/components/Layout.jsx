@@ -60,6 +60,7 @@ const ICON_MAP = {
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
