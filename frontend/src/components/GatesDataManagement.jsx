@@ -179,10 +179,6 @@ export default function GatesDataManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 ml-2" />
-          {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
-        </Button>
         <div className="text-right flex-1">
           <h2 className="font-cairo font-bold text-xl text-right">
             {language === 'ar' ? 'إدارة الأبواب' : 'Gates Management'}
@@ -191,6 +187,10 @@ export default function GatesDataManagement() {
             {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب' : 'Add and edit gates data'}
           </p>
         </div>
+        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+          <Plus className="w-4 h-4 ml-2" />
+          {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
+        </Button>
       </div>
 
       {/* Gates Table */}
