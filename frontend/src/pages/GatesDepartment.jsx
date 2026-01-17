@@ -109,18 +109,24 @@ const GateCard = ({ gate }) => {
 export default function GatesDepartment() {
   const [gates, setGates] = useState([]);
   const [stats, setStats] = useState(null);
+  const [employeeStats, setEmployeeStats] = useState(null);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [gatesRes, statsRes] = await Promise.all([
+        const token = localStorage.getItem("token");
+        const [gatesRes, statsRes, empStatsRes] = await Promise.all([
           axios.get(`${API}/gates`),
-          axios.get(`${API}/gates/stats`)
+          axios.get(`${API}/gates/stats`),
+          axios.get(`${API}/employees/stats/gates`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
         ]);
         setGates(gatesRes.data);
         setStats(statsRes.data);
+        setEmployeeStats(empStatsRes.data);
       } catch (error) {
         console.error("Error fetching gates data:", error);
       } finally {
