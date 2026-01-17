@@ -571,19 +571,20 @@ export default function SidebarManager() {
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12 text-right"></TableHead>
-                    <TableHead className="w-16 text-right">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div dir="rtl">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 text-right"></TableHead>
+                      <TableHead className="w-16 text-right">{language === 'ar' ? 'الترتيب' : 'Order'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الرابط' : 'Link'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   <SortableContext
                     items={displayItems.map(item => item.id)}
