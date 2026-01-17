@@ -176,8 +176,12 @@ export default function SystemSettings() {
         </TabsList>
 
         {/* Login Page Settings Tab */}
-        <TabsContent value="login" className="mt-6 space-y-6"
->
+        <TabsContent value="login" className="mt-6">
+          <SettingSection
+            icon={LogIn}
+            title={language === 'ar' ? 'إعدادات شاشة الدخول' : 'Login Page Settings'}
+            description={language === 'ar' ? 'تخصيص شاشة الدخول والشعار' : 'Customize login page and branding'}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
