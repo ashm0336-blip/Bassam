@@ -227,9 +227,22 @@ export default function SystemSettings() {
                 
                 {/* Logo Preview */}
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50"
+                    style={{ width: '192px', height: '192px' }}
+                  >
                     {loginSettings.logo_url ? (
-                      <img src={loginSettings.logo_url} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      <img 
+                        src={loginSettings.logo_url} 
+                        alt="Logo" 
+                        className="object-contain"
+                        style={{ 
+                          width: `${loginSettings.logo_size}px`,
+                          height: `${loginSettings.logo_size}px`,
+                          maxWidth: '100%',
+                          maxHeight: '100%'
+                        }}
+                      />
                     ) : (
                       <div className="text-center text-muted-foreground">
                         <ImageIcon className="w-12 h-12 mx-auto mb-2" />
@@ -261,6 +274,36 @@ export default function SystemSettings() {
                       className="hidden"
                     />
                   </div>
+                </div>
+
+                {/* Logo Size Control */}
+                <div className="mb-4">
+                  <Label className="font-medium mb-2 block">{language === 'ar' ? 'حجم الشعار' : 'Logo Size'}</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {language === 'ar' ? 'تعيين حجم عرض الشعار في شاشة الدخول' : 'Set logo display size on login screen'}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <Input 
+                      type="number"
+                      min="50"
+                      max="300"
+                      value={loginSettings.logo_size}
+                      onChange={(e) => setLoginSettings({...loginSettings, logo_size: parseInt(e.target.value) || 150})}
+                      className="w-24"
+                    />
+                    <input 
+                      type="range" 
+                      min="50" 
+                      max="300" 
+                      value={loginSettings.logo_size}
+                      onChange={(e) => setLoginSettings({...loginSettings, logo_size: parseInt(e.target.value)})}
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-muted-foreground w-20">{loginSettings.logo_size}px</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {language === 'ar' ? 'قيمة بين 50 و 300 بكسل (المثالي: 150 بكسل)' : 'Value between 50 and 300 pixels (Ideal: 150px)'}
+                  </p>
                 </div>
 
                 {/* Logo URL Input */}
