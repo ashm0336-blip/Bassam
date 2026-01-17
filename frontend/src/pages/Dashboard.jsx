@@ -377,48 +377,6 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {/* Department Comparison Chart */}
-      <Card data-testid="dept-comparison-chart">
-        <CardHeader className="pb-2">
-          <CardTitle className="font-cairo text-lg">مقارنة نسب الإشغال بين الإدارات</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={departments} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E0" horizontal={true} vertical={false} />
-                <XAxis 
-                  type="number" 
-                  domain={[0, 100]}
-                  tick={{ fontSize: 11, fill: '#64748B' }}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  width={150}
-                  tick={{ fontSize: 11, fill: '#64748B' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    border: '1px solid #E5E5E0',
-                    borderRadius: '8px',
-                    direction: 'rtl'
-                  }}
-                  formatter={(value) => [`${value}%`, 'نسبة الإشغال']}
-                />
-                <Bar 
-                  dataKey="percentage" 
-                  fill="#004D38"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
