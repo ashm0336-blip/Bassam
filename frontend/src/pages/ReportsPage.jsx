@@ -123,6 +123,12 @@ export default function ReportsPage() {
   // Get user's department for filtering
   const userDepartment = user?.department;
 
+  // Handler for department filter change
+  const handleDeptFilterChange = (value) => {
+    console.log("Department filter changed to:", value);
+    setFilterDept(value);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
