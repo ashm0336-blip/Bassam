@@ -64,6 +64,7 @@ const SettingItem = ({ label, description, children }) => (
 
 export default function SystemSettings() {
   const { language } = useLanguage();
+  const { refreshHeader } = useHeader();
   const [activeTab, setActiveTab] = useState("login");
   
   const [settings, setSettings] = useState({
