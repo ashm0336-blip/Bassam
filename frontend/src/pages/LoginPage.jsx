@@ -193,7 +193,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-400 mt-10">
-            © 2024 منصة خدمات الحشود - الإدارة العامة للتخطيط
+            © 2024 {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
           </p>
         </div>
       </div>
