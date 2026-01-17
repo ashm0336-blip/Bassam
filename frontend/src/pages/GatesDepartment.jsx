@@ -109,23 +109,20 @@ const GateCard = ({ gate }) => {
 };
 
 export default function GatesDepartment() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  
   const [gates, setGates] = useState([]);
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  
-  // Get active tab from URL query params
-  const searchParams = new URLSearchParams(window.location.search);
-  const urlTab = searchParams.get('tab') || 'dashboard';
-  const [activeTab, setActiveTab] = useState(urlTab);
 
-  // Update tab when URL changes
+  // Update when tab changes - no need for separate state
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab') || 'dashboard';
-    setActiveTab(tab);
-  }, [window.location.search]);
+    // Re-fetch data when tab changes if needed
+    console.log('Active tab:', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchData = async () => {
