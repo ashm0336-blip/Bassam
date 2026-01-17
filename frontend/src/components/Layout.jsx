@@ -60,42 +60,12 @@ const ICON_MAP = {
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const { t, language, toggleLanguage, isRTL } = useLanguage();
-
-  // Fetch menu items from API
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        
-        const response = await axios.get(`${API}/sidebar-menu`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        setMenuItems(response.data);
-      } catch (error) {
-        console.error("Error fetching menu items:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchMenuItems();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+  const { menuItems, loading } = useSidebar();
 
   // Convert menu items from API to navigation format
   const allMenuItems = menuItems.map(item => ({
