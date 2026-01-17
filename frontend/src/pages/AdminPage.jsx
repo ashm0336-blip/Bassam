@@ -4,9 +4,7 @@ import {
   LayoutDashboard,
   Users,
   Activity,
-  Database,
-  Settings,
-  FileText
+  Settings
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
