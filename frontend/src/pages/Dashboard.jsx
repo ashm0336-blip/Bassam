@@ -173,23 +173,37 @@ export default function Dashboard() {
   const [departments, setDepartments] = useState([]);
   const [crowdData, setCrowdData] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [gatesWithoutStaff, setGatesWithoutStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, deptsRes, crowdRes, alertsRes] = await Promise.all([
+        const [statsRes, deptsRes, crowdRes, alertsRes, gatesRes, employeesRes] = await Promise.all([
           axios.get(`${API}/dashboard/stats`),
           axios.get(`${API}/dashboard/departments`),
           axios.get(`${API}/dashboard/crowd-hourly`),
-          axios.get(`${API}/alerts`)
+          axios.get(`${API}/alerts`),
+          axios.get(`${API}/gates`),
+          axios.get(`${API}/employees?department=gates`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
         ]);
         
         setStats(statsRes.data);
         setDepartments(deptsRes.data);
         setCrowdData(crowdRes.data);
         setAlerts(alertsRes.data.slice(0, 4));
+        
+        // Find open gates without staff
+        const openGates = gatesRes.data.filter(g => g.status === 'مفتوح');
+        const employees = employeesRes.data.filter(e => e.is_active);
+        const gatesNoStaff = openGates.filter(gate => {
+          const staffAtGate = employees.filter(emp => emp.location === gate.name);
+          return staffAtGate.length === 0;
+        });
+        setGatesWithoutStaff(gatesNoStaff);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
