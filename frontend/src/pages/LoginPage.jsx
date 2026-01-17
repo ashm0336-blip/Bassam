@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,15 +10,39 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-// Background image of Makkah
-const BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1758985776354-4df674930917?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxrYWFiYSUyMG1lY2NhJTIwaXNsYW1pYyUyMG1vc3F1ZSUyMHBpbGdyaW1hZ2V8ZW58MHx8fHwxNzY4NTc2NTEwfDA&ixlib=rb-4.1.0&q=85";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [pageSettings, setPageSettings] = useState({
+    site_name_ar: "خدمات الحشود",
+    site_name_en: "Crowd Services",
+    subtitle_ar: "منصة إدارة الحشود في الحرم المكي الشريف",
+    subtitle_en: "Crowd Management Platform at Al-Haram",
+    logo_url: "",
+    background_url: "https://images.unsplash.com/photo-1758985776354-4df674930917?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxrYWFiYSUyMG1lY2NhJTIwaXNsYW1pYyUyMG1vc3F1ZSUyMHBpbGdyaW1hZ2V8ZW58MHx8fHwxNzY4NTc2NTEwfDA&ixlib=rb-4.1.0&q=85",
+    primary_color: "#DC2626",
+    welcome_text_ar: "مرحباً بك",
+    welcome_text_en: "Welcome"
+  });
+
+  useEffect(() => {
+    fetchPageSettings();
+  }, []);
+
+  const fetchPageSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/login-page`);
+      setPageSettings(response.data);
+    } catch (error) {
+      console.error("Error fetching login settings:", error);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
