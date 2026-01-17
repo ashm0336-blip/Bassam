@@ -226,6 +226,7 @@ export default function SidebarManager() {
       toast.success(language === 'ar' ? "تم حذف القسم بنجاح" : "Menu item deleted successfully");
       setDeleteDialogOpen(false);
       fetchMenuItems();
+      refreshMenu(); // ✨ تحديث القائمة الجانبية فوراً
     } catch (error) {
       console.error("Error deleting menu item:", error);
       toast.error(language === 'ar' ? "فشل حذف القسم" : "Failed to delete menu item");
