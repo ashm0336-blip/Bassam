@@ -933,19 +933,39 @@ async def get_notifications(unread_only: bool = False):
     return notifications
 
 @api_router.get("/reports")
-async def get_reports(type: Optional[str] = None, department: Optional[str] = None):
-    """Get available reports"""
-    reports = [
-        {"id": str(uuid.uuid4()), "title": "التقرير اليومي للحشود", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "all", "summary": "تقرير شامل"},
-        {"id": str(uuid.uuid4()), "title": "تقرير الأبواب", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "gates", "summary": "حالة الأبواب"},
-        {"id": str(uuid.uuid4()), "title": "تقرير صحن المطاف", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "mataf", "summary": "حركة الطواف"},
-        {"id": str(uuid.uuid4()), "title": "تقرير الساحات", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "plazas", "summary": "حالة الساحات"},
+async def get_reports(
+    type: Optional[str] = None, 
+    department: Optional[str] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Get available reports with RBAC filtering"""
+    all_reports = [
+        {"id": str(uuid.uuid4()), "title": "التقرير اليومي للحشود", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "all", "summary": "تقرير شامل لجميع الإدارات"},
+        {"id": str(uuid.uuid4()), "title": "تقرير إدارة الأبواب", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "gates", "summary": "حالة الأبواب والحركة"},
+        {"id": str(uuid.uuid4()), "title": "تقرير صحن المطاف", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "mataf", "summary": "حركة الطواف والأعداد"},
+        {"id": str(uuid.uuid4()), "title": "تقرير الساحات", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "plazas", "summary": "حالة الساحات والتدفق"},
+        {"id": str(uuid.uuid4()), "title": "تقرير خدمات الحشود", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "crowd_services", "summary": "خدمات الحشود والتنسيق"},
+        {"id": str(uuid.uuid4()), "title": "تقرير التخطيط", "type": "daily", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "planning", "summary": "الخطط والجداول"},
+        {"id": str(uuid.uuid4()), "title": "تقرير أسبوعي - الأبواب", "type": "weekly", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "gates", "summary": "تحليل أسبوعي للأبواب"},
+        {"id": str(uuid.uuid4()), "title": "تقرير أسبوعي - المطاف", "type": "weekly", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "mataf", "summary": "تحليل أسبوعي للمطاف"},
+        {"id": str(uuid.uuid4()), "title": "تقرير شهري شامل", "type": "monthly", "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "department": "all", "summary": "تقرير شهري لجميع الإدارات"},
     ]
     
+    # Apply RBAC filtering
+    reports = all_reports
+    user_role = user.get("role")
+    user_dept = user.get("department")
+    
+    # Department managers can only see their department reports + "all" reports
+    if user_role == "department_manager" and user_dept:
+        reports = [r for r in reports if r["department"] == user_dept or r["department"] == "all"]
+    
+    # Apply optional filters
     if type:
         reports = [r for r in reports if r["type"] == type]
     if department:
         reports = [r for r in reports if r["department"] == department]
+    
     return reports
 
 @api_router.get("/planning/stats")
