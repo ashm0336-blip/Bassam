@@ -242,6 +242,45 @@ class LoginPageSettingsUpdate(BaseModel):
     welcome_text_ar: Optional[str] = None
     welcome_text_en: Optional[str] = None
 
+# ============= Header Settings Models =============
+class HeaderSettings(BaseModel):
+    id: str = "header_settings"
+    background_color: str = "#FFFFFF"
+    text_color: str = "#000000"
+    show_shadow: bool = True
+    show_date: bool = True
+    show_page_name: bool = True
+    show_user_name: bool = True
+    show_language_toggle: bool = True
+    show_theme_toggle: bool = True
+    show_logout_button: bool = True
+    custom_greeting_ar: str = "أهلاً"
+    custom_greeting_en: str = "Hello"
+    show_logo: bool = False
+    header_logo_url: Optional[str] = None
+    header_height: int = 64
+    border_style: str = "solid"
+    transparency: int = 100
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class HeaderSettingsUpdate(BaseModel):
+    background_color: Optional[str] = None
+    text_color: Optional[str] = None
+    show_shadow: Optional[bool] = None
+    show_date: Optional[bool] = None
+    show_page_name: Optional[bool] = None
+    show_user_name: Optional[bool] = None
+    show_language_toggle: Optional[bool] = None
+    show_theme_toggle: Optional[bool] = None
+    show_logout_button: Optional[bool] = None
+    custom_greeting_ar: Optional[str] = None
+    custom_greeting_en: Optional[str] = None
+    show_logo: Optional[bool] = None
+    header_logo_url: Optional[str] = None
+    header_height: Optional[int] = None
+    border_style: Optional[str] = None
+    transparency: Optional[int] = None
+
 # ============= Auth Functions =============
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
