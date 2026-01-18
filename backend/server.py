@@ -1756,6 +1756,97 @@ async def get_haramain_density():
             "error": str(e)
         }
 
+
+# ============= Season Management Routes =============
+@api_router.get("/settings/season")
+async def get_active_season():
+    """Get current active season"""
+    season = await db.seasons.find_one({"id": "active_season"}, {"_id": 0})
+    if not season:
+        default = Season()
+        return default.model_dump()
+    return season
+
+@api_router.put("/admin/settings/season")
+async def update_season(season_name: str, admin: dict = Depends(require_admin)):
+    """Update active season and adjust gate operations"""
+    valid_seasons = ["normal", "umrah", "ramadan", "hajj"]
+    if season_name not in valid_seasons:
+        raise HTTPException(status_code=400, detail="موسم غير صالح")
+    
+    # Update season
+    season_data = {
+        "id": "active_season",
+        "current_season": season_name,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.seasons.update_one(
+        {"id": "active_season"},
+        {"$set": season_data},
+        upsert=True
+    )
+    
+    # Update gates based on season
+    if season_name == "normal":
+        # Close all gates
+        await db.gates.update_many({}, {"$set": {"status": "مغلق"}})
+    else:
+        # Open gates that support this season
+        await db.gates.update_many(
+            {"operational_seasons": season_name},
+            {"$set": {"status": "مفتوح"}}
+        )
+        # Close gates that don't support this season
+        await db.gates.update_many(
+            {"operational_seasons": {"$ne": season_name}},
+            {"$set": {"status": "مغلق"}}
+        )
+    
+    # Count active gates
+    active_count = await db.gates.count_documents({"status": "مفتوح"})
+    await db.seasons.update_one(
+        {"id": "active_season"},
+        {"$set": {"active_gates_count": active_count}}
+    )
+    
+    await log_activity("تغيير الموسم", admin, "active_season", f"الموسم النشط: {season_name}")
+    
+    return {"message": f"تم تفعيل موسم {season_name}", "active_gates": active_count}
+
+# ============= Prohibited Items Routes =============
+@api_router.get("/prohibited-items")
+async def get_prohibited_items(category: Optional[str] = None):
+    """Get prohibited items list"""
+    query = {"is_active": True}
+    if category:
+        query["category"] = category
+    
+    items = await db.prohibited_items.find(query, {"_id": 0}).to_list(1000)
+    return items
+
+@api_router.post("/admin/prohibited-items")
+async def create_prohibited_item(item: ProhibitedItemCreate, admin: dict = Depends(require_admin)):
+    """Create prohibited item"""
+    item_dict = item.model_dump()
+    item_obj = ProhibitedItem(**item_dict)
+    doc = item_obj.model_dump()
+    
+    await db.prohibited_items.insert_one(doc)
+    await log_activity("إضافة عنصر ممنوع", admin, item_obj.id, item.name_ar)
+    
+    return item_obj
+
+@api_router.delete("/admin/prohibited-items/{item_id}")
+async def delete_prohibited_item(item_id: str, admin: dict = Depends(require_admin)):
+    """Delete prohibited item"""
+    result = await db.prohibited_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="العنصر غير موجود")
+    
+    await log_activity("حذف عنصر ممنوع", admin, item_id, "تم الحذف")
+    return {"message": "تم حذف العنصر بنجاح"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
