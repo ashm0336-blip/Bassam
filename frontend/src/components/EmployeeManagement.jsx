@@ -308,8 +308,8 @@ export default function EmployeeManagement({ department }) {
                     <TableCell className="text-center">
                       {!isReadOnly() && department === 'planning' ? (
                         <Select 
-                          value={employee.shift} 
-                          onValueChange={(newShift) => handleQuickMove(employee.id, employee.location, newShift)}
+                          value={employee.shift || ""} 
+                          onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}
                         >
                           <SelectTrigger className="h-8 w-36 text-xs">
                             <SelectValue placeholder="الوردية..." />
@@ -328,6 +328,31 @@ export default function EmployeeManagement({ department }) {
                             className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
                           >
                             {employee.shift}
+                          </Badge>
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {!isReadOnly() && department === 'planning' ? (
+                        <Select 
+                          value={employee.weekly_rest || ""} 
+                          onValueChange={(v) => handleQuickMove(employee.id, 'weekly_rest', v)}
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue placeholder="اختر..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {REST_PATTERNS.map((rest) => (
+                              <SelectItem key={rest.value} value={rest.value}>
+                                {rest.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        employee.weekly_rest && (
+                          <Badge variant="outline">
+                            {employee.weekly_rest}
                           </Badge>
                         )
                       )}
