@@ -105,6 +105,26 @@ class Season(BaseModel):
     active_gates_count: int = 0
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ============= Prohibited Items Models =============
+class ProhibitedItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name_ar: str
+    name_en: str
+    category: str  # weapons, electronics, food, etc.
+    severity: str = "high"  # high, medium, low
+    exception_note_ar: Optional[str] = None
+    exception_note_en: Optional[str] = None
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ProhibitedItemCreate(BaseModel):
+    name_ar: str
+    name_en: str
+    category: str
+    severity: Optional[str] = "high"
+    exception_note_ar: Optional[str] = None
+    exception_note_en: Optional[str] = None
+
 # ============= Plazas Models =============
 class PlazaCreate(BaseModel):
     name: str
