@@ -75,7 +75,6 @@ export const AuthProvider = ({ children }) => {
 
   const canManageDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
-    if (user?.role === 'general_manager') return true;
     if (user?.role === 'department_manager' && user?.department === department) return true;
     return false;
   };
@@ -86,12 +85,6 @@ export const AuthProvider = ({ children }) => {
     if (user?.role === 'monitoring_team') return true;
     if (user?.role === 'department_manager' && user?.department === department) return true;
     if (user?.role === 'field_staff' && user?.department === department) return true;
-    return false;
-  };
-
-  const canManageDepartment = (department) => {
-    if (user?.role === 'system_admin') return true;
-    if (user?.role === 'department_manager' && user?.department === department) return true;
     return false;
   };
 
