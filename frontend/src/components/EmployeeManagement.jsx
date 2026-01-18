@@ -370,9 +370,14 @@ export default function EmployeeManagement({ department }) {
                     </TableCell>
                     <TableCell className="text-center text-sm">{employee.location || '-'}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={employee.is_active ? "default" : "secondary"}>
-                        {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-                      </Badge>
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge variant={employee.is_active ? "default" : "secondary"}>
+                          {employee.is_active ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                        </Badge>
+                        {employee.on_rest && (
+                          <span className="text-xs text-orange-600">☕ {language === 'ar' ? 'في راحة' : 'On Rest'}</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-left">
                       <div className="flex items-center gap-2 justify-start">
