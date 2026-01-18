@@ -56,8 +56,14 @@ const DEPARTMENTS = {
 
 const SHIFTS = [
   { value: "الأولى", label: "الأولى", color: "bg-blue-500" },
+  { value: "الأولى صيف", label: "الأولى صيف", color: "bg-blue-500" },
+  { value: "الأولى شتاء", label: "الأولى شتاء", color: "bg-blue-600" },
   { value: "الثانية", label: "الثانية", color: "bg-green-500" },
+  { value: "الثانية صيف", label: "الثانية صيف", color: "bg-green-500" },
+  { value: "الثانية شتاء", label: "الثانية شتاء", color: "bg-green-600" },
   { value: "الثالثة", label: "الثالثة", color: "bg-orange-500" },
+  { value: "الثالثة صيف", label: "الثالثة صيف", color: "bg-orange-500" },
+  { value: "الثالثة شتاء", label: "الثالثة شتاء", color: "bg-orange-600" },
   { value: "الرابعة", label: "الرابعة", color: "bg-purple-500" }
 ];
 
