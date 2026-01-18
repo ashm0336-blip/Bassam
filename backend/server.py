@@ -1988,6 +1988,105 @@ async def delete_transaction(
     await log_activity("حذف معاملة", admin, transaction_id, "تم الحذف")
     return {"message": "تم حذف المعاملة بنجاح"}
 
+# ============= Transactions Export Routes =============
+@api_router.get("/transactions/export/pdf")
+async def export_transactions_pdf(user: dict = Depends(get_current_user)):
+    """Export transactions to PDF with Arabic support"""
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from arabic_reshaper import reshape
+    from bidi.algorithm import get_display
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    # Get transactions
+    query = {}
+    if user.get("role") == "department_manager":
+        query["department"] = user.get("department")
+    
+    transactions = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Create PDF in memory
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=10*mm, leftMargin=10*mm, topMargin=15*mm, bottomMargin=15*mm)
+    
+    elements = []
+    
+    # Add title
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#004D38'),
+        alignment=1  # Center
+    )
+    
+    title = Paragraph("Administrative Transactions Report<br/>تقرير المعاملات الإدارية", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 10*mm))
+    
+    # Prepare table data
+    def arabic_text(text):
+        if not text:
+            return ""
+        try:
+            reshaped = reshape(str(text))
+            return get_display(reshaped)
+        except:
+            return str(text)
+    
+    table_data = [
+        ['#', 'Number', 'Date', 'Subject', 'Assigned', 'Done', 'Progress', 'Pending', 'Notes']
+    ]
+    
+    for idx, t in enumerate(transactions, 1):
+        table_data.append([
+            str(idx),
+            t.get('transaction_number', ''),
+            t.get('transaction_date', ''),
+            t.get('subject', '')[:50],
+            t.get('assigned_to', ''),
+            '✓' if t.get('status') == 'completed' else '',
+            '✓' if t.get('status') == 'in_progress' else '',
+            '✓' if t.get('status') == 'pending' else '',
+            (t.get('notes') or '')[:40]
+        ])
+    
+    # Create table
+    table = Table(table_data, colWidths=[15*mm, 25*mm, 20*mm, 70*mm, 35*mm, 15*mm, 20*mm, 15*mm, 50*mm])
+    
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#004D38')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F0')])
+    ]))
+    
+    elements.append(table)
+    
+    # Build PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=transactions_{datetime.now().strftime('%Y-%m-%d')}.pdf"}
+    )
+
+
 # Include the router in the main app
 app.include_router(api_router)
 
