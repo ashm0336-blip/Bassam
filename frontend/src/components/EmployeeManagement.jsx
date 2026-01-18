@@ -122,7 +122,18 @@ export default function EmployeeManagement({ department }) {
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setEmployees(response.data);
+      
+      // تحديث الحالة تلقائياً حسب أيام الراحة
+      const today = new Date().toLocaleDateString('ar-SA', { weekday: 'long' }).replace('يوم ', '');
+      
+      const updatedEmployees = response.data.map(emp => {
+        if (emp.weekly_rest && emp.weekly_rest.includes(today)) {
+          return {...emp, is_active: false, on_rest: true};
+        }
+        return emp;
+      });
+      
+      setEmployees(updatedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       toast.error(language === 'ar' ? "فشل في جلب الموظفين" : "Failed to fetch employees");
