@@ -251,10 +251,12 @@ export default function EmployeeManagement({ department }) {
             {department ? DEPARTMENTS[department]?.[language] : (language === 'ar' ? 'جميع الأقسام' : 'All Departments')}
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 ml-2" />
-          {language === 'ar' ? 'موظف جديد' : 'New Employee'}
-        </Button>
+        {!isReadOnly() && (
+          <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+            <Plus className="w-4 h-4 ml-2" />
+            {language === 'ar' ? 'موظف جديد' : 'New Employee'}
+          </Button>
+        )}
       </div>
 
       {/* Employees Table */}
