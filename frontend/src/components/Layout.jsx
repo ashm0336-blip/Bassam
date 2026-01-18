@@ -55,7 +55,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 // Icon mapping
 const ICON_MAP = {
   LayoutDashboard, ClipboardList, LayoutGrid, DoorOpen, Users, Circle,
-  FileText, Bell, Settings, Map, Shield, Home, UserCheck, Building,
+  FileText, Bell, Settings, Map, Shield, ShieldAlert, Home, UserCheck, Building,
   MapPin, Navigation, Layers, List, Grid, Database, Archive, Folder,
   Calendar, BarChart3, PieChart, TrendingUp, Activity, User, Menu
 };
