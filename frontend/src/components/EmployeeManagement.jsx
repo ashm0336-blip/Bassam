@@ -578,21 +578,11 @@ export default function EmployeeManagement({ department }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <Label className="font-medium">{language === 'ar' ? 'الحالة' : 'Status'}</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'ar' ? 'هل الموظف نشط حالياً؟' : 'Is the employee currently active?'}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar' ? 'الحالة ستُحسب تلقائياً حسب أيام الراحة' : 'Status will be calculated automatically'}
                   </p>
                 </div>
-                <Switch 
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({...formData, is_active: checked})}
-                />
-              </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
