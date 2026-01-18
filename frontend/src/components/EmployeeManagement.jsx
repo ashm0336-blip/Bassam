@@ -67,6 +67,13 @@ const SHIFTS = [
   { value: "الرابعة", label: "الرابعة", color: "bg-purple-500" }
 ];
 
+const REST_PATTERNS = [
+  { value: "السبت - الأحد", label: "السبت - الأحد" },
+  { value: "الخميس - الجمعة", label: "الخميس - الجمعة" },
+  { value: "الجمعة - السبت", label: "الجمعة - السبت" },
+  { value: "الأحد - الاثنين", label: "الأحد - الاثنين" }
+];
+
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
@@ -217,13 +224,10 @@ export default function EmployeeManagement({ department }) {
     }
   };
 
-  const handleQuickMove = async (employeeId, location, shift = null) => {
+  const handleQuickMove = async (employeeId, field, value) => {
     try {
       const token = localStorage.getItem("token");
-      
-      const updateData = {};
-      if (location !== undefined) updateData.location = location;
-      if (shift !== null) updateData.shift = shift;
+      const updateData = { [field]: value };
       
       await axios.put(
         `${API}/employees/${employeeId}`,
@@ -231,17 +235,12 @@ export default function EmployeeManagement({ department }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      if (shift) {
-        toast.success(language === 'ar' ? `تم تغيير الوردية إلى ${shift}` : `Shift changed to ${shift}`);
-      } else {
-        toast.success(language === 'ar' ? `تم نقل الموظف إلى ${location}` : `Employee moved to ${location}`);
-      }
-      
+      toast.success(language === 'ar' ? 'تم التحديث' : 'Updated');
       fetchEmployees();
       fetchStats();
     } catch (error) {
-      console.error("Error updating employee:", error);
-      toast.error(language === 'ar' ? "فشل التحديث" : "Failed to update");
+      console.error("Error:", error);
+      toast.error(language === 'ar' ? "فشل التحديث" : "Failed");
     }
   };
 
@@ -291,6 +290,7 @@ export default function EmployeeManagement({ department }) {
                 <TableRow>
                   <TableHead className="text-right">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
