@@ -182,6 +182,40 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleExport = () => {
+    try {
+      // Prepare data for export
+      const exportData = filteredTransactions.map(t => ({
+        'رقم المعاملة': t.transaction_number,
+        'التاريخ': t.transaction_date,
+        'الموضوع': t.subject,
+        'المستلم': t.assigned_to,
+        'الأولوية': t.priority,
+        'الحالة': statusConfig[t.status]?.label_ar || t.status,
+        'الملاحظات': t.notes || '-'
+      }));
+
+      // Convert to CSV
+      const headers = Object.keys(exportData[0]);
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => headers.map(h => `"${row[h]}"`).join(','))
+      ].join('\n');
+
+      // Download
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      
+      toast.success(language === 'ar' ? 'تم التصدير بنجاح' : 'Exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(language === 'ar' ? 'فشل التصدير' : 'Export failed');
+    }
+  };
+
   const statusConfig = {
     pending: { 
       label_ar: "قيد الانتظار", 
@@ -297,7 +331,7 @@ export default function TransactionsPage() {
               </SelectContent>
             </Select>
             
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="w-4 h-4 ml-2" />
               {language === 'ar' ? 'تصدير' : 'Export'}
             </Button>
