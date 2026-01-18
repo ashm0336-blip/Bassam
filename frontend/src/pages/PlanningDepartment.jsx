@@ -12,18 +12,9 @@ import {
   ClipboardList,
   Clock,
   CheckCircle2,
-  Briefcase
-} from "lucide-react";
-import { 
-  ClipboardList, 
-  Users, 
-  CheckCircle2, 
-  Clock,
+  Briefcase,
   Activity,
-  Target,
-  UserCheck,
-  UserX,
-  MapPin
+  Target
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
