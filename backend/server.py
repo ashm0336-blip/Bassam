@@ -367,6 +367,41 @@ class InteractiveMapCreate(BaseModel):
     width: Optional[int] = 1920
     height: Optional[int] = 1080
 
+# ============= Transaction Models =============
+class Transaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    transaction_number: str  # رقم المعاملة
+    transaction_date: str  # التاريخ الهجري
+    subject: str  # الموضوع
+    assigned_to: str  # اسم المستلم (employee name)
+    assigned_by: str  # من عيّن المعاملة
+    status: str = "pending"  # pending, in_progress, completed
+    notes: Optional[str] = None  # الملاحظات
+    priority: str = "normal"  # low, normal, high, urgent
+    department: str = "gates"
+    due_date: Optional[str] = None
+    completed_date: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class TransactionCreate(BaseModel):
+    transaction_number: str
+    transaction_date: str
+    subject: str
+    assigned_to: str
+    priority: Optional[str] = "normal"
+    department: Optional[str] = "gates"
+    due_date: Optional[str] = None
+    notes: Optional[str] = None
+
+class TransactionUpdate(BaseModel):
+    assigned_to: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[str] = None
+    completed_date: Optional[str] = None
+
 # ============= Auth Functions =============
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
