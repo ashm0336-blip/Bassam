@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Map,
   Shield,
+  ShieldAlert,
   LogOut,
   Moon,
   Sun,
