@@ -55,6 +55,7 @@ export default function TransactionsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -108,12 +109,25 @@ export default function TransactionsPage() {
     
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${API}/transactions`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      toast.success(language === 'ar' ? 'تمت إضافة المعاملة بنجاح' : 'Transaction added successfully');
+      if (editMode && selectedTransaction) {
+        // Update existing
+        await axios.put(
+          `${API}/transactions/${selectedTransaction.id}`,
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(language === 'ar' ? 'تم تحديث المعاملة بنجاح' : 'Transaction updated successfully');
+      } else {
+        // Create new
+        await axios.post(`${API}/transactions`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(language === 'ar' ? 'تمت إضافة المعاملة بنجاح' : 'Transaction added successfully');
+      }
+      
       setDialogOpen(false);
+      setEditMode(false);
       fetchTransactions();
       fetchStats();
       
@@ -129,9 +143,25 @@ export default function TransactionsPage() {
         notes: ""
       });
     } catch (error) {
-      console.error("Error creating transaction:", error);
-      toast.error(language === 'ar' ? 'فشل إضافة المعاملة' : 'Failed to add transaction');
+      console.error("Error saving transaction:", error);
+      toast.error(language === 'ar' ? 'فشل حفظ المعاملة' : 'Failed to save transaction');
     }
+  };
+
+  const handleEdit = (transaction) => {
+    setSelectedTransaction(transaction);
+    setEditMode(true);
+    setFormData({
+      transaction_number: transaction.transaction_number,
+      transaction_date: transaction.transaction_date,
+      subject: transaction.subject,
+      assigned_to: transaction.assigned_to,
+      priority: transaction.priority,
+      department: transaction.department,
+      due_date: transaction.due_date || "",
+      notes: transaction.notes || ""
+    });
+    setDialogOpen(true);
   };
 
   const handleStatusUpdate = async (transactionId, newStatus) => {
@@ -336,16 +366,27 @@ export default function TransactionsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setSelectedTransaction(transaction);
-                            setDetailsDialogOpen(true);
-                          }}
-                        >
-                          {language === 'ar' ? 'التفاصيل' : 'Details'}
-                        </Button>
+                        <div className="flex items-center gap-2 justify-center">
+                          {!isReadOnly() && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(transaction)}
+                            >
+                              {language === 'ar' ? 'تعديل' : 'Edit'}
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedTransaction(transaction);
+                              setDetailsDialogOpen(true);
+                            }}
+                          >
+                            {language === 'ar' ? 'التفاصيل' : 'Details'}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -356,12 +397,15 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Add Transaction Dialog */}
+      {/* Add/Edit Transaction Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="font-cairo text-right">
-              {language === 'ar' ? 'إضافة معاملة جديدة' : 'Add New Transaction'}
+              {editMode 
+                ? (language === 'ar' ? 'تعديل المعاملة' : 'Edit Transaction')
+                : (language === 'ar' ? 'إضافة معاملة جديدة' : 'Add New Transaction')
+              }
             </DialogTitle>
           </DialogHeader>
 
