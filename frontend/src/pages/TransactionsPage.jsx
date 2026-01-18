@@ -448,6 +448,9 @@ export default function TransactionsPage() {
                   <TableHead className="text-right">{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
                   <TableHead className="text-right">{language === 'ar' ? 'الموضوع' : 'Subject'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'المستلم' : 'Assigned'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'من أنشأها' : 'Created By'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created Date'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'آخر تحديث' : 'Last Update'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الأولوية' : 'Priority'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
@@ -468,6 +471,25 @@ export default function TransactionsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-center text-sm">{transaction.assigned_to}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        <Badge variant="outline" className="text-xs">
+                          {transaction.assigned_by}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground">
+                        {new Date(transaction.created_at).toLocaleDateString('ar-SA', { 
+                          year: 'numeric', 
+                          month: '2-digit', 
+                          day: '2-digit' 
+                        })}
+                      </TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground">
+                        {new Date(transaction.updated_at).toLocaleDateString('ar-SA', { 
+                          year: 'numeric', 
+                          month: '2-digit', 
+                          day: '2-digit' 
+                        })}
+                      </TableCell>
                       <TableCell className="text-center">
                         {!isReadOnly() ? (
                           <Select 
