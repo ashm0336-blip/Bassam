@@ -296,7 +296,7 @@ export default function EmployeeManagement({ department }) {
             {language === 'ar' ? `إجمالي ${employees.length} موظف` : `Total ${employees.length} employees`}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
