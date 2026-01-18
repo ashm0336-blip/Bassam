@@ -207,10 +207,12 @@ export default function GatesDataManagement() {
             {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب' : 'Add and edit gates data'}
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 ml-2" />
-          {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
-        </Button>
+        {!isReadOnly() && (
+          <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+            <Plus className="w-4 h-4 ml-2" />
+            {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
+          </Button>
+        )}
       </div>
 
       {/* Gates Table */}
