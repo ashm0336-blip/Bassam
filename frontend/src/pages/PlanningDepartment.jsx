@@ -50,14 +50,36 @@ export default function PlanningDepartment() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const [statsRes, empStatsRes] = await Promise.all([
-          axios.get(`${API}/planning/stats`),
+        const [employeesRes, empStatsRes] = await Promise.all([
+          axios.get(`${API}/employees?department=planning`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
           axios.get(`${API}/employees/stats/planning`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
-        setStats(statsRes.data);
-        setEmployeeStats(empStatsRes.data);
+        
+        // حساب النشطين بناءً على أيام الراحة
+        const today = new Date().toLocaleDateString('ar-SA', { weekday: 'long' }).replace('يوم ', '');
+        const allEmployees = employeesRes.data;
+        
+        const activeNow = allEmployees.filter(emp => {
+          if (!emp.weekly_rest) return true; // لو ما عنده راحة يعتبر نشط
+          return !emp.weekly_rest.includes(today);
+        });
+        
+        const onRest = allEmployees.filter(emp => {
+          if (!emp.weekly_rest) return false;
+          return emp.weekly_rest.includes(today);
+        });
+        
+        setEmployeeStats({
+          ...empStatsRes.data,
+          total_employees: allEmployees.length,
+          active_employees: activeNow.length,
+          inactive_employees: onRest.length,
+          on_rest: onRest.length
+        });
       } catch (error) {
         console.error("Error fetching planning stats:", error);
       } finally {
