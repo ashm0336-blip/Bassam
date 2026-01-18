@@ -89,8 +89,18 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  const canManageDepartment = (department) => {
+    if (user?.role === 'system_admin') return true;
+    if (user?.role === 'department_manager' && user?.department === department) return true;
+    return false;
+  };
+
   const canAddAlerts = () => {
-    return user?.role === 'system_admin' || user?.role === 'general_manager' || user?.role === 'department_manager' || user?.role === 'field_staff';
+    return user?.role === 'system_admin' || user?.role === 'department_manager' || user?.role === 'field_staff';
+  };
+
+  const isReadOnly = () => {
+    return user?.role === 'general_manager' || user?.role === 'monitoring_team';
   };
 
   return (
@@ -105,6 +115,7 @@ export const AuthProvider = ({ children }) => {
       canManageDepartment,
       canViewDepartment,
       canAddAlerts,
+      isReadOnly,
       isAuthenticated: !!user 
     }}>
       {children}
