@@ -10,6 +10,7 @@ import { HeaderProvider } from "@/context/HeaderContext";
 import { DepartmentProtectedRoute, AdminProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
+import ManagerDashboard from "@/pages/ManagerDashboard";
 import PlanningDepartment from "@/pages/PlanningDepartment";
 import PlazasDepartment from "@/pages/PlazasDepartment";
 import GatesDepartment from "@/pages/GatesDepartment";
