@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   FileText,
   Plus,
@@ -57,6 +60,7 @@ export default function TransactionsPage() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     transaction_number: "",
@@ -182,38 +186,128 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = (type) => {
     try {
-      // Prepare data for export
-      const exportData = filteredTransactions.map(t => ({
-        'رقم المعاملة': t.transaction_number,
-        'التاريخ': t.transaction_date,
-        'الموضوع': t.subject,
-        'المستلم': t.assigned_to,
-        'الأولوية': t.priority,
-        'الحالة': statusConfig[t.status]?.label_ar || t.status,
-        'الملاحظات': t.notes || '-'
-      }));
-
-      // Convert to CSV
-      const headers = Object.keys(exportData[0]);
-      const csvContent = [
-        headers.join(','),
-        ...exportData.map(row => headers.map(h => `"${row[h]}"`).join(','))
-      ].join('\n');
-
-      // Download
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-      
-      toast.success(language === 'ar' ? 'تم التصدير بنجاح' : 'Exported successfully');
+      if (type === 'excel') {
+        handleExportExcel();
+      } else if (type === 'pdf') {
+        handleExportPDF();
+      }
     } catch (error) {
       console.error('Export error:', error);
       toast.error(language === 'ar' ? 'فشل التصدير' : 'Export failed');
     }
+  };
+
+  const handleExportExcel = () => {
+    // Prepare data
+    const data = filteredTransactions.map((t, idx) => ({
+      'التسلسل': idx + 1,
+      'رقم المعاملة': t.transaction_number,
+      'التاريخ': t.transaction_date,
+      'الموضوع': t.subject,
+      'المستلم': t.assigned_to,
+      'الأولوية': t.priority === 'urgent' ? 'عاجل' : t.priority === 'high' ? 'عالية' : t.priority === 'low' ? 'منخفضة' : 'عادية',
+      'تم الإنجاز': t.status === 'completed' ? '✓' : '',
+      'تحت الإجراء': t.status === 'in_progress' ? '✓' : '',
+      'لم يتم الإنجاز': t.status === 'pending' ? '✓' : '',
+      'الملاحظات': t.notes || ''
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 8 },  // التسلسل
+      { wch: 15 }, // رقم المعاملة
+      { wch: 15 }, // التاريخ
+      { wch: 40 }, // الموضوع
+      { wch: 20 }, // المستلم
+      { wch: 12 }, // الأولوية
+      { wch: 12 }, // تم
+      { wch: 12 }, // تحت
+      { wch: 12 }, // لم يتم
+      { wch: 50 }  // الملاحظات
+    ];
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'المعاملات');
+
+    // Download
+    XLSX.writeFile(wb, `transactions_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success(language === 'ar' ? 'تم التصدير إلى Excel بنجاح' : 'Exported to Excel successfully');
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    
+    // Add Arabic font support (simplified - using default for now)
+    doc.setFont('helvetica');
+    doc.setFontSize(16);
+    doc.text('تقرير المعاملات الإدارية', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text(`التاريخ: ${new Date().toLocaleDateString('ar-SA')}`, doc.internal.pageSize.width - 20, 25, { align: 'right' });
+
+    // Prepare table data
+    const tableData = filteredTransactions.map((t, idx) => [
+      idx + 1,
+      t.transaction_number,
+      t.transaction_date,
+      t.subject,
+      t.assigned_to,
+      t.status === 'completed' ? '✓' : '',
+      t.status === 'in_progress' ? '✓' : '',
+      t.status === 'pending' ? '✓' : '',
+      t.notes || ''
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [[
+        'م',
+        'رقم المعاملة',
+        'التاريخ',
+        'الموضوع',
+        'المستلم',
+        'تم',
+        'تحت الإجراء',
+        'لم يتم',
+        'الملاحظات'
+      ]],
+      body: tableData,
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        cellPadding: 2,
+        halign: 'center'
+      },
+      headStyles: {
+        fillColor: [0, 77, 56],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: {
+        0: { cellWidth: 10 },  // م
+        1: { cellWidth: 25 },  // رقم
+        2: { cellWidth: 20 },  // تاريخ
+        3: { cellWidth: 60 },  // موضوع
+        4: { cellWidth: 30 },  // مستلم
+        5: { cellWidth: 15 },  // تم
+        6: { cellWidth: 20 },  // تحت
+        7: { cellWidth: 15 },  // لم يتم
+        8: { cellWidth: 50 }   // ملاحظات
+      }
+    });
+
+    doc.save(`transactions_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success(language === 'ar' ? 'تم التصدير إلى PDF بنجاح' : 'Exported to PDF successfully');
   };
 
   const statusConfig = {
@@ -331,10 +425,21 @@ export default function TransactionsPage() {
               </SelectContent>
             </Select>
             
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 ml-2" />
-              {language === 'ar' ? 'تصدير' : 'Export'}
-            </Button>
+            <Select onValueChange={handleExport}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder={language === 'ar' ? 'تصدير' : 'Export'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="excel">
+                  <Download className="w-4 h-4 ml-2 inline" />
+                  Excel
+                </SelectItem>
+                <SelectItem value="pdf">
+                  <Download className="w-4 h-4 ml-2 inline" />
+                  PDF
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
