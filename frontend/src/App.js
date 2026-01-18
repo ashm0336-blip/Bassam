@@ -19,6 +19,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import MapPage from "@/pages/MapPage";
+import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 
