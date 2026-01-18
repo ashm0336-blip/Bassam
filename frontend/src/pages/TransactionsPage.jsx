@@ -186,6 +186,23 @@ export default function TransactionsPage() {
     }
   };
 
+  const handlePriorityUpdate = async (transactionId, newPriority) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/transactions/${transactionId}`,
+        { priority: newPriority },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === 'ar' ? 'تم تحديث الأولوية' : 'Priority updated');
+      fetchTransactions();
+    } catch (error) {
+      console.error("Error updating priority:", error);
+      toast.error(language === 'ar' ? 'فشل التحديث' : 'Failed to update');
+    }
+  };
+
   const handleExport = (type) => {
     try {
       if (type === 'excel') {
@@ -281,6 +298,29 @@ export default function TransactionsPage() {
       label_en: "Completed", 
       color: "bg-green-100 text-green-800 border-green-200",
       icon: CheckCircle
+    }
+  };
+
+  const priorityConfig = {
+    low: {
+      label_ar: "منخفضة",
+      label_en: "Low",
+      color: "bg-green-100 text-green-800 border-green-300"
+    },
+    normal: {
+      label_ar: "عادية",
+      label_en: "Normal",
+      color: "bg-gray-100 text-gray-800 border-gray-300"
+    },
+    high: {
+      label_ar: "عالية",
+      label_en: "High",
+      color: "bg-orange-100 text-orange-800 border-orange-300"
+    },
+    urgent: {
+      label_ar: "عاجل",
+      label_en: "Urgent",
+      color: "bg-red-100 text-red-800 border-red-300"
     }
   };
 
@@ -429,9 +469,37 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell className="text-center text-sm">{transaction.assigned_to}</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={transaction.priority === 'urgent' ? 'destructive' : 'outline'} className="text-xs">
-                          {transaction.priority}
-                        </Badge>
+                        {!isReadOnly() ? (
+                          <Select 
+                            value={transaction.priority} 
+                            onValueChange={(v) => handlePriorityUpdate(transaction.id, v)}
+                          >
+                            <SelectTrigger className="h-8 w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">
+                                <span className="text-green-600">●</span> {language === 'ar' ? 'منخفضة' : 'Low'}
+                              </SelectItem>
+                              <SelectItem value="normal">
+                                <span className="text-gray-600">●</span> {language === 'ar' ? 'عادية' : 'Normal'}
+                              </SelectItem>
+                              <SelectItem value="high">
+                                <span className="text-orange-600">●</span> {language === 'ar' ? 'عالية' : 'High'}
+                              </SelectItem>
+                              <SelectItem value="urgent">
+                                <span className="text-red-600">●</span> {language === 'ar' ? 'عاجل' : 'Urgent'}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge className={priorityConfig[transaction.priority]?.color || 'bg-gray-100'}>
+                            {language === 'ar' 
+                              ? priorityConfig[transaction.priority]?.label_ar 
+                              : priorityConfig[transaction.priority]?.label_en
+                            }
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         {!isReadOnly() ? (
