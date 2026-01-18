@@ -95,8 +95,7 @@ export default function EmployeeManagement({ department }) {
     shift: "الأولى",
     weekly_rest: "",
     work_tasks: "",
-    department: department || user?.department || "planning",
-    is_active: true
+    department: department || user?.department || "planning"
   });
 
   useEffect(() => {
