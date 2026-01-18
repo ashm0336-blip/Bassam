@@ -289,8 +289,7 @@ export default function EmployeeManagement({ department }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                  <TableHead className="text-right">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
@@ -300,8 +299,12 @@ export default function EmployeeManagement({ department }) {
               <TableBody>
                 {employees.map((employee) => (
                   <TableRow key={employee.id}>
-                    <TableCell className="text-right font-medium">{employee.name}</TableCell>
-                    <TableCell className="text-center">{employee.job_title}</TableCell>
+                    <TableCell className="text-right">
+                      <div>
+                        <p className="font-medium">{employee.employee_number} - {employee.name}</p>
+                        <p className="text-xs text-muted-foreground">{employee.job_title}</p>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       {!isReadOnly() && department === 'planning' ? (
                         <Select 
