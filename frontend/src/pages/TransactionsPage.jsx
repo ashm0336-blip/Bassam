@@ -243,70 +243,89 @@ export default function TransactionsPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape', 'mm', 'a4');
     
-    // Add Arabic font support (simplified - using default for now)
-    doc.setFont('helvetica');
-    doc.setFontSize(16);
-    doc.text('تقرير المعاملات الإدارية', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Administrative Transactions Report', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+    doc.text('تقرير المعاملات الإدارية', doc.internal.pageSize.width / 2, 22, { align: 'center' });
     
     doc.setFontSize(10);
-    doc.text(`التاريخ: ${new Date().toLocaleDateString('ar-SA')}`, doc.internal.pageSize.width - 20, 25, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    const today = new Date().toLocaleDateString('en-US');
+    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 20, 30, { align: 'right' });
 
     // Prepare table data
     const tableData = filteredTransactions.map((t, idx) => [
       idx + 1,
       t.transaction_number,
       t.transaction_date,
-      t.subject,
+      t.subject.substring(0, 50) + (t.subject.length > 50 ? '...' : ''),
       t.assigned_to,
       t.status === 'completed' ? '✓' : '',
       t.status === 'in_progress' ? '✓' : '',
       t.status === 'pending' ? '✓' : '',
-      t.notes || ''
+      (t.notes || '').substring(0, 40) + (t.notes && t.notes.length > 40 ? '...' : '')
     ]);
 
     autoTable(doc, {
-      startY: 30,
+      startY: 35,
       head: [[
-        'م',
-        'رقم المعاملة',
-        'التاريخ',
-        'الموضوع',
-        'المستلم',
-        'تم',
-        'تحت الإجراء',
-        'لم يتم',
-        'الملاحظات'
+        '#',
+        'Number',
+        'Date',
+        'Subject',
+        'Assigned',
+        'Done',
+        'Progress',
+        'Pending',
+        'Notes'
       ]],
       body: tableData,
       styles: {
         font: 'helvetica',
-        fontSize: 8,
-        cellPadding: 2,
-        halign: 'center'
+        fontSize: 9,
+        cellPadding: 3,
+        halign: 'center',
+        valign: 'middle'
       },
       headStyles: {
         fillColor: [0, 77, 56],
         textColor: 255,
-        fontSize: 9,
-        fontStyle: 'bold'
+        fontSize: 10,
+        fontStyle: 'bold',
+        halign: 'center'
       },
       alternateRowStyles: {
-        fillColor: [245, 245, 245]
+        fillColor: [245, 245, 240]
       },
       columnStyles: {
-        0: { cellWidth: 10 },  // م
-        1: { cellWidth: 25 },  // رقم
-        2: { cellWidth: 20 },  // تاريخ
-        3: { cellWidth: 60 },  // موضوع
-        4: { cellWidth: 30 },  // مستلم
-        5: { cellWidth: 15 },  // تم
-        6: { cellWidth: 20 },  // تحت
-        7: { cellWidth: 15 },  // لم يتم
-        8: { cellWidth: 50 }   // ملاحظات
-      }
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 22, halign: 'center' },
+        3: { cellWidth: 65, halign: 'left' },
+        4: { cellWidth: 35, halign: 'left' },
+        5: { cellWidth: 15, halign: 'center' },
+        6: { cellWidth: 18, halign: 'center' },
+        7: { cellWidth: 18, halign: 'center' },
+        8: { cellWidth: 55, halign: 'left' }
+      },
+      margin: { top: 35, right: 10, bottom: 10, left: 10 }
     });
 
-    doc.save(`transactions_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`transactions_report_${new Date().toISOString().split('T')[0]}.pdf`);
     toast.success(language === 'ar' ? 'تم التصدير إلى PDF بنجاح' : 'Exported to PDF successfully');
   };
 
