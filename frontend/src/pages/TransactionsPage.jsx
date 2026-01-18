@@ -240,93 +240,27 @@ export default function TransactionsPage() {
     toast.success(language === 'ar' ? 'تم التصدير إلى Excel بنجاح' : 'Exported to Excel successfully');
   };
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF('landscape', 'mm', 'a4');
-    
-    // Title
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Administrative Transactions Report', doc.internal.pageSize.width / 2, 15, { align: 'center' });
-    doc.text('تقرير المعاملات الإدارية', doc.internal.pageSize.width / 2, 22, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const today = new Date().toLocaleDateString('en-US');
-    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 20, 30, { align: 'right' });
-
-    // Prepare table data
-    const tableData = filteredTransactions.map((t, idx) => [
-      idx + 1,
-      t.transaction_number,
-      t.transaction_date,
-      t.subject.substring(0, 50) + (t.subject.length > 50 ? '...' : ''),
-      t.assigned_to,
-      t.status === 'completed' ? '✓' : '',
-      t.status === 'in_progress' ? '✓' : '',
-      t.status === 'pending' ? '✓' : '',
-      (t.notes || '').substring(0, 40) + (t.notes && t.notes.length > 40 ? '...' : '')
-    ]);
-
-    autoTable(doc, {
-      startY: 35,
-      head: [[
-        '#',
-        'Number',
-        'Date',
-        'Subject',
-        'Assigned',
-        'Done',
-        'Progress',
-        'Pending',
-        'Notes'
-      ]],
-      body: tableData,
-      styles: {
-        font: 'helvetica',
-        fontSize: 9,
-        cellPadding: 3,
-        halign: 'center',
-        valign: 'middle'
-      },
-      headStyles: {
-        fillColor: [0, 77, 56],
-        textColor: 255,
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 240]
-      },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 25, halign: 'center' },
-        2: { cellWidth: 22, halign: 'center' },
-        3: { cellWidth: 65, halign: 'left' },
-        4: { cellWidth: 35, halign: 'left' },
-        5: { cellWidth: 15, halign: 'center' },
-        6: { cellWidth: 18, halign: 'center' },
-        7: { cellWidth: 18, halign: 'center' },
-        8: { cellWidth: 55, halign: 'left' }
-      },
-      margin: { top: 35, right: 10, bottom: 10, left: 10 }
-    });
-
-    // Footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.text(
-        `Page ${i} of ${pageCount}`,
-        doc.internal.pageSize.width / 2,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
+  const handleExportPDF = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/transactions/export/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `transactions_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success(language === 'ar' ? 'تم التصدير إلى PDF بنجاح' : 'Exported to PDF successfully');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error(language === 'ar' ? 'فشل التصدير' : 'Export failed');
     }
-
-    doc.save(`transactions_report_${new Date().toISOString().split('T')[0]}.pdf`);
-    toast.success(language === 'ar' ? 'تم التصدير إلى PDF بنجاح' : 'Exported to PDF successfully');
   };
 
   const statusConfig = {
