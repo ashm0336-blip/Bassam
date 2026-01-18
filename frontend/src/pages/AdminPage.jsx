@@ -47,7 +47,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-9 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -58,11 +58,15 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity'}</span>
+            <span className="text-xs">{language === 'ar' ? 'النشاط' : 'Activity'}</span>
           </TabsTrigger>
           <TabsTrigger value="season" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Calendar className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'المواسم' : 'Seasons'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="prohibited" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <ShieldAlert className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الممنوعات' : 'Prohibited'}</span>
           </TabsTrigger>
           <TabsTrigger value="maps" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <MapIcon className="w-5 h-5" />
@@ -96,6 +100,10 @@ export default function AdminPage() {
 
         <TabsContent value="season" className="mt-6">
           <SeasonManager />
+        </TabsContent>
+
+        <TabsContent value="prohibited" className="mt-6">
+          <ProhibitedItemsManager />
         </TabsContent>
 
         <TabsContent value="maps" className="mt-6">
