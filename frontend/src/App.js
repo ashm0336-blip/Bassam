@@ -26,6 +26,17 @@ import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 
+// Conditional Dashboard
+function ConditionalDashboard() {
+  const { user } = useAuth();
+  
+  if (user?.role === 'general_manager') {
+    return <ManagerDashboard />;
+  }
+  
+  return <Dashboard />;
+}
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -81,7 +92,7 @@ function AppRoutes() {
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<Dashboard />} />
+        <Route index element={<ConditionalDashboard />} />
         <Route path="map" element={<MapPage />} />
         <Route path="planning" element={
           <DepartmentProtectedRoute department="planning">
