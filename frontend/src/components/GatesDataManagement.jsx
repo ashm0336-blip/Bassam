@@ -299,14 +299,20 @@ export default function GatesDataManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex gap-2 justify-center">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(gate)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        {!isReadOnly() ? (
+                          <div className="flex gap-2 justify-center">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(gate)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            {language === 'ar' ? 'قراءة فقط' : 'Read Only'}
+                          </Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
