@@ -2038,7 +2038,7 @@ async def export_transactions_pdf(user: dict = Depends(get_current_user)):
         try:
             reshaped = reshape(str(text))
             return get_display(reshaped)
-        except:
+        except Exception:
             return str(text)
     
     table_data = [
