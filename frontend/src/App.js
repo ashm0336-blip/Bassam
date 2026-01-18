@@ -20,6 +20,7 @@ import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import MapPage from "@/pages/MapPage";
 import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
+import TransactionsPage from "@/pages/TransactionsPage";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 
