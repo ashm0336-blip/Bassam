@@ -21,6 +21,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import MapPage from "@/pages/MapPage";
 import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import TransactionsPage from "@/pages/TransactionsPage";
+import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 
@@ -110,6 +111,7 @@ function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
+        <Route path="shifts" element={<ShiftsCalendar />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={
           <AdminProtectedRoute>
