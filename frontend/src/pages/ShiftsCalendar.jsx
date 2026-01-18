@@ -1,15 +1,59 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
-import { Calendar as CalendarIcon, Users, Clock, Briefcase, Coffee } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Coffee,
+  Edit,
+  Save,
+  X,
+  Loader2
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export default function ShiftsCalendar() {
+const SHIFTS = [
+  { value: "الأولى صيف", label: "الأولى صيف", time: "3:00 - 8:00", color: "bg-blue-500" },
+  { value: "الأولى شتاء", label: "الأولى شتاء", time: "2:30 - 7:30", color: "bg-blue-600" },
+  { value: "الثانية صيف", label: "الثانية صيف", time: "2:30 - 9:30", color: "bg-green-500" },
+  { value: "الثانية شتاء", label: "الثانية شتاء", time: "2:00 - 9:00", color: "bg-green-600" },
+  { value: "الثالثة صيف", label: "الثالثة صيف", time: "9:00 - 3:00", color: "bg-orange-500" },
+  { value: "الثالثة شتاء", label: "الثالثة شتاء", time: "", color: "bg-orange-600" },
+  { value: "الرابعة", label: "الرابعة", time: "", color: "bg-purple-500" }
+];
+
+const WEEKDAYS = [
+  "السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"
+];
+
+export default function ShiftsManagement() {
   const { language } = useLanguage();
+  const { isReadOnly } = useAuth();
   const [employees, setEmployees] = useState([]);
+  const [editingShift, setEditingShift] = useState(null);
+  const [editingRest, setEditingRest] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,24 +68,44 @@ export default function ShiftsCalendar() {
       });
       setEmployees(response.data);
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const shiftColors = {
-    'الأولى صيف': 'bg-blue-100 text-blue-800 border-blue-200',
-    'الأولى شتاء': 'bg-blue-200 text-blue-900 border-blue-300',
-    'الثانية صيف': 'bg-green-100 text-green-800 border-green-200',
-    'الثانية شتاء': 'bg-green-200 text-green-900 border-green-300',
-    'الثالثة صيف': 'bg-orange-100 text-orange-800 border-orange-200',
-    'الثالثة شتاء': 'bg-orange-200 text-orange-900 border-orange-300'
+  const handleUpdateShift = async (employeeId, newShift) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/employees/${employeeId}`,
+        { shift: newShift },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === 'ar' ? 'تم تحديث الوردية' : 'Shift updated');
+      fetchEmployees();
+      setEditingShift(null);
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(language === 'ar' ? 'فشل التحديث' : 'Failed');
+    }
   };
 
-  const taskColors = {
-    'الشؤون الإدارية': 'bg-purple-100 text-purple-800',
-    'الشؤون الفنية والميدانية': 'bg-cyan-100 text-cyan-800'
+  const handleUpdateRest = async (employeeId, newRest) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/employees/${employeeId}`,
+        { weekly_rest: newRest },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === 'ar' ? 'تم تحديث أيام الراحة' : 'Rest days updated');
+      fetchEmployees();
+      setEditingRest(null);
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(language === 'ar' ? 'فشل التحديث' : 'Failed');
+    }
   };
 
   const groupByShift = employees.reduce((acc, emp) => {
@@ -51,153 +115,203 @@ export default function ShiftsCalendar() {
     return acc;
   }, {});
 
-  const groupByTasks = employees.reduce((acc, emp) => {
-    const task = emp.work_tasks || 'غير محدد';
-    if (!acc[task]) acc[task] = [];
-    acc[task].push(emp);
-    return acc;
-  }, {});
-
   return (
-    <div className="space-y-6" data-testid="shifts-calendar">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="space-y-6" dir="rtl">
+      {/* Header */}
+      <div className="text-right">
+        <h1 className="font-cairo font-bold text-2xl">
+          {language === 'ar' ? 'إدارة الورديات وأيام الراحة' : 'Shifts & Rest Days Management'}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {language === 'ar' ? 'تحكم كامل في جداول الورديات وأيام الراحة للموظفين' : 'Complete control over shifts and rest days'}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'إجمالي الموظفين' : 'Total Staff'}
-                </p>
+                <p className="text-xs text-muted-foreground">إجمالي الموظفين</p>
                 <p className="text-2xl font-bold">{employees.length}</p>
               </div>
-              <Users className="w-8 h-8 text-primary" />
+              <Clock className="w-8 h-8 text-primary" />
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'الورديات' : 'Shifts'}
-                </p>
+                <p className="text-xs text-muted-foreground">الورديات النشطة</p>
                 <p className="text-2xl font-bold">{Object.keys(groupByShift).length}</p>
               </div>
               <Clock className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'الشؤون الإدارية' : 'Administrative'}
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {groupByTasks['الشؤون الإدارية']?.length || 0}
+                <p className="text-xs text-muted-foreground">موظفين بورديات</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {employees.filter(e => e.shift).length}
                 </p>
               </div>
-              <Briefcase className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  {language === 'ar' ? 'الفنية والميدانية' : 'Technical & Field'}
-                </p>
-                <p className="text-2xl font-bold text-cyan-600">
-                  {groupByTasks['الشؤون الفنية والميدانية']?.length || 0}
-                </p>
-              </div>
-              <Briefcase className="w-8 h-8 text-cyan-600" />
+              <Clock className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Shifts Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* By Shift */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end">
-              <Clock className="w-5 h-5" />
-              {language === 'ar' ? 'توزيع الورديات' : 'Shift Distribution'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(groupByShift).map(([shift, emps]) => (
-              <div key={shift} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge className={shiftColors[shift] || 'bg-gray-100'}>
-                    {shift}
-                  </Badge>
-                  <p className="text-sm font-medium">{emps.length} {language === 'ar' ? 'موظف' : 'staff'}</p>
-                </div>
-                <div className="pr-4 space-y-1">
-                  {emps.map(emp => (
-                    <div key={emp.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">
-                      <div className="text-right flex-1">
-                        <p className="font-medium">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.job_title}</p>
-                      </div>
-                      {emp.shift_time && (
-                        <Badge variant="outline" className="text-xs">
-                          {emp.shift_time}
-                        </Badge>
+      {/* Shifts Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end">
+            <Clock className="w-5 h-5" />
+            جدول الورديات
+          </CardTitle>
+          <CardDescription className="text-right">
+            اضغط على الوردية لتعديلها
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الموظف</TableHead>
+                <TableHead className="text-center">الرقم الوظيفي</TableHead>
+                <TableHead className="text-center">الوردية</TableHead>
+                <TableHead className="text-center">الوقت</TableHead>
+                <TableHead className="text-center">مهام العمل</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {employees.map((emp) => {
+                const shiftInfo = SHIFTS.find(s => s.value === emp.shift);
+                
+                return (
+                  <TableRow key={emp.id}>
+                    <TableCell className="text-right font-medium">{emp.name}</TableCell>
+                    <TableCell className="text-center text-sm">{emp.employee_number}</TableCell>
+                    <TableCell className="text-center">
+                      {!isReadOnly() ? (
+                        <Select 
+                          value={emp.shift || ""} 
+                          onValueChange={(v) => handleUpdateShift(emp.id, v)}
+                        >
+                          <SelectTrigger className="h-8 w-36">
+                            <SelectValue placeholder="اختر..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SHIFTS.map((shift) => (
+                              <SelectItem key={shift.value} value={shift.value}>
+                                {shift.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        emp.shift && (
+                          <Badge className={`${shiftInfo?.color || 'bg-gray-500'} text-white`}>
+                            {emp.shift}
+                          </Badge>
+                        )
                       )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* By Work Tasks */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end">
-              <Briefcase className="w-5 h-5" />
-              {language === 'ar' ? 'توزيع المهام' : 'Task Distribution'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(groupByTasks).map(([task, emps]) => (
-              <div key={task} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge className={taskColors[task] || 'bg-gray-100'}>
-                    {task}
-                  </Badge>
-                  <p className="text-sm font-medium">{emps.length} {language === 'ar' ? 'موظف' : 'staff'}</p>
-                </div>
-                <div className="pr-4 space-y-1">
-                  {emps.map(emp => (
-                    <div key={emp.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">
-                      <div className="text-right flex-1">
-                        <p className="font-medium">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
-                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      {shiftInfo?.time || emp.shift_time || '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
                       <Badge variant="outline" className="text-xs">
-                        <Coffee className="w-3 h-3 ml-1" />
-                        {emp.weekly_rest}
+                        {emp.work_tasks || '-'}
                       </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Rest Days Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end">
+            <Coffee className="w-5 h-5" />
+            جدول أيام الراحة
+          </CardTitle>
+          <CardDescription className="text-right">
+            اضغط لتعديل أيام الراحة
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الموظف</TableHead>
+                <TableHead className="text-center">الرقم الوظيفي</TableHead>
+                <TableHead className="text-center">أيام الراحة الحالية</TableHead>
+                <TableHead className="text-center">الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {employees.map((emp) => (
+                <TableRow key={emp.id}>
+                  <TableCell className="text-right font-medium">{emp.name}</TableCell>
+                  <TableCell className="text-center text-sm">{emp.employee_number}</TableCell>
+                  <TableCell className="text-center">
+                    {editingRest === emp.id ? (
+                      <div className="flex gap-2 justify-center">
+                        <Input 
+                          defaultValue={emp.weekly_rest}
+                          id={`rest-${emp.id}`}
+                          className="h-8 w-48 text-center"
+                          placeholder="مثال: السبت - الأحد"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const newRest = document.getElementById(`rest-${emp.id}`).value;
+                            handleUpdateRest(emp.id, newRest);
+                          }}
+                        >
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingRest(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="text-sm">
+                        {emp.weekly_rest || '-'}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {!isReadOnly() && editingRest !== emp.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingRest(emp.id)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
