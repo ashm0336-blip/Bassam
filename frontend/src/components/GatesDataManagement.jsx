@@ -43,6 +43,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function GatesDataManagement() {
   const { language } = useLanguage();
+  const { isReadOnly } = useAuth();
   const [gates, setGates] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
