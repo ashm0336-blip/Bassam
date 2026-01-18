@@ -45,7 +45,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-7 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -56,7 +56,11 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity Log'}</span>
+            <span className="text-xs">{language === 'ar' ? 'سجل النشاط' : 'Activity'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="season" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Calendar className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'المواسم' : 'Seasons'}</span>
           </TabsTrigger>
           <TabsTrigger value="maps" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <MapIcon className="w-5 h-5" />
@@ -72,7 +76,7 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Menu className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'القائمة الجانبية' : 'Sidebar'}</span>
+            <span className="text-xs">{language === 'ar' ? 'القائمة' : 'Sidebar'}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -86,6 +90,10 @@ export default function AdminPage() {
 
         <TabsContent value="activity" className="mt-6">
           <ActivityLog />
+        </TabsContent>
+
+        <TabsContent value="season" className="mt-6">
+          <SeasonManager />
         </TabsContent>
 
         <TabsContent value="maps" className="mt-6">
