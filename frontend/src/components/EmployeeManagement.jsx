@@ -63,7 +63,7 @@ const SHIFTS = [
 
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
-  const { user } = useAuth();
+  const { user, isReadOnly } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [gates, setGates] = useState([]);
   const [stats, setStats] = useState({ total_employees: 0, active_employees: 0, inactive_employees: 0 });
