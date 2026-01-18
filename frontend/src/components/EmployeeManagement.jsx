@@ -89,9 +89,12 @@ export default function EmployeeManagement({ department }) {
   
   const [formData, setFormData] = useState({
     name: "",
+    employee_number: "",
     job_title: "",
     location: "",
     shift: "الأولى",
+    weekly_rest: "",
+    work_tasks: "",
     department: department || user?.department || "planning",
     is_active: true
   });
@@ -474,6 +477,18 @@ export default function EmployeeManagement({ department }) {
               </div>
               
               <div>
+                <Label htmlFor="emp-number">{language === 'ar' ? 'الرقم الوظيفي' : 'Employee Number'}</Label>
+                <Input
+                  id="emp-number"
+                  value={formData.employee_number}
+                  onChange={(e) => setFormData({...formData, employee_number: e.target.value})}
+                  required
+                  className="mt-1"
+                  placeholder={language === 'ar' ? 'مثال: 10344' : 'e.g., 10344'}
+                />
+              </div>
+              
+              <div>
                 <Label htmlFor="job-title">{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</Label>
                 <Input
                   id="job-title"
@@ -484,6 +499,19 @@ export default function EmployeeManagement({ department }) {
                   placeholder={language === 'ar' ? 'مثال: مشرف ميداني' : 'e.g., Field Supervisor'}
                 />
               </div>
+              
+              {department === 'planning' && (
+                <div>
+                  <Label htmlFor="work-tasks">{language === 'ar' ? 'مهام العمل' : 'Work Tasks'}</Label>
+                  <Input
+                    id="work-tasks"
+                    value={formData.work_tasks}
+                    onChange={(e) => setFormData({...formData, work_tasks: e.target.value})}
+                    className="mt-1"
+                    placeholder={language === 'ar' ? 'مثال: الشؤون الإدارية' : 'e.g., Administrative Affairs'}
+                  />
+                </div>
+              )}
               
               <div>
                 <Label htmlFor="location">{language === 'ar' ? 'موقع التغطية' : 'Coverage Location'}</Label>
