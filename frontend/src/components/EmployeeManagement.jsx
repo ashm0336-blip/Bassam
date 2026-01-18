@@ -217,22 +217,31 @@ export default function EmployeeManagement({ department }) {
     }
   };
 
-  const handleQuickMove = async (employeeId, newLocation) => {
+  const handleQuickMove = async (employeeId, location, shift = null) => {
     try {
       const token = localStorage.getItem("token");
       
+      const updateData = {};
+      if (location !== undefined) updateData.location = location;
+      if (shift !== null) updateData.shift = shift;
+      
       await axios.put(
         `${API}/employees/${employeeId}`,
-        { location: newLocation },
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success(language === 'ar' ? `تم نقل الموظف إلى ${newLocation}` : `Employee moved to ${newLocation}`);
+      if (shift) {
+        toast.success(language === 'ar' ? `تم تغيير الوردية إلى ${shift}` : `Shift changed to ${shift}`);
+      } else {
+        toast.success(language === 'ar' ? `تم نقل الموظف إلى ${location}` : `Employee moved to ${location}`);
+      }
+      
       fetchEmployees();
       fetchStats();
     } catch (error) {
-      console.error("Error moving employee:", error);
-      toast.error(language === 'ar' ? "فشل نقل الموظف" : "Failed to move employee");
+      console.error("Error updating employee:", error);
+      toast.error(language === 'ar' ? "فشل التحديث" : "Failed to update");
     }
   };
 
@@ -294,12 +303,30 @@ export default function EmployeeManagement({ department }) {
                     <TableCell className="text-right font-medium">{employee.name}</TableCell>
                     <TableCell className="text-center">{employee.job_title}</TableCell>
                     <TableCell className="text-center">
-                      {employee.shift && (
-                        <Badge 
-                          className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
+                      {!isReadOnly() && department === 'planning' ? (
+                        <Select 
+                          value={employee.shift} 
+                          onValueChange={(newShift) => handleQuickMove(employee.id, employee.location, newShift)}
                         >
-                          {employee.shift}
-                        </Badge>
+                          <SelectTrigger className="h-8 w-36 text-xs">
+                            <SelectValue placeholder="الوردية..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SHIFTS.map((shift) => (
+                              <SelectItem key={shift.value} value={shift.value}>
+                                {shift.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        employee.shift && (
+                          <Badge 
+                            className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
+                          >
+                            {employee.shift}
+                          </Badge>
+                        )
                       )}
                     </TableCell>
                     <TableCell className="text-center text-sm">{employee.location || '-'}</TableCell>
