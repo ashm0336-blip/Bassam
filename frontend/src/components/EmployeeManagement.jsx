@@ -564,6 +564,24 @@ export default function EmployeeManagement({ department }) {
                 </Select>
               </div>
               
+              {department === 'planning' && (
+                <div>
+                  <Label htmlFor="rest">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</Label>
+                  <Select value={formData.weekly_rest} onValueChange={(value) => setFormData({...formData, weekly_rest: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر أيام الراحة...' : 'Select rest days...'} />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {REST_PATTERNS.map(rest => (
+                        <SelectItem key={rest.value} value={rest.value}>
+                          {rest.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <Label className="font-medium">{language === 'ar' ? 'الحالة' : 'Status'}</Label>
