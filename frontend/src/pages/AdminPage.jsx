@@ -7,7 +7,8 @@ import {
   Settings,
   List,
   Menu,
-  Map as MapIcon
+  Map as MapIcon,
+  Calendar
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -17,6 +18,7 @@ import SystemSettings from "./admin/SystemSettings";
 import DropdownManager from "./admin/DropdownManager";
 import SidebarManager from "./admin/SidebarManager";
 import MapManager from "./admin/MapManager";
+import SeasonManager from "./admin/SeasonManager";
 
 export default function AdminPage() {
   const { language } = useLanguage();
