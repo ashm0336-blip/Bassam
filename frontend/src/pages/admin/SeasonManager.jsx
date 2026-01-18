@@ -1,17 +1,26 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
-import { Calendar, Plus, Trash2, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { 
+  Calendar, 
+  Save, 
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Settings as SettingsIcon
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -19,21 +28,31 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function SeasonManager() {
   const { language } = useLanguage();
   const [currentSeason, setCurrentSeason] = useState("normal");
-  const [activeGates, setActiveGates] = useState(0);
+  const [gates, setGates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [changing, setChanging] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     fetchSeason();
+    fetchGates();
   }, []);
 
   const fetchSeason = async () => {
     try {
       const response = await axios.get(`${API}/settings/season`);
       setCurrentSeason(response.data.current_season);
-      setActiveGates(response.data.active_gates_count);
     } catch (error) {
       console.error("Error fetching season:", error);
+    }
+  };
+
+  const fetchGates = async () => {
+    try {
+      const response = await axios.get(`${API}/gates`);
+      setGates(response.data);
+    } catch (error) {
+      console.error("Error fetching gates:", error);
     } finally {
       setLoading(false);
     }
@@ -51,16 +70,43 @@ export default function SeasonManager() {
       );
       
       setCurrentSeason(newSeason);
-      setActiveGates(response.data.active_gates);
       toast.success(language === 'ar' ? response.data.message : `Season ${newSeason} activated`);
       
-      // Reload page to update gates
-      setTimeout(() => window.location.reload(), 1500);
+      // Refresh gates
+      fetchGates();
     } catch (error) {
       console.error("Error changing season:", error);
       toast.error(language === 'ar' ? "فشل تغيير الموسم" : "Failed to change season");
     } finally {
       setChanging(false);
+    }
+  };
+
+  const handleToggleSeason = async (gateId, season, currentValue) => {
+    try {
+      const token = localStorage.getItem("token");
+      const gate = gates.find(g => g.id === gateId);
+      let newSeasons = gate.operational_seasons || [];
+      
+      if (currentValue) {
+        // Remove season
+        newSeasons = newSeasons.filter(s => s !== season);
+      } else {
+        // Add season
+        newSeasons = [...newSeasons, season];
+      }
+      
+      await axios.put(
+        `${API}/admin/gates/${gateId}`,
+        { operational_seasons: newSeasons },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === 'ar' ? 'تم التحديث' : 'Updated');
+      fetchGates();
+    } catch (error) {
+      console.error("Error updating gate seasons:", error);
+      toast.error(language === 'ar' ? 'فشل التحديث' : 'Failed to update');
     }
   };
 
@@ -72,21 +118,34 @@ export default function SeasonManager() {
   ];
 
   const currentSeasonInfo = seasons.find(s => s.value === currentSeason);
+  const activeGates = gates.filter(g => g.status === 'مفتوح').length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-right">
-        <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
-          <Calendar className="w-5 h-5" />
-          {language === 'ar' ? 'إدارة المواسم' : 'Season Management'}
-        </CardTitle>
-        <CardDescription className="text-right mt-1">
-          {language === 'ar' 
-            ? 'تفعيل وتعطيل الأبواب حسب الموسم الحالي'
-            : 'Activate and deactivate gates based on current season'
+      <div className="flex items-start justify-between gap-4">
+        <Button 
+          variant={editMode ? "default" : "outline"}
+          onClick={() => setEditMode(!editMode)}
+        >
+          <SettingsIcon className="w-4 h-4 ml-2" />
+          {editMode 
+            ? (language === 'ar' ? 'إنهاء التعديل' : 'Finish Editing')
+            : (language === 'ar' ? 'تعديل المواسم' : 'Edit Seasons')
           }
-        </CardDescription>
+        </Button>
+        <div className="text-right flex-1">
+          <CardTitle className="font-cairo text-xl flex items-center gap-2 justify-end">
+            <Calendar className="w-5 h-5" />
+            {language === 'ar' ? 'إدارة المواسم' : 'Season Management'}
+          </CardTitle>
+          <CardDescription className="text-right mt-1">
+            {language === 'ar' 
+              ? 'تفعيل المواسم وتحديد الأبواب التشغيلية'
+              : 'Activate seasons and configure operational gates'
+            }
+          </CardDescription>
+        </div>
       </div>
 
       {/* Current Season */}
@@ -97,9 +156,9 @@ export default function SeasonManager() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-right flex-1">
-              <div className="flex items-center gap-3 justify-end mb-2">
+          <div className="flex items-center justify-between" dir="rtl">
+            <div className="text-right">
+              <div className="flex items-center gap-3 mb-2">
                 <span className="text-3xl">{currentSeasonInfo?.icon}</span>
                 <h2 className="text-2xl font-cairo font-bold">
                   {language === 'ar' ? currentSeasonInfo?.label_ar : currentSeasonInfo?.label_en}
@@ -107,8 +166,8 @@ export default function SeasonManager() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {language === 'ar' 
-                  ? `${activeGates} باب مفتوح حالياً`
-                  : `${activeGates} gates currently open`
+                  ? `${activeGates} باب مفتوح من ${gates.length}`
+                  : `${activeGates} gates open out of ${gates.length}`
                 }
               </p>
             </div>
@@ -136,89 +195,93 @@ export default function SeasonManager() {
                 className={`p-6 rounded-lg border-2 transition-all ${
                   currentSeason === season.value
                     ? 'border-primary bg-primary/10'
-                    : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5'
-                } ${changing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    : 'border-gray-200 hover:border-primary/50'
+                } ${changing ? 'opacity-50' : ''}`}
               >
                 <div className="text-center">
                   <div className="text-4xl mb-2">{season.icon}</div>
-                  <p className="font-cairo font-bold text-lg">
+                  <p className="font-cairo font-bold">
                     {language === 'ar' ? season.label_ar : season.label_en}
                   </p>
                   {currentSeason === season.value && (
-                    <Badge variant="default" className="mt-2">
-                      {language === 'ar' ? 'نشط' : 'Active'}
-                    </Badge>
+                    <Badge className="mt-2">{language === 'ar' ? 'نشط' : 'Active'}</Badge>
                   )}
                 </div>
               </button>
             ))}
           </div>
-          
-          <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-yellow-800 dark:text-yellow-200">
-                  {language === 'ar' ? 'تنبيه' : 'Warning'}
-                </p>
-                <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-                  {language === 'ar' 
-                    ? 'تغيير الموسم سيقوم بفتح/إغلاق الأبواب تلقائياً حسب التشغيل المخصص لكل موسم'
-                    : 'Changing the season will automatically open/close gates based on their operational schedule'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Season Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Gates Configuration */}
+      {editMode && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-cairo text-sm text-right">
-              {language === 'ar' ? 'معلومات المواسم' : 'Season Information'}
+          <CardHeader>
+            <CardTitle className="font-cairo text-base text-right">
+              {language === 'ar' ? 'تكوين الأبواب للمواسم' : 'Gates Configuration for Seasons'}
             </CardTitle>
+            <CardDescription className="text-right">
+              {language === 'ar' 
+                ? 'حدد المواسم التي يعمل فيها كل باب'
+                : 'Select which seasons each gate operates in'
+              }
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm" dir="rtl">
-            <div className="flex justify-between items-center">
-              <span className="font-bold">83 باب</span>
-              <span className="text-muted-foreground">العمرة</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">101 باب</span>
-              <span className="text-muted-foreground">رمضان</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">147 باب</span>
-              <span className="text-muted-foreground">الحج</span>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">{language === 'ar' ? 'الباب' : 'Gate'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'عمرة' : 'Umrah'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'رمضان' : 'Ramadan'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'حج' : 'Hajj'}</TableHead>
+                    <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gates.map((gate) => {
+                    const operationalSeasons = gate.operational_seasons || [];
+                    
+                    return (
+                      <TableRow key={gate.id}>
+                        <TableCell className="text-right font-medium">
+                          {gate.name}
+                          <br />
+                          <span className="text-xs text-muted-foreground">{gate.plaza}</span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={operationalSeasons.includes('umrah')}
+                            onCheckedChange={() => handleToggleSeason(gate.id, 'umrah', operationalSeasons.includes('umrah'))}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={operationalSeasons.includes('ramadan')}
+                            onCheckedChange={() => handleToggleSeason(gate.id, 'ramadan', operationalSeasons.includes('ramadan'))}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={operationalSeasons.includes('hajj')}
+                            onCheckedChange={() => handleToggleSeason(gate.id, 'hajj', operationalSeasons.includes('hajj'))}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={gate.status === 'مفتوح' ? 'default' : 'secondary'}>
+                            {gate.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-cairo text-sm text-right">
-              {language === 'ar' ? 'الأبواب حسب الموسم الحالي' : 'Gates by Current Season'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3" dir="rtl">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm">
-                {language === 'ar' ? `${activeGates} باب مفتوح` : `${activeGates} gates open`}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <XCircle className="w-4 h-4 text-red-600" />
-              <span className="text-sm">
-                {language === 'ar' ? `${17 - activeGates} باب مغلق` : `${17 - activeGates} gates closed`}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   );
 }
