@@ -4,6 +4,16 @@ import { useSidebar } from "@/context/SidebarContext";
 import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  MapPin,
+  ClipboardList,
+  Clock,
+  CheckCircle2,
+  Briefcase
+} from "lucide-react";
 import { 
   ClipboardList, 
   Users, 
