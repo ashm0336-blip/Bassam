@@ -134,20 +134,7 @@ export default function PlanningDepartment() {
         </>
       )}
 
-      {activeTab === 'data' && (
-        <>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-cairo font-bold text-2xl">إدارة تخطيط خدمات الحشود</h1>
-              <p className="text-sm text-muted-foreground mt-1">إدارة الخطط والجداول والموارد البشرية</p>
-            </div>
-            <Button className="bg-primary hover:bg-primary/90" data-testid="create-plan-btn">
-              <ClipboardList className="w-4 h-4 ml-2" />
-              خطة جديدة
-            </Button>
-          </div>
-        </>
-      )}
+      {/* activeTab === 'data' تم حذفه - لا داعي له */}
 
       {activeTab === 'employees' && (
         <EmployeeManagement department="planning" />
