@@ -304,7 +304,7 @@ export default function EmployeeManagement({ department }) {
                     </TableCell>
                     <TableCell className="text-left">
                       <div className="flex items-center gap-2 justify-start">
-                        {department === 'gates' && gates.length > 0 && (
+                        {!isReadOnly() && department === 'gates' && gates.length > 0 && (
                           <Select 
                             value={employee.location} 
                             onValueChange={(newLocation) => handleQuickMove(employee.id, newLocation)}
@@ -321,25 +321,34 @@ export default function EmployeeManagement({ department }) {
                             </SelectContent>
                           </Select>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(employee)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedEmployee(employee);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!isReadOnly() && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(employee)}
+                              className="h-8 w-8"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedEmployee(employee);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {isReadOnly() && (
+                          <Badge variant="secondary" className="text-xs">
+                            {language === 'ar' ? 'قراءة فقط' : 'Read Only'}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
