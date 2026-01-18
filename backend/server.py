@@ -1882,6 +1882,112 @@ async def delete_prohibited_item(item_id: str, admin: dict = Depends(require_adm
     await log_activity("حذف عنصر ممنوع", admin, item_id, "تم الحذف")
     return {"message": "تم حذف العنصر بنجاح"}
 
+# ============= Transactions Routes =============
+@api_router.get("/transactions")
+async def get_transactions(
+    department: Optional[str] = None,
+    status: Optional[str] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Get transactions with filters"""
+    query = {}
+    
+    # Filter by department for department managers
+    if user.get("role") == "department_manager":
+        query["department"] = user.get("department")
+    elif department:
+        query["department"] = department
+    
+    if status:
+        query["status"] = status
+    
+    transactions = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return transactions
+
+@api_router.get("/transactions/stats")
+async def get_transaction_stats(user: dict = Depends(get_current_user)):
+    """Get transaction statistics"""
+    query = {}
+    if user.get("role") == "department_manager":
+        query["department"] = user.get("department")
+    
+    all_transactions = await db.transactions.find(query, {"_id": 0}).to_list(1000)
+    
+    completed = len([t for t in all_transactions if t.get("status") == "completed"])
+    in_progress = len([t for t in all_transactions if t.get("status") == "in_progress"])
+    pending = len([t for t in all_transactions if t.get("status") == "pending"])
+    
+    # Calculate overdue (pending for more than 7 days)
+    from datetime import timedelta
+    overdue = 0
+    for t in all_transactions:
+        if t.get("status") in ["pending", "in_progress"]:
+            created = datetime.fromisoformat(t["created_at"])
+            if datetime.now(timezone.utc) - created > timedelta(days=7):
+                overdue += 1
+    
+    return {
+        "total": len(all_transactions),
+        "completed": completed,
+        "in_progress": in_progress,
+        "pending": pending,
+        "overdue": overdue
+    }
+
+@api_router.post("/transactions")
+async def create_transaction(
+    transaction: TransactionCreate,
+    user: dict = Depends(get_current_user)
+):
+    """Create new transaction"""
+    transaction_dict = transaction.model_dump()
+    transaction_dict["assigned_by"] = user.get("email")
+    
+    transaction_obj = Transaction(**transaction_dict)
+    doc = transaction_obj.model_dump()
+    
+    await db.transactions.insert_one(doc)
+    await log_activity("إنشاء معاملة", user, transaction_obj.id, f"رقم {transaction.transaction_number}")
+    
+    return transaction_obj
+
+@api_router.put("/transactions/{transaction_id}")
+async def update_transaction(
+    transaction_id: str,
+    transaction: TransactionUpdate,
+    user: dict = Depends(get_current_user)
+):
+    """Update transaction"""
+    update_data = {k: v for k, v in transaction.model_dump().items() if v is not None}
+    
+    # If status changed to completed, set completed_date
+    if update_data.get("status") == "completed":
+        update_data["completed_date"] = datetime.now(timezone.utc).isoformat()
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.transactions.update_one({"id": transaction_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
+    
+    await log_activity("تحديث معاملة", user, transaction_id, f"تحديث الحالة")
+    
+    updated = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/transactions/{transaction_id}")
+async def delete_transaction(
+    transaction_id: str,
+    admin: dict = Depends(require_admin)
+):
+    """Delete transaction (admin only)"""
+    result = await db.transactions.delete_one({"id": transaction_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
+    
+    await log_activity("حذف معاملة", admin, transaction_id, "تم الحذف")
+    return {"message": "تم حذف المعاملة بنجاح"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
