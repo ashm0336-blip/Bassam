@@ -221,7 +221,7 @@ export default function GatesDataManagement() {
           <CardTitle className="font-cairo text-right">{language === 'ar' ? 'قائمة الأبواب' : 'Gates List'}</CardTitle>
           <CardDescription className="text-right">{language === 'ar' ? `إجمالي ${gates.length} باب` : `Total ${gates.length} gates`}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
