@@ -655,50 +655,131 @@ export default function TransactionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Details Dialog */}
+      {/* Details Dialog - Professional */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-cairo text-right">
+            <DialogTitle className="font-cairo text-xl text-right">
               {language === 'ar' ? 'تفاصيل المعاملة' : 'Transaction Details'}
             </DialogTitle>
           </DialogHeader>
 
           {selectedTransaction && (
-            <div className="space-y-4" dir="rtl">
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'رقم المعاملة' : 'Number'}</p>
-                <p className="font-bold">{selectedTransaction.transaction_number}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}</p>
-                <p>{selectedTransaction.transaction_date}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الموضوع' : 'Subject'}</p>
-                <p>{selectedTransaction.subject}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'المستلم' : 'Assigned To'}</p>
-                <p>{selectedTransaction.assigned_to}</p>
-              </div>
-              {selectedTransaction.notes && (
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الملاحظات' : 'Notes'}</p>
-                  <p className="text-sm">{selectedTransaction.notes}</p>
+            <div className="space-y-6" dir="rtl">
+              {/* Header Card */}
+              <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">{language === 'ar' ? 'رقم المعاملة' : 'Transaction Number'}</p>
+                      <p className="text-2xl font-cairo font-bold text-primary">{selectedTransaction.transaction_number}</p>
+                    </div>
+                    <Badge className={statusConfig[selectedTransaction.status]?.color + ' text-lg px-4 py-2'}>
+                      {language === 'ar' 
+                        ? statusConfig[selectedTransaction.status]?.label_ar 
+                        : statusConfig[selectedTransaction.status]?.label_en
+                      }
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-right">
+                      <p className="text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}</p>
+                      <p className="font-medium">{selectedTransaction.transaction_date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted-foreground">{language === 'ar' ? 'الأولوية' : 'Priority'}</p>
+                      <Badge className={priorityConfig[selectedTransaction.priority]?.color}>
+                        {language === 'ar' 
+                          ? priorityConfig[selectedTransaction.priority]?.label_ar 
+                          : priorityConfig[selectedTransaction.priority]?.label_en
+                        }
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Main Details */}
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-2">{language === 'ar' ? 'الموضوع' : 'Subject'}</p>
+                  <p className="font-medium text-base leading-relaxed">{selectedTransaction.subject}</p>
                 </div>
-              )}
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}</p>
-                <Badge className={statusConfig[selectedTransaction.status]?.color}>
-                  {language === 'ar' 
-                    ? statusConfig[selectedTransaction.status]?.label_ar 
-                    : statusConfig[selectedTransaction.status]?.label_en
-                  }
-                </Badge>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                    <p className="text-xs text-muted-foreground mb-2">{language === 'ar' ? 'المستلم' : 'Assigned To'}</p>
+                    <p className="font-semibold text-blue-900 dark:text-blue-100">{selectedTransaction.assigned_to}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200">
+                    <p className="text-xs text-muted-foreground mb-2">{language === 'ar' ? 'من عيّن' : 'Assigned By'}</p>
+                    <p className="font-semibold text-purple-900 dark:text-purple-100">{selectedTransaction.assigned_by}</p>
+                  </div>
+                </div>
+
+                {selectedTransaction.notes && (
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground mb-2">{language === 'ar' ? 'الملاحظات' : 'Notes'}</p>
+                        <p className="text-sm text-yellow-900 dark:text-yellow-100 leading-relaxed">{selectedTransaction.notes}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timeline */}
+                <div className="border-r-2 border-primary/30 pr-4 space-y-3">
+                  <p className="text-sm font-semibold text-right">{language === 'ar' ? 'التسلسل الزمني' : 'Timeline'}</p>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="w-3 h-3 rounded-full bg-primary mt-1.5" />
+                    <div className="flex-1 text-right">
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}
+                      </p>
+                      <p className="text-sm font-medium">
+                        {new Date(selectedTransaction.created_at).toLocaleDateString('ar-SA')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedTransaction.status === 'completed' && selectedTransaction.completed_date && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mt-1.5" />
+                      <div className="flex-1 text-right">
+                        <p className="text-xs text-muted-foreground">
+                          {language === 'ar' ? 'تاريخ الإنجاز' : 'Completed'}
+                        </p>
+                        <p className="text-sm font-medium text-green-600">
+                          {new Date(selectedTransaction.completed_date).toLocaleDateString('ar-SA')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-3 h-3 rounded-full bg-gray-300 mt-1.5" />
+                    <div className="flex-1 text-right">
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' ? 'آخر تحديث' : 'Last Updated'}
+                      </p>
+                      <p className="text-sm font-medium">
+                        {new Date(selectedTransaction.updated_at).toLocaleDateString('ar-SA')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailsDialogOpen(false)}>
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
