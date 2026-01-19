@@ -343,6 +343,16 @@ export default function MatafDepartment() {
       {activeTab === 'employees' && (
         <EmployeeManagement department="mataf" />
       )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <TransactionsPage department="mataf" />
+      )}
+
+      {/* Shifts Tab */}
+      {activeTab === 'shifts' && (
+        <ShiftsCalendar department="mataf" />
+      )}
     </div>
   );
 }
