@@ -31,19 +31,9 @@ export default function ShiftsManagement({ department = null }) {
   // Use passed department prop or user's department
   const activeDepartment = department || user?.department;
   
-  const [shifts, setShifts] = useState([
-    { id: "1", name: "الأولى صيف", time: "3:00 - 8:00", type: "صيف" },
-    { id: "2", name: "الأولى شتاء", time: "2:30 - 7:30", type: "شتاء" },
-    { id: "3", name: "الثانية صيف", time: "2:30 - 9:30", type: "صيف" },
-    { id: "4", name: "الثانية شتاء", time: "2:00 - 9:00", type: "شتاء" },
-    { id: "5", name: "الثالثة صيف", time: "9:00 - 3:00", type: "صيف" }
-  ]);
-
-  const [restPatterns, setRestPatterns] = useState([
-    { id: "1", pattern: "السبت - الأحد", days: 2 },
-    { id: "2", pattern: "الخميس - الجمعة", days: 2 },
-    { id: "3", pattern: "الجمعة - السبت", days: 2 }
-  ]);
+  // Start with empty data - each department manages its own shifts
+  const [shifts, setShifts] = useState([]);
+  const [restPatterns, setRestPatterns] = useState([]);
 
   const [shiftDialog, setShiftDialog] = useState(false);
   const [restDialog, setRestDialog] = useState(false);
