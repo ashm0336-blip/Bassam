@@ -93,6 +93,12 @@ export default function MatafDepartment() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only fetch data when on dashboard or data tab
+    if (activeTab !== 'dashboard' && activeTab !== 'data') {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -120,7 +126,7 @@ export default function MatafDepartment() {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   if (loading) {
     return (
