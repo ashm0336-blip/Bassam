@@ -96,6 +96,16 @@ export default function CrowdServicesDepartment() {
       {activeTab === 'employees' && (
         <EmployeeManagement department="crowd_services" />
       )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <TransactionsPage department="crowd_services" />
+      )}
+
+      {/* Shifts Tab */}
+      {activeTab === 'shifts' && (
+        <ShiftsCalendar department="crowd_services" />
+      )}
     </div>
   );
 }
