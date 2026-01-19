@@ -1891,11 +1891,11 @@ class AlHaramAPITester:
         
         # Department manager credentials
         dept_managers = {
-            "gates": {"email": "manager.gates@crowd.sa", "password": "password"},
-            "plazas": {"email": "manager.plazas@crowd.sa", "password": "test123"},
-            "planning": {"email": "manager.planning@crowd.sa", "password": "test123"},
-            "mataf": {"email": "manager.mataf@crowd.sa", "password": "test123"},
-            "crowd_services": {"email": "manager.crowd@crowd.sa", "password": "test123"}
+            "gates": {"email": "manager.gates@crowd.sa", "password": "manager123"},
+            "plazas": {"email": "manager.plazas@crowd.sa", "password": "manager123"},
+            "planning": {"email": "manager.planning@crowd.sa", "password": "manager123"},
+            "mataf": {"email": "manager.mataf@crowd.sa", "password": "manager123"},
+            "crowd_services": {"email": "manager.crowd@crowd.sa", "password": "manager123"}
         }
         
         # Test 1: Data isolation for department managers
