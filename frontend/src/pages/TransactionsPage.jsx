@@ -216,7 +216,7 @@ export default function TransactionsPage({ department = null }) {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `${API}/admin/transactions/${transactionId}`,
+        `${API}/transactions/${transactionId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       

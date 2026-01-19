@@ -1978,14 +1978,31 @@ async def update_transaction(
 @api_router.delete("/transactions/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    admin: dict = Depends(require_admin)
+    user: dict = Depends(get_current_user)
 ):
-    """Delete transaction (admin only)"""
-    result = await db.transactions.delete_one({"id": transaction_id})
-    if result.deleted_count == 0:
+    """Delete transaction - department managers can delete their own department's transactions"""
+    # Get the transaction first
+    transaction = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not transaction:
         raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
     
-    await log_activity("حذف معاملة", admin, transaction_id, "تم الحذف")
+    # Check permissions
+    user_role = user.get("role")
+    user_dept = user.get("department")
+    trans_dept = transaction.get("department")
+    
+    # Admin can delete any transaction
+    if user_role not in ["system_admin", "general_manager"]:
+        # Department manager can only delete their department's transactions
+        if user_role == "department_manager" and user_dept != trans_dept:
+            raise HTTPException(status_code=403, detail="لا يمكنك حذف معاملات قسم آخر")
+        # Other roles cannot delete
+        elif user_role not in ["department_manager"]:
+            raise HTTPException(status_code=403, detail="ليس لديك صلاحية الحذف")
+    
+    result = await db.transactions.delete_one({"id": transaction_id})
+    
+    await log_activity("حذف معاملة", user, transaction_id, "تم الحذف")
     return {"message": "تم حذف المعاملة بنجاح"}
 
 # ============= Transactions Export Routes =============
