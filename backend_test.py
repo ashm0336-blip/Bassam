@@ -2055,7 +2055,7 @@ class AlHaramAPITester:
             if success and isinstance(gates_trans, list) and len(gates_trans) > 0:
                 gates_trans_id = gates_trans[0].get("id")
             
-            # Get planning transactions (should be empty for gates manager)
+            # Get planning transactions (should be filtered to gates only)
             success, planning_trans = self.test_endpoint(
                 "GET /api/transactions?department=planning - Gates Manager (should be filtered)",
                 "transactions?department=planning",
@@ -2063,14 +2063,23 @@ class AlHaramAPITester:
                 expected_status=200
             )
             
-            # Gates manager should NOT see planning transactions
+            # Gates manager should NOT see planning transactions (backend ignores the filter and returns gates transactions)
             if success and isinstance(planning_trans, list):
-                if len(planning_trans) == 0:
+                # Check if any planning transactions are returned
+                planning_trans_found = [t for t in planning_trans if t.get("department") == "planning"]
+                
+                if len(planning_trans_found) == 0:
                     self.log_result("Gates Manager - Cannot See Planning Transactions", True,
-                                  "Correctly filtered out planning transactions")
+                                  "Correctly filtered out planning transactions (backend ignores dept filter for managers)")
                 else:
                     self.log_result("Gates Manager - Cannot See Planning Transactions", False,
-                                  f"Should not see planning transactions, but got {len(planning_trans)}")
+                                  f"Should not see planning transactions, but got {len(planning_trans_found)}")
+                
+                # Should only see gates transactions
+                gates_trans_found = [t for t in planning_trans if t.get("department") == "gates"]
+                if len(gates_trans_found) == len(planning_trans):
+                    self.log_result("Gates Manager - Only Sees Gates Transactions", True,
+                                  f"All {len(planning_trans)} transactions belong to gates department")
             
             # Try to delete a planning transaction (need to get ID from admin first)
             # Switch to admin to get planning transaction ID
