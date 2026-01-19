@@ -1554,3 +1554,217 @@ All major issues from previous testing sessions have been RESOLVED:
 
 All requested features from today's testing session are working correctly. The two previously critical issues (mobile horizontal scroll and sidebar menu rendering) have been completely resolved.
 
+
+---
+
+## Testing Session - 2026-01-17 - Transaction Isolation Between Departments
+
+### Feature Tested
+**Complete Transaction Isolation Between All 5 Departments**
+
+### Test Objective
+Verify that each department can only see and manage their own transactions, with complete isolation from other departments.
+
+### Departments Tested
+1. gates (إدارة الأبواب)
+2. plazas (إدارة الساحات)
+3. planning (إدارة تخطيط خدمات الحشود)
+4. mataf (إدارة صحن المطاف)
+5. crowd_services (إدارة خدمات حشود الحرم)
+
+### Test Data Setup
+- Created exactly ONE test transaction per department
+- Transaction numbers: TEST-{department}-001
+- All transactions created by admin user
+- Total test transactions: 5
+
+### Test Results Summary
+**Total Tests: 12**
+**Passed: 12**
+**Failed: 0**
+**Success Rate: 100.0%**
+
+---
+
+### ✅ TEST 1: Admin Department Filtering (5/5 Passed)
+
+**Objective:** Admin can view each department page and sees ONLY that department's transaction
+
+**Test Cases:**
+1. ✅ **Admin views gates page**
+   - GET `/api/transactions?department=gates`
+   - Expected: 1 transaction (TEST-gates-001)
+   - Result: ✅ PASSED - Returns exactly 1 transaction with correct department
+
+2. ✅ **Admin views plazas page**
+   - GET `/api/transactions?department=plazas`
+   - Expected: 1 transaction (TEST-plazas-001)
+   - Result: ✅ PASSED - Returns exactly 1 transaction with correct department
+
+3. ✅ **Admin views planning page**
+   - GET `/api/transactions?department=planning`
+   - Expected: 1 transaction (TEST-planning-001)
+   - Result: ✅ PASSED - Returns exactly 1 transaction with correct department
+
+4. ✅ **Admin views mataf page**
+   - GET `/api/transactions?department=mataf`
+   - Expected: 1 transaction (TEST-mataf-001)
+   - Result: ✅ PASSED - Returns exactly 1 transaction with correct department
+
+5. ✅ **Admin views crowd_services page**
+   - GET `/api/transactions?department=crowd_services`
+   - Expected: 1 transaction (TEST-crowd_services-001)
+   - Result: ✅ PASSED - Returns exactly 1 transaction with correct department
+
+**Success Criteria Met:**
+- ✅ Each department filter returns exactly 1 transaction
+- ✅ Returned transaction has correct department field
+- ✅ No cross-department data leakage
+- ✅ Transaction numbers match expected format (TEST-{dept}-001)
+
+---
+
+### ✅ TEST 2: Department Manager Isolation (5/5 Passed)
+
+**Objective:** Each department manager sees ONLY their own department's transactions
+
+**Test Cases:**
+1. ✅ **Gates Manager (manager.gates@crowd.sa)**
+   - GET `/api/transactions` (auto-filtered by backend)
+   - Expected: 1 transaction (TEST-gates-001)
+   - Result: ✅ PASSED - Returns only gates transaction
+   - Verified: No plazas, planning, mataf, or crowd_services transactions visible
+
+2. ✅ **Plazas Manager (manager.plazas@crowd.sa)**
+   - GET `/api/transactions`
+   - Expected: 1 transaction (TEST-plazas-001)
+   - Result: ✅ PASSED - Returns only plazas transaction
+   - Verified: No other departments' transactions visible
+
+3. ✅ **Planning Manager (manager.planning@crowd.sa)**
+   - GET `/api/transactions`
+   - Expected: 1 transaction (TEST-planning-001)
+   - Result: ✅ PASSED - Returns only planning transaction
+   - Verified: No other departments' transactions visible
+
+4. ✅ **Mataf Manager (manager.mataf@crowd.sa)**
+   - GET `/api/transactions`
+   - Expected: 1 transaction (TEST-mataf-001)
+   - Result: ✅ PASSED - Returns only mataf transaction
+   - Verified: No other departments' transactions visible
+
+5. ✅ **Crowd Services Manager (manager.crowd@crowd.sa)**
+   - GET `/api/transactions`
+   - Expected: 1 transaction (TEST-crowd_services-001)
+   - Result: ✅ PASSED - Returns only crowd_services transaction
+   - Verified: No other departments' transactions visible
+
+**Success Criteria Met:**
+- ✅ Each manager sees exactly 1 transaction
+- ✅ Transaction belongs to manager's own department
+- ✅ Complete isolation - no cross-department visibility
+- ✅ Backend auto-filtering working correctly (no manual filter needed)
+
+---
+
+### ✅ TEST 3: Delete Permissions (2/2 Passed)
+
+**Objective:** Department managers can ONLY delete transactions from their own department
+
+**Test Cases:**
+1. ✅ **Cross-Department Delete Prevention**
+   - User: Gates Manager (manager.gates@crowd.sa)
+   - Action: Attempt to DELETE planning transaction
+   - Expected: 403 Forbidden
+   - Result: ✅ PASSED - Correctly returned 403 Forbidden
+   - Message: "لا يمكنك حذف معاملات قسم آخر"
+
+2. ✅ **Own Department Delete Permission**
+   - User: Gates Manager (manager.gates@crowd.sa)
+   - Action: DELETE gates transaction (TEST-gates-001)
+   - Expected: 200 Success
+   - Result: ✅ PASSED - Successfully deleted own transaction
+   - Verified: Transaction was removed from database
+
+**Success Criteria Met:**
+- ✅ Cross-department delete blocked with 403
+- ✅ Own department delete succeeds with 200
+- ✅ Proper error messages in Arabic
+- ✅ Permission checks working correctly
+
+---
+
+### Backend Implementation Verified
+
+**Endpoint:** GET `/api/transactions`
+- ✅ Authentication required (uses `get_current_user` dependency)
+- ✅ Auto-filtering for department_manager role:
+  ```python
+  if user.get("role") == "department_manager":
+      query["department"] = user.get("department")
+  ```
+- ✅ Manual filtering for admin/general_manager:
+  ```python
+  elif department:
+      query["department"] = department
+  ```
+
+**Endpoint:** DELETE `/api/transactions/{transaction_id}`
+- ✅ Permission validation implemented:
+  ```python
+  if user_role == "department_manager" and user_dept != trans_dept:
+      raise HTTPException(status_code=403, detail="لا يمكنك حذف معاملات قسم آخر")
+  ```
+- ✅ Admin/general_manager can delete any transaction
+- ✅ Department managers can only delete their own department's transactions
+
+---
+
+### Security Validation
+
+✅ **Authentication Enforcement:** All transaction endpoints require valid JWT token
+✅ **Role-Based Filtering:** Department managers automatically filtered to their department
+✅ **Data Isolation:** Complete separation between departments - no data leakage
+✅ **Permission Checks:** Delete operations properly validate department ownership
+✅ **Admin Access:** System admin and general manager have unrestricted access
+
+---
+
+### Test Credentials Used
+
+| Role | Email | Password | Department |
+|------|-------|----------|------------|
+| System Admin | admin@crowd.sa | admin123 | - |
+| Gates Manager | manager.gates@crowd.sa | manager123 | gates |
+| Plazas Manager | manager.plazas@crowd.sa | manager123 | plazas |
+| Planning Manager | manager.planning@crowd.sa | manager123 | planning |
+| Mataf Manager | manager.mataf@crowd.sa | manager123 | mataf |
+| Crowd Services Manager | manager.crowd@crowd.sa | manager123 | crowd_services |
+
+---
+
+### Conclusion
+
+**✅ ALL TESTS PASSED - TRANSACTION ISOLATION WORKING PERFECTLY**
+
+The transaction management system demonstrates complete isolation between all 5 departments:
+- ✅ Each department can only see their own transactions
+- ✅ Admin can view any department's transactions using filters
+- ✅ Department managers cannot access other departments' data
+- ✅ Delete permissions properly enforced
+- ✅ No data leakage between departments
+- ✅ RBAC implementation is secure and functional
+
+**Status:** ✅ PRODUCTION READY
+
+All success criteria from the review request have been met:
+1. ✅ Each department has exactly one test transaction
+2. ✅ Admin can filter by department and sees only that department's data
+3. ✅ Each manager sees only their own department's transaction
+4. ✅ Cross-department delete blocked (403)
+5. ✅ Own department delete succeeds (200)
+
+**Test File:** `/app/test_transaction_isolation.py`
+**Test Execution Time:** ~3 seconds
+**Test Coverage:** Complete isolation across all 5 departments
+
