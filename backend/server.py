@@ -1905,11 +1905,17 @@ async def get_transactions(
     return transactions
 
 @api_router.get("/transactions/stats")
-async def get_transaction_stats(user: dict = Depends(get_current_user)):
+async def get_transaction_stats(
+    department: Optional[str] = None,
+    user: dict = Depends(get_current_user)
+):
     """Get transaction statistics"""
     query = {}
     if user.get("role") == "department_manager":
         query["department"] = user.get("department")
+    # If department filter is provided (for admin viewing specific dept page)
+    elif department:
+        query["department"] = department
     
     all_transactions = await db.transactions.find(query, {"_id": 0}).to_list(1000)
     
