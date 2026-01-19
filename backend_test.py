@@ -2220,6 +2220,9 @@ class AlHaramAPITester:
         # Category 14: Employee-Gate Relationship (TODAY'S FEATURE)
         self.test_employee_gate_relationship()
         
+        # Category 15: Transactions Data Isolation (CRITICAL TEST)
+        self.test_transactions_data_isolation()
+        
         # Additional tests
         self.test_admin_endpoints()
         self.test_unauthorized_access()
