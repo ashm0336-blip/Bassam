@@ -81,7 +81,7 @@ export default function TransactionsPage({ department = null }) {
   useEffect(() => {
     fetchTransactions();
     fetchStats();
-  }, [filterStatus]);
+  }, [filterStatus, activeDepartment]);
 
   const fetchTransactions = async () => {
     try {
@@ -118,7 +118,14 @@ export default function TransactionsPage({ department = null }) {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/transactions/stats`, {
+      
+      // Build URL with department filter
+      let url = `${API}/transactions/stats`;
+      if (activeDepartment) {
+        url += `?department=${activeDepartment}`;
+      }
+      
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);
