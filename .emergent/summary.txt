@@ -12,42 +12,61 @@ The user wants to build a comprehensive management platform called Crowd Service
 **User's preferred language**: Arabic (العربية)
 
 **what currently exists?**
-A sophisticated full-stack application (React + FastAPI + MongoDB) with an Arabic-first UI. The platform has evolved significantly and now includes:
--   **Advanced Role-Based Access Control (RBAC):** A multi-tiered permission system is fully implemented with roles for , , , , and . Page access and UI elements are dynamically rendered based on the logged-in user's role and associated department.
--   **Comprehensive System Admin Panel:** A dedicated, feature-rich admin panel at  is available only to the . It features a multi-tab layout for a Dashboard, User Management (full CRUD), and a live Activity Log. The UI of this panel underwent extensive revisions to meet the user's specific RTL layout requirements.
--   **Department-Specific Management:** Data management has been decentralized. Each of the five department pages is now a mini-application with its own dashboard, data management tab (e.g., managing gates in the Gates department), and an employee management system.
--   **Employee Management System:** Department managers can perform full CRUD operations on their staff. The employee model is detailed, including fields for coverage location and shift (وردية).
--   **Detailed Dashboards:** The main dashboard and department-level dashboards display real-time statistics, including detailed employee counts per department, per shift, and per coverage location.
--   **Live Activity Logging:** Key actions across the application (logins, user creation/updates/deletions, employee management) are now recorded and displayed in the system admin's activity log.
--   **Core Features:** Dark Mode, Language Switching (Ar/En), and PDF/Excel export for reports are complete and functional.
+A highly advanced and feature-rich full-stack application. Building on a solid foundation of RBAC and department-specific management, this session added an extensive suite of dynamic management features, transforming the platform into a near-complete CMS.
+
+Key functionalities include:
+-   **Full CMS for Core Components:** The Admin Panel now provides full CRUD and dynamic management for the **Sidebar** (including drag-and-drop reordering and submenu creation), all **Dropdown Options** across the app, the **Login Page** (logo, colors, text), and the **Header** (colors, visibility of elements).
+-   **Advanced Departmental Features:**
+    -   **Filtered Reports:** The reports page is now role-aware, showing department managers only data relevant to their department.
+    -   **Employee-Gate Linking:** Employee assignment is now tied directly to a dropdown of *open* gates, and the gates table displays a live count and list of assigned staff, with color-coded warnings for unstaffed gates.
+    -   **Submenus for Departments:** Each department in the sidebar now has its own dynamic submenu (e.g., Dashboard, Data, Employees), which is also manageable from the admin panel.
+-   **New Management Modules:**
+    -   **Transactions System:** A complete module for tracking administrative transactions with status/priority management, assignment, and professional PDF/Excel export with full Arabic support.
+    -   **Shifts & Rest Days System:** A dedicated interface for managing shift schedules and employee rest days, with an intelligent system to automatically mark employees as inactive on their rest days.
+    -   **Seasons & Prohibited Items:** The system now supports operational Seasons (like Ramadan, Hajj) that can automatically open/close relevant gates. A browsable page and management panel for prohibited items have also been added.
+-   **Role-Specific Enhancements:** A custom, data-rich dashboard was built for the General Manager role, and their permissions were refined to be strictly read-only across all management pages.
+-   **Data-Driven Dashboards:** All mock data has been purged from the main dashboard, which now displays live, meaningful statistics based on real data from the database.
+-   **MVP for Interactive Maps:** A functional interactive map page has been created using Leaflet, capable of displaying markers linked to real data from the database.
 
 **Last working item**:
-    - Last item agent was working: The user requested a very large, complex feature: a fully customizable interactive map system. After understanding the scope, the agent and user agreed to postpone this feature and conclude the current session by documenting the extensive progress made. The agent's final actions were to run a full-scale testing suite to validate the stability of the entire application.
+    - Last item agent was working: The user reported that after many new features were added, the UI looked broken on mobile devices. The agent identified that several tables were overflowing the screen and that a previous layout fix for mobile had broken the layout on desktop. The agent applied  to the tables and corrected the responsive margin classes for the main content area.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? NA
+    - Which testing method agent to use? screenshot tool
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: UI/UX Brittleness due to Iterative Changes (Priority: P1)
-  - Issue 2: ResizeObserver loop limit exceeded Error (Priority: P2)
+  - Issue 1: Mobile Responsiveness for Tables and Layout (Priority: P0)
+  - Issue 2: PDF Export Arabic Font Rendering (Priority: P1)
+  - Issue 3: ResizeObserver loop limit exceeded Error (Priority: P3)
 
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The agent went through numerous, often contradictory, UI revisions for the admin panel, particularly concerning layout direction (RTL vs. LTR), card design, and table formatting. The current state is what the user last approved, but it was a point of significant friction.
-     - Next debug checklist: Before implementing any new UI, create a simple wireframe or a very detailed textual description and get explicit user confirmation to avoid rework.
-     - Why fix this issue and what will be achieved with the fix? This is a process issue. Solving it will dramatically speed up development and reduce user frustration by ensuring UI changes are right the first time.
-     - Status:  RESOLVED (for now, but high risk of recurrence)
+     - Attempted fixes: The agent added  to table containers and corrected responsive margin classes in  (from  to  and  respectively).
+     - Next debug checklist: 
+        1. Use the screenshot tool to verify the layout on a small screen (e.g., 375px width) and a large screen (e.g., 1920px width).
+        2. Specifically check pages with wide tables like Employee Management, Gate Management, and Transactions to ensure they scroll horizontally on mobile without breaking the main page layout.
+        3. Verify that the main content area has the correct margin next to the sidebar on desktop and no margin when the sidebar is collapsed on mobile.
+     - Why fix this issue and what will be achieved with the fix? The application must be usable on all screen sizes. This fix ensures that the new, complex data tables do not break the user experience on mobile devices.
+     - Status:  USER VERIFICATION PENDING
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? frontend
      - Blocked on other issue: None
   - Issue 2: 
-     - Attempted fixes: This error originated from the  library. The agent first tried React Error Boundaries, then removed the problematic chart, and finally implemented a global script in  to suppress the error.
+     - Attempted fixes: The initial frontend PDF generation using  produced corrupted Arabic text. The agent re-implemented the feature by creating a new backend endpoint that uses , , and  to generate a PDF with correct Arabic rendering.
      - Next debug checklist: 
-        1. If the error reappears, confirm it's from a  component.
-        2. Check for updates to the  library that may have fixed the bug.
-        3. If no library fix exists, consider replacing  with an alternative charting library (e.g., ) for the specific component causing the issue.
-     - Why fix this issue and what will be achieved with the fix? The current fix is a global workaround that papers over the issue. A proper fix would ensure long-term stability and prevent the error from resurfacing unexpectedly.
+        1. Log in and navigate to the Transactions page.
+        2. Click the Export button and select PDF.
+        3. Open the downloaded PDF and verify that all Arabic text in the headers and table content is rendered correctly and legibly, without broken characters or reversed text.
+     - Why fix this issue and what will be achieved with the fix? The PDF export feature is useless if the primary language is unreadable. This fix is critical for the usability of the reporting functionality.
+     - Status:  USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on other issue: None
+  - Issue 3: 
+     - Attempted fixes: This is a known issue from a previous session, originating from the  library. It was resolved via a global script workaround in . It did not recur in this session.
+     - Next debug checklist: Monitor console logs on pages with charts. If it reappears, consider replacing the specific  component with an alternative.
+     - Why fix this issue and what will be achieved with the fix? The current solution is a temporary workaround. A permanent fix would improve long-term stability.
      - Status:  RESOLVED (via workaround)
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? frontend
@@ -58,114 +77,135 @@ A sophisticated full-stack application (React + FastAPI + MongoDB) with an Arabi
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **P1: تقارير مفلترة حسب الإدارة (Filtered Reports per Department):** The backend API already supports filtering. The task is to enhance the Reports page UI to allow department managers to only see/export reports relevant to their department.
-  - **P2: إشعارات Push حقيقية (Real Push Notifications):** Implement a real-time push notification system (e.g., using WebSockets or a service like Firebase) to replace the current in-app polling.
-  - **P3: اختبار شامل على Mobile (Comprehensive Mobile Testing):** Conduct a thorough review of the entire application on various mobile screen sizes and fix any responsive design issues.
-
+  - **P0: Dynamic Department Dashboards:** While the backend APIs correctly filter stats per department, the frontend dashboard components on the department pages (e.g., ) need to be updated to consume and display these department-specific stats instead of global ones.
+  - **P1: Real-time Crowd Density Data:** The user is very keen on integrating live crowd data. The agent's attempt at scraping the official website revealed the data is static. The next steps are to investigate more advanced options like using Computer Vision on live YouTube streams of the Haram or formally requesting an API from the authorities.
+  - **P2: Real Push Notifications:** Implement a real-time push notification system (e.g., using WebSockets) to replace the current static notifications page.
 - **Future Tasks:**
-  - **P0: 🗺️ نظام الخرائط التفاعلية (Interactive Maps System):** This is the next major feature requested by the user. The plan is to build a highly customizable map system where admins can upload map images, define layers, place interactive markers for staff and assets, and view real-time data overlays.
-  - **P2: Live Data Integration:** Replace all remaining mock data with live data from real-time sources.
+  - **P0: 🗺️ Interactive Maps System (Phase 2):** Build upon the MVP. Key features include allowing admins to upload custom map images, a click on map to add marker feature, and creating layers to toggle the visibility of different marker types (e.g., gates, employees, services).
+  - **P1: Advanced Analytics & AI:** Implement the agent's suggestions for advanced analytics, such as a real-time flow counter for gates, historical data charts, and predictive analytics for crowd flow.
+  - **P2: Full Transactions Module Enhancements:** Add suggested features like advanced statistics, a full historical timeline for each transaction, and file attachments.
+  - **P3: Refactor Monolithic Files:** Break down the massive  into a modular structure with separate files for routes, models, and services. Similarly, refactor the large  and department page components on the frontend.
 
 **Completed work in this session**
-- **Role-Based Access Control (RBAC):** Fully implemented roles (, , etc.) with backend API protection and frontend conditional rendering.
-- **System Admin Panel:** Built a comprehensive, multi-tab admin panel (, , , ) with extensive UI customization.
-- **Department Management Features:**
-    - Created department-specific dashboards with detailed statistics.
-    - Implemented a full Employee Management system (CRUD, location, shift) within each department page.
-    - Moved data management (Gates) from the admin panel to the relevant department page.
-- **Data & Features:**
-    - Implemented a live, persistent Activity Log for key user actions.
-    - Developed an advanced, multi-select form for managing the details of the Haram gates.
-    - Integrated employee, shift, and location statistics into department dashboards.
-- **Key Bug Fixes:**
-    - Resolved a persistent ResizeObserver loop crash by implementing a global fix.
-    - Fixed numerous UI layout and component interaction bugs in the admin panel.
+- **CMS for Sidebar:** Implemented a full management system in the admin panel for the sidebar, including CRUD, drag-and-drop reordering, and nested submenus. The frontend  is now fully dynamic.
+- **CMS for Dropdowns:** Created a management panel for all dropdown options used in forms across the application.
+- **CMS for Login & Header:** Built interfaces in the admin settings to allow complete customization of the Login page and the main application Header.
+- **Transactions Management System:** Developed a new module for CRUD operations on administrative transactions, including status/priority tracking and PDF/Excel export with backend-powered Arabic support.
+- **Shifts & Rest Days Management:** Created a dedicated system to define and manage employee shifts and rest day patterns, separate from employee assignment.
+- **Advanced Employee Management:**
+    - Linked  to a live dropdown of open gates.
+    - Added a  dropdown to employee profiles.
+    - Implemented an intelligent system where an employee's active status is determined automatically based on their rest days.
+- **Role-Specific Access & Dashboards:** Refined the General Manager role to be strictly read-only and created a custom, data-rich dashboard tailored to their needs.
+- **Data-Driven Dashboards:** Purged all hardcoded mock data from the main dashboard, replacing it with live, aggregated data from the backend.
+- **PDF Data Seeding:** Successfully analyzed multiple user-provided PDF reports to extract and seed the database with real-world data for gates, employees, and prohibited items.
+- **Seasons & Prohibited Items:** Implemented backend models and frontend UI for managing operational seasons and displaying a list of prohibited items.
+- **Extensive UI/UX & RTL Overhaul:** Corrected numerous Right-to-Left (RTL) layout issues, particularly with table column order and header/button alignment, and implemented a professional, nested drag-and-drop UI in the admin panel.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork:** A login validation issue was mentioned in the previous fork's summary.
-  - **Recurrence count:** 1
-  - **Status:** RESOLVED. This did not recur in the current session, but the RBAC changes have added complexity, so it remains a critical area to monitor.
+  - **Issue recurrence in previous fork:** Login validation issue.
+  - **Recurrence count:** 0 in this session.
+  - **Status:** RESOLVED. The issue did not reappear.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, , , Shadcn UI.
-- **Backend:** FastAPI, PyMongo, python-jose (JWT), passlib[bcrypt].
+- **Frontend:** React, Tailwind CSS, Shadcn UI, , ,  (for drag and drop), ,  (for maps), ,  (for Excel export).
+- **Backend:** FastAPI, PyMongo, , ,  (for PDF generation),  (for web scraping).
 - **Database:** MongoDB.
-- **Architecture:** SPA with a RESTful API backend, featuring advanced Role-Based Access Control (RBAC) at both the API and UI levels.
+- **Architecture:** The application remains a SPA with a RESTful API, but now features significant dynamic configuration capabilities managed through the admin panel. The backend is a large monolith in .
 
 **key DB schema**
-  - **users:** 
-  - **employees:** 
-  - **activity_logs:** 
-  - **gates:** 
+  - **users, employees, activity_logs, gates:** Mostly unchanged, with new fields added as needed (e.g.,  to employees).
+  - **dropdown_options:** 
+  - **sidebar_items:** 
+  - **settings:**  (e.g., , )
+  - **transactions:** 
+  - **maps:** 
+  - **map_markers:** 
+  - **seasons:** 
+  - **prohibited_items:** 
+  - **shifts, rest_patterns:** New collections to store shift and rest day definitions.
 
 **changes in tech stack**
-  - None.
+  - PDF generation was moved from frontend () to backend () to properly support Arabic.
+  - Several new libraries were added for features like drag-and-drop, maps, and web scraping.
 
 **All files of reference**
-- : Contains all business logic, RBAC decorators, data models, and API endpoints.
-- : The main entry point for the system admin, which renders the different admin tabs.
-- : This new directory contains the individual components for each tab in the admin panel.
--  (and other dept pages): Now structured with tabs to manage department-specific dashboards, data, and employees.
-- : A key reusable component for managing staff within each department.
-- : Core of the frontend permission system.
-- : Contains the workaround script for the  library bug.
+- : The monolithic backend file containing almost all new and updated business logic.
+- : This directory has been heavily populated with new management components (, , , etc.).
+- : Overhauled to fetch its structure from the new .
+- : Rewritten to remove all mock data and display live statistics.
+- : The new, comprehensive transaction management interface.
+- : The new interface for managing shifts and rest patterns.
+- : The new interactive map interface.
+- : Contains new context providers (, ) that are critical to the new dynamic nature of the UI.
 
 **Areas that need refactoring**:
-- The five department pages (Gates, Plazas, etc.) share a very similar structure (Tabs for Dashboard, Data, Employees). This could be abstracted into a generic  component to reduce code duplication.
+- **CRITICAL:**  is now over 2000 lines long and acts as a monolith. It urgently needs to be broken down into a modular structure (e.g., , ) to ensure maintainability.
+- The five department pages still share a nearly identical structure and could be abstracted into a generic  component.
+- Many frontend components like  and  have grown very large and contain a mix of UI, state management, and API logic. They should be broken down into smaller, more focused sub-components.
 
 **key api endpoints**
-- : User login.
-- : Full CRUD for users (System Admin only).
-- : Full CRUD for employees (Department Managers for their own dept).
-- : Full CRUD for gates data.
-- : Retrieves the live activity log.
-- : Gets aggregated stats for all departments for the main dashboard.
+- **/api/admin/sidebar-menu**: Full CRUD for managing sidebar items.
+- **/api/admin/dropdown-options**: Full CRUD for managing all application dropdowns.
+- **/api/admin/settings/{settings_id}**: GET/POST for application settings (login, header).
+- **/api/transactions**: Full CRUD for the new transactions module.
+- **/api/transactions/export/pdf**: New endpoint for generating PDFs on the backend.
+- **/api/admin/seasons**: Full CRUD for managing seasons.
+- **/api/admin/prohibited-items**: Full CRUD for managing prohibited items.
+- **/api/admin/maps, /api/admin/map-markers**: Full CRUD for the interactive map system.
+- **/api/haramain/mataf-density**: Endpoint that scrapes the official website for data.
 
 **Critical Info for New Agent**
-- **User Communication is Paramount:** The user is very hands-on with UI/UX and may provide iterative or conflicting feedback. To avoid rework, **always confirm UI changes with a detailed description or wireframe before coding**. The back-and-forth on the admin panel's RTL/LTR layout is a key example of this.
-- **Postponed Major Feature:** The user has approved a large, complex Interactive Maps feature but has agreed to **postpone it**. Do not start work on this until the user explicitly asks for it again. The immediate upcoming tasks are smaller refinements.
-- **RBAC Complexity:** The permission system is multi-layered. When making changes, test functionality from the perspective of different roles (, , ) to prevent regressions.
+- **User Communication Style:** The user is very direct, hands-on, and has high standards for UI/UX, especially regarding Right-to-Left (RTL) layouts. The agent MUST continue the established pattern of confirming understanding before building (). This builds trust and avoids rework.
+- **Backend Monolith:** Be aware that  is extremely large. When adding new backend features, you will need to navigate this file carefully. Proposing a refactoring plan to break this file up would be a valuable long-term improvement.
+- **Frontend Build Fragility:** The frontend build broke several times due to duplicate imports and other small errors. Be extra cautious when adding new imports or refactoring code. Always check the application after making changes.
+- **Data is Now Real:** Most of the application is now driven by real data. When adding features, ensure they are connected to the database and not using hardcoded values. The user is actively checking for this.
+- **Follow the User's Lead:** The user's priorities can shift rapidly based on new ideas. Be flexible and ready to pivot, but always complete the current small task before starting a new large one.
 
 **documents and test reports created in this job**
-  - 
-  - Testing agent reports from the final test run.
+  -  (updated multiple times)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **User:** Confirmed they want to start the next set of tasks (Live Activity Log, Advanced Notifications, Mobile Improvements).
-- **Agent:** Proposed a new plan with the requested tasks, prioritizing the activity log.
-- **User:** Agreed to postpone the massive Interactive Maps feature.
-- **Agent:** Recommended pausing the current job to save the extensive progress before starting a huge new feature like maps.
-- **User:** Agreed with the agent's suggestion to build the map system in phases.
-- **Agent:** Explained the complexity of the fully customizable map feature and proposed a phased approach.
-- **User:** Requested all options for the interactive map feature.
-- **Agent:** Asked for clarification on the requirements for the interactive map system.
-- **User:** Stated they want to start on the interactive map system next.
-- **Agent:** Confirmed completion of all department dashboards and transfer of employee stats.
+- **User:** The dashboards for the department managers, like planning, are they showing the correct data specific to their department? - The agent confirmed the APIs are correct but the UI components may not be fully wired up.
+- **User:** I want to delete the Planning tab under the Planning department sidebar menu. Its useless." - The agent deleted it.
+- **User:** "The Planning managers dashboard is full of fake data. Remove it. - The agent removed the mock data.
+- **User:** Complained that the app crashed (). - The agent fixed the missing import.
+- **User:** The site is completely down. - The agent investigated and found the site was running, concluding it was a browser cache issue.
+- **User:** Complained angrily about duplicate declaration errors (, ) and the site being broken. - The agent apologized and fixed the errors immediately.
+- **User:** Pointed out that employee shifts and rest days are not being handled correctly and that the management UI is insufficient. - The agent implemented a full-fledged management system for shifts and rest days.
+- **User:** Requested that the employee's active status be automatically determined by their rest day schedule. - The agent implemented this smart feature.
+- **User:** Requested a transactions page for the Planning department, identical to the one for the Gates department. - The agent implemented it.
+- **User:** Pointed out missing fields (employee ID, rest days) in the Add Employee form. - The agent added them.
+- **User:** Sent a new PDF and asked the agent to update employee names to be fully quadruple and add missing employees. - The agent performed the data sync.
 
 **Project Health Check:**
-- **Broken:** None. The application is stable and all tests passed.
-- **Mocked:** Some statistical numbers and chart data points are still hardcoded. However, the core entities (users, employees, gates) are now fully managed through the UI and persisted in the database.
+- **Broken:** None. The application was left in a working state after the final bug fixes.
+- **Mocked:** Very few. The agent performed a thorough sweep to remove mock data from all major dashboards. The core of the application is now driven by real, persistent data.
 
 **3rd Party Integrations**
-- None currently active.
+- **dnd-kit:** Used for all drag-and-drop functionality in the admin panel.
+- **leaflet & react-leaflet:** Used for the interactive map feature.
+- **xlsx & file-saver:** Used for client-side Excel export.
+- **reportlab, arabic-reshaper, python-bidi:** Used on the backend for generating PDFs with proper Arabic support.
+- **beautifulsoup4:** Used on the backend for the experimental web scraper.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Full backend and frontend suites were run at the end of the session).
-  - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: The testing agent generated temporary test files, but no permanent test files were added to the repo.
-  - Known regressions: None.
+  - Testing agent used after significant changes: YES. Both backend and frontend testing agents were used to validate stability and find issues.
+  - Troubleshoot agent used after agent stuck in loop: NO.
+  - Test files created: Test files were created by the testing agents but not committed to the repository.
+  - Known regressions: The rapid development led to several temporary regressions (broken layouts, compilation errors due to duplicate imports) that were fixed during the session. The code is functional but may be fragile.
 
 **Credentials to test flow:**
 - **System Admin:**  / 
-- **General Manager:**  / 
+- **General Manager (Read-Only):**  / 
 - **Gates Dept Manager:**  / 
-- **Plazas Dept Manager:**  / 
+- **New Test Gates Manager:**  / 
 
 **What agent forgot to execute**
-- The agent successfully implemented everything the user requested in this session, following the user's shifting priorities. No planned tasks were forgotten.</analysis>
+- The agent occasionally missed small but critical implementation details (especially regarding RTL layouts, component alignment, and code cleanliness like duplicate imports), leading to rework and user frustration. The next agent must be exceptionally diligent in double-checking all UI changes against the user's specific RTL expectations before presenting them as complete.</analysis>
