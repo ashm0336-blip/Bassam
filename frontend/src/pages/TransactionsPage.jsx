@@ -86,9 +86,23 @@ export default function TransactionsPage({ department = null }) {
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem("token");
-      const url = filterStatus === "all" 
-        ? `${API}/transactions`
-        : `${API}/transactions?status=${filterStatus}`;
+      
+      // Build URL with department filter if department prop is provided
+      let url = `${API}/transactions`;
+      const params = new URLSearchParams();
+      
+      if (filterStatus !== "all") {
+        params.append("status", filterStatus);
+      }
+      
+      // CRITICAL: Use activeDepartment for filtering
+      if (activeDepartment) {
+        params.append("department", activeDepartment);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
       
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
