@@ -208,6 +208,27 @@ export default function TransactionsPage({ department = null }) {
     }
   };
 
+  const handleDelete = async (transactionId) => {
+    if (!window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذه المعاملة؟' : 'Are you sure you want to delete this transaction?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${API}/admin/transactions/${transactionId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
+      fetchTransactions();
+      fetchStats();
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      toast.error(language === 'ar' ? 'فشل الحذف' : 'Failed to delete');
+    }
+  };
+
   const handleExport = (type) => {
     try {
       if (type === 'excel') {
