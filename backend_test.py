@@ -1884,6 +1884,291 @@ class AlHaramAPITester:
                 auth_required=True,
                 expected_status=200
             )
+    
+    def test_transactions_data_isolation(self):
+        """Test comprehensive data isolation for transactions system"""
+        print("\n🔒 Testing Transactions Data Isolation (CRITICAL TEST)...")
+        
+        # Department manager credentials
+        dept_managers = {
+            "gates": {"email": "manager.gates@crowd.sa", "password": "password"},
+            "plazas": {"email": "manager.plazas@crowd.sa", "password": "test123"},
+            "planning": {"email": "manager.planning@crowd.sa", "password": "test123"},
+            "mataf": {"email": "manager.mataf@crowd.sa", "password": "test123"},
+            "crowd_services": {"email": "manager.crowd@crowd.sa", "password": "test123"}
+        }
+        
+        # Test 1: Data isolation for department managers
+        print("\n  📋 Test 1: Data Isolation for Department Managers")
+        for dept_name, credentials in dept_managers.items():
+            # Login as department manager
+            success, login_data = self.test_endpoint(
+                f"Login as {dept_name.title()} Manager",
+                "auth/login",
+                method="POST",
+                data=credentials,
+                expected_status=200
+            )
+            
+            if not success or "access_token" not in login_data:
+                print(f"  ⚠️ Failed to login as {dept_name} manager, skipping tests for this department")
+                continue
+            
+            dept_token = login_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = dept_token
+            
+            # Get transactions without department parameter
+            success, transactions = self.test_endpoint(
+                f"GET /api/transactions - {dept_name.title()} Manager (no dept param)",
+                "transactions",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(transactions, list):
+                # Should see exactly 1 transaction
+                if len(transactions) == 1:
+                    self.log_result(f"{dept_name.title()} Manager - Transaction Count", True, 
+                                  f"Correctly sees 1 transaction")
+                    
+                    # Verify the transaction belongs to the correct department
+                    trans_dept = transactions[0].get("department")
+                    if trans_dept == dept_name:
+                        self.log_result(f"{dept_name.title()} Manager - Department Match", True,
+                                      f"Transaction belongs to {dept_name}")
+                    else:
+                        self.log_result(f"{dept_name.title()} Manager - Department Match", False,
+                                      f"Expected {dept_name}, got {trans_dept}")
+                else:
+                    self.log_result(f"{dept_name.title()} Manager - Transaction Count", False,
+                                  f"Expected 1 transaction, got {len(transactions)}")
+            
+            # Get transaction stats
+            success, stats = self.test_endpoint(
+                f"GET /api/transactions/stats - {dept_name.title()} Manager",
+                "transactions/stats",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(stats, dict):
+                total = stats.get("total", 0)
+                if total == 1:
+                    self.log_result(f"{dept_name.title()} Manager - Stats Total", True,
+                                  f"Stats shows total=1")
+                else:
+                    self.log_result(f"{dept_name.title()} Manager - Stats Total", False,
+                                  f"Expected total=1, got {total}")
+            
+            self.auth_token = temp_token
+        
+        # Test 2: Admin with department filter
+        print("\n  📋 Test 2: Admin Data Isolation with Department Filter")
+        
+        # Login as admin
+        admin_login = {"email": "admin@crowd.sa", "password": "admin123"}
+        success, admin_data = self.test_endpoint(
+            "Login as System Admin",
+            "auth/login",
+            method="POST",
+            data=admin_login,
+            expected_status=200
+        )
+        
+        admin_token = None
+        if success and "access_token" in admin_data:
+            admin_token = admin_data["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = admin_token
+            
+            # Test filtering by each department
+            for dept_name in dept_managers.keys():
+                success, transactions = self.test_endpoint(
+                    f"GET /api/transactions?department={dept_name} - Admin Filter",
+                    f"transactions?department={dept_name}",
+                    auth_required=True,
+                    expected_status=200
+                )
+                
+                if success and isinstance(transactions, list):
+                    if len(transactions) == 1:
+                        self.log_result(f"Admin Filter - {dept_name.title()} Count", True,
+                                      f"Correctly sees 1 transaction for {dept_name}")
+                        
+                        # Verify department
+                        if transactions[0].get("department") == dept_name:
+                            self.log_result(f"Admin Filter - {dept_name.title()} Match", True,
+                                          f"Transaction belongs to {dept_name}")
+                        else:
+                            self.log_result(f"Admin Filter - {dept_name.title()} Match", False,
+                                          f"Expected {dept_name}, got {transactions[0].get('department')}")
+                    else:
+                        self.log_result(f"Admin Filter - {dept_name.title()} Count", False,
+                                      f"Expected 1 transaction, got {len(transactions)}")
+                
+                # Test stats with department filter
+                success, stats = self.test_endpoint(
+                    f"GET /api/transactions/stats?department={dept_name} - Admin",
+                    f"transactions/stats?department={dept_name}",
+                    auth_required=True,
+                    expected_status=200
+                )
+                
+                if success and isinstance(stats, dict):
+                    total = stats.get("total", 0)
+                    if total == 1:
+                        self.log_result(f"Admin Stats - {dept_name.title()} Total", True,
+                                      f"Stats shows total=1 for {dept_name}")
+                    else:
+                        self.log_result(f"Admin Stats - {dept_name.title()} Total", False,
+                                      f"Expected total=1, got {total}")
+            
+            self.auth_token = temp_token
+        
+        # Test 3: Delete permissions
+        print("\n  📋 Test 3: Delete Permissions")
+        
+        # Login as Gates Manager
+        success, gates_login = self.test_endpoint(
+            "Login as Gates Manager",
+            "auth/login",
+            method="POST",
+            data=dept_managers["gates"],
+            expected_status=200
+        )
+        
+        if success and "access_token" in gates_login:
+            gates_token = gates_login["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = gates_token
+            
+            # Get gates transactions to find an ID
+            success, gates_trans = self.test_endpoint(
+                "GET /api/transactions - Gates Manager",
+                "transactions",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            gates_trans_id = None
+            if success and isinstance(gates_trans, list) and len(gates_trans) > 0:
+                gates_trans_id = gates_trans[0].get("id")
+            
+            # Get planning transactions (should be empty for gates manager)
+            success, planning_trans = self.test_endpoint(
+                "GET /api/transactions?department=planning - Gates Manager (should be filtered)",
+                "transactions?department=planning",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            # Gates manager should NOT see planning transactions
+            if success and isinstance(planning_trans, list):
+                if len(planning_trans) == 0:
+                    self.log_result("Gates Manager - Cannot See Planning Transactions", True,
+                                  "Correctly filtered out planning transactions")
+                else:
+                    self.log_result("Gates Manager - Cannot See Planning Transactions", False,
+                                  f"Should not see planning transactions, but got {len(planning_trans)}")
+            
+            # Try to delete a planning transaction (need to get ID from admin first)
+            # Switch to admin to get planning transaction ID
+            if admin_token:
+                self.auth_token = admin_token
+                
+                success, planning_trans_admin = self.test_endpoint(
+                    "GET /api/transactions?department=planning - Admin",
+                    "transactions?department=planning",
+                    auth_required=True,
+                    expected_status=200
+                )
+                
+                planning_trans_id = None
+                if success and isinstance(planning_trans_admin, list) and len(planning_trans_admin) > 0:
+                    planning_trans_id = planning_trans_admin[0].get("id")
+                
+                # Switch back to gates manager
+                self.auth_token = gates_token
+                
+                # Try to delete planning transaction (should fail with 403)
+                if planning_trans_id:
+                    success, delete_response = self.test_endpoint(
+                        "DELETE /api/transactions/{id} - Gates Manager Delete Planning (should fail)",
+                        f"transactions/{planning_trans_id}",
+                        method="DELETE",
+                        auth_required=True,
+                        expected_status=403
+                    )
+                    
+                    if success:
+                        self.log_result("Gates Manager - Cannot Delete Planning Transaction", True,
+                                      "Correctly rejected with 403")
+            
+            # Delete gates transaction (should succeed)
+            if gates_trans_id:
+                success, delete_response = self.test_endpoint(
+                    "DELETE /api/transactions/{id} - Gates Manager Delete Gates (should succeed)",
+                    f"transactions/{gates_trans_id}",
+                    method="DELETE",
+                    auth_required=True,
+                    expected_status=200
+                )
+                
+                if success:
+                    self.log_result("Gates Manager - Can Delete Own Transaction", True,
+                                  "Successfully deleted gates transaction")
+            
+            self.auth_token = temp_token
+        
+        # Test 4: Cross-department isolation
+        print("\n  📋 Test 4: Cross-Department Isolation")
+        
+        # Login as Gates Manager
+        success, gates_login = self.test_endpoint(
+            "Login as Gates Manager (Cross-Dept Test)",
+            "auth/login",
+            method="POST",
+            data=dept_managers["gates"],
+            expected_status=200
+        )
+        
+        if success and "access_token" in gates_login:
+            gates_token = gates_login["access_token"]
+            temp_token = self.auth_token
+            self.auth_token = gates_token
+            
+            # Try to get transactions with department=planning filter
+            success, cross_dept_trans = self.test_endpoint(
+                "GET /api/transactions?department=planning - Gates Manager (should be filtered)",
+                "transactions?department=planning",
+                auth_required=True,
+                expected_status=200
+            )
+            
+            # Should return empty or only gates transactions (backend should ignore the filter for dept managers)
+            if success and isinstance(cross_dept_trans, list):
+                # Check if any planning transactions are returned
+                planning_trans_found = [t for t in cross_dept_trans if t.get("department") == "planning"]
+                
+                if len(planning_trans_found) == 0:
+                    self.log_result("Cross-Department Isolation - Planning Filter Ignored", True,
+                                  "Gates manager cannot access planning transactions even with filter")
+                else:
+                    self.log_result("Cross-Department Isolation - Planning Filter Ignored", False,
+                                  f"Gates manager should not see planning transactions, but got {len(planning_trans_found)}")
+                
+                # All returned transactions should be gates transactions
+                all_gates = all(t.get("department") == "gates" for t in cross_dept_trans)
+                if all_gates or len(cross_dept_trans) == 0:
+                    self.log_result("Cross-Department Isolation - Only Gates Transactions", True,
+                                  "All returned transactions belong to gates department")
+                else:
+                    depts = set(t.get("department") for t in cross_dept_trans)
+                    self.log_result("Cross-Department Isolation - Only Gates Transactions", False,
+                                  f"Found transactions from other departments: {depts}")
+            
+            self.auth_token = temp_token
 
     def run_all_tests(self):
         """Run all API tests - Comprehensive Testing for Review Request"""
