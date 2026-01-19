@@ -5,6 +5,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GatesDataManagement from "@/components/GatesDataManagement";
+import TransactionsPage from "@/pages/TransactionsPage";
+import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import { 
   DoorOpen, 
   DoorClosed,
@@ -461,6 +463,16 @@ export default function GatesDepartment() {
       {/* Employees Management Tab */}
       {activeTab === 'employees' && (
         <EmployeeManagement department="gates" />
+      )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <TransactionsPage department="gates" />
+      )}
+
+      {/* Shifts Tab */}
+      {activeTab === 'shifts' && (
+        <ShiftsCalendar department="gates" />
       )}
     </div>
   );
