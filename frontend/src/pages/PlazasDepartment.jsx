@@ -310,6 +310,16 @@ export default function PlazasDepartment() {
       {activeTab === 'employees' && (
         <EmployeeManagement department="plazas" />
       )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <TransactionsPage department="plazas" />
+      )}
+
+      {/* Shifts Tab */}
+      {activeTab === 'shifts' && (
+        <ShiftsCalendar department="plazas" />
+      )}
     </div>
   );
 }
