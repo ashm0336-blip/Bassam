@@ -1,800 +1,1002 @@
 {
   "summary": {
-    "total_tests": 155,
-    "passed_tests": 152,
-    "failed_tests": 3,
-    "success_rate": 98.06451612903226,
-    "timestamp": "2026-01-17T18:30:11.478808"
+    "total_tests": 183,
+    "passed_tests": 162,
+    "failed_tests": 21,
+    "success_rate": 88.52459016393442,
+    "timestamp": "2026-01-19T23:10:55.670624"
   },
   "results": {
     "Login - System Admin (admin@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 492",
-      "timestamp": "2026-01-17T18:30:04.572100"
+      "timestamp": "2026-01-19T23:10:46.406395"
     },
     "Verify System Admin Role": {
       "success": true,
       "details": "Role: system_admin",
-      "timestamp": "2026-01-17T18:30:04.572632"
+      "timestamp": "2026-01-19T23:10:46.407025"
     },
     "Login - General Manager (general.manager@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 530",
-      "timestamp": "2026-01-17T18:30:04.843999"
+      "timestamp": "2026-01-19T23:10:46.680415"
     },
     "Verify General Manager Role": {
       "success": true,
       "details": "Role: general_manager",
-      "timestamp": "2026-01-17T18:30:04.844773"
+      "timestamp": "2026-01-19T23:10:46.681013"
     },
     "Login - Gates Manager (manager.gates@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 541",
-      "timestamp": "2026-01-17T18:30:05.099884"
+      "timestamp": "2026-01-19T23:10:46.941291"
     },
     "Verify Department Manager Department Field": {
       "success": true,
       "details": "Department: gates",
-      "timestamp": "2026-01-17T18:30:05.100402"
+      "timestamp": "2026-01-19T23:10:46.941866"
     },
     "GET /api/auth/me - Get Current User": {
       "success": true,
       "details": "Status: 200, Data length: 189",
-      "timestamp": "2026-01-17T18:30:05.176014"
+      "timestamp": "2026-01-19T23:10:46.978453"
     },
     "Invalid Login (Should Fail with 401)": {
       "success": true,
       "details": "Status: 401, Data length: 37",
-      "timestamp": "2026-01-17T18:30:05.209162"
+      "timestamp": "2026-01-19T23:10:47.017525"
     },
     "Permission Check - System Admin Access to /api/users": {
       "success": true,
-      "details": "Status: 200, Data length: 2118",
-      "timestamp": "2026-01-17T18:30:05.244431"
+      "details": "Status: 200, Data length: 2750",
+      "timestamp": "2026-01-19T23:10:47.055311"
     },
     "GET /api/users - List All Users (super_admin)": {
       "success": true,
-      "details": "Status: 200, Data length: 2118",
-      "timestamp": "2026-01-17T18:30:05.281626"
+      "details": "Status: 200, Data length: 2750",
+      "timestamp": "2026-01-19T23:10:47.093149"
     },
     "POST /api/users - Create Field Staff with Department": {
       "success": true,
       "details": "Status: 200, Data length: 200",
-      "timestamp": "2026-01-17T18:30:05.583372"
+      "timestamp": "2026-01-19T23:10:47.350703"
     },
     "Verify Field Staff Department": {
       "success": true,
       "details": "Department correctly set to 'mataf'",
-      "timestamp": "2026-01-17T18:30:05.584035"
+      "timestamp": "2026-01-19T23:10:47.351308"
     },
     "POST /api/users - Create Dept Manager with Department": {
       "success": true,
       "details": "Status: 200, Data length: 211",
-      "timestamp": "2026-01-17T18:30:05.851270"
+      "timestamp": "2026-01-19T23:10:47.612232"
     },
     "Verify Dept Manager Department": {
       "success": true,
       "details": "Department correctly set to 'plazas'",
-      "timestamp": "2026-01-17T18:30:05.851903"
+      "timestamp": "2026-01-19T23:10:47.612936"
     },
     "POST /api/users - Create Monitoring Team (no department)": {
       "success": true,
       "details": "Status: 200, Data length: 201",
-      "timestamp": "2026-01-17T18:30:06.114162"
+      "timestamp": "2026-01-19T23:10:47.873067"
     },
     "POST /api/users - Field Staff without Department (should fail)": {
       "success": true,
       "details": "Status: 400, Data length: 42",
-      "timestamp": "2026-01-17T18:30:06.150009"
+      "timestamp": "2026-01-19T23:10:47.910890"
     },
     "POST /api/users - Dept Manager without Department (should fail)": {
       "success": true,
       "details": "Status: 400, Data length: 42",
-      "timestamp": "2026-01-17T18:30:06.187738"
+      "timestamp": "2026-01-19T23:10:47.943443"
     },
     "PUT /api/users/{user_id} - Update User Name and Department": {
       "success": true,
       "details": "Status: 200, Data length: 208",
-      "timestamp": "2026-01-17T18:30:06.231835"
+      "timestamp": "2026-01-19T23:10:47.978046"
     },
     "Verify User Update": {
       "success": true,
       "details": "User name and department updated correctly",
-      "timestamp": "2026-01-17T18:30:06.232388"
+      "timestamp": "2026-01-19T23:10:47.978504"
     },
     "PUT /api/users/{user_id} - Update User Password": {
       "success": true,
       "details": "Status: 200, Data length: 211",
-      "timestamp": "2026-01-17T18:30:06.488912"
+      "timestamp": "2026-01-19T23:10:48.239511"
     },
     "DELETE /api/users/{user_id} - Delete Self (should fail)": {
       "success": true,
       "details": "Status: 400, Data length: 38",
-      "timestamp": "2026-01-17T18:30:06.527120"
+      "timestamp": "2026-01-19T23:10:48.275909"
     },
     "DELETE /api/users/{user_id} - Delete Field Staff User": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-17T18:30:06.563542"
+      "timestamp": "2026-01-19T23:10:48.311069"
     },
     "DELETE /api/users/{user_id} - Delete Dept Manager User": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-17T18:30:06.599488"
+      "timestamp": "2026-01-19T23:10:48.351378"
     },
     "DELETE /api/users/{user_id} - Delete Monitoring User": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-17T18:30:06.637406"
+      "timestamp": "2026-01-19T23:10:48.385120"
     },
     "GET /api/users - Verify User Count After Cleanup": {
       "success": true,
-      "details": "Status: 200, Data length: 2118",
-      "timestamp": "2026-01-17T18:30:06.668552"
+      "details": "Status: 200, Data length: 2750",
+      "timestamp": "2026-01-19T23:10:48.421181"
     },
     "Verify User Cleanup": {
       "success": true,
-      "details": "User count back to 10",
-      "timestamp": "2026-01-17T18:30:06.669032"
+      "details": "User count back to 13",
+      "timestamp": "2026-01-19T23:10:48.421742"
     },
     "Login as Dept Manager": {
       "success": true,
       "details": "Status: 200, Data length: 543",
-      "timestamp": "2026-01-17T18:30:06.962081"
+      "timestamp": "2026-01-19T23:10:48.681440"
     },
     "Verify Department in Login Response (Dept Manager)": {
       "success": true,
       "details": "Department: plazas",
-      "timestamp": "2026-01-17T18:30:06.962725"
+      "timestamp": "2026-01-19T23:10:48.682088"
     },
     "GET /api/auth/me - Verify Department Field (Dept Manager)": {
       "success": true,
       "details": "Status: 200, Data length: 212",
-      "timestamp": "2026-01-17T18:30:06.998457"
+      "timestamp": "2026-01-19T23:10:48.715025"
     },
     "Verify Department in /auth/me": {
       "success": true,
       "details": "Department: plazas",
-      "timestamp": "2026-01-17T18:30:06.998968"
+      "timestamp": "2026-01-19T23:10:48.715655"
     },
     "GET /api/users - Dept Manager Access (should fail with 403)": {
       "success": true,
       "details": "Status: 403, Data length: 60",
-      "timestamp": "2026-01-17T18:30:07.032231"
+      "timestamp": "2026-01-19T23:10:48.748879"
     },
     "POST /api/users - Dept Manager Create User (should fail with 403)": {
       "success": true,
       "details": "Status: 403, Data length: 60",
-      "timestamp": "2026-01-17T18:30:07.064468"
+      "timestamp": "2026-01-19T23:10:48.781590"
     },
     "Login as Field Staff": {
       "success": true,
       "details": "Status: 200, Data length: 534",
-      "timestamp": "2026-01-17T18:30:07.318616"
+      "timestamp": "2026-01-19T23:10:49.076594"
     },
     "Verify Department in Login Response (Field Staff)": {
       "success": true,
       "details": "Department: mataf",
-      "timestamp": "2026-01-17T18:30:07.319343"
+      "timestamp": "2026-01-19T23:10:49.077268"
     },
     "GET /api/auth/me - Verify Department Field (Field Staff)": {
       "success": true,
       "details": "Status: 200, Data length: 208",
-      "timestamp": "2026-01-17T18:30:07.352669"
+      "timestamp": "2026-01-19T23:10:49.110502"
     },
     "Verify Department in /auth/me (Field Staff)": {
       "success": true,
       "details": "Department: mataf",
-      "timestamp": "2026-01-17T18:30:07.353104"
+      "timestamp": "2026-01-19T23:10:49.111073"
     },
     "GET /api/users - Field Staff Access (should fail with 403)": {
       "success": true,
       "details": "Status: 403, Data length: 60",
-      "timestamp": "2026-01-17T18:30:07.387527"
+      "timestamp": "2026-01-19T23:10:49.144828"
     },
     "DELETE /api/users/{user_id} - Field Staff Delete (should fail with 403)": {
       "success": true,
       "details": "Status: 403, Data length: 60",
-      "timestamp": "2026-01-17T18:30:07.421618"
+      "timestamp": "2026-01-19T23:10:49.179371"
     },
     "GET /api/employees - List All Employees": {
       "success": true,
-      "details": "Status: 200, Data length: 590",
-      "timestamp": "2026-01-17T18:30:07.454243"
+      "details": "Status: 200, Data length: 4775",
+      "timestamp": "2026-01-19T23:10:49.216746"
     },
     "GET /api/employees?department=gates - Filter by Department": {
       "success": true,
-      "details": "Status: 200, Data length: 590",
-      "timestamp": "2026-01-17T18:30:07.489191"
+      "details": "Status: 200, Data length: 558",
+      "timestamp": "2026-01-19T23:10:49.293278"
     },
     "POST /api/employees - Create Employee with Location and Shift": {
       "success": true,
       "details": "Status: 200, Data length: 82",
-      "timestamp": "2026-01-17T18:30:07.528499"
+      "timestamp": "2026-01-19T23:10:49.328522"
     },
     "Verify Employee Creation": {
       "success": true,
-      "details": "Employee created with ID: b3589997-c898-4c3c-b2ef-9105119c8555",
-      "timestamp": "2026-01-17T18:30:07.528992"
+      "details": "Employee created with ID: 0aa736f0-5d16-4454-b5de-7b5daadab7af",
+      "timestamp": "2026-01-19T23:10:49.329182"
     },
     "PUT /api/employees/{id} - Update Employee Location and Shift": {
       "success": true,
       "details": "Status: 200, Data length: 36",
-      "timestamp": "2026-01-17T18:30:07.562889"
+      "timestamp": "2026-01-19T23:10:49.361425"
     },
     "GET /api/employees/stats/gates - Get Employee Stats": {
       "success": true,
       "details": "Status: 200, Data length: 190",
-      "timestamp": "2026-01-17T18:30:07.596729"
+      "timestamp": "2026-01-19T23:10:49.393919"
     },
     "Verify Shift Distribution in Stats": {
       "success": true,
       "details": "All shifts present: {'shift_1': 2, 'shift_2': 1, 'shift_3': 0, 'shift_4': 0}",
-      "timestamp": "2026-01-17T18:30:07.597232"
+      "timestamp": "2026-01-19T23:10:49.394467"
     },
     "Verify Locations Count in Stats": {
       "success": true,
-      "details": "Locations count: 2",
-      "timestamp": "2026-01-17T18:30:07.597239"
+      "details": "Locations count: 1",
+      "timestamp": "2026-01-19T23:10:49.394476"
     },
     "DELETE /api/employees/{id} - Delete Employee": {
       "success": true,
       "details": "Status: 200, Data length: 34",
-      "timestamp": "2026-01-17T18:30:07.632809"
+      "timestamp": "2026-01-19T23:10:49.428846"
     },
     "GET /api/gates - List All Gates": {
       "success": true,
-      "details": "Status: 200, Data length: 884",
-      "timestamp": "2026-01-17T18:30:07.662782"
+      "details": "Status: 200, Data length: 6454",
+      "timestamp": "2026-01-19T23:10:49.468363"
     },
     "POST /api/admin/gates - Create Gate with All 9 Fields": {
       "success": true,
       "details": "Status: 200, Data length: 81",
-      "timestamp": "2026-01-17T18:30:07.737377"
+      "timestamp": "2026-01-19T23:10:49.514076"
     },
     "Verify Gate Creation with All Fields": {
       "success": true,
-      "details": "Gate created with ID: 469c8b23-72c9-4a46-a66d-ce935bb101ee",
-      "timestamp": "2026-01-17T18:30:07.737881"
+      "details": "Gate created with ID: 32505d5b-1fe4-4e6e-a7c5-f6590a324d6c",
+      "timestamp": "2026-01-19T23:10:49.514653"
     },
     "GET /api/gates - Verify Plaza Color": {
       "success": true,
-      "details": "Status: 200, Data length: 1355",
-      "timestamp": "2026-01-17T18:30:07.773784"
+      "details": "Status: 200, Data length: 6925",
+      "timestamp": "2026-01-19T23:10:49.551045"
     },
     "Verify Plaza Color Field": {
       "success": true,
       "details": "Plaza color: #FF5733",
-      "timestamp": "2026-01-17T18:30:07.774218"
+      "timestamp": "2026-01-19T23:10:49.551680"
     },
     "Verify Multi-Category Support": {
       "success": true,
       "details": "Categories: ['محرمين', 'مصلين', 'عربات']",
-      "timestamp": "2026-01-17T18:30:07.774229"
+      "timestamp": "2026-01-19T23:10:49.551694"
     },
     "PUT /api/admin/gates/{id} - Update Gate": {
       "success": true,
       "details": "Status: 200, Data length: 35",
-      "timestamp": "2026-01-17T18:30:07.805187"
+      "timestamp": "2026-01-19T23:10:49.587088"
     },
     "DELETE /api/admin/gates/{id} - Delete Gate": {
       "success": true,
       "details": "Status: 200, Data length: 33",
-      "timestamp": "2026-01-17T18:30:07.837458"
+      "timestamp": "2026-01-19T23:10:49.623753"
     },
     "GET /api/dashboard/departments - Verify Employee Stats": {
       "success": true,
-      "details": "Status: 200, Data length: 1860",
-      "timestamp": "2026-01-17T18:30:07.875991"
+      "details": "Status: 200, Data length: 1863",
+      "timestamp": "2026-01-19T23:10:49.661980"
     },
     "Verify Employee Stats in Dashboard": {
       "success": true,
       "details": "All fields present: ['total', 'shifts', 'locations_count', 'employees_with_location']",
-      "timestamp": "2026-01-17T18:30:07.876405"
+      "timestamp": "2026-01-19T23:10:49.662548"
     },
     "Verify Shifts in Employee Stats": {
       "success": true,
-      "details": "All shifts present: {'الأولى': 0, 'الثانية': 0, 'الثالثة': 0, 'الرابعة': 0}",
-      "timestamp": "2026-01-17T18:30:07.876417"
+      "details": "All shifts present: {'الأولى': 1, 'الثانية': 0, 'الثالثة': 0, 'الرابعة': 0}",
+      "timestamp": "2026-01-19T23:10:49.662562"
     },
     "Verify Locations Count": {
       "success": true,
       "details": "Locations count: 0",
-      "timestamp": "2026-01-17T18:30:07.876421"
+      "timestamp": "2026-01-19T23:10:49.662567"
     },
     "Dashboard Stats": {
       "success": true,
-      "details": "Status: 200, Data length: 162",
-      "timestamp": "2026-01-17T18:30:07.908421"
+      "details": "Status: 200, Data length: 163",
+      "timestamp": "2026-01-19T23:10:49.696540"
     },
     "Dashboard Departments": {
       "success": true,
-      "details": "Status: 200, Data length: 1860",
-      "timestamp": "2026-01-17T18:30:07.942275"
+      "details": "Status: 200, Data length: 1863",
+      "timestamp": "2026-01-19T23:10:49.745938"
     },
     "Hourly Crowd Data": {
       "success": true,
       "details": "Status: 200, Data length: 1152",
-      "timestamp": "2026-01-17T18:30:07.974787"
+      "timestamp": "2026-01-19T23:10:49.778753"
     },
     "GET /api/admin/activity-logs - Get All Activity Logs": {
       "success": true,
-      "details": "Status: 200, Data length: 30825",
-      "timestamp": "2026-01-17T18:30:08.013190"
+      "details": "Status: 200, Data length: 31113",
+      "timestamp": "2026-01-19T23:10:49.813451"
     },
     "Verify Activity Log Structure": {
       "success": true,
       "details": "All required fields present",
-      "timestamp": "2026-01-17T18:30:08.013680"
+      "timestamp": "2026-01-19T23:10:49.814035"
     },
     "Verify Activity Log Actions": {
       "success": true,
       "details": "Found actions: ['login', 'user_created', 'employee_created']",
-      "timestamp": "2026-01-17T18:30:08.013708"
+      "timestamp": "2026-01-19T23:10:49.814069"
     },
     "GET /api/admin/activity-logs?action=login - Filter by Action": {
       "success": true,
-      "details": "Status: 200, Data length: 29408",
-      "timestamp": "2026-01-17T18:30:08.054379"
+      "details": "Status: 200, Data length: 30634",
+      "timestamp": "2026-01-19T23:10:49.849283"
     },
     "Verify Action Filter": {
       "success": true,
       "details": "All logs have action='login' (100 logs)",
-      "timestamp": "2026-01-17T18:30:08.054798"
+      "timestamp": "2026-01-19T23:10:49.849731"
     },
     "GET /api/admin/activity-logs?user_email=admin@crowd.sa - Filter by User Email": {
       "success": true,
-      "details": "Status: 200, Data length: 30901",
-      "timestamp": "2026-01-17T18:30:08.090475"
+      "details": "Status: 200, Data length: 30732",
+      "timestamp": "2026-01-19T23:10:49.887540"
     },
     "Verify User Email Filter": {
       "success": true,
       "details": "All logs from admin@crowd.sa (100 logs)",
-      "timestamp": "2026-01-17T18:30:08.090913"
+      "timestamp": "2026-01-19T23:10:49.888019"
     },
-    "GET /api/admin/activity-logs?date=2026-01-17 - Filter by Date": {
+    "GET /api/admin/activity-logs?date=2026-01-19 - Filter by Date": {
       "success": true,
-      "details": "Status: 200, Data length: 30825",
-      "timestamp": "2026-01-17T18:30:08.125930"
+      "details": "Status: 200, Data length: 31113",
+      "timestamp": "2026-01-19T23:10:49.926644"
     },
     "GET /api/alerts - List All Alerts": {
       "success": true,
       "details": "Status: 200, Data length: 1455",
-      "timestamp": "2026-01-17T18:30:08.160979"
+      "timestamp": "2026-01-19T23:10:49.961315"
     },
     "POST /api/admin/alerts - Create Alert": {
       "success": true,
       "details": "Status: 200, Data length: 83",
-      "timestamp": "2026-01-17T18:30:08.199220"
+      "timestamp": "2026-01-19T23:10:50.001313"
     },
     "Verify Alert Creation": {
       "success": true,
-      "details": "Alert created with ID: 8618f303-5b78-4415-86ef-2dc3109c1c7e",
-      "timestamp": "2026-01-17T18:30:08.199624"
+      "details": "Alert created with ID: a9515c46-a492-4138-998f-6828af08a42c",
+      "timestamp": "2026-01-19T23:10:50.001883"
     },
     "DELETE /api/admin/alerts/{id} - Delete Alert": {
       "success": true,
       "details": "Status: 200, Data length: 35",
-      "timestamp": "2026-01-17T18:30:08.229776"
+      "timestamp": "2026-01-19T23:10:50.034227"
     },
     "GET /api/reports - Unauthorized Access (should fail with 403)": {
       "success": true,
       "details": "Status: 403, Data length: 31",
-      "timestamp": "2026-01-17T18:30:08.261307"
+      "timestamp": "2026-01-19T23:10:50.063098"
     },
     "Login as System Admin": {
       "success": true,
       "details": "Status: 200, Data length: 492",
-      "timestamp": "2026-01-17T18:30:08.516365"
+      "timestamp": "2026-01-19T23:10:54.243564"
     },
     "GET /api/reports - System Admin (should see all 9 reports)": {
       "success": true,
       "details": "Status: 200, Data length: 1597",
-      "timestamp": "2026-01-17T18:30:08.548124"
+      "timestamp": "2026-01-19T23:10:50.349979"
     },
     "System Admin - Report Count": {
       "success": true,
       "details": "Correctly sees all 9 reports",
-      "timestamp": "2026-01-17T18:30:08.548523"
+      "timestamp": "2026-01-19T23:10:50.350460"
     },
     "Login as General Manager (test.general@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 528",
-      "timestamp": "2026-01-17T18:30:08.805324"
+      "timestamp": "2026-01-19T23:10:50.602835"
     },
     "GET /api/reports - General Manager (should see all 9 reports)": {
       "success": true,
       "details": "Status: 200, Data length: 1597",
-      "timestamp": "2026-01-17T18:30:08.839022"
+      "timestamp": "2026-01-19T23:10:50.635722"
     },
     "General Manager - Report Count": {
       "success": true,
       "details": "Correctly sees all 9 reports",
-      "timestamp": "2026-01-17T18:30:08.839443"
+      "timestamp": "2026-01-19T23:10:50.636284"
     },
     "Login as Gates Manager (test.gates@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 536",
-      "timestamp": "2026-01-17T18:30:09.101205"
+      "timestamp": "2026-01-19T23:10:50.893664"
     },
     "GET /api/reports - Gates Manager (should see 4 reports: gates + all)": {
       "success": true,
       "details": "Status: 200, Data length: 718",
-      "timestamp": "2026-01-17T18:30:09.137652"
+      "timestamp": "2026-01-19T23:10:50.927339"
     },
     "Gates Manager - Report Filtering": {
       "success": true,
       "details": "Correctly sees 4 reports (2 gates + 2 all)",
-      "timestamp": "2026-01-17T18:30:09.138082"
+      "timestamp": "2026-01-19T23:10:50.927950"
     },
     "Gates Manager - No Other Departments": {
       "success": true,
       "details": "Correctly filtered out other departments",
-      "timestamp": "2026-01-17T18:30:09.138092"
+      "timestamp": "2026-01-19T23:10:50.927962"
     },
     "Login as Mataf Manager (test.mataf@crowd.sa)": {
       "success": true,
       "details": "Status: 200, Data length: 536",
-      "timestamp": "2026-01-17T18:30:09.391524"
+      "timestamp": "2026-01-19T23:10:51.184579"
     },
     "GET /api/reports - Mataf Manager (should see 4 reports: mataf + all)": {
       "success": true,
       "details": "Status: 200, Data length: 713",
-      "timestamp": "2026-01-17T18:30:09.448176"
+      "timestamp": "2026-01-19T23:10:51.233026"
     },
     "Mataf Manager - Report Filtering": {
       "success": true,
       "details": "Correctly sees 4 reports (2 mataf + 2 all)",
-      "timestamp": "2026-01-17T18:30:09.448591"
+      "timestamp": "2026-01-19T23:10:51.233589"
     },
     "Mataf Manager - No Other Departments": {
       "success": true,
       "details": "Correctly filtered out other departments",
-      "timestamp": "2026-01-17T18:30:09.448600"
+      "timestamp": "2026-01-19T23:10:51.233601"
     },
     "GET /api/sidebar-menu - Get User Sidebar Menu": {
       "success": true,
-      "details": "Status: 200, Data length: 9011",
-      "timestamp": "2026-01-17T18:30:09.479528"
+      "details": "Status: 200, Data length: 13699",
+      "timestamp": "2026-01-19T23:10:51.269368"
     },
     "Sidebar Menu Returns List": {
       "success": true,
-      "details": "Returned 26 menu items",
-      "timestamp": "2026-01-17T18:30:09.479952"
+      "details": "Returned 36 menu items",
+      "timestamp": "2026-01-19T23:10:51.270032"
     },
     "Sidebar Menu Item Structure": {
       "success": true,
       "details": "All required fields present",
-      "timestamp": "2026-01-17T18:30:09.479962"
+      "timestamp": "2026-01-19T23:10:51.270044"
     },
     "Submenu Items Present": {
       "success": true,
-      "details": "Found 15 submenu items",
-      "timestamp": "2026-01-17T18:30:09.479975"
+      "details": "Found 25 submenu items",
+      "timestamp": "2026-01-19T23:10:51.270057"
     },
     "Parent Items Validation": {
       "success": true,
       "details": "11 parent items have no parent_id",
-      "timestamp": "2026-01-17T18:30:09.479980"
+      "timestamp": "2026-01-19T23:10:51.270063"
     },
     "Submenu Parent Validation": {
       "success": true,
       "details": "All submenus have valid parent_id",
-      "timestamp": "2026-01-17T18:30:09.479988"
+      "timestamp": "2026-01-19T23:10:51.270074"
     },
     "Gates Menu Found": {
       "success": true,
       "details": "Gates menu: إدارة الأبواب",
-      "timestamp": "2026-01-17T18:30:09.479995"
+      "timestamp": "2026-01-19T23:10:51.270082"
     },
     "Gates Menu Children Count": {
-      "success": true,
-      "details": "Gates menu has exactly 3 children",
-      "timestamp": "2026-01-17T18:30:09.479999"
+      "success": false,
+      "details": "Expected 3 children, found 6",
+      "timestamp": "2026-01-19T23:10:51.270090"
     },
     "Total Menu Items Count": {
       "success": false,
-      "details": "Expected ~16 items, found 26",
-      "timestamp": "2026-01-17T18:30:09.480008"
+      "details": "Expected ~16 items, found 36",
+      "timestamp": "2026-01-19T23:10:51.270094"
     },
     "GET /api/admin/sidebar-menu - Get Admin Sidebar Menu": {
       "success": true,
-      "details": "Status: 200, Data length: 9011",
-      "timestamp": "2026-01-17T18:30:09.513453"
+      "details": "Status: 200, Data length: 13699",
+      "timestamp": "2026-01-19T23:10:51.304132"
     },
     "Admin Sidebar Menu Returns List": {
       "success": true,
-      "details": "Returned 26 menu items",
-      "timestamp": "2026-01-17T18:30:09.513882"
+      "details": "Returned 36 menu items",
+      "timestamp": "2026-01-19T23:10:51.304691"
     },
     "Admin Menu Parent-Child Links": {
       "success": true,
       "details": "All children properly linked to parents",
-      "timestamp": "2026-01-17T18:30:09.513908"
+      "timestamp": "2026-01-19T23:10:51.304721"
     },
     "Admin View Completeness": {
       "success": true,
-      "details": "Admin sees all items (26 >= 26)",
-      "timestamp": "2026-01-17T18:30:09.513912"
+      "details": "Admin sees all items (36 >= 36)",
+      "timestamp": "2026-01-19T23:10:51.304728"
     },
     "GET /api/admin/dropdown-options/categories - Get Categories": {
       "success": true,
       "details": "Status: 200, Data length: 734",
-      "timestamp": "2026-01-17T18:30:09.543950"
+      "timestamp": "2026-01-19T23:10:51.337875"
     },
     "Verify Available Categories": {
       "success": true,
       "details": "Found 8 categories",
-      "timestamp": "2026-01-17T18:30:09.544366"
+      "timestamp": "2026-01-19T23:10:51.338446"
     },
     "GET /api/admin/dropdown-options - Get All Options": {
       "success": true,
       "details": "Status: 200, Data length: 6474",
-      "timestamp": "2026-01-17T18:30:09.575312"
+      "timestamp": "2026-01-19T23:10:51.373423"
     },
     "GET /api/admin/dropdown-options?category=shifts - Filter by Category": {
       "success": true,
       "details": "Status: 200, Data length: 842",
-      "timestamp": "2026-01-17T18:30:09.605307"
+      "timestamp": "2026-01-19T23:10:51.406867"
     },
     "Verify Shifts Options": {
       "success": true,
       "details": "All 4 shifts present: ['الأولى', 'الثانية', 'الثالثة', 'الرابعة']",
-      "timestamp": "2026-01-17T18:30:09.605705"
+      "timestamp": "2026-01-19T23:10:51.407534"
     },
     "POST /api/admin/dropdown-options - Create Option": {
       "success": true,
       "details": "Status: 200, Data length: 222",
-      "timestamp": "2026-01-17T18:30:09.639836"
+      "timestamp": "2026-01-19T23:10:51.441776"
     },
     "Verify Option Creation": {
       "success": true,
-      "details": "Option created with ID: 4935c9e9-b350-4acd-8c4f-a74f587d99ea",
-      "timestamp": "2026-01-17T18:30:09.640259"
+      "details": "Option created with ID: 88ee6a2d-dd8f-47a4-9ed4-a511448c0270",
+      "timestamp": "2026-01-19T23:10:51.442290"
     },
     "PUT /api/admin/dropdown-options/{id} - Update Option": {
       "success": true,
       "details": "Status: 200, Data length: 227",
-      "timestamp": "2026-01-17T18:30:09.674638"
+      "timestamp": "2026-01-19T23:10:51.476031"
     },
     "Verify Option Update": {
       "success": true,
       "details": "Option updated successfully",
-      "timestamp": "2026-01-17T18:30:09.675061"
+      "timestamp": "2026-01-19T23:10:51.476613"
     },
     "DELETE /api/admin/dropdown-options/{id} - Delete Option": {
       "success": true,
       "details": "Status: 200, Data length: 34",
-      "timestamp": "2026-01-17T18:30:09.709850"
+      "timestamp": "2026-01-19T23:10:51.508446"
     },
     "GET /api/dropdown-options - Public Access": {
       "success": true,
       "details": "Status: 200, Data length: 6598",
-      "timestamp": "2026-01-17T18:30:09.741714"
+      "timestamp": "2026-01-19T23:10:51.543066"
     },
     "Verify Public Options Grouped": {
       "success": true,
       "details": "Options grouped by 7 categories",
-      "timestamp": "2026-01-17T18:30:09.742130"
+      "timestamp": "2026-01-19T23:10:51.543842"
     },
     "GET /api/settings/login-page - Get Settings": {
       "success": true,
-      "details": "Status: 200, Data length: 8481144",
-      "timestamp": "2026-01-17T18:30:09.992678"
+      "details": "Status: 200, Data length: 8481223",
+      "timestamp": "2026-01-19T23:10:51.804041"
     },
     "Verify Login Settings Structure": {
       "success": false,
-      "details": "Missing fields: ['site_name_en', 'subtitle_en']",
-      "timestamp": "2026-01-17T18:30:09.993816"
+      "details": "Missing fields: ['subtitle_en']",
+      "timestamp": "2026-01-19T23:10:51.805736"
     },
     "PUT /api/admin/settings/login-page - Update Settings": {
       "success": true,
       "details": "Status: 200, Data length: 8481227",
-      "timestamp": "2026-01-17T18:30:10.213362"
+      "timestamp": "2026-01-19T23:10:52.008473"
     },
     "Verify Login Settings Update": {
       "success": true,
       "details": "Settings updated correctly",
-      "timestamp": "2026-01-17T18:30:10.214127"
+      "timestamp": "2026-01-19T23:10:52.009274"
     },
     "PUT /api/admin/settings/login-page - Restore Original": {
       "success": true,
       "details": "Status: 200, Data length: 8481223",
-      "timestamp": "2026-01-17T18:30:10.430042"
+      "timestamp": "2026-01-19T23:10:52.207077"
     },
     "GET /api/settings/header - Get Settings": {
       "success": true,
-      "details": "Status: 200, Data length: 435",
-      "timestamp": "2026-01-17T18:30:10.462096"
+      "details": "Status: 200, Data length: 437",
+      "timestamp": "2026-01-19T23:10:52.243289"
     },
     "Verify Header Settings Structure": {
       "success": true,
       "details": "All required fields present",
-      "timestamp": "2026-01-17T18:30:10.462507"
+      "timestamp": "2026-01-19T23:10:52.243808"
     },
     "PUT /api/admin/settings/header - Update Settings": {
       "success": true,
       "details": "Status: 200, Data length: 437",
-      "timestamp": "2026-01-17T18:30:10.501394"
+      "timestamp": "2026-01-19T23:10:52.280180"
     },
     "Verify Header Settings Update": {
       "success": true,
       "details": "All settings updated correctly",
-      "timestamp": "2026-01-17T18:30:10.501923"
+      "timestamp": "2026-01-19T23:10:52.280749"
     },
     "PUT /api/admin/settings/header - Restore Original": {
       "success": true,
-      "details": "Status: 200, Data length: 435",
-      "timestamp": "2026-01-17T18:30:10.534159"
+      "details": "Status: 200, Data length: 437",
+      "timestamp": "2026-01-19T23:10:52.312025"
     },
     "GET /api/maps - Get All Maps": {
       "success": true,
-      "details": "Status: 200, Data length: 340",
-      "timestamp": "2026-01-17T18:30:10.566591"
+      "details": "Status: 200, Data length: 623",
+      "timestamp": "2026-01-19T23:10:52.346600"
     },
     "POST /api/admin/maps - Create Map": {
       "success": true,
       "details": "Status: 200, Data length: 281",
-      "timestamp": "2026-01-17T18:30:10.600231"
+      "timestamp": "2026-01-19T23:10:52.390704"
     },
     "Verify Map Creation": {
       "success": true,
-      "details": "Map created with ID: 62ab0dc8-7b31-40ab-9f64-7fe97b16808a",
-      "timestamp": "2026-01-17T18:30:10.600730"
+      "details": "Map created with ID: 077ca7e0-09fe-4f5a-8112-5ab59c785bfe",
+      "timestamp": "2026-01-19T23:10:52.391301"
     },
     "POST /api/admin/maps/markers - Create Marker": {
       "success": true,
       "details": "Status: 200, Data length: 313",
-      "timestamp": "2026-01-17T18:30:10.635156"
+      "timestamp": "2026-01-19T23:10:52.433010"
     },
     "Verify Marker Creation": {
       "success": true,
-      "details": "Marker created with ID: b7af082b-5a9e-4f45-b002-829ffaf43bd7",
-      "timestamp": "2026-01-17T18:30:10.635565"
+      "details": "Marker created with ID: 318a1631-0a2e-4385-b57b-8bdd0f3a736d",
+      "timestamp": "2026-01-19T23:10:52.433602"
     },
     "GET /api/maps/{map_id}/markers - Get Markers with Live Data": {
       "success": true,
       "details": "Status: 200, Data length: 315",
-      "timestamp": "2026-01-17T18:30:10.669559"
+      "timestamp": "2026-01-19T23:10:52.466807"
     },
     "Verify Live Data Enrichment": {
       "success": false,
       "details": "live_data field missing",
-      "timestamp": "2026-01-17T18:30:10.670003"
+      "timestamp": "2026-01-19T23:10:52.467369"
     },
     "DELETE /api/admin/maps/markers/{id} - Delete Marker": {
       "success": true,
       "details": "Status: 200, Data length: 35",
-      "timestamp": "2026-01-17T18:30:10.702237"
+      "timestamp": "2026-01-19T23:10:52.501240"
     },
     "GET /api/maps?department=gates - Filter by Department": {
       "success": true,
-      "details": "Status: 200, Data length: 623",
-      "timestamp": "2026-01-17T18:30:10.733747"
+      "details": "Status: 200, Data length: 906",
+      "timestamp": "2026-01-19T23:10:52.534596"
     },
     "GET /api/gates?status=open - Get Open Gates for Location Dropdown": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-17T18:30:10.806624"
+      "timestamp": "2026-01-19T23:10:52.568058"
     },
     "Verify Open Gates Filter": {
       "success": true,
       "details": "All 0 gates are open",
-      "timestamp": "2026-01-17T18:30:10.807070"
+      "timestamp": "2026-01-19T23:10:52.568664"
     },
     "POST /api/employees - Create Employee with Gate Location": {
       "success": true,
       "details": "Status: 200, Data length: 82",
-      "timestamp": "2026-01-17T18:30:10.882375"
+      "timestamp": "2026-01-19T23:10:52.599089"
     },
     "Verify Employee with Gate Location": {
       "success": true,
       "details": "Employee created with location: باب الملك عبدالعزيز - الساحة الشرقية",
-      "timestamp": "2026-01-17T18:30:10.882838"
+      "timestamp": "2026-01-19T23:10:52.599641"
     },
     "GET /api/employees/stats/gates - Verify Staff Count": {
       "success": true,
       "details": "Status: 200, Data length: 190",
-      "timestamp": "2026-01-17T18:30:10.919194"
+      "timestamp": "2026-01-19T23:10:52.636038"
     },
     "Verify Staff Count in Stats": {
       "success": true,
-      "details": "Employees with location: 3, Unique locations: 2",
-      "timestamp": "2026-01-17T18:30:10.919706"
+      "details": "Employees with location: 1, Unique locations: 1",
+      "timestamp": "2026-01-19T23:10:52.636658"
     },
     "GET /api/gates/stats - Get Gate Statistics": {
       "success": true,
-      "details": "Status: 200, Data length: 106",
-      "timestamp": "2026-01-17T18:30:10.952639"
+      "details": "Status: 200, Data length: 107",
+      "timestamp": "2026-01-19T23:10:52.668376"
     },
     "Verify Gate Stats Structure": {
       "success": true,
       "details": "All required fields present",
-      "timestamp": "2026-01-17T18:30:10.953090"
+      "timestamp": "2026-01-19T23:10:52.668891"
     },
     "DELETE /api/employees/{id} - Delete Test Employee": {
       "success": true,
       "details": "Status: 200, Data length: 34",
-      "timestamp": "2026-01-17T18:30:10.986875"
+      "timestamp": "2026-01-19T23:10:52.705371"
+    },
+    "Login as Gates Manager": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:54.891474"
+    },
+    "Login as Plazas Manager": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:53.213491"
+    },
+    "Login as Planning Manager": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:53.467927"
+    },
+    "Login as Mataf Manager": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:53.725669"
+    },
+    "Login as Crowd_Services Manager": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:53.979392"
+    },
+    "GET /api/transactions?department=gates - Admin Filter": {
+      "success": true,
+      "details": "Status: 200, Data length: 2",
+      "timestamp": "2026-01-19T23:10:54.281209"
+    },
+    "Admin Filter - Gates Count": {
+      "success": false,
+      "details": "Expected 1 transaction, got 0",
+      "timestamp": "2026-01-19T23:10:54.281781"
+    },
+    "GET /api/transactions/stats?department=gates - Admin": {
+      "success": true,
+      "details": "Status: 200, Data length: 74",
+      "timestamp": "2026-01-19T23:10:54.317330"
+    },
+    "Admin Stats - Gates Total": {
+      "success": false,
+      "details": "Expected total=1, got 0",
+      "timestamp": "2026-01-19T23:10:54.317995"
+    },
+    "GET /api/transactions?department=plazas - Admin Filter": {
+      "success": true,
+      "details": "Status: 200, Data length: 2",
+      "timestamp": "2026-01-19T23:10:54.353272"
+    },
+    "Admin Filter - Plazas Count": {
+      "success": false,
+      "details": "Expected 1 transaction, got 0",
+      "timestamp": "2026-01-19T23:10:54.353813"
+    },
+    "GET /api/transactions/stats?department=plazas - Admin": {
+      "success": true,
+      "details": "Status: 200, Data length: 74",
+      "timestamp": "2026-01-19T23:10:54.387185"
+    },
+    "Admin Stats - Plazas Total": {
+      "success": false,
+      "details": "Expected total=1, got 0",
+      "timestamp": "2026-01-19T23:10:54.387654"
+    },
+    "GET /api/transactions?department=planning - Admin Filter": {
+      "success": true,
+      "details": "Status: 200, Data length: 2",
+      "timestamp": "2026-01-19T23:10:54.418941"
+    },
+    "Admin Filter - Planning Count": {
+      "success": false,
+      "details": "Expected 1 transaction, got 0",
+      "timestamp": "2026-01-19T23:10:54.419409"
+    },
+    "GET /api/transactions/stats?department=planning - Admin": {
+      "success": true,
+      "details": "Status: 200, Data length: 74",
+      "timestamp": "2026-01-19T23:10:54.454239"
+    },
+    "Admin Stats - Planning Total": {
+      "success": false,
+      "details": "Expected total=1, got 0",
+      "timestamp": "2026-01-19T23:10:54.454728"
+    },
+    "GET /api/transactions?department=mataf - Admin Filter": {
+      "success": true,
+      "details": "Status: 200, Data length: 2",
+      "timestamp": "2026-01-19T23:10:54.490712"
+    },
+    "Admin Filter - Mataf Count": {
+      "success": false,
+      "details": "Expected 1 transaction, got 0",
+      "timestamp": "2026-01-19T23:10:54.491207"
+    },
+    "GET /api/transactions/stats?department=mataf - Admin": {
+      "success": true,
+      "details": "Status: 200, Data length: 74",
+      "timestamp": "2026-01-19T23:10:54.563608"
+    },
+    "Admin Stats - Mataf Total": {
+      "success": false,
+      "details": "Expected total=1, got 0",
+      "timestamp": "2026-01-19T23:10:54.564285"
+    },
+    "GET /api/transactions?department=crowd_services - Admin Filter": {
+      "success": true,
+      "details": "Status: 200, Data length: 2",
+      "timestamp": "2026-01-19T23:10:54.595564"
+    },
+    "Admin Filter - Crowd_Services Count": {
+      "success": false,
+      "details": "Expected 1 transaction, got 0",
+      "timestamp": "2026-01-19T23:10:54.596108"
+    },
+    "GET /api/transactions/stats?department=crowd_services - Admin": {
+      "success": true,
+      "details": "Status: 200, Data length: 74",
+      "timestamp": "2026-01-19T23:10:54.633580"
+    },
+    "Admin Stats - Crowd_Services Total": {
+      "success": false,
+      "details": "Expected total=1, got 0",
+      "timestamp": "2026-01-19T23:10:54.634169"
+    },
+    "Login as Gates Manager (Cross-Dept Test)": {
+      "success": false,
+      "details": "Expected 200, got 401",
+      "timestamp": "2026-01-19T23:10:55.148995"
     },
     "Get Users (Admin)": {
       "success": true,
-      "details": "Status: 200, Data length: 2118",
-      "timestamp": "2026-01-17T18:30:11.023585"
+      "details": "Status: 200, Data length: 2750",
+      "timestamp": "2026-01-19T23:10:55.185852"
     },
     "Unauthorized Gate Creation": {
       "success": true,
       "details": "Status: 403, Data length: 31",
-      "timestamp": "2026-01-17T18:30:11.056968"
+      "timestamp": "2026-01-19T23:10:55.220550"
     },
     "Unauthorized Users Access": {
       "success": true,
       "details": "Status: 403, Data length: 31",
-      "timestamp": "2026-01-17T18:30:11.090471"
+      "timestamp": "2026-01-19T23:10:55.252256"
     },
     "API Root": {
       "success": true,
       "details": "Status: 200, Data length: 65",
-      "timestamp": "2026-01-17T18:30:11.163207"
+      "timestamp": "2026-01-19T23:10:55.325444"
     },
     "Plazas List": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-17T18:30:11.195338"
+      "timestamp": "2026-01-19T23:10:55.356498"
     },
     "Plazas Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 127",
-      "timestamp": "2026-01-17T18:30:11.227531"
+      "timestamp": "2026-01-19T23:10:55.388936"
     },
     "Mataf Levels": {
       "success": true,
       "details": "Status: 200, Data length: 2",
-      "timestamp": "2026-01-17T18:30:11.262559"
+      "timestamp": "2026-01-19T23:10:55.420428"
     },
     "Mataf Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 172",
-      "timestamp": "2026-01-17T18:30:11.301263"
+      "timestamp": "2026-01-19T23:10:55.452003"
     },
     "Reports List": {
       "success": true,
       "details": "Status: 200, Data length: 1597",
-      "timestamp": "2026-01-17T18:30:11.338400"
+      "timestamp": "2026-01-19T23:10:55.482947"
     },
     "Reports Filtered by Type": {
       "success": true,
       "details": "Status: 200, Data length: 1059",
-      "timestamp": "2026-01-17T18:30:11.381903"
+      "timestamp": "2026-01-19T23:10:55.532513"
     },
     "Reports Filtered by Department": {
       "success": true,
       "details": "Status: 200, Data length: 358",
-      "timestamp": "2026-01-17T18:30:11.413138"
+      "timestamp": "2026-01-19T23:10:55.565095"
     },
     "Planning Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 140",
-      "timestamp": "2026-01-17T18:30:11.445040"
+      "timestamp": "2026-01-19T23:10:55.599231"
     },
     "Crowd Services Statistics": {
       "success": true,
       "details": "Status: 200, Data length: 151",
-      "timestamp": "2026-01-17T18:30:11.478055"
+      "timestamp": "2026-01-19T23:10:55.669665"
     }
   },
   "failures": [
     {
+      "test": "Gates Menu Children Count",
+      "details": "Expected 3 children, found 6"
+    },
+    {
       "test": "Total Menu Items Count",
-      "details": "Expected ~16 items, found 26"
+      "details": "Expected ~16 items, found 36"
     },
     {
       "test": "Verify Login Settings Structure",
-      "details": "Missing fields: ['site_name_en', 'subtitle_en']"
+      "details": "Missing fields: ['subtitle_en']"
     },
     {
       "test": "Verify Live Data Enrichment",
       "details": "live_data field missing"
+    },
+    {
+      "test": "Login as Gates Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Login as Plazas Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Login as Planning Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Login as Mataf Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Login as Crowd_Services Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Admin Filter - Gates Count",
+      "details": "Expected 1 transaction, got 0"
+    },
+    {
+      "test": "Admin Stats - Gates Total",
+      "details": "Expected total=1, got 0"
+    },
+    {
+      "test": "Admin Filter - Plazas Count",
+      "details": "Expected 1 transaction, got 0"
+    },
+    {
+      "test": "Admin Stats - Plazas Total",
+      "details": "Expected total=1, got 0"
+    },
+    {
+      "test": "Admin Filter - Planning Count",
+      "details": "Expected 1 transaction, got 0"
+    },
+    {
+      "test": "Admin Stats - Planning Total",
+      "details": "Expected total=1, got 0"
+    },
+    {
+      "test": "Admin Filter - Mataf Count",
+      "details": "Expected 1 transaction, got 0"
+    },
+    {
+      "test": "Admin Stats - Mataf Total",
+      "details": "Expected total=1, got 0"
+    },
+    {
+      "test": "Admin Filter - Crowd_Services Count",
+      "details": "Expected 1 transaction, got 0"
+    },
+    {
+      "test": "Admin Stats - Crowd_Services Total",
+      "details": "Expected total=1, got 0"
+    },
+    {
+      "test": "Login as Gates Manager",
+      "details": "Expected 200, got 401"
+    },
+    {
+      "test": "Login as Gates Manager (Cross-Dept Test)",
+      "details": "Expected 200, got 401"
     }
   ]
 }
