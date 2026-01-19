@@ -24,9 +24,12 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-export default function ShiftsManagement() {
+export default function ShiftsManagement({ department = null }) {
   const { language } = useLanguage();
-  const { isReadOnly } = useAuth();
+  const { user, isReadOnly } = useAuth();
+  
+  // Use passed department prop or user's department
+  const activeDepartment = department || user?.department;
   
   const [shifts, setShifts] = useState([
     { id: "1", name: "الأولى صيف", time: "3:00 - 8:00", type: "صيف" },

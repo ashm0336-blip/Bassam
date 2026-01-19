@@ -48,9 +48,12 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export default function TransactionsPage() {
+export default function TransactionsPage({ department = null }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
+  
+  // Use passed department prop or user's department
+  const activeDepartment = department || user?.department;
   const [transactions, setTransactions] = useState([]);
   const [stats, setStats] = useState({});
   const [filterStatus, setFilterStatus] = useState("all");
@@ -68,7 +71,7 @@ export default function TransactionsPage() {
     subject: "",
     assigned_to: "",
     priority: "normal",
-    department: user?.department || "gates",
+    department: activeDepartment || "gates",
     due_date: "",
     notes: ""
   });
