@@ -2390,6 +2390,9 @@ class AlHaramAPITester:
         # Category 15: Transactions Data Isolation (CRITICAL TEST)
         self.test_transactions_data_isolation()
         
+        # Category 16: Transaction Data Isolation for Admin (TODAY'S TEST)
+        self.test_transaction_data_isolation_admin()
+        
         # Additional tests
         self.test_admin_endpoints()
         self.test_unauthorized_access()
