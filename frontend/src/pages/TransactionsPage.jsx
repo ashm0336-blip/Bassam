@@ -487,8 +487,8 @@ export default function TransactionsPage({ department = null }) {
       {/* Transactions Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-[1000px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">{language === 'ar' ? 'رقم المعاملة' : 'Number'}</TableHead>
