@@ -2071,14 +2071,14 @@ async def export_transactions_pdf(user: dict = Depends(get_current_user)):
     for idx, t in enumerate(transactions, 1):
         table_data.append([
             str(idx),
-            t.get('transaction_number', ''),
-            t.get('transaction_date', ''),
-            t.get('subject', '')[:50],
-            t.get('assigned_to', ''),
+            arabic_text(t.get('transaction_number', '')),
+            arabic_text(t.get('transaction_date', '')),
+            arabic_text(t.get('subject', '')[:50]),
+            arabic_text(t.get('assigned_to', '')),
             '✓' if t.get('status') == 'completed' else '',
             '✓' if t.get('status') == 'in_progress' else '',
             '✓' if t.get('status') == 'pending' else '',
-            (t.get('notes') or '')[:40]
+            arabic_text((t.get('notes') or '')[:40])
         ])
     
     # Create table
