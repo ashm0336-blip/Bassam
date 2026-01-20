@@ -254,9 +254,9 @@ frontend:
   
   - task: "Sidebar Menu with Expandable Submenus - UI"
     implemented: true
-    working: true
-    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/context/SidebarContext.jsx"
-    stuck_count: 0
+    working: false
+    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/context/SidebarContext.jsx, Database sidebar_menu collection"
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
@@ -266,6 +266,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ WORKING (2026-01-17): Sidebar submenu functionality is FULLY OPERATIONAL. COMPREHENSIVE TESTING RESULTS: (1) /api/sidebar-menu endpoint IS being called successfully (22 API calls detected) ✅. (2) Menu items rendering correctly with 10 parent items with submenus (chevron icons visible) ✅. (3) Sidebar expand/collapse working (256px ↔ 80px) ✅. (4) ACCORDION BEHAVIOR WORKING: Only one submenu open at a time ✅. (5) SUBMENU NAVIGATION TESTED: Gates department submenu has 3 items (Dashboard, Data, Employees) ✅. (6) Navigation to Gates → Dashboard successful ✅. (7) Navigation to Gates → Data successful ✅. (8) Content changes without page refresh ✅. (9) RTL layout active (dir='rtl') ✅. The previous issue was likely a timing/race condition that has been resolved. SidebarContext.jsx now correctly waits for user authentication before fetching menu items (line 49: useEffect depends on user). All submenu functionality working as expected."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL NAVIGATION BUG (2026-01-20): Planning department submenu items redirect to home page instead of staying on planning page. USER REPORT: Clicking 'المعاملات' (Transactions) or 'الورديات' (Shifts) in Planning submenu redirects to '/' instead of '/planning?tab=transactions' or '/planning?tab=shifts'. ROOT CAUSE IDENTIFIED: Database sidebar_menu collection has INCORRECT href values for Planning submenu items. ACTUAL VALUES: (1) 'المعاملات': href='/transactions?dept=planning' ❌, (2) 'الورديات': href='/shifts' ❌. EXPECTED VALUES: (1) 'المعاملات': href='/planning?tab=transactions' ✅, (2) 'الورديات': href='/planning?tab=shifts' ✅. TECHNICAL EXPLANATION: The routes '/transactions' and '/shifts' do NOT exist in App.js routing configuration. These components are only rendered within department pages via tab parameters. When users click these invalid routes, React Router cannot find a match and falls back to the catch-all route '<Navigate to=\"/\" replace />' (App.js line 134), causing redirect to home page. IMPACT: Users cannot access Transactions or Shifts tabs in Planning department via sidebar navigation. TESTING EVIDENCE: Playwright test confirmed clicking 'المعاملات' changes URL from '/planning' to '/' (home page redirect). FIX REQUIRED: Update database sidebar_menu collection to correct the href values for Planning submenu items."
 
   - task: "Dark Mode Theme Implementation"
     implemented: true
