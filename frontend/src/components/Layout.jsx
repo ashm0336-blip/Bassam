@@ -473,7 +473,7 @@ export const Layout = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
       </div>
