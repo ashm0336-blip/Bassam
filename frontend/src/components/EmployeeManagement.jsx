@@ -297,8 +297,8 @@ export default function EmployeeManagement({ department }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
