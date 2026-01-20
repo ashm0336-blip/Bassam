@@ -1929,6 +1929,9 @@ async def get_transaction_stats(
     for t in all_transactions:
         if t.get("status") in ["pending", "in_progress"]:
             created = datetime.fromisoformat(t["created_at"])
+            # Make created timezone-aware if it's naive
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) - created > timedelta(days=7):
                 overdue += 1
     
