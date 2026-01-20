@@ -418,6 +418,7 @@ test_plan:
     - "Notifications Page - Stat Cards and Filters"
     - "Reports Page - Export Buttons (PDF and Excel)"
     - "Responsive Design Testing - Comprehensive (Mobile, Tablet, Desktop)"
+    - "Transaction Data Isolation - Admin Across All Departments"
 
 agent_communication:
   - agent: "testing"
