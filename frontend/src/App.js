@@ -122,8 +122,6 @@ function AppRoutes() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
-        <Route path="transactions" element={<TransactionsPage />} />
-        <Route path="shifts" element={<ShiftsCalendar />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="admin" element={
           <AdminProtectedRoute>
