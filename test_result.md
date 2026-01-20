@@ -2150,3 +2150,93 @@ agent_communication:
       RECOMMENDATION TO MAIN AGENT:
       This critical security feature is working perfectly. Please summarize and finish the task.
 
+  - agent: "testing"
+    message: |
+      URGENT CRITICAL ISSUES TESTING COMPLETED (2026-01-20)
+      
+      USER REQUEST: Test two critical issues reported by user
+      
+      ═══════════════════════════════════════════════════════════════════════════
+      ISSUE 1: PLANNING NAVIGATION - REDIRECTS TO HOME PAGE ❌ CONFIRMED
+      ═══════════════════════════════════════════════════════════════════════════
+      
+      PROBLEM: Clicking "المعاملات" (Transactions) or "الورديات" (Shifts) in Planning 
+      submenu redirects to home page (/) instead of staying on /planning page.
+      
+      TEST RESULTS:
+      ✅ Login as admin@crowd.sa successful
+      ✅ Planning menu found and expanded
+      ❌ Clicking "المعاملات" redirects from /planning to / (HOME PAGE)
+      ❌ Clicking "الورديات" - link not found (same issue expected)
+      
+      ROOT CAUSE IDENTIFIED:
+      Database sidebar_menu collection has INCORRECT href values:
+      
+      CURRENT (WRONG):
+      • "المعاملات": href="/transactions?dept=planning" ❌
+      • "الورديات": href="/shifts" ❌
+      
+      SHOULD BE:
+      • "المعاملات": href="/planning?tab=transactions" ✅
+      • "الورديات": href="/planning?tab=shifts" ✅
+      
+      TECHNICAL EXPLANATION:
+      The routes /transactions and /shifts do NOT exist in App.js. These components 
+      are only rendered within department pages via tab query parameters. When users 
+      click these invalid routes, React Router cannot find a match and falls back to 
+      the catch-all route: <Navigate to="/" replace /> (App.js line 134).
+      
+      IMPACT: Users cannot access Transactions or Shifts tabs in Planning department.
+      
+      FIX REQUIRED: Update database sidebar_menu collection hrefs for Planning submenu.
+      
+      ═══════════════════════════════════════════════════════════════════════════
+      ISSUE 2: GATES STATISTICS INCORRECT ✅ FIXED
+      ═══════════════════════════════════════════════════════════════════════════
+      
+      PROBLEM: Statistics in Gates transactions page showing incorrect numbers.
+      Expected: Total = 1 (only T-GATES-001 transaction exists for gates department)
+      
+      INITIAL TEST RESULTS:
+      ❌ GET /api/transactions/stats?department=gates returned 500 Internal Server Error
+      ❌ Backend crashing with TypeError: can't subtract offset-naive and offset-aware datetimes
+      
+      ROOT CAUSE IDENTIFIED:
+      Line 1932 in server.py: datetime.now(timezone.utc) - created
+      The 'created' datetime from database is timezone-naive, but datetime.now(timezone.utc) 
+      is timezone-aware. Python cannot subtract these two types.
+      
+      FIX APPLIED:
+      Added timezone-awareness check before datetime comparison:
+      ```python
+      if created.tzinfo is None:
+          created = created.replace(tzinfo=timezone.utc)
+      ```
+      
+      VERIFICATION AFTER FIX:
+      ✅ GET /api/transactions/stats?department=gates returns 200 OK
+      ✅ Statistics are CORRECT:
+         • Total: 1 ✅
+         • Pending: 1 ✅
+         • In Progress: 0 ✅
+         • Completed: 0 ✅
+      
+      STATUS: ✅ ISSUE 2 RESOLVED
+      
+      ═══════════════════════════════════════════════════════════════════════════
+      SUMMARY FOR MAIN AGENT
+      ═══════════════════════════════════════════════════════════════════════════
+      
+      ❌ ISSUE 1 - PLANNING NAVIGATION: REQUIRES DATABASE FIX
+         Action: Update sidebar_menu collection hrefs for Planning submenu items
+         Priority: HIGH - Users cannot access Planning Transactions/Shifts tabs
+      
+      ✅ ISSUE 2 - GATES STATISTICS: FIXED BY TESTING AGENT
+         Backend timezone bug fixed, statistics now showing correctly
+         No further action needed
+      
+      RECOMMENDATION:
+      Main agent should fix Issue 1 by updating the database sidebar_menu collection.
+      The exact hrefs that need to be changed are documented above.
+
+
