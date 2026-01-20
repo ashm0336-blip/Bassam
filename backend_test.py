@@ -1254,6 +1254,164 @@ class AlHaramAPITester:
                 expected_status=200
             )
     
+    def test_transaction_data_isolation_admin(self):
+        """Test transaction data isolation for Admin across all departments"""
+        print("\n🔒 Testing Transaction Data Isolation (Admin User)...")
+        
+        # Login as Admin
+        admin_login = {
+            "email": "admin@crowd.sa",
+            "password": "admin123"
+        }
+        
+        success, admin_data = self.test_endpoint(
+            "Login as Admin (admin@crowd.sa)",
+            "auth/login",
+            method="POST",
+            data=admin_login,
+            expected_status=200
+        )
+        
+        if not success or "access_token" not in admin_data:
+            print("❌ Failed to login as admin, skipping transaction isolation tests")
+            return
+        
+        admin_token = admin_data["access_token"]
+        temp_token = self.auth_token
+        self.auth_token = admin_token
+        
+        # Test 1: Admin → Planning Transactions
+        success, planning_transactions = self.test_endpoint(
+            "GET /api/transactions?department=planning - Planning Transactions",
+            "transactions?department=planning",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(planning_transactions, list):
+            if len(planning_transactions) == 1:
+                transaction = planning_transactions[0]
+                if transaction.get("transaction_number") == "T-PLANNING-001" and transaction.get("department") == "planning":
+                    self.log_result("Admin - Planning Transactions Isolation", True, 
+                                  f"Correctly returns 1 planning transaction: {transaction.get('transaction_number')}")
+                else:
+                    self.log_result("Admin - Planning Transactions Isolation", False, 
+                                  f"Transaction mismatch: {transaction.get('transaction_number')}, dept: {transaction.get('department')}")
+            else:
+                self.log_result("Admin - Planning Transactions Isolation", False, 
+                              f"Expected 1 transaction, got {len(planning_transactions)}")
+        
+        # Test 2: Admin → Gates Transactions
+        success, gates_transactions = self.test_endpoint(
+            "GET /api/transactions?department=gates - Gates Transactions",
+            "transactions?department=gates",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(gates_transactions, list):
+            if len(gates_transactions) == 1:
+                transaction = gates_transactions[0]
+                if transaction.get("transaction_number") == "T-GATES-001" and transaction.get("department") == "gates":
+                    self.log_result("Admin - Gates Transactions Isolation", True, 
+                                  f"Correctly returns 1 gates transaction: {transaction.get('transaction_number')}")
+                else:
+                    self.log_result("Admin - Gates Transactions Isolation", False, 
+                                  f"Transaction mismatch: {transaction.get('transaction_number')}, dept: {transaction.get('department')}")
+            else:
+                self.log_result("Admin - Gates Transactions Isolation", False, 
+                              f"Expected 1 transaction, got {len(gates_transactions)}")
+        
+        # Test 3: Admin → Plazas Transactions
+        success, plazas_transactions = self.test_endpoint(
+            "GET /api/transactions?department=plazas - Plazas Transactions",
+            "transactions?department=plazas",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(plazas_transactions, list):
+            if len(plazas_transactions) == 1:
+                transaction = plazas_transactions[0]
+                if transaction.get("transaction_number") == "T-PLAZAS-002" and transaction.get("department") == "plazas":
+                    self.log_result("Admin - Plazas Transactions Isolation", True, 
+                                  f"Correctly returns 1 plazas transaction: {transaction.get('transaction_number')}")
+                else:
+                    self.log_result("Admin - Plazas Transactions Isolation", False, 
+                                  f"Transaction mismatch: {transaction.get('transaction_number')}, dept: {transaction.get('department')}")
+            else:
+                self.log_result("Admin - Plazas Transactions Isolation", False, 
+                              f"Expected 1 transaction, got {len(plazas_transactions)}")
+        
+        # Test 4: Admin → Mataf Transactions
+        success, mataf_transactions = self.test_endpoint(
+            "GET /api/transactions?department=mataf - Mataf Transactions",
+            "transactions?department=mataf",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(mataf_transactions, list):
+            if len(mataf_transactions) == 1:
+                transaction = mataf_transactions[0]
+                if transaction.get("transaction_number") == "T-MATAF-004" and transaction.get("department") == "mataf":
+                    self.log_result("Admin - Mataf Transactions Isolation", True, 
+                                  f"Correctly returns 1 mataf transaction: {transaction.get('transaction_number')}")
+                else:
+                    self.log_result("Admin - Mataf Transactions Isolation", False, 
+                                  f"Transaction mismatch: {transaction.get('transaction_number')}, dept: {transaction.get('department')}")
+            else:
+                self.log_result("Admin - Mataf Transactions Isolation", False, 
+                              f"Expected 1 transaction, got {len(mataf_transactions)}")
+        
+        # Test 5: Admin → Crowd Services Transactions
+        success, crowd_services_transactions = self.test_endpoint(
+            "GET /api/transactions?department=crowd_services - Crowd Services Transactions",
+            "transactions?department=crowd_services",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(crowd_services_transactions, list):
+            if len(crowd_services_transactions) == 1:
+                transaction = crowd_services_transactions[0]
+                if transaction.get("transaction_number") == "T-CROWD_SERVICES-005" and transaction.get("department") == "crowd_services":
+                    self.log_result("Admin - Crowd Services Transactions Isolation", True, 
+                                  f"Correctly returns 1 crowd_services transaction: {transaction.get('transaction_number')}")
+                else:
+                    self.log_result("Admin - Crowd Services Transactions Isolation", False, 
+                                  f"Transaction mismatch: {transaction.get('transaction_number')}, dept: {transaction.get('department')}")
+            else:
+                self.log_result("Admin - Crowd Services Transactions Isolation", False, 
+                              f"Expected 1 transaction, got {len(crowd_services_transactions)}")
+        
+        # Test 6: Admin WITHOUT department filter - Should see ALL transactions
+        success, all_transactions = self.test_endpoint(
+            "GET /api/transactions - Admin Without Filter (should see all 5 transactions)",
+            "transactions",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(all_transactions, list):
+            if len(all_transactions) == 5:
+                # Verify all departments are present
+                departments = set(t.get("department") for t in all_transactions)
+                expected_depts = {"planning", "gates", "plazas", "mataf", "crowd_services"}
+                
+                if departments == expected_depts:
+                    self.log_result("Admin - All Transactions Without Filter", True, 
+                                  f"Correctly returns all 5 transactions from all departments")
+                else:
+                    self.log_result("Admin - All Transactions Without Filter", False, 
+                                  f"Expected departments {expected_depts}, got {departments}")
+            else:
+                self.log_result("Admin - All Transactions Without Filter", False, 
+                              f"Expected 5 transactions, got {len(all_transactions)}")
+        
+        # Restore original token
+        self.auth_token = temp_token
+    
     def test_sidebar_submenu_functionality(self):
         """Test sidebar menu with expandable submenus"""
         print("\n📋 Testing Sidebar Submenu Functionality...")
