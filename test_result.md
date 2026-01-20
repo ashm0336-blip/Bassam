@@ -209,11 +209,11 @@ backend:
 frontend:
   - task: "Responsive Design - Mobile Horizontal Scroll"
     implemented: true
-    working: true
-    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/pages/Dashboard.jsx, /app/frontend/src/pages/AdminPage.jsx, /app/frontend/src/pages/GatesDepartment.jsx"
-    stuck_count: 0
+    working: false
+    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/pages/Dashboard.jsx, /app/frontend/src/pages/AdminPage.jsx, /app/frontend/src/pages/GatesDepartment.jsx, /app/frontend/src/pages/TransactionsPage.jsx, /app/frontend/src/components/EmployeeManagement.jsx, /app/frontend/src/components/GatesDataManagement.jsx"
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
@@ -221,6 +221,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ FIXED (2026-01-17): Mobile horizontal scroll issue RESOLVED. Testing confirms: Mobile viewport (375px) scroll width = 375px (NO overflow). Desktop viewport (1920px) scroll width = 1920px (NO overflow). Hamburger menu working correctly on mobile. Desktop sidebar visible and functioning. The Layout.jsx responsive classes are now working correctly with proper lg: prefixes for desktop-only margins. SUCCESS CRITERIA MET: No horizontal page scroll on mobile ✅, Desktop layout correct ✅, Mobile menu functional ✅."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE FOUND (2026-01-20): Table horizontal scroll implementation INCOMPLETE. While tables have correct min-width and overflow-x-auto containers, the PAGE ITSELF still has horizontal scroll. MOBILE (375px) TEST RESULTS: ❌ Transactions Page: 1034px scroll width (659px overflow), ❌ Employees Page: 934px scroll width (559px overflow), ❌ Gates Data Page: 1134px scroll width (759px overflow), ✅ Dashboard: 375px (NO overflow), ✅ Gates Dashboard Tab: 375px (NO overflow). TABLET (768px) TEST RESULTS: ❌ Transactions: 1034px (266px overflow), ❌ Employees: 934px (166px overflow), ✅ Dashboard: 768px (NO overflow). ROOT CAUSE IDENTIFIED: Cards are expanding to fit table min-width instead of being constrained to viewport. Diagnostic shows: (1) Main content div is 1034px wide (should be 375px), (2) Page containers have overflow-x: visible, (3) Cards have no max-width constraint, (4) Content is pushing all parent containers wider. FIX REQUIRED: Add max-w-full to page containers (space-y-6 divs) OR add overflow-hidden to Cards OR constrain main element better. The tables themselves are correctly implemented with overflow-x-auto and min-width, but parent containers need width constraints to prevent page-level horizontal scroll."
   
   - task: "Sidebar Menu with Expandable Submenus - UI"
     implemented: true
