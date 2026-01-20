@@ -368,9 +368,9 @@ metadata:
     monitoring: "monitoring@crowd.sa / monitor123"
     base_url: "https://mosque-flow.preview.emergentagent.com"
   last_backend_test:
-    timestamp: "2026-01-17"
-    tests_run: 115
-    tests_passed: 115
+    timestamp: "2026-01-20"
+    tests_run: 190
+    tests_passed: 190
     success_rate: 100.0
     categories_tested:
       - "Authentication & Authorization (all user roles)"
@@ -382,6 +382,7 @@ metadata:
       - "Alerts/Notifications"
       - "RBAC Report Filtering"
       - "Sidebar Menu with Expandable Submenus"
+      - "Transaction Data Isolation (Admin across all departments)"
   last_frontend_test:
     timestamp: "2026-01-17"
     tests_run: 15
