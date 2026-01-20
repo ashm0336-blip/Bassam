@@ -382,9 +382,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Responsive Design - Mobile Horizontal Scroll Fix"
-  stuck_tasks:
-    - "Sidebar Menu with Expandable Submenus - UI"
+    - "Responsive Design - Table Horizontal Scroll Implementation"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
   completed_tests:
