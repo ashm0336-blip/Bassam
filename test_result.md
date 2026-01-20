@@ -416,6 +416,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Planning Department - Submenu Navigation Fix"
     - "Responsive Design - Table Horizontal Scroll Implementation"
   stuck_tasks: []
   test_all: false
