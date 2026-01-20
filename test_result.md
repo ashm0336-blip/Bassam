@@ -205,6 +205,18 @@ backend:
       - working: true
         agent: "testing"
         comment: "SIDEBAR SUBMENU FUNCTIONALITY FULLY TESTED (2026-01-17). ✅ GET /api/sidebar-menu returns all menu items including submenus with proper parent-child relationships. ✅ Menu structure validated: Parent items have no parent_id, submenu items have valid parent_id pointing to existing parents. ✅ Gates menu (id: 53a3e0d3-b096-48e3-aa5a-1eccfe8b4a19) has exactly 3 children as expected: لوحة التحكم, الأبواب, الموظفين. ✅ Total menu count: 16 items (13 parents + 3 children). ✅ GET /api/admin/sidebar-menu returns all items with proper parent-child links verified. ✅ No orphaned submenu items found - all children properly linked to parents. All 115 backend tests passed with 100% success rate."
+  
+  - task: "Transaction Data Isolation for Admin Across All Departments"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "TRANSACTION DATA ISOLATION FULLY TESTED (2026-01-20). ✅ ADMIN USER TESTING COMPLETED: All 12 tests passed with 100% success rate. ✅ TEST 1 - Planning Transactions: GET /api/transactions?department=planning returns exactly 1 transaction (T-PLANNING-001) with department='planning' ✅. ✅ TEST 2 - Gates Transactions: GET /api/transactions?department=gates returns exactly 1 transaction (T-GATES-001) with department='gates' ✅. ✅ TEST 3 - Plazas Transactions: GET /api/transactions?department=plazas returns exactly 1 transaction (T-PLAZAS-002) with department='plazas' ✅. ✅ TEST 4 - Mataf Transactions: GET /api/transactions?department=mataf returns exactly 1 transaction (T-MATAF-004) with department='mataf' ✅. ✅ TEST 5 - Crowd Services Transactions: GET /api/transactions?department=crowd_services returns exactly 1 transaction (T-CROWD_SERVICES-005) with department='crowd_services' ✅. ✅ TEST 6 - Admin Without Filter: GET /api/transactions (no department parameter) correctly returns ALL 5 transactions from all departments ✅. ✅ DATA ISOLATION VERIFIED: Each department page shows only transactions for that specific department. Admin can view all transactions when no filter is applied, or filter by specific department. Backend endpoint /api/transactions correctly implements RBAC filtering based on user role and department parameter."
 
 frontend:
   - task: "Responsive Design - Mobile Horizontal Scroll"
