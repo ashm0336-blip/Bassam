@@ -217,6 +217,21 @@ backend:
       - working: true
         agent: "testing"
         comment: "TRANSACTION DATA ISOLATION FULLY TESTED (2026-01-20). ✅ ADMIN USER TESTING COMPLETED: All 12 tests passed with 100% success rate. ✅ TEST 1 - Planning Transactions: GET /api/transactions?department=planning returns exactly 1 transaction (T-PLANNING-001) with department='planning' ✅. ✅ TEST 2 - Gates Transactions: GET /api/transactions?department=gates returns exactly 1 transaction (T-GATES-001) with department='gates' ✅. ✅ TEST 3 - Plazas Transactions: GET /api/transactions?department=plazas returns exactly 1 transaction (T-PLAZAS-002) with department='plazas' ✅. ✅ TEST 4 - Mataf Transactions: GET /api/transactions?department=mataf returns exactly 1 transaction (T-MATAF-004) with department='mataf' ✅. ✅ TEST 5 - Crowd Services Transactions: GET /api/transactions?department=crowd_services returns exactly 1 transaction (T-CROWD_SERVICES-005) with department='crowd_services' ✅. ✅ TEST 6 - Admin Without Filter: GET /api/transactions (no department parameter) correctly returns ALL 5 transactions from all departments ✅. ✅ DATA ISOLATION VERIFIED: Each department page shows only transactions for that specific department. Admin can view all transactions when no filter is applied, or filter by specific department. Backend endpoint /api/transactions correctly implements RBAC filtering based on user role and department parameter."
+  
+  - task: "Transaction Stats API - Timezone Bug Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL BUG (2026-01-20): GET /api/transactions/stats endpoint crashing with 500 error. ERROR: 'TypeError: can't subtract offset-naive and offset-aware datetimes' on line 1932. ROOT CAUSE: When calculating overdue transactions, the code compares datetime.now(timezone.utc) (timezone-aware) with datetime.fromisoformat(t['created_at']) (timezone-naive). Python cannot subtract these two types. IMPACT: All transaction statistics pages fail to load (Gates, Planning, Plazas, Mataf, Crowd Services). Users see blank statistics cards or error messages."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED (2026-01-20): Added timezone-awareness check before datetime comparison. Solution: Check if created datetime is timezone-naive (created.tzinfo is None), and if so, make it timezone-aware by adding UTC timezone (created.replace(tzinfo=timezone.utc)). VERIFICATION: GET /api/transactions/stats?department=gates now returns 200 OK with correct statistics: Total=1, Pending=1, In Progress=0, Completed=0. All department statistics endpoints now working correctly."
 
 frontend:
   - task: "Responsive Design - Mobile Horizontal Scroll"
