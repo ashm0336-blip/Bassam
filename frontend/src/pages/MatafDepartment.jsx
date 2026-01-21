@@ -85,6 +85,12 @@ const LevelCard = ({ level }) => {
 export default function MatafDepartment() {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'dashboard';
+  const { menuItems } = useSidebar();
+  const { language } = useLanguage();
+  
+  // Get page title from sidebar menu
+  const pageInfo = menuItems.find(item => item.href === '/mataf' && !item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'صحن المطاف' : 'Mataf');
   
   const [matafLevels, setMatafLevels] = useState([]);
   const [haramainData, setHaramainData] = useState(null);
