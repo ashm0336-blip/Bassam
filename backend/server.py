@@ -1138,9 +1138,11 @@ async def get_plazas():
     return plazas
 
 @api_router.get("/plazas/stats")
-async def get_plazas_stats():
-    """Get plazas summary statistics"""
+async def get_plazas_stats(user: dict = Depends(get_current_user)):
+    """Get plazas summary statistics - REAL DATA"""
     plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
+    transactions = await db.transactions.find({"department": "plazas"}, {"_id": 0}).to_list(1000)
+    
     total_current = sum(p.get("current_crowd", 0) for p in plazas)
     total_max = sum(p.get("max_capacity", 0) for p in plazas) or 1
     overall_pct = (total_current / total_max) * 100
@@ -1152,7 +1154,10 @@ async def get_plazas_stats():
         "overall_percentage": round(overall_pct, 1),
         "normal": len([p for p in plazas if (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 < 70]),
         "warning": len([p for p in plazas if 70 <= (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 < 85]),
-        "critical": len([p for p in plazas if (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 >= 85])
+        "critical": len([p for p in plazas if (p.get("current_crowd", 0) / (p.get("max_capacity", 1) or 1)) * 100 >= 85]),
+        "total_transactions": len(transactions),
+        "pending_transactions": len([t for t in transactions if t.get("status") == "pending"]),
+        "completed_transactions": len([t for t in transactions if t.get("status") == "completed"])
     }
 
 @api_router.get("/mataf")
