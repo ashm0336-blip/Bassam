@@ -26,6 +26,12 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function CrowdServicesDepartment() {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'dashboard';
+  const { menuItems } = useSidebar();
+  const { language } = useLanguage();
+  
+  // Get page title from sidebar menu
+  const pageInfo = menuItems.find(item => item.href === '/crowd-services' && !item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'خدمات الحشود' : 'Crowd Services');
   
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
@@ -70,7 +76,7 @@ export default function CrowdServicesDepartment() {
       {activeTab === 'dashboard' && (
         <>
           <div>
-            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم خدمات حشود الحرم</h2>
+            <h2 className="font-cairo font-bold text-xl text-right">{pageTitle}</h2>
             <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على الخدمات والطلبات</p>
           </div>
           <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20"><CardHeader className="pb-3"><CardTitle className="font-cairo text-base text-right flex items-center gap-2 justify-end"><Users className="w-5 h-5 text-primary" />إحصائيات الموظفين</CardTitle></CardHeader><CardContent><div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2"><div className="text-center p-2 rounded-lg bg-card border border-border"><Users className="w-4 h-4 mx-auto text-primary mb-1" /><p className="text-lg font-bold">{employeeStats?.total_employees || 0}</p><p className="text-[10px] text-muted-foreground">إجمالي</p></div><div className="text-center p-2 rounded-lg bg-card border border-border"><UserCheck className="w-4 h-4 mx-auto text-green-500 mb-1" /><p className="text-lg font-bold text-green-600">{employeeStats?.active_employees || 0}</p><p className="text-[10px] text-muted-foreground">نشطون</p></div><div className="text-center p-2 rounded-lg bg-card border border-border"><UserX className="w-4 h-4 mx-auto text-gray-500 mb-1" /><p className="text-lg font-bold text-gray-600">{employeeStats?.inactive_employees || 0}</p><p className="text-[10px] text-muted-foreground">غير نشطين</p></div><div className="text-center p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200"><div className="w-2 h-2 rounded-full bg-blue-500 mx-auto mb-1" /><p className="text-lg font-bold text-blue-600">{employeeStats?.shifts?.shift_1 || 0}</p><p className="text-[10px] text-muted-foreground">الأولى</p></div><div className="text-center p-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200"><div className="w-2 h-2 rounded-full bg-green-500 mx-auto mb-1" /><p className="text-lg font-bold text-green-600">{employeeStats?.shifts?.shift_2 || 0}</p><p className="text-[10px] text-muted-foreground">الثانية</p></div><div className="text-center p-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200"><div className="w-2 h-2 rounded-full bg-orange-500 mx-auto mb-1" /><p className="text-lg font-bold text-orange-600">{employeeStats?.shifts?.shift_3 || 0}</p><p className="text-[10px] text-muted-foreground">الثالثة</p></div><div className="text-center p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200"><div className="w-2 h-2 rounded-full bg-purple-500 mx-auto mb-1" /><p className="text-lg font-bold text-purple-600">{employeeStats?.shifts?.shift_4 || 0}</p><p className="text-[10px] text-muted-foreground">الرابعة</p></div><div className="text-center p-2 rounded-lg bg-card border border-border"><MapPin className="w-4 h-4 mx-auto text-blue-500 mb-1" /><p className="text-lg font-bold text-blue-600">{employeeStats?.locations_count || 0}</p><p className="text-[10px] text-muted-foreground">المواقع</p></div></div></CardContent></Card>
