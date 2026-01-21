@@ -109,7 +109,7 @@ export default function PlanningDepartment() {
       {activeTab === 'dashboard' && (
         <>
           <div>
-            <h2 className="font-cairo font-bold text-xl text-right">لوحة تحكم إدارة التخطيط</h2>
+            <h2 className="font-cairo font-bold text-xl text-right">{pageTitle}</h2>
             <p className="text-sm text-muted-foreground mt-1 text-right">نظرة شاملة على جميع العمليات والموظفين</p>
           </div>
 

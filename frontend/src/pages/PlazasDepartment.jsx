@@ -89,8 +89,8 @@ export default function PlazasDepartment() {
   const activeTab = searchParams.get('tab') || 'dashboard';
   
   // Get page title and subtitle from sidebar menu
-  const pageInfo = menuItems.find(item => location.pathname.startsWith(item.href.split('?')[0]) && item.parent_id);
-  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'لوحة تحكم إدارة الساحات' : 'Plazas Dashboard');
+  const pageInfo = menuItems.find(item => item.href === '/plazas' && !item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'إدارة الساحات' : 'Plazas Management');
   const pageSubtitle = pageInfo ? (language === 'ar' ? pageInfo.subtitle_ar : pageInfo.subtitle_en) : (language === 'ar' ? 'نظرة شاملة على حالة الساحات والموظفين' : 'Overview of plazas and employees');
   
   const [plazas, setPlazas] = useState([]);
