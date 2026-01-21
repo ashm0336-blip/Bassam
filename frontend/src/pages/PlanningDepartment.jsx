@@ -202,44 +202,32 @@ export default function PlanningDepartment() {
               </CardContent>
             </Card>
 
-            {/* Work Tasks Distribution */}
+            {/* Transactions Quick Stats */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="font-cairo text-base text-right">توزيع المهام</CardTitle>
+                <CardTitle className="font-cairo text-base text-right">إحصائيات المعاملات</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                   <div className="text-right flex-1">
-                    <p className="text-sm font-medium">الشؤون الإدارية</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 bg-purple-200 rounded-full h-2">
-                        <div className="bg-purple-600 h-2 rounded-full" style={{width: '21%'}}></div>
-                      </div>
-                      <span className="text-sm font-bold text-purple-700">3</span>
-                    </div>
+                    <p className="text-sm font-medium">قيد الانتظار</p>
+                    <p className="text-2xl font-bold text-yellow-700">{stats?.pending_transactions || 0}</p>
                   </div>
+                  <Clock className="w-8 h-8 text-yellow-600" />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="text-right flex-1">
-                    <p className="text-sm font-medium">الشؤون الفنية والميدانية</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 bg-cyan-200 rounded-full h-2">
-                        <div className="bg-cyan-600 h-2 rounded-full" style={{width: '43%'}}></div>
-                      </div>
-                      <span className="text-sm font-bold text-cyan-700">6</span>
-                    </div>
+                    <p className="text-sm font-medium">قيد التنفيذ</p>
+                    <p className="text-2xl font-bold text-blue-700">{stats?.in_progress_transactions || 0}</p>
                   </div>
+                  <Activity className="w-8 h-8 text-blue-600" />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <div className="text-right flex-1">
-                    <p className="text-sm font-medium">غير محدد</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div className="bg-gray-600 h-2 rounded-full" style={{width: '36%'}}></div>
-                      </div>
-                      <span className="text-sm font-bold text-gray-700">5</span>
-                    </div>
+                    <p className="text-sm font-medium">مكتملة</p>
+                    <p className="text-2xl font-bold text-green-700">{stats?.completed_transactions || 0}</p>
                   </div>
+                  <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
               </CardContent>
             </Card>
