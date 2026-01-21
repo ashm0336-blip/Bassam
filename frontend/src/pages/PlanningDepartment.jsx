@@ -43,6 +43,12 @@ const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
 export default function PlanningDepartment() {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'dashboard';
+  const { menuItems } = useSidebar();
+  const { language } = useLanguage();
+  
+  // Get page title from sidebar menu
+  const pageInfo = menuItems.find(item => item.href === '/planning' && !item.parent_id);
+  const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'تخطيط خدمات الحشود' : 'Planning');
   
   const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
