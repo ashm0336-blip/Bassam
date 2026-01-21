@@ -1249,25 +1249,42 @@ async def get_reports(
     return reports
 
 @api_router.get("/planning/stats")
-async def get_planning_stats():
+async def get_planning_stats(user: dict = Depends(get_current_user)):
+    """Get real planning department statistics from database"""
+    # Get real transactions count for planning
+    transactions = await db.transactions.find({"department": "planning"}, {"_id": 0}).to_list(1000)
+    
+    # Get employees count
+    employees = await db.employees.find({"department": "planning", "is_active": True}, {"_id": 0}).to_list(1000)
+    
+    # Calculate transaction stats
+    pending = len([t for t in transactions if t.get("status") == "pending"])
+    in_progress = len([t for t in transactions if t.get("status") == "in_progress"])
+    completed = len([t for t in transactions if t.get("status") == "completed"])
+    
     return {
-        "active_plans": 5,
-        "pending_approvals": 2,
-        "completed_today": 10,
-        "scheduled_events": 3,
-        "resource_utilization": 75,
-        "staff_deployed": 200
+        "total_transactions": len(transactions),
+        "pending_transactions": pending,
+        "in_progress_transactions": in_progress,
+        "completed_transactions": completed,
+        "total_employees": len(employees),
+        "active_employees": len(employees)
     }
 
 @api_router.get("/crowd-services/stats")
-async def get_crowd_services_stats():
+async def get_crowd_services_stats(user: dict = Depends(get_current_user)):
+    """Get real crowd services statistics from database"""
+    # Get real transactions count
+    transactions = await db.transactions.find({"department": "crowd_services"}, {"_id": 0}).to_list(1000)
+    
+    # Get employees count
+    employees = await db.employees.find({"department": "crowd_services", "is_active": True}, {"_id": 0}).to_list(1000)
+    
     return {
-        "service_requests_today": 50,
-        "resolved_requests": 45,
-        "pending_requests": 5,
-        "average_response_time": 8,
-        "satisfaction_rate": 95,
-        "active_teams": 25
+        "total_transactions": len(transactions),
+        "pending_transactions": len([t for t in transactions if t.get("status") == "pending"]),
+        "completed_transactions": len([t for t in transactions if t.get("status") == "completed"]),
+        "total_employees": len(employees)
     }
 
 # Legacy endpoints

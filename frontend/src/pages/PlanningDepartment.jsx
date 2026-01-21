@@ -58,11 +58,14 @@ export default function PlanningDepartment() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const [employeesRes, empStatsRes] = await Promise.all([
+        const [employeesRes, empStatsRes, planningStatsRes] = await Promise.all([
           axios.get(`${API}/employees?department=planning`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
           axios.get(`${API}/employees/stats/planning`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API}/planning/stats`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -88,6 +91,7 @@ export default function PlanningDepartment() {
           inactive_employees: onRest.length,
           on_rest: onRest.length
         });
+        setStats(planningStatsRes.data);
       } catch (error) {
         console.error("Error fetching planning stats:", error);
       } finally {
@@ -139,8 +143,8 @@ export default function PlanningDepartment() {
                 <div className="flex items-center justify-between">
                   <div className="text-right">
                     <p className="text-xs text-green-700">المعاملات</p>
-                    <p className="text-3xl font-bold text-green-900">0</p>
-                    <p className="text-xs text-green-600 mt-1">جميع الحالات</p>
+                    <p className="text-3xl font-bold text-green-900">{stats?.total_transactions || 0}</p>
+                    <p className="text-xs text-green-600 mt-1">{stats?.pending_transactions || 0} قيد الانتظار</p>
                   </div>
                   <ClipboardList className="w-12 h-12 text-green-600" />
                 </div>
@@ -151,11 +155,11 @@ export default function PlanningDepartment() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-right">
-                    <p className="text-xs text-purple-700">الشؤون الإدارية</p>
-                    <p className="text-3xl font-bold text-purple-900">3</p>
-                    <p className="text-xs text-purple-600 mt-1">موظفين</p>
+                    <p className="text-xs text-purple-700">قيد التنفيذ</p>
+                    <p className="text-3xl font-bold text-purple-900">{stats?.in_progress_transactions || 0}</p>
+                    <p className="text-xs text-purple-600 mt-1">من المعاملات</p>
                   </div>
-                  <Briefcase className="w-12 h-12 text-purple-600" />
+                  <Activity className="w-12 h-12 text-purple-600" />
                 </div>
               </CardContent>
             </Card>
@@ -164,11 +168,11 @@ export default function PlanningDepartment() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-right">
-                    <p className="text-xs text-cyan-700">الفنية والميدانية</p>
-                    <p className="text-3xl font-bold text-cyan-900">6</p>
-                    <p className="text-xs text-cyan-600 mt-1">موظفين</p>
+                    <p className="text-xs text-cyan-700">مكتملة</p>
+                    <p className="text-3xl font-bold text-cyan-900">{stats?.completed_transactions || 0}</p>
+                    <p className="text-xs text-cyan-600 mt-1">من المعاملات</p>
                   </div>
-                  <Briefcase className="w-12 h-12 text-cyan-600" />
+                  <CheckCircle className="w-12 h-12 text-cyan-600" />
                 </div>
               </CardContent>
             </Card>
