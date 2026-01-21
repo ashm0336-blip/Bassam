@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Clock,
   CheckCircle2,
+  CheckCircle,
   Briefcase,
   Activity,
   Target
