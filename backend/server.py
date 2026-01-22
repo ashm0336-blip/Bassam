@@ -154,6 +154,14 @@ class AlertCreate(BaseModel):
     message: str
     department: str
     priority: str = "medium"  # critical, high, medium, low
+    status: str = "وارد"  # وارد, قيد الإجراء, بانتظار رد, مكتمل
+    received_at: str  # ISO datetime string (Gregorian)
+    
+class AlertUpdate(BaseModel):
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    message: Optional[str] = None
+    closed_at: Optional[str] = None
 
 class EmployeeCreate(BaseModel):
     name: str
@@ -744,16 +752,48 @@ async def update_mataf_level(mataf_id: str, mataf: MatafLevelUpdate, user: dict 
 # ============= Admin Routes - Alerts =============
 @api_router.post("/admin/alerts")
 async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
+    # Validate received_at is not in future
+    received_dt = datetime.fromisoformat(alert.received_at.replace('Z', '+00:00'))
+    if received_dt > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="لا يمكن أن يكون تاريخ الاستلام في المستقبل")
+    
     alert_id = str(uuid.uuid4())
     alert_doc = {
         "id": alert_id,
         **alert.model_dump(),
         "is_read": False,
         "created_by": user["id"],
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "closed_at": None
     }
     await db.alerts.insert_one(alert_doc)
-    return {"message": "تم إنشاء التنبيه بنجاح", "id": alert_id}
+    await log_activity("إنشاء بلاغ", user, alert_id, f"بلاغ: {alert.title}")
+    return {"message": "تم إنشاء البلاغ بنجاح", "id": alert_id}
+
+@api_router.put("/alerts/{alert_id}")
+async def update_alert(alert_id: str, alert: AlertUpdate, user: dict = Depends(get_current_user)):
+    """Update alert status and details"""
+    existing = await db.alerts.find_one({"id": alert_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="البلاغ غير موجود")
+    
+    update_data = {k: v for k, v in alert.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # If status changed to "مكتمل", set closed_at automatically
+    if update_data.get("status") == "مكتمل":
+        current_status = existing.get("status")
+        # Only allow closing if currently "قيد الإجراء" or "بانتظار رد"
+        if current_status not in ["قيد الإجراء", "بانتظار رد"]:
+            raise HTTPException(status_code=400, detail="لا يمكن إغلاق البلاغ إلا إذا كان قيد الإجراء أو بانتظار رد")
+        update_data["closed_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.alerts.update_one({"id": alert_id}, {"$set": update_data})
+    await log_activity("تحديث بلاغ", user, alert_id, f"تحديث الحالة إلى {update_data.get('status', '')}")
+    
+    updated = await db.alerts.find_one({"id": alert_id}, {"_id": 0})
+    return updated
 
 # ============= Employee Management Routes =============
 @api_router.get("/employees")
