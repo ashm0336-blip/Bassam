@@ -81,18 +81,39 @@ export default function TransactionsPage({ department = null }) {
 
   // Calculate transaction duration
   const calculateDuration = (transaction) => {
-    const startDate = new Date(transaction.transaction_date);
-    const endDate = transaction.completed_date ? new Date(transaction.completed_date) : new Date();
-    const diffMs = endDate - startDate;
-    const hours = Math.floor(diffMs / 3600000);
-    const minutes = Math.floor((diffMs % 3600000) / 60000);
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    
-    if (days > 0) {
-      return `${days}ي ${remainingHours}س`;
+    try {
+      // Handle both old format (string like "1447/07/16") and new format (ISO datetime)
+      let startDate;
+      if (transaction.transaction_date) {
+        // Try to parse as ISO date first
+        if (transaction.transaction_date.includes('T') || transaction.transaction_date.includes('-')) {
+          startDate = new Date(transaction.transaction_date);
+        } else {
+          // Old format - use created_at instead
+          startDate = new Date(transaction.created_at);
+        }
+      } else {
+        startDate = new Date(transaction.created_at);
+      }
+      
+      const endDate = transaction.completed_date ? new Date(transaction.completed_date) : new Date();
+      const diffMs = endDate - startDate;
+      
+      if (diffMs < 0) return "0س 0د";
+      
+      const hours = Math.floor(diffMs / 3600000);
+      const minutes = Math.floor((diffMs % 3600000) / 60000);
+      const days = Math.floor(hours / 24);
+      const remainingHours = hours % 24;
+      
+      if (days > 0) {
+        return `${days}ي ${remainingHours}س`;
+      }
+      return `${hours}س ${minutes}د`;
+    } catch (error) {
+      console.error("Error calculating duration:", error);
+      return "---";
     }
-    return `${hours}س ${minutes}د`;
   };
 
   useEffect(() => {
