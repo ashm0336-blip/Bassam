@@ -223,16 +223,33 @@ export default function TransactionsPage({ department = null }) {
   };
 
   const handleEdit = (transaction) => {
+    // Check if completed
+    if (transaction.status === "completed") {
+      toast.error(language === 'ar' ? 'لا يمكن تعديل معاملة مكتملة' : 'Cannot edit completed transaction');
+      return;
+    }
+    
+    // Fix old date format for DatePicker
+    let transDate = transaction.transaction_date;
+    if (transDate && !transDate.includes('T')) {
+      transDate = transaction.created_at; // Use created_at if old format
+    }
+    
+    let dueDate = transaction.due_date;
+    if (dueDate && !dueDate.includes('T')) {
+      dueDate = null;
+    }
+    
     setSelectedTransaction(transaction);
     setEditMode(true);
     setFormData({
       transaction_number: transaction.transaction_number,
-      transaction_date: transaction.transaction_date,
+      transaction_date: transDate,
       subject: transaction.subject,
       assigned_to: transaction.assigned_to,
       priority: transaction.priority,
       department: transaction.department,
-      due_date: transaction.due_date || "",
+      due_date: dueDate || null,
       notes: transaction.notes || ""
     });
     setDialogOpen(true);
