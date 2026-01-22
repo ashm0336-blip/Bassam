@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import HijriDateTimePicker from "@/components/HijriDateTimePicker";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -69,14 +70,30 @@ export default function TransactionsPage({ department = null }) {
 
   const [formData, setFormData] = useState({
     transaction_number: "",
-    transaction_date: "",
+    transaction_date: new Date().toISOString(),
     subject: "",
     assigned_to: "",
     priority: "normal",
     department: activeDepartment || "gates",
-    due_date: "",
+    due_date: null,
     notes: ""
   });
+
+  // Calculate transaction duration
+  const calculateDuration = (transaction) => {
+    const startDate = new Date(transaction.transaction_date);
+    const endDate = transaction.completed_date ? new Date(transaction.completed_date) : new Date();
+    const diffMs = endDate - startDate;
+    const hours = Math.floor(diffMs / 3600000);
+    const minutes = Math.floor((diffMs % 3600000) / 60000);
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    
+    if (days > 0) {
+      return `${days}ي ${remainingHours}س`;
+    }
+    return `${hours}س ${minutes}د`;
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -136,6 +153,12 @@ export default function TransactionsPage({ department = null }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate transaction_date is not in future
+    if (new Date(formData.transaction_date) > new Date()) {
+      toast.error(language === 'ar' ? 'لا يمكن أن يكون تاريخ المعاملة في المستقبل' : 'Transaction date cannot be in the future');
+      return;
+    }
     
     try {
       const token = localStorage.getItem("token");
@@ -495,11 +518,9 @@ export default function TransactionsPage({ department = null }) {
                   <TableHead className="text-right">{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
                   <TableHead className="text-right">{language === 'ar' ? 'الموضوع' : 'Subject'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'المستلم' : 'Assigned'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'من أنشأها' : 'Created By'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created Date'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'آخر تحديث' : 'Last Update'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الأولوية' : 'Priority'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-center">{language === 'ar' ? 'مدة المعاملة' : 'Duration'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -510,7 +531,15 @@ export default function TransactionsPage({ department = null }) {
                   return (
                     <TableRow key={transaction.id}>
                       <TableCell className="text-right font-bold">{transaction.transaction_number}</TableCell>
-                      <TableCell className="text-right text-sm">{transaction.transaction_date}</TableCell>
+                      <TableCell className="text-right text-sm">
+                        {new Date(transaction.transaction_date).toLocaleDateString('ar-SA', { 
+                          year: 'numeric', 
+                          month: '2-digit', 
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </TableCell>
                       <TableCell className="text-right">
                         <p className="font-medium">{transaction.subject}</p>
                         {transaction.notes && (
@@ -518,25 +547,6 @@ export default function TransactionsPage({ department = null }) {
                         )}
                       </TableCell>
                       <TableCell className="text-center text-sm">{transaction.assigned_to}</TableCell>
-                      <TableCell className="text-center text-sm">
-                        <Badge variant="outline" className="text-xs">
-                          {transaction.assigned_by}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center text-xs text-muted-foreground">
-                        {new Date(transaction.created_at).toLocaleDateString('ar-SA', { 
-                          year: 'numeric', 
-                          month: '2-digit', 
-                          day: '2-digit' 
-                        })}
-                      </TableCell>
-                      <TableCell className="text-center text-xs text-muted-foreground">
-                        {new Date(transaction.updated_at).toLocaleDateString('ar-SA', { 
-                          year: 'numeric', 
-                          month: '2-digit', 
-                          day: '2-digit' 
-                        })}
-                      </TableCell>
                       <TableCell className="text-center">
                         {!isReadOnly() ? (
                           <Select 
@@ -661,12 +671,11 @@ export default function TransactionsPage({ department = null }) {
                 />
               </div>
               <div>
-                <Label className="text-right block mb-2">{language === 'ar' ? 'التاريخ (هجري)' : 'Date (Hijri)'}</Label>
-                <Input
+                <HijriDateTimePicker
+                  label={language === 'ar' ? 'تاريخ ووقت المعاملة' : 'Transaction Date & Time'}
                   value={formData.transaction_date}
-                  onChange={(e) => setFormData({...formData, transaction_date: e.target.value})}
-                  placeholder="1447/07/16"
-                  className="text-right"
+                  onChange={(date) => setFormData({...formData, transaction_date: date})}
+                  maxDate={new Date()}
                   required
                 />
               </div>
