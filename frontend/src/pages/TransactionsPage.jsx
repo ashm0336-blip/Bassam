@@ -626,6 +626,11 @@ export default function TransactionsPage({ department = null }) {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
+                        <Badge variant="outline" className="font-mono text-sm">
+                          {calculateDuration(transaction)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
                         <div className="flex items-center gap-2 justify-center">
                           {!isReadOnly() && (
                             <Button
