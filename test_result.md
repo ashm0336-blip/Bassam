@@ -233,6 +233,18 @@ backend:
         agent: "testing"
         comment: "✅ FIXED (2026-01-20): Added timezone-awareness check before datetime comparison. Solution: Check if created datetime is timezone-naive (created.tzinfo is None), and if so, make it timezone-aware by adding UTC timezone (created.replace(tzinfo=timezone.utc)). VERIFICATION: GET /api/transactions/stats?department=gates now returns 200 OK with correct statistics: Total=1, Pending=1, In Progress=0, Completed=0. All department statistics endpoints now working correctly."
 
+  - task: "Transaction Management - Add and Edit Functionality"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/TransactionsPage.jsx, /app/frontend/src/components/HijriDateTimePicker.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "⚠️ PARTIALLY WORKING (2026-01-22): Comprehensive testing completed. ✅ WORKING: DateTime Picker with Hijri/Gregorian support excellent, form fields all functional, edit mode loads data correctly, transaction table displays properly. ❌ CRITICAL ISSUE: Duration column ('مدة المعاملة') header exists but cells are EMPTY - no duration values displaying (expected format: '5ي 3س' or '10س 30د'). calculateDuration() function exists (lines 83-117) but values not rendering in UI. ⚠️ MINOR ISSUE: Priority dropdown has modal overlay interception preventing option selection (Radix UI Select component issue). ⚠️ MINOR ISSUE: Login page timeout after logout blocks multi-department testing. IMPACT: Users cannot see transaction duration, which is a core feature. PRIORITY: HIGH - Duration display must be fixed."
+
 frontend:
   - task: "Responsive Design - Mobile Horizontal Scroll"
     implemented: true
