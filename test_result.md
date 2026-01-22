@@ -416,8 +416,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Planning Department - Submenu Navigation Fix"
-    - "Responsive Design - Table Horizontal Scroll Implementation"
+    - "Transaction Management - Add and Edit Functionality"
+    - "Transaction Duration Column Display"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
