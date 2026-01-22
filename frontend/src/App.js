@@ -17,6 +17,7 @@ import GatesDepartment from "@/pages/GatesDepartment";
 import CrowdServicesDepartment from "@/pages/CrowdServicesDepartment";
 import MatafDepartment from "@/pages/MatafDepartment";
 import ReportsPage from "@/pages/ReportsPage";
+import AlertsPage from "@/pages/AlertsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import MapPage from "@/pages/MapPage";
@@ -120,6 +121,7 @@ function AppRoutes() {
           </DepartmentProtectedRoute>
         } />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="alerts" element={<AlertsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
         <Route path="settings" element={<SettingsPage />} />

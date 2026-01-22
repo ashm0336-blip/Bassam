@@ -221,3 +221,4 @@ a:active,
 .interactive:active {
   transform: scale(0.98);
 }
+@import "react-datepicker/dist/react-datepicker.css";
