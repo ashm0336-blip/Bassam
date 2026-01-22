@@ -241,6 +241,14 @@ export default function TransactionsPage({ department = null }) {
   const handleStatusUpdate = async (transactionId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Get transaction to check if it's already completed
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (transaction?.status === "completed") {
+        toast.error(language === 'ar' ? 'لا يمكن تعديل معاملة مكتملة' : 'Cannot modify completed transaction');
+        return;
+      }
+      
       await axios.put(
         `${API}/transactions/${transactionId}`,
         { status: newStatus },
@@ -259,6 +267,14 @@ export default function TransactionsPage({ department = null }) {
   const handlePriorityUpdate = async (transactionId, newPriority) => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Check if transaction is completed
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (transaction?.status === "completed") {
+        toast.error(language === 'ar' ? 'لا يمكن تعديل معاملة مكتملة' : 'Cannot modify completed transaction');
+        return;
+      }
+      
       await axios.put(
         `${API}/transactions/${transactionId}`,
         { priority: newPriority },
@@ -274,6 +290,13 @@ export default function TransactionsPage({ department = null }) {
   };
 
   const handleDelete = async (transactionId) => {
+    // Check if transaction is completed
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction?.status === "completed") {
+      toast.error(language === 'ar' ? 'لا يمكن حذف معاملة مكتملة' : 'Cannot delete completed transaction');
+      return;
+    }
+    
     if (!window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذه المعاملة؟' : 'Are you sure you want to delete this transaction?')) {
       return;
     }
@@ -548,9 +571,10 @@ export default function TransactionsPage({ department = null }) {
               <TableBody>
                 {filteredTransactions.map((transaction) => {
                   const StatusIcon = statusConfig[transaction.status]?.icon || Clock;
+                  const isCompleted = transaction.status === "completed";
                   
                   return (
-                    <TableRow key={transaction.id}>
+                    <TableRow key={transaction.id} className={isCompleted ? "bg-gray-50/50 dark:bg-gray-900/20" : ""}>
                       <TableCell className="text-right font-bold">{transaction.transaction_number}</TableCell>
                       <TableCell className="text-right text-sm">
                         {new Date(transaction.transaction_date).toLocaleDateString('ar-SA', { 
@@ -569,7 +593,7 @@ export default function TransactionsPage({ department = null }) {
                       </TableCell>
                       <TableCell className="text-center text-sm">{transaction.assigned_to}</TableCell>
                       <TableCell className="text-center">
-                        {!isReadOnly() ? (
+                        {!isReadOnly() && !isCompleted ? (
                           <Select 
                             value={transaction.priority} 
                             onValueChange={(v) => handlePriorityUpdate(transaction.id, v)}
@@ -602,7 +626,7 @@ export default function TransactionsPage({ department = null }) {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {!isReadOnly() ? (
+                        {!isReadOnly() && !isCompleted ? (
                           <Select 
                             value={transaction.status} 
                             onValueChange={(v) => handleStatusUpdate(transaction.id, v)}
@@ -632,7 +656,7 @@ export default function TransactionsPage({ department = null }) {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center gap-2 justify-center">
-                          {!isReadOnly() && (
+                          {!isReadOnly() && !isCompleted && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -651,7 +675,7 @@ export default function TransactionsPage({ department = null }) {
                           >
                             {language === 'ar' ? 'التفاصيل' : 'Details'}
                           </Button>
-                          {!isReadOnly() && (
+                          {!isReadOnly() && !isCompleted && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -660,6 +684,11 @@ export default function TransactionsPage({ department = null }) {
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
+                          )}
+                          {isCompleted && (
+                            <Badge variant="outline" className="text-xs text-green-600">
+                              🔒 مؤرشفة
+                            </Badge>
                           )}
                         </div>
                       </TableCell>
