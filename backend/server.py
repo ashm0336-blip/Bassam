@@ -2010,9 +2010,16 @@ async def create_transaction(
     transaction: TransactionCreate,
     user: dict = Depends(get_current_user)
 ):
-    """Create new transaction"""
+    """Create new transaction with validation"""
+    # Validate transaction_date is not in future
+    trans_date = datetime.fromisoformat(transaction.transaction_date.replace('Z', '+00:00'))
+    if trans_date > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="لا يمكن أن يكون تاريخ المعاملة في المستقبل")
+    
     transaction_dict = transaction.model_dump()
     transaction_dict["assigned_by"] = user.get("email")
+    transaction_dict["status"] = "pending"
+    transaction_dict["completed_date"] = None
     
     transaction_obj = Transaction(**transaction_dict)
     doc = transaction_obj.model_dump()
@@ -2028,11 +2035,19 @@ async def update_transaction(
     transaction: TransactionUpdate,
     user: dict = Depends(get_current_user)
 ):
-    """Update transaction"""
+    """Update transaction with auto-complete logic"""
+    existing = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
+    
     update_data = {k: v for k, v in transaction.model_dump().items() if v is not None}
     
-    # If status changed to completed, set completed_date
-    if update_data.get("status") == "completed":
+    # Auto-set completed_date when status changes to completed
+    if update_data.get("status") == "completed" and existing.get("status") != "completed":
+        # Only allow completion if currently "pending" or "in_progress"
+        current_status = existing.get("status")
+        if current_status not in ["pending", "in_progress"]:
+            raise HTTPException(status_code=400, detail="لا يمكن إكمال المعاملة إلا إذا كانت معلقة أو قيد التنفيذ")
         update_data["completed_date"] = datetime.now(timezone.utc).isoformat()
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
