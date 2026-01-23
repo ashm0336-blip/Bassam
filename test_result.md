@@ -582,6 +582,7 @@ test_plan:
     - "Department Settings → Employee Form Integration"
     - "Employee Table Quick Edit - Inline Editing for Shift, Rest Pattern, and Location"
     - "Live Statistics Update When Employee Data Changes"
+    - "Shift Time Column - Dynamic Update in Employee Table"
 
 agent_communication:
   - agent: "testing"
