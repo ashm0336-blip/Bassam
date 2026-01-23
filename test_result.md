@@ -567,6 +567,92 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: |
+      ❌❌❌ CRITICAL RBAC BUG - SIDEBAR MENU PERMISSIONS (2026-01-23) ❌❌❌
+      
+      USER REQUEST: Complete end-to-end test of Mataf department manager experience
+      - Login: manager.mataf@crowd.sa / test123
+      - Test landing page redirect, sidebar menu, department settings, employee management
+      
+      TEST RESULTS SUMMARY:
+      ✅ Login successful
+      ✅ Landing page redirects to /mataf (correct - not dashboard)
+      ✅ Mataf department page loads correctly
+      ✅ Department Settings tab working (/mataf?tab=settings)
+      ✅ Employee Management tab working (/mataf?tab=employees)
+      ✅ Statistics cards displaying correctly
+      ❌ CRITICAL FAILURE: Sidebar menu RBAC violation
+      
+      CRITICAL BUG DETAILS:
+      
+      🔴 SIDEBAR MENU RBAC VIOLATION:
+      - EXPECTED: Department manager should see ONLY:
+        * صحن المطاف (their department)
+        * الإشعارات (public)
+        * الإعدادات (public)
+      - ACTUAL: Sidebar shows:
+        * لوحة التحكم (Dashboard) ❌ FORBIDDEN - should be admin/general manager only
+        * الإشعارات ✅
+        * الإعدادات ✅
+        * صحن المطاف ❌ MISSING - their own department not showing!
+      
+      ROOT CAUSE ANALYSIS:
+      File: /app/backend/server.py
+      Function: get_user_sidebar_menu() (lines 1644-1679)
+      
+      PROBLEM: Backend RBAC filtering IGNORES the 'roles' field in menu items
+      
+      EVIDENCE:
+      1. Dashboard menu item in database has:
+         - admin_only: false
+         - is_public: false
+         - department: null
+         - roles: ['system_admin', 'general_manager'] ← THIS IS IGNORED!
+      
+      2. Backend filtering logic (lines 1656-1677):
+         - Line 1656: Checks admin_only ✅
+         - Line 1660: Checks is_public ✅
+         - Line 1665: Checks department ✅
+         - Lines 1676-1677: Items with department=null fall into 'else' block
+           and are added for ALL users ❌
+         - NEVER checks 'roles' field ❌
+      
+      3. Result: Dashboard item passes all checks and is shown to department managers
+      
+      FIX REQUIRED:
+      In /app/backend/server.py, function get_user_sidebar_menu(), add role-based filtering:
+      
+      After line 1675 (before the else block), add:
+      ```python
+      # Check roles restriction
+      if item.get("roles") and user_role not in item.get("roles"):
+          continue
+      ```
+      
+      This will:
+      - Check if item has a 'roles' field
+      - If yes, verify user's role is in the allowed roles list
+      - Skip the item if user's role is not allowed
+      
+      IMPACT:
+      - SECURITY: Department managers see admin-only pages in sidebar
+      - UX: Users see menu items they cannot access (clicking leads to access denied)
+      - RBAC: Fundamental role-based access control violation
+      - ALL department managers affected (gates, plazas, mataf, planning, crowd_services)
+      
+      PRIORITY: HIGH - This is a P1 security and UX issue
+      
+      ADDITIONAL FINDINGS:
+      ⚠️ Employee status auto-calculation: Could not test because no employee has rest pattern 'الخميس - الجمعة' (today is Friday)
+      ⚠️ Quick edit dropdowns: Not visible in table (may be read-only mode for department manager role)
+      
+      RECOMMENDATION TO MAIN AGENT:
+      1. Fix the RBAC filtering in backend immediately (add roles check)
+      2. Test with all department manager accounts to verify fix
+      3. Consider adding unit tests for RBAC filtering logic
+      4. Review other RBAC checks in codebase for similar issues
+  
+  - agent: "testing"
+    message: |
       ✅✅✅ QUICK EDIT FEATURE COMPLETE - ALL 3 COLUMNS WORKING FOR MATAF (2026-01-23) ✅✅✅
       
       USER REQUEST: Test quick edit from employee table for all 3 columns (shift, rest pattern, location)
