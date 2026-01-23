@@ -475,8 +475,7 @@ metadata:
       - "Reports Page & Export Functionality"
 
 test_plan:
-  current_focus:
-    - "Department Settings Page - Mataf"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
