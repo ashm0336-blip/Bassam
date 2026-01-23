@@ -346,7 +346,7 @@ export default function EmployeeManagement({ department }) {
                             <SelectValue placeholder="الوردية..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {SHIFTS.map((shift) => (
+                            {shifts.map((shift) => (
                               <SelectItem key={shift.value} value={shift.value}>
                                 {shift.label}
                               </SelectItem>
@@ -356,7 +356,10 @@ export default function EmployeeManagement({ department }) {
                       ) : (
                         employee.shift && (
                           <Badge 
-                            className={`${SHIFTS.find(s => s.value === employee.shift)?.color || 'bg-gray-500'} text-white`}
+                            style={{ 
+                              backgroundColor: shifts.find(s => s.value === employee.shift)?.color || '#6b7280' 
+                            }}
+                            className="text-white"
                           >
                             {employee.shift}
                           </Badge>
@@ -373,7 +376,7 @@ export default function EmployeeManagement({ department }) {
                             <SelectValue placeholder="اختر..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {REST_PATTERNS.map((rest) => (
+                            {restPatterns.map((rest) => (
                               <SelectItem key={rest.value} value={rest.value}>
                                 {rest.label}
                               </SelectItem>
