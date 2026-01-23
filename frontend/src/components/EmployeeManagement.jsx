@@ -291,14 +291,6 @@ export default function EmployeeManagement({ department }) {
   };
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   // Calculate statistics dynamically using useMemo (recalculates when dependencies change)
   const statistics = useMemo(() => {
     const totalEmployees = employees.length;
@@ -332,6 +324,14 @@ export default function EmployeeManagement({ department }) {
       restPatternStats
     };
   }, [employees, shifts, coverageLocations, restPatterns]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-full">
