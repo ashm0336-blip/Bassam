@@ -45,7 +45,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-9 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -73,10 +73,6 @@ export default function AdminPage() {
           <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="dropdowns" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <List className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'القوائم' : 'Dropdowns'}</span>
           </TabsTrigger>
           <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Menu className="w-5 h-5" />
@@ -110,10 +106,6 @@ export default function AdminPage() {
 
         <TabsContent value="settings" className="mt-6">
           <SystemSettings />
-        </TabsContent>
-
-        <TabsContent value="dropdowns" className="mt-6">
-          <DropdownManager />
         </TabsContent>
 
         <TabsContent value="sidebar" className="mt-6">
