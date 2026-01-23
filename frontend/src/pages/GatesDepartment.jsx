@@ -468,11 +468,6 @@ export default function GatesDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="gates" />
       )}
-
-      {/* Shifts Tab */}
-      {activeTab === 'shifts' && (
-        <ShiftsCalendar department="gates" />
-      )}
     </div>
   );
 }
