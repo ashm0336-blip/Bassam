@@ -30,10 +30,27 @@ import AdminPage from "@/pages/AdminPage";
 function ConditionalDashboard() {
   const { user } = useAuth();
   
+  // General Manager sees unified dashboard
   if (user?.role === 'general_manager') {
     return <ManagerDashboard />;
   }
   
+  // Department Managers see their department page directly
+  if (user?.role === 'department_manager' && user?.department) {
+    const departmentRoutes = {
+      'planning': '/planning',
+      'gates': '/gates',
+      'plazas': '/plazas',
+      'mataf': '/mataf',
+      'crowd_services': '/crowd-services'
+    };
+    const route = departmentRoutes[user.department];
+    if (route) {
+      return <Navigate to={route} replace />;
+    }
+  }
+  
+  // Admin and others see main dashboard
   return <Dashboard />;
 }
 
