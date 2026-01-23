@@ -160,11 +160,6 @@ export default function CrowdServicesDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="crowd_services" />
       )}
-
-      {/* Shifts Tab */}
-      {activeTab === 'shifts' && (
-        <ShiftsCalendar department="crowd_services" />
-      )}
     </div>
   );
 }

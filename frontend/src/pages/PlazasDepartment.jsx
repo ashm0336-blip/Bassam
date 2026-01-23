@@ -314,11 +314,6 @@ export default function PlazasDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="plazas" />
       )}
-
-      {/* Shifts Tab */}
-      {activeTab === 'shifts' && (
-        <ShiftsCalendar department="plazas" />
-      )}
     </div>
   );
 }
