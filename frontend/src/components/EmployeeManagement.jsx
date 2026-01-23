@@ -468,6 +468,12 @@ export default function EmployeeManagement({ department }) {
                 <TableRow>
                   <TableHead className="text-right">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Clock className="w-4 h-4 text-purple-600" />
+                      <span>{language === 'ar' ? 'وقت الوردية' : 'Shift Time'}</span>
+                    </div>
+                  </TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
