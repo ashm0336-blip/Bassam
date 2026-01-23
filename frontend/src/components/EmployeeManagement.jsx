@@ -84,15 +84,12 @@ export default function EmployeeManagement({ department }) {
   });
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchDepartmentSettings();
-      await fetchEmployees();
-      await fetchStats();
-      if (department === 'gates') {
-        await fetchGates();
-      }
-    };
-    loadData();
+    fetchDepartmentSettings();
+    fetchEmployees();
+    fetchStats();
+    if (department === 'gates') {
+      fetchGates();
+    }
   }, [department]);
 
   const fetchDepartmentSettings = async () => {
@@ -136,19 +133,17 @@ export default function EmployeeManagement({ department }) {
       const dept = department || user?.department;
       const url = dept ? `${API}/employees?department=${dept}` : `${API}/employees`;
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const [employeesRes, restPatternsRes] = await Promise.all([
+        axios.get(url, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/${dept}/settings/rest_patterns`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] }))
+      ]);
       
       // Get today's day name in Arabic
       const today = new Date().toLocaleDateString('ar-SA', { weekday: 'long' }).replace('يوم ', '');
       
-      // Fetch rest patterns to get rest_days
-      const restPatternsRes = await axios.get(`${API}/${dept}/settings/rest_patterns`, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).catch(() => ({ data: [] }));
-      
-      const updatedEmployees = response.data.map(emp => {
+      const updatedEmployees = employeesRes.data.map(emp => {
         if (emp.weekly_rest) {
           // Find the rest pattern for this employee
           const restPattern = restPatternsRes.data.find(r => r.value === emp.weekly_rest);
