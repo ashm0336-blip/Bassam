@@ -548,6 +548,19 @@ export default function EmployeeManagement({ department }) {
                       ))}
                     </SelectContent>
                   </Select>
+                ) : coverageLocations.length > 0 ? (
+                  <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر الموقع...' : 'Select location...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coverageLocations.map((loc) => (
+                        <SelectItem key={loc.value} value={loc.value}>
+                          {loc.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <Input
                     id="location"
@@ -561,6 +574,11 @@ export default function EmployeeManagement({ department }) {
                 {department === 'gates' && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {language === 'ar' ? 'يعرض فقط الأبواب المفتوحة' : 'Shows only open gates'}
+                  </p>
+                )}
+                {coverageLocations.length > 0 && department !== 'gates' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar' ? 'من إعدادات القسم' : 'From department settings'}
                   </p>
                 )}
               </div>
@@ -592,26 +610,26 @@ export default function EmployeeManagement({ department }) {
                 </Select>
               </div>
               
-              {department === 'planning' && (
-                <div>
-                  <Label htmlFor="rest">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</Label>
-                  <Select value={formData.weekly_rest} onValueChange={(value) => setFormData({...formData, weekly_rest: value})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder={language === 'ar' ? 'اختر أيام الراحة...' : 'Select rest days...'} />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {restPatterns.map(rest => (
-                        <SelectItem key={rest.value} value={rest.value}>
-                          {rest.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {language === 'ar' ? 'الحالة ستُحسب تلقائياً حسب أيام الراحة' : 'Status will be calculated automatically'}
-                  </p>
-                </div>
-              )}
+              <div>
+                <Label htmlFor="rest">{language === 'ar' ? 'نمط الراحة' : 'Rest Pattern'}</Label>
+                <Select value={formData.weekly_rest} onValueChange={(value) => setFormData({...formData, weekly_rest: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر نمط الراحة...' : 'Select rest pattern...'} />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {restPatterns.map(rest => (
+                      <SelectItem key={rest.value} value={rest.value}>
+                        {rest.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === 'ar' 
+                    ? 'الحالة (نشط/غير نشط) ستُحسب تلقائياً حسب أيام الراحة' 
+                    : 'Status (active/inactive) will be calculated automatically based on rest days'}
+                </p>
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
