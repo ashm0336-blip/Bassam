@@ -532,6 +532,99 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: |
+      ❌ QUICK EDIT FEATURE INCOMPLETE - SHIFT DROPDOWN NOT AVAILABLE FOR MATAF (2026-01-23)
+      
+      USER REQUEST: Test quick edit from employee table for all 3 columns (shift, rest pattern, location)
+      - Login: manager.mataf@crowd.sa / test123
+      - Employee: بسام اسماعيل غزاوي - 12345
+      - Test shift, rest pattern, and location quick edit
+      
+      TEST RESULTS SUMMARY:
+      ✅ REST PATTERN QUICK EDIT: FULLY WORKING
+      ✅ LOCATION QUICK EDIT: FULLY WORKING
+      ❌ SHIFT QUICK EDIT: NOT WORKING FOR MATAF DEPARTMENT
+      
+      DETAILED FINDINGS:
+      
+      ✅ REST PATTERN QUICK EDIT (WORKING):
+      - Dropdown visible in employee table row ✅
+      - Shows 3 options from department settings: السبت - الأحد, الأربعاء - الخميس, الخميس - الجمعة ✅
+      - Selection works correctly ✅
+      - Success toast 'تم التحديث' appears ✅
+      - PUT /api/employees/{id} API call successful ✅
+      - Data updates in table UI immediately ✅
+      - Data PERSISTS after page reload ✅
+      - Changed from 'الخميس - الجمعة' to 'السبت - الأحد' successfully ✅
+      
+      ✅ LOCATION QUICK EDIT (WORKING):
+      - Dropdown visible in employee table row ✅
+      - Shows 3 options from department settings: صحن المطاف, الدور الأول, السطح ✅
+      - Selection works correctly ✅
+      - Success toast 'تم التحديث' appears ✅
+      - PUT /api/employees/{id} API call successful ✅
+      - Data updates in table UI immediately ✅
+      - Data PERSISTS after page reload ✅
+      - Changed from 'صحن المطاف' to 'السطح' successfully ✅
+      
+      ❌ SHIFT QUICK EDIT (NOT WORKING):
+      - Dropdown NOT visible in employee table row ❌
+      - Shift displayed as plain text 'الثانية' (read-only) ❌
+      - Cannot quick-edit shift from table ❌
+      - Must open full edit dialog to change shift ❌
+      
+      ROOT CAUSE IDENTIFIED:
+      File: /app/frontend/src/components/EmployeeManagement.jsx
+      Line: 340
+      Code: {!isReadOnly() && department === 'planning' ? (
+      
+      ISSUE: The shift dropdown is ONLY enabled for 'planning' department.
+      For all other departments (gates, plazas, mataf, crowd_services), 
+      shift is displayed as a read-only Badge instead of an editable Select dropdown.
+      
+      FIX REQUIRED:
+      Remove the 'department === planning' condition on line 340.
+      
+      BEFORE:
+      {!isReadOnly() && department === 'planning' ? (
+        <Select value={employee.shift || ""} onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}>
+          ...
+        </Select>
+      ) : (
+        <Badge>{employee.shift}</Badge>
+      )}
+      
+      AFTER:
+      {!isReadOnly() ? (
+        <Select value={employee.shift || ""} onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}>
+          ...
+        </Select>
+      ) : (
+        <Badge>{employee.shift}</Badge>
+      )}
+      
+      IMPACT:
+      - Mataf managers cannot quick-edit shift from employee table
+      - Feature is inconsistent (rest pattern and location are editable, but shift is not)
+      - User expectation is that all 3 columns should be quick-editable
+      - This creates a poor user experience
+      
+      PRIORITY: HIGH
+      The feature is 66% complete (2 out of 3 columns working).
+      Shift quick-edit must be enabled for Mataf department to meet requirements.
+      
+      API VERIFICATION:
+      - Total PUT /api/employees requests: 2 (rest pattern + location)
+      - Expected: 3 (shift + rest pattern + location)
+      - Backend handleQuickMove function works correctly for all fields
+      - Issue is purely frontend conditional rendering
+      
+      RECOMMENDATION TO MAIN AGENT:
+      Please remove the department restriction on line 340 to enable shift quick-edit
+      for all departments. The backend already supports this functionality via the
+      handleQuickMove function (lines 258-276).
+  
+  - agent: "testing"
+    message: |
       ✅✅✅ EMPLOYEE DATA PERSISTENCE - CRITICAL BUG FIXED AND VERIFIED (2026-01-23) ✅✅✅
       
       USER'S URGENT REQUEST: Test employee data persistence RIGHT NOW
