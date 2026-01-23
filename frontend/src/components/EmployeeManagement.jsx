@@ -84,12 +84,15 @@ export default function EmployeeManagement({ department }) {
   });
 
   useEffect(() => {
-    fetchEmployees();
-    fetchStats();
-    fetchDepartmentSettings();
-    if (department === 'gates') {
-      fetchGates();
-    }
+    const loadData = async () => {
+      await fetchDepartmentSettings();
+      await fetchEmployees();
+      await fetchStats();
+      if (department === 'gates') {
+        await fetchGates();
+      }
+    };
+    loadData();
   }, [department]);
 
   const fetchDepartmentSettings = async () => {
