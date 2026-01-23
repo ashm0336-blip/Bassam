@@ -6,6 +6,7 @@ import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import TransactionsPage from "@/pages/TransactionsPage";
 import ShiftsCalendar from "@/pages/ShiftsCalendar";
+import DepartmentSettings from "@/pages/DepartmentSettings";
 import { 
   Circle, 
   Clock,
@@ -364,6 +365,11 @@ export default function MatafDepartment() {
       {/* Shifts Tab */}
       {activeTab === 'shifts' && (
         <ShiftsCalendar department="mataf" />
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <DepartmentSettings department="mataf" />
       )}
     </div>
   );
