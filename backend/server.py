@@ -1651,18 +1651,26 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     user_dept = user.get("department")
     
     filtered_items = []
+    accessible_parent_ids = set()
+    
+    # First pass: Filter parent items and collect accessible parent IDs
     for item in items:
+        # Skip submenu items in first pass
+        if item.get("parent_id"):
+            continue
+            
         # Admin-only items
         if item.get("admin_only") and user_role != "system_admin":
             continue
         
-        # Check roles restriction (new - critical for RBAC)
+        # Check roles restriction
         if item.get("roles") and user_role not in item.get("roles"):
             continue
         
         # Public items accessible to all
         if item.get("is_public"):
             filtered_items.append(item)
+            accessible_parent_ids.add(item.get("id"))
             continue
         
         # Department-specific items
@@ -1670,15 +1678,27 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             # Check if user can access this department
             if user_role == "system_admin":
                 filtered_items.append(item)
+                accessible_parent_ids.add(item.get("id"))
             elif user_role == "general_manager":
                 filtered_items.append(item)
+                accessible_parent_ids.add(item.get("id"))
             elif user_role == "monitoring_team":
                 filtered_items.append(item)
+                accessible_parent_ids.add(item.get("id"))
             elif user_role == "department_manager" and user_dept == item.get("department"):
                 filtered_items.append(item)
+                accessible_parent_ids.add(item.get("id"))
         else:
             # No department restriction
             filtered_items.append(item)
+            accessible_parent_ids.add(item.get("id"))
+    
+    # Second pass: Add submenu items only if parent is accessible
+    for item in items:
+        if item.get("parent_id"):
+            # Only add submenu if parent is accessible
+            if item.get("parent_id") in accessible_parent_ids:
+                filtered_items.append(item)
     
     return filtered_items
 
