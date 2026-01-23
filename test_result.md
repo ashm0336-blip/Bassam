@@ -3075,3 +3075,102 @@ test_plan:
     - "Sidebar Menu Structure - Shifts Tab Removed"
     - "Admin Panel - Dropdowns Tab Removed"
 
+  - agent: "testing"
+    message: |
+      ❌❌❌ CRITICAL INTEGRATION BUG - Department Settings → Employee Form (2026-01-23) ❌❌❌
+      
+      USER REQUEST: Complete Integration Test - Department Settings → Employee Management
+      Test that employee form uses ALL settings from department configuration.
+      
+      TEST RESULTS: ❌ INTEGRATION BROKEN - P0 BLOCKER
+      
+      WHAT WAS TESTED:
+      ✅ STEP 1: Login as admin@crowd.sa/admin123 - SUCCESS
+      ✅ STEP 2: Navigate to /mataf?tab=settings - SUCCESS
+      ✅ STEP 3: Add 2nd shift "الوردية الليلية" (value=night_shift, start=22:00, end=06:00, color=#ef4444) - SUCCESS
+      ✅ STEP 4: Add 2nd rest pattern "الخميس - الجمعة" (value=thu_fri) - SUCCESS
+      ✅ STEP 5: Add 2nd location "السطح" (value=roof) - SUCCESS
+      ✅ STEP 6: Navigate to /mataf?tab=employees - SUCCESS
+      ✅ STEP 7: Click "موظف جديد" button - SUCCESS
+      ❌ STEP 8: Verify shift dropdown has ALL shifts - FAILED
+      ❌ STEP 9: Verify rest pattern dropdown has ALL patterns - FAILED
+      ✅ STEP 10: Verify location dropdown has ALL locations - SUCCESS
+      
+      CRITICAL BUG IDENTIFIED:
+      
+      ❌ SHIFT DROPDOWN SHOWS WRONG DATA:
+         Expected: الوردية الصباحية, الوردية المسائية, الوردية الليلية (SHIFTS)
+         Actual: الدور الأرضي, الدور الأول, الدور الأول, السطح (LOCATIONS!)
+      
+      ❌ REST PATTERN DROPDOWN SHOWS WRONG DATA:
+         Expected: السبت - الأحد, الأربعاء - الخميس, الخميس - الجمعة (REST PATTERNS)
+         Actual: الدور الأرضي, الدور الأول, الدور الأول, السطح (LOCATIONS!)
+      
+      ✅ LOCATION DROPDOWN SHOWS CORRECT DATA:
+         Expected: الدور الأرضي, الدور الأول, السطح (LOCATIONS)
+         Actual: الدور الأرضي, الدور الأول, الدور الأول, السطح (CORRECT)
+      
+      ROOT CAUSE ANALYSIS:
+      
+      1. BACKEND APIs ARE WORKING CORRECTLY:
+         ✅ GET /api/mataf/settings/shifts returns 5 shifts (including الوردية الليلية)
+         ✅ GET /api/mataf/settings/rest_patterns returns 4 patterns (including الخميس - الجمعة)
+         ✅ GET /api/mataf/settings/coverage_locations returns 4 locations (including السطح)
+      
+      2. REACT DUPLICATE KEY ERRORS IN CONSOLE:
+         ❌ Error: "Encountered two children with the same key, first_floor" (22+ times)
+         ❌ Error: "Encountered two children with the same key, evening" (12+ times)
+         ❌ Error: "Encountered two children with the same key, wed_thu" (6+ times)
+      
+      3. DATABASE HAS DUPLICATE VALUES:
+         - 3 shifts with value="evening" (IDs: 9d5ea07a, af215e99, f3721789)
+         - 2 rest patterns with value="wed_thu" (IDs: 59da6ee7, 97ff5dc6)
+         - 2 locations with value="first_floor" (IDs: 54a1f0cd, 0e5537a7)
+      
+      4. FRONTEND CODE ISSUE:
+         File: /app/frontend/src/components/EmployeeManagement.jsx
+         
+         Line 594: <SelectItem key={shift.value} value={shift.value}>
+         Line 621: <SelectItem key={rest.value} value={rest.value}>
+         Line 558: <SelectItem key={loc.value} value={loc.value}>
+         
+         Problem: Using 'value' as key causes React to only render ONE item per unique value.
+         When there are duplicates, React cannot distinguish between them, causing rendering issues.
+      
+      FIX REQUIRED:
+      
+      Change SelectItem keys from 'value' to 'id' in EmployeeManagement.jsx:
+      
+      Line 594: <SelectItem key={shift.id} value={shift.value}>
+      Line 621: <SelectItem key={rest.id} value={rest.value}>
+      Line 558: <SelectItem key={loc.id} value={loc.value}>
+      
+      This will ensure each SelectItem has a unique key (the database ID) while still using the value field for the actual form value.
+      
+      IMPACT:
+      
+      ❌ Users CANNOT create employees with correct shift/rest pattern data
+      ❌ Dropdowns show completely wrong options (locations instead of shifts/rest patterns)
+      ❌ Integration between Department Settings and Employee Management is COMPLETELY BROKEN
+      ❌ This is a P0 BLOCKER - the feature is unusable
+      
+      ADDITIONAL ISSUE - DUPLICATE DATA IN DATABASE:
+      
+      The database has duplicate entries with the same 'value' field:
+      - Multiple shifts with value="evening"
+      - Multiple rest patterns with value="wed_thu"
+      - Multiple locations with value="first_floor"
+      
+      This suggests the Department Settings page is creating duplicate entries instead of updating existing ones.
+      This should also be investigated and fixed to prevent data pollution.
+      
+      RECOMMENDATION TO MAIN AGENT:
+      
+      1. IMMEDIATE FIX: Change SelectItem keys from 'value' to 'id' in EmployeeManagement.jsx (lines 558, 594, 621)
+      2. SECONDARY FIX: Investigate why Department Settings is creating duplicate entries
+      3. DATA CLEANUP: Remove duplicate entries from department_settings collection
+      4. RETEST: After fixes, rerun the integration test to verify employee form loads correct data
+      
+      PRIORITY: CRITICAL - P0 BLOCKER
+      
+      STATUS: ❌ INTEGRATION TEST FAILED - FEATURE BROKEN
