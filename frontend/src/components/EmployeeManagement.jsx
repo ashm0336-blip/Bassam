@@ -526,6 +526,22 @@ export default function EmployeeManagement({ department }) {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
+                      {(() => {
+                        const shiftData = shifts.find(s => s.value === employee.shift);
+                        if (shiftData && shiftData.start_time && shiftData.end_time) {
+                          return (
+                            <Badge 
+                              className="bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-100 flex items-center gap-1.5 justify-center px-3 py-1.5"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span className="font-medium">{shiftData.start_time} - {shiftData.end_time}</span>
+                            </Badge>
+                          );
+                        }
+                        return <span className="text-muted-foreground text-xs">-</span>;
+                      })()}
+                    </TableCell>
+                    <TableCell className="text-center">
                       {!isReadOnly() ? (
                         <Select 
                           value={employee.weekly_rest || ""} 
