@@ -169,6 +169,9 @@ class EmployeeCreate(BaseModel):
     department: str  # planning, plazas, gates, crowd_services, mataf
     location: str  # موقع التغطية
     shift: str  # الوردية: صباحية، مسائية، ليلية
+    employee_number: Optional[str] = None
+    weekly_rest: Optional[str] = None
+    work_tasks: Optional[str] = None
     is_active: bool = True
 
 class EmployeeUpdate(BaseModel):
@@ -176,6 +179,9 @@ class EmployeeUpdate(BaseModel):
     job_title: Optional[str] = None
     location: Optional[str] = None
     shift: Optional[str] = None
+    employee_number: Optional[str] = None
+    weekly_rest: Optional[str] = None
+    work_tasks: Optional[str] = None
     is_active: Optional[bool] = None
 
 class StatusCheck(BaseModel):
