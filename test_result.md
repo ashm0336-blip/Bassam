@@ -2820,3 +2820,48 @@ agent_communication:
       5. Clean up the 2 test employees created without employee_number field
       
       This confirms the user's report and identifies the exact root cause. The fix is straightforward - just add the missing fields to the Pydantic models.
+  
+  - agent: "testing"
+    message: |
+      CRITICAL P0 BUG - DEPARTMENT SETTINGS FEATURE COMPLETELY BROKEN (2026-01-23)
+      
+      USER REQUEST: Test Department Settings page for Mataf department
+      - Add shift with all fields
+      - Add rest pattern
+      - Add coverage location
+      - Verify data persists
+      
+      TEST RESULTS: FEATURE COMPLETELY NON-FUNCTIONAL
+      
+      ROOT CAUSE IDENTIFIED:
+      In /app/backend/server.py, Department Settings Routes (lines 2260-2340) are defined AFTER app.include_router(api_router) on line 2238.
+      This means ALL Department Settings endpoints are NEVER registered with FastAPI.
+      
+      FAILED ENDPOINTS (All return 404):
+      - GET /api/{department}/settings/{setting_type}  (line 2261)
+      - POST /api/{department}/settings  (line 2276)
+      - PUT /api/{department}/settings/{setting_id}  (line 2301)
+      - DELETE /api/{department}/settings/{setting_id}  (line 2326)
+      
+      EVIDENCE:
+      1. Console logs show repeated 404 errors for all settings endpoints
+      2. Direct API test: curl GET /api/mataf/settings/shifts returns {"detail":"Not Found"}
+      3. Frontend UI is PERFECT (all tabs, buttons, dialogs, forms work correctly)
+      4. Backend routes are DEFINED but NOT REGISTERED (defined after router inclusion)
+      
+      FIX REQUIRED:
+      Move app.include_router(api_router) from line 2238 to AFTER line 2340 (after all routes are defined).
+      This is a 1-line change that will fix the entire Department Settings feature.
+      
+      IMPACT:
+      - P0 BLOCKER: Department Settings feature is 100% non-functional
+      - Affects ALL departments (mataf, planning, gates, plazas, crowd_services)
+      - Users cannot view, add, edit, or delete any settings
+      
+      TESTING COMPLETED:
+      - Login as admin successful
+      - Navigate to /mataf?tab=settings successful
+      - All 3 tabs load correctly (الورديات، أنماط الراحة، مواقع التغطية)
+      - Add dialogs open and forms work
+      - BUT: All API calls fail with 404
+      - No data can be saved or retrieved
