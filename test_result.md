@@ -487,6 +487,58 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: |
+      ✅✅✅ EMPLOYEE DATA PERSISTENCE - CRITICAL BUG FIXED AND VERIFIED (2026-01-23) ✅✅✅
+      
+      USER'S URGENT REQUEST: Test employee data persistence RIGHT NOW
+      - User was very frustrated and about to cancel subscription
+      - Issue: Employee data (employee_number, shift, weekly_rest) disappearing after page reload
+      
+      TEST RESULTS: 🎉 SUCCESS - ALL DATA PERSISTS CORRECTLY 🎉
+      
+      BACKEND FIX VERIFIED:
+      ✅ EmployeeCreate model (lines 166-175) now includes:
+         - employee_number: Optional[str] = None
+         - weekly_rest: Optional[str] = None
+         - work_tasks: Optional[str] = None
+      ✅ EmployeeUpdate model (lines 177-185) also updated with these fields
+      
+      COMPREHENSIVE UI TEST COMPLETED:
+      ✅ Login as manager.planning@crowd.sa / test123
+      ✅ Navigate to Planning → Employees tab
+      ✅ Click "إضافة موظف جديد" (Add New Employee)
+      ✅ Fill ALL fields:
+         - Name: "اختبار نهائي"
+         - Employee Number: "88888"
+         - Job Title: "موظف اختبار"
+         - Location: "المكتب الرئيسي"
+         - Shift: "الثانية"
+         - Weekly Rest: "السبت - الأحد"
+         - Work Tasks: "مهام اختبارية"
+      ✅ Click Save - Success toast displayed
+      ✅ Employee appears in table with ALL data visible
+      ✅ CRITICAL: Reload page (F5)
+      ✅ After reload: Employee 88888 STILL FOUND with ALL fields intact
+      ✅ Backend API verification: All fields correctly saved in database
+      
+      EVIDENCE OF SUCCESS:
+      - Employee visible in UI table after save ✅
+      - Employee visible in UI table after reload ✅
+      - API response confirms all fields saved:
+        * employee_number: "88888" ✅
+        * shift: "الثانية" ✅
+        * weekly_rest: "السبت - الأحد" ✅
+        * work_tasks: "مهام اختبارية" ✅
+      
+      CONCLUSION:
+      The critical bug is COMPLETELY FIXED. Employee data now persists correctly after page reload.
+      User's issue is RESOLVED. The fix is working perfectly in production.
+      
+      RECOMMENDATION TO MAIN AGENT:
+      Please summarize this success to the user and finish the task. The user was very frustrated,
+      so emphasize that the issue is now completely resolved and all employee data persists correctly.
+  
+  - agent: "testing"
+    message: |
       COMPREHENSIVE TRANSACTION MANAGEMENT TESTING COMPLETED (2026-01-22)
       
       ✅ CORE FUNCTIONALITY WORKING - MINOR ISSUES FOUND
