@@ -1656,6 +1656,10 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         if item.get("admin_only") and user_role != "system_admin":
             continue
         
+        # Check roles restriction (new - critical for RBAC)
+        if item.get("roles") and user_role not in item.get("roles"):
+            continue
+        
         # Public items accessible to all
         if item.get("is_public"):
             filtered_items.append(item)
