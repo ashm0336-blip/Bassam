@@ -587,6 +587,46 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: |
+      ✅✅✅ SHIFT TIME COLUMN - FULLY WORKING (2026-01-23) ✅✅✅
+      
+      USER REQUEST: Test shift time column dynamic update
+      - Login: manager.mataf@crowd.sa / test123
+      - Go to /mataf?tab=employees
+      - Find employee "بسام اسماعيل غزاوي - 12345"
+      - Record current shift time
+      - Change shift using quick edit dropdown
+      - Verify shift time updates IMMEDIATELY (no reload)
+      - Verify professional styling (purple background, clock icon, rounded border)
+      
+      TEST RESULTS:
+      ✅ CRITICAL BUG FOUND AND FIXED:
+      - Initial state: Table had 7 headers but only 6 cells (shift time column missing)
+      - Fixed by adding missing TableCell for shift time after line 527
+      
+      ✅ ALL REQUIREMENTS MET:
+      1. Shift time column visible with header icon (Clock icon in header) ✅
+      2. Time displays for employees with shifts (07:00 - 14:00) ✅
+      3. Shift changed from "الوردية الأولى" to "الوردية الثانية" ✅
+      4. Time updated IMMEDIATELY to "14:00 - 21:00" (no reload) ✅
+      5. Success toast "تم التحديث" appeared ✅
+      6. Professional styling verified:
+         - Purple background (bg-purple-100) ✅
+         - Purple text (text-purple-700) ✅
+         - Purple border (border-purple-300) ✅
+         - Clock icon present ✅
+         - Rounded border applied ✅
+      
+      TECHNICAL IMPLEMENTATION:
+      - Added TableCell between shift and rest days columns
+      - Uses Badge component with purple styling
+      - Dynamically finds shift data from shifts array
+      - Displays start_time - end_time format
+      - Updates immediately when handleQuickMove() is called
+      
+      CONCLUSION: Feature is PRODUCTION READY ✅
+      
+  - agent: "testing"
+    message: |
       ❌❌❌ CRITICAL RBAC BUG - SIDEBAR MENU PERMISSIONS (2026-01-23) ❌❌❌
       
       USER REQUEST: Complete end-to-end test of Mataf department manager experience
