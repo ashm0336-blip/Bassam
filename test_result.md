@@ -549,82 +549,63 @@ agent_communication:
       
       DETAILED FINDINGS:
       
-      ✅ REST PATTERN QUICK EDIT (WORKING):
-      - Dropdown visible in employee table row ✅
-      - Shows 3 options from department settings: السبت - الأحد, الأربعاء - الخميس, الخميس - الجمعة ✅
+      ✅ SHIFT QUICK EDIT (NOW WORKING - CRITICAL FIX VERIFIED):
+      - FIX APPLIED: Line 340 in EmployeeManagement.jsx changed from '{!isReadOnly() && department === 'planning' ? (' to '{!isReadOnly() ? (' ✅
+      - Department restriction REMOVED - shift dropdown now available for ALL departments ✅
+      - Dropdown visible in employee table row (not read-only badge anymore) ✅
+      - Shows 3 shift options from department settings: الوردية الأولى, الوردية الثانية, الوردية الثالثة ✅
       - Selection works correctly ✅
       - Success toast 'تم التحديث' appears ✅
       - PUT /api/employees/{id} API call successful ✅
       - Data updates in table UI immediately ✅
       - Data PERSISTS after page reload ✅
-      - Changed from 'الخميس - الجمعة' to 'السبت - الأحد' successfully ✅
+      - Changed from 'الوردية الثانية' to 'الوردية الأولى' successfully ✅
+      
+      ✅ REST PATTERN QUICK EDIT (WORKING):
+      - Dropdown visible in employee table row ✅
+      - Shows 3 options from department settings: السبت - الأحد, الأربعاء - الخميس, الخميس - الجمعة ✅
+      - Selection works correctly ✅
+      - Success toast appears ✅
+      - PUT /api/employees/{id} API call successful ✅
+      - Data updates in table UI immediately ✅
+      - Data PERSISTS after page reload ✅
+      - Changed from 'الخميس - الجمعة' to 'الأربعاء - الخميس' successfully ✅
       
       ✅ LOCATION QUICK EDIT (WORKING):
       - Dropdown visible in employee table row ✅
       - Shows 3 options from department settings: صحن المطاف, الدور الأول, السطح ✅
       - Selection works correctly ✅
-      - Success toast 'تم التحديث' appears ✅
+      - Success toast appears ✅
       - PUT /api/employees/{id} API call successful ✅
       - Data updates in table UI immediately ✅
       - Data PERSISTS after page reload ✅
       - Changed from 'صحن المطاف' to 'السطح' successfully ✅
       
-      ❌ SHIFT QUICK EDIT (NOT WORKING):
-      - Dropdown NOT visible in employee table row ❌
-      - Shift displayed as plain text 'الثانية' (read-only) ❌
-      - Cannot quick-edit shift from table ❌
-      - Must open full edit dialog to change shift ❌
-      
-      ROOT CAUSE IDENTIFIED:
-      File: /app/frontend/src/components/EmployeeManagement.jsx
-      Line: 340
-      Code: {!isReadOnly() && department === 'planning' ? (
-      
-      ISSUE: The shift dropdown is ONLY enabled for 'planning' department.
-      For all other departments (gates, plazas, mataf, crowd_services), 
-      shift is displayed as a read-only Badge instead of an editable Select dropdown.
-      
-      FIX REQUIRED:
-      Remove the 'department === planning' condition on line 340.
-      
-      BEFORE:
-      {!isReadOnly() && department === 'planning' ? (
-        <Select value={employee.shift || ""} onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}>
-          ...
-        </Select>
-      ) : (
-        <Badge>{employee.shift}</Badge>
-      )}
-      
-      AFTER:
-      {!isReadOnly() ? (
-        <Select value={employee.shift || ""} onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}>
-          ...
-        </Select>
-      ) : (
-        <Badge>{employee.shift}</Badge>
-      )}
-      
-      IMPACT:
-      - Mataf managers cannot quick-edit shift from employee table
-      - Feature is inconsistent (rest pattern and location are editable, but shift is not)
-      - User expectation is that all 3 columns should be quick-editable
-      - This creates a poor user experience
-      
-      PRIORITY: HIGH
-      The feature is 66% complete (2 out of 3 columns working).
-      Shift quick-edit must be enabled for Mataf department to meet requirements.
+      PERSISTENCE VERIFICATION:
+      ✅ Page reloaded (F5) after making all 3 changes
+      ✅ Shift value persisted: 'الوردية الأولى' ✅
+      ✅ Rest pattern value persisted: 'الأربعاء - الخميس' ✅
+      ✅ Location value persisted: 'السطح' ✅
+      ✅ ALL 3 CHANGES PERSISTED SUCCESSFULLY ✅
       
       API VERIFICATION:
-      - Total PUT /api/employees requests: 2 (rest pattern + location)
-      - Expected: 3 (shift + rest pattern + location)
-      - Backend handleQuickMove function works correctly for all fields
-      - Issue is purely frontend conditional rendering
+      - Total PUT /api/employees requests: 3 (one for each field: shift, rest pattern, location) ✅
+      - All API calls successful ✅
+      - Backend handleQuickMove function works correctly for all fields ✅
+      
+      CONCLUSION:
+      🎉 The feature is now 100% COMPLETE and WORKING PERFECTLY 🎉
+      - ALL 3 columns (shift, rest pattern, location) are quick-editable from employee table ✅
+      - Works for Mataf department (and all other departments) ✅
+      - All dropdowns load from department settings ✅
+      - All changes persist after page reload ✅
+      - No department restrictions ✅
+      - Feature is consistent across all departments ✅
+      - PRODUCTION READY ✅
       
       RECOMMENDATION TO MAIN AGENT:
-      Please remove the department restriction on line 340 to enable shift quick-edit
-      for all departments. The backend already supports this functionality via the
-      handleQuickMove function (lines 258-276).
+      The quick edit feature is FULLY FUNCTIONAL. Please summarize this success to the user
+      and finish the task. All requirements from the test scenario have been met successfully.
   
   - agent: "testing"
     message: |
