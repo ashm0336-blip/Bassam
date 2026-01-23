@@ -218,6 +218,44 @@ class DropdownOptionUpdate(BaseModel):
     order: Optional[int] = None
     is_active: Optional[bool] = None
 
+
+# ============= Department Settings Models =============
+class DepartmentSetting(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    department: str  # mataf, planning, gates, plazas, crowd_services
+    setting_type: str  # shifts, rest_patterns, coverage_locations
+    value: str
+    label: str
+    description: Optional[str] = None
+    color: Optional[str] = None
+    start_time: Optional[str] = None  # للورديات فقط
+    end_time: Optional[str] = None    # للورديات فقط
+    order: int = 0
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class DepartmentSettingCreate(BaseModel):
+    department: str
+    setting_type: str
+    value: str
+    label: str
+    description: Optional[str] = None
+    color: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    order: int = 0
+
+class DepartmentSettingUpdate(BaseModel):
+    value: Optional[str] = None
+    label: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+
 # ============= Sidebar Menu Models =============
 class SidebarMenuItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
