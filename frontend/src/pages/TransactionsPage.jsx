@@ -17,7 +17,8 @@ import {
   AlertCircle,
   XCircle,
   Edit,
-  Trash2
+  Trash2,
+  Timer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -612,7 +613,12 @@ export default function TransactionsPage({ department = null }) {
                   <TableHead className="text-center">{language === 'ar' ? 'المستلم' : 'Assigned'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الأولوية' : 'Priority'}</TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'مدة المعاملة' : 'Duration'}</TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Timer className="w-4 h-4 text-primary" />
+                      <span>{language === 'ar' ? 'مدة المعاملة' : 'Duration'}</span>
+                    </div>
+                  </TableHead>
                   <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
