@@ -1048,6 +1048,99 @@ agent_communication:
       • Missing: Plazas and Mataf export cards ⚠️
       • ROOT CAUSE: Backend APIs return empty data (plazas.length=0, mataf.length=0)
       • This is NOT a bug - export cards only show when data exists
+  
+  - agent: "testing"
+    message: |
+      ✅✅✅ DEPARTMENT SETTINGS FEATURE - FULLY WORKING (2026-01-23) ✅✅✅
+      
+      USER REQUEST: Test Department Settings page - Add shift, rest pattern, and location
+      
+      TEST RESULTS: 🎉 ALL TESTS PASSED - 100% SUCCESS RATE 🎉
+      
+      BACKEND FIX VERIFIED:
+      ✅ Routes now properly registered (lines 2237-2322 defined BEFORE app.include_router on line 2326)
+      ✅ All API endpoints working correctly
+      ✅ No 404 errors detected
+      
+      COMPREHENSIVE UI TESTING COMPLETED:
+      
+      ✅ TEST 1: LOGIN
+      - Login as admin@crowd.sa / admin123 successful
+      - Redirected to dashboard
+      
+      ✅ TEST 2: NAVIGATION
+      - Navigate to /mataf?tab=settings successful
+      - Page loads with title "إعدادات القسم"
+      - All 3 tabs visible: الورديات، أنماط الراحة، مواقع التغطية
+      
+      ✅ TEST 3: TAB 1 - SHIFTS (الورديات)
+      - Tab clickable ✅
+      - GET /api/mataf/settings/shifts returns 200 OK (7 successful calls) ✅
+      - "إضافة وردية" button opens dialog ✅
+      - Form filled with all fields:
+        * Label: "الوردية الصباحية"
+        * Value: "morning"
+        * Start Time: "06:00"
+        * End Time: "12:00"
+        * Color: "#3b82f6" (Blue)
+        * Order: 1
+      - POST /api/mataf/settings successful (200 OK) ✅
+      - Success toast "تم الإضافة بنجاح" displayed ✅
+      - Shift appears in table with correct data ✅
+        * Label: الوردية الصباحية
+        * Time: 06:00 - 12:00
+      - Color badge displayed correctly ✅
+      
+      ✅ TEST 4: TAB 2 - REST PATTERNS (أنماط الراحة)
+      - Tab clickable ✅
+      - GET /api/mataf/settings/rest_patterns returns 200 OK (7 successful calls) ✅
+      - "إضافة نمط راحة" button opens dialog ✅
+      - Form filled:
+        * Label: "السبت - الأحد"
+        * Value: "sat_sun"
+      - POST successful ✅
+      - Rest pattern appears in table ✅
+      
+      ✅ TEST 5: TAB 3 - COVERAGE LOCATIONS (مواقع التغطية)
+      - Tab clickable ✅
+      - GET /api/mataf/settings/coverage_locations returns 200 OK (7 successful calls) ✅
+      - "إضافة موقع" button opens dialog ✅
+      - Form filled:
+        * Label: "الدور الأرضي"
+        * Value: "ground_floor"
+      - POST successful ✅
+      - Location appears in table ✅
+      
+      ✅ TEST 6: DATA PERSISTENCE
+      - Page reloaded (F5) ✅
+      - Shift data PERSISTED after reload ✅
+      - Rest pattern data PERSISTED after reload ✅
+      - Location data PERSISTED after reload ✅
+      
+      API CALL SUMMARY:
+      - GET /mataf/settings/shifts: 7 calls (all 200 OK)
+      - GET /mataf/settings/rest_patterns: 7 calls (all 200 OK)
+      - GET /mataf/settings/coverage_locations: 7 calls (all 200 OK)
+      - POST /mataf/settings: 3 calls (all 200 OK)
+      
+      ERROR CHECKS:
+      ✅ Zero console errors
+      ✅ Zero 404 errors
+      ✅ All API calls return 200 OK
+      
+      SCREENSHOTS CAPTURED:
+      - settings_page_initial.png: Initial page load with 3 tabs
+      - shifts_tab_after_add.png: Shift added successfully with toast notification
+      - rest_patterns_tab_after_add.png: Rest pattern added successfully
+      - locations_tab_after_add.png: Location added successfully
+      - final_state_after_reload.png: All data persisted after page reload
+      
+      CONCLUSION:
+      All requirements from test scenario met successfully. Department Settings feature is FULLY FUNCTIONAL and PRODUCTION READY.
+      
+      RECOMMENDATION TO MAIN AGENT:
+      Please summarize this success to the user and finish the task. All APIs are working correctly, data persists properly, and the UI is functioning perfectly.
+
       • RBAC logic is working correctly ✅
       
       ⚠️ TEST 3: GENERAL MANAGER (test.general@crowd.sa)
