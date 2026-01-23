@@ -247,6 +247,18 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ DATE MIGRATION FIX VERIFIED (2026-01-23): P0 critical fix is WORKING CORRECTLY. Tested transaction #12345 with status 'قيد الانتظار' (Pending) in Gates department. ✅ EDIT FUNCTIONALITY: Edit button clicked successfully, edit modal opened without any RangeError crashes. ✅ DATE PICKER: Displays correctly with valid date (2026/01/22 22:20), shows both Hijri (1447/08/03) and Gregorian (٢٢‏/١‏/٢٠٢٦) formats. ✅ FORM PRE-FILL: All fields pre-filled correctly (transaction number: 12345, subject: موضوع معين, assigned to: بسام). ✅ SAVE OPERATION: Transaction saved successfully with toast notification 'تم تحديث المعاملة بنجاح'. Backend verification confirms updated_at timestamp changed. ✅ NO CONSOLE ERRORS: Zero console errors or RangeError exceptions detected. The date migration fix successfully handles old transaction dates without crashes. Old transactions can now be edited safely."
+  
+  - task: "Transaction Duration Column Display"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/TransactionsPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ DURATION DISPLAY FEATURE FULLY WORKING (2026-01-23): Comprehensive testing completed for Gates Department transactions. ✅ COLUMN HEADER: Timer icon (⏱️) displayed correctly in header with 'مدة المعاملة' text. ✅ TRANSACTION 1 (12345 - Pending): Duration badge showing '10 ساعة و 54 دقيقة' with ⚡ icon, emerald/green color (fast), professional rounded border styling. ✅ TRANSACTION 2 (T-GATES-001 - Completed): Duration badge showing '2 يوم و 22 ساعة' with ⏱️ icon, blue color (medium), professional rounded border styling. ✅ STYLING: All badges have proper color-coded backgrounds (emerald for fast, blue for medium, amber for warning, red for critical), rounded borders, and appropriate icons (⚡, ⏱️, ⚠️, 🔥). ✅ ARABIC TEXT: Duration text displays correctly in Arabic format with proper time units (يوم، ساعة، دقيقة). ✅ DURATION CALCULATION: Correctly calculates duration from transaction_date to now for pending transactions, and from transaction_date to completed_date for completed transactions. ✅ API CALLS: GET /api/transactions?department=gates and GET /api/transactions/stats?department=gates working correctly. ✅ NO ERRORS: Zero console errors detected. All requirements from test scenario met successfully."
 
 frontend:
   - task: "Responsive Design - Mobile Horizontal Scroll"
