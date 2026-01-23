@@ -337,7 +337,7 @@ export default function EmployeeManagement({ department }) {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      {!isReadOnly() && department === 'planning' ? (
+                      {!isReadOnly() ? (
                         <Select 
                           value={employee.shift || ""} 
                           onValueChange={(v) => handleQuickMove(employee.id, 'shift', v)}
@@ -347,8 +347,14 @@ export default function EmployeeManagement({ department }) {
                           </SelectTrigger>
                           <SelectContent>
                             {shifts.map((shift) => (
-                              <SelectItem key={shift.value} value={shift.value}>
-                                {shift.label}
+                              <SelectItem key={shift.id} value={shift.value}>
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-3 h-3 rounded-full" 
+                                    style={{ backgroundColor: shift.color }}
+                                  />
+                                  {shift.label}
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
