@@ -291,8 +291,127 @@ export default function EmployeeManagement({ department }) {
     );
   }
 
+  // Calculate statistics dynamically
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter(e => e.is_active).length;
+  const inactiveEmployees = employees.filter(e => !e.is_active).length;
+  
+  // Stats by shift
+  const shiftStats = shifts.map(shift => ({
+    ...shift,
+    count: employees.filter(e => e.shift === shift.value).length
+  }));
+  
+  // Stats by location
+  const locationStats = coverageLocations.map(loc => ({
+    ...loc,
+    count: employees.filter(e => e.location === loc.value).length
+  }));
+  
+  // Stats by rest pattern
+  const restPatternStats = restPatterns.map(rest => ({
+    ...rest,
+    count: employees.filter(e => e.weekly_rest === rest.value).length
+  }));
+
   return (
     <div className="space-y-6 max-w-full">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Status Stats */}
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-right">
+                <p className="text-xs text-blue-700">{language === 'ar' ? 'إجمالي الموظفين' : 'Total Employees'}</p>
+                <p className="text-3xl font-cairo font-bold text-blue-900">{totalEmployees}</p>
+              </div>
+              <Users className="w-10 h-10 text-blue-600" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200">
+              <div className="text-center">
+                <UserCheck className="w-4 h-4 mx-auto text-green-600 mb-1" />
+                <p className="text-lg font-bold text-green-600">{activeEmployees}</p>
+                <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'نشط' : 'Active'}</p>
+              </div>
+              <div className="text-center">
+                <UserX className="w-4 h-4 mx-auto text-gray-600 mb-1" />
+                <p className="text-lg font-bold text-gray-600">{inactiveEmployees}</p>
+                <p className="text-[10px] text-muted-foreground">{language === 'ar' ? 'غير نشط' : 'Inactive'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shift Stats */}
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-right">
+                <p className="text-xs text-purple-700">{language === 'ar' ? 'توزيع الورديات' : 'Shift Distribution'}</p>
+              </div>
+              <Clock className="w-10 h-10 text-purple-600" />
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-purple-200">
+              {shiftStats.slice(0, 3).map(shift => (
+                <div key={shift.id} className="text-center">
+                  <div 
+                    className="w-3 h-3 rounded-full mx-auto mb-1" 
+                    style={{ backgroundColor: shift.color }}
+                  />
+                  <p className="text-lg font-bold" style={{ color: shift.color }}>{shift.count}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{shift.label}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location Stats */}
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-right">
+                <p className="text-xs text-green-700">{language === 'ar' ? 'توزيع المواقع' : 'Location Distribution'}</p>
+              </div>
+              <MapPin className="w-10 h-10 text-green-600" />
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-green-200">
+              {locationStats.slice(0, 3).map(loc => (
+                <div key={loc.id} className="text-center">
+                  <MapPin className="w-4 h-4 mx-auto text-green-600 mb-1" />
+                  <p className="text-lg font-bold text-green-600">{loc.count}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{loc.label}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Rest Pattern Stats (if there are patterns) */}
+      {restPatternStats.length > 0 && (
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-orange-700">{language === 'ar' ? 'توزيع أنماط الراحة' : 'Rest Pattern Distribution'}</p>
+              </div>
+              <Coffee className="w-8 h-8 text-orange-600" />
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {restPatternStats.map(rest => (
+                <div key={rest.id} className="text-center p-2 rounded-lg bg-white dark:bg-card border border-orange-200">
+                  <Coffee className="w-4 h-4 mx-auto text-orange-600 mb-1" />
+                  <p className="text-xl font-bold text-orange-600">{rest.count}</p>
+                  <p className="text-[10px] text-muted-foreground">{rest.label}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="text-right flex-1">
