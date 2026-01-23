@@ -531,6 +531,7 @@ test_plan:
     - "Transaction Duration Column Display"
     - "Department Settings Page - Mataf"
     - "Department Settings → Employee Form Integration"
+    - "Employee Table Quick Edit - Inline Editing for Shift, Rest Pattern, and Location"
 
 agent_communication:
   - agent: "testing"
