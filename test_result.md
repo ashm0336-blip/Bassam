@@ -532,8 +532,11 @@ metadata:
       - "Reports Page & Export Functionality"
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus:
+    - "Sidebar Menu with Expandable Submenus - UI (CRITICAL RBAC BUG)"
+    - "Mataf Department Manager - Complete End-to-End Experience"
+  stuck_tasks:
+    - "Sidebar Menu with Expandable Submenus - UI"
   test_all: false
   test_priority: "high_first"
   completed_tests:
