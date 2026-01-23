@@ -5,7 +5,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import TransactionsPage from "@/pages/TransactionsPage";
-import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import DepartmentSettings from "@/pages/DepartmentSettings";
 import { 
   Circle, 
@@ -360,11 +359,6 @@ export default function MatafDepartment() {
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
         <TransactionsPage department="mataf" />
-      )}
-
-      {/* Shifts Tab */}
-      {activeTab === 'shifts' && (
-        <ShiftsCalendar department="mataf" />
       )}
 
       {/* Settings Tab */}
