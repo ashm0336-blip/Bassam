@@ -569,14 +569,22 @@ export default function EmployeeManagement({ department }) {
                 <Label htmlFor="shift">{language === 'ar' ? 'الوردية' : 'Shift'}</Label>
                 <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue />
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الوردية...' : 'Select shift...'} />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {SHIFTS.map(shift => (
+                    {shifts.map(shift => (
                       <SelectItem key={shift.value} value={shift.value}>
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${shift.color}`} />
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: shift.color }}
+                          />
                           {shift.label}
+                          {shift.start_time && shift.end_time && (
+                            <span className="text-xs text-muted-foreground">
+                              ({shift.start_time} - {shift.end_time})
+                            </span>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
@@ -592,7 +600,7 @@ export default function EmployeeManagement({ department }) {
                       <SelectValue placeholder={language === 'ar' ? 'اختر أيام الراحة...' : 'Select rest days...'} />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      {REST_PATTERNS.map(rest => (
+                      {restPatterns.map(rest => (
                         <SelectItem key={rest.value} value={rest.value}>
                           {rest.label}
                         </SelectItem>
