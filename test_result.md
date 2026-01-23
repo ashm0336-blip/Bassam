@@ -515,6 +515,7 @@ test_plan:
     - "Transaction Management - Add and Edit Functionality"
     - "Transaction Duration Column Display"
     - "Department Settings Page - Mataf"
+    - "Department Settings → Employee Form Integration"
 
 agent_communication:
   - agent: "testing"
