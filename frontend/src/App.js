@@ -23,7 +23,6 @@ import SettingsPage from "@/pages/SettingsPage";
 import MapPage from "@/pages/MapPage";
 import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import TransactionsPage from "@/pages/TransactionsPage";
-import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 
