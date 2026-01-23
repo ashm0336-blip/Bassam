@@ -368,12 +368,13 @@ export default function EmployeeManagement({ department }) {
             <div className="flex items-center justify-between mb-3">
               <div className="text-right">
                 <p className="text-xs text-purple-700">{language === 'ar' ? 'توزيع الورديات' : 'Shift Distribution'}</p>
+                <p className="text-[10px] text-muted-foreground">{statistics.shiftStats.length} {language === 'ar' ? 'وردية' : 'shifts'}</p>
               </div>
               <Clock className="w-10 h-10 text-purple-600" />
             </div>
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-purple-200">
-              {statistics.shiftStats.slice(0, 3).map(shift => (
-                <div key={shift.id} className="text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-purple-200 max-h-24 overflow-y-auto">
+              {statistics.shiftStats.map(shift => (
+                <div key={shift.id} className="text-center p-1">
                   <div 
                     className="w-3 h-3 rounded-full mx-auto mb-1" 
                     style={{ backgroundColor: shift.color }}
@@ -392,12 +393,13 @@ export default function EmployeeManagement({ department }) {
             <div className="flex items-center justify-between mb-3">
               <div className="text-right">
                 <p className="text-xs text-green-700">{language === 'ar' ? 'توزيع المواقع' : 'Location Distribution'}</p>
+                <p className="text-[10px] text-muted-foreground">{statistics.locationStats.length} {language === 'ar' ? 'موقع' : 'locations'}</p>
               </div>
               <MapPin className="w-10 h-10 text-green-600" />
             </div>
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-green-200">
-              {statistics.locationStats.slice(0, 3).map(loc => (
-                <div key={loc.id} className="text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-green-200 max-h-24 overflow-y-auto">
+              {statistics.locationStats.map(loc => (
+                <div key={loc.id} className="text-center p-1">
                   <MapPin className="w-4 h-4 mx-auto text-green-600 mb-1" />
                   <p className="text-lg font-bold text-green-600">{loc.count}</p>
                   <p className="text-[10px] text-muted-foreground truncate">{loc.label}</p>
