@@ -158,6 +158,21 @@ backend:
         agent: "testing"
         comment: "EMPLOYEE MANAGEMENT FULLY TESTED (2026-01-17). ✅ GET /api/employees lists all employees. ✅ GET /api/employees?department=gates filters by department. ✅ POST /api/employees creates employee with location (الباب الرئيسي - الساحة الشرقية) and shift (الأولى). ✅ PUT /api/employees/{id} updates location and shift. ✅ DELETE /api/employees/{id} deletes employee. ✅ GET /api/employees/stats/{department} returns comprehensive stats including: total_employees, active_employees, shifts (shift_1, shift_2, shift_3, shift_4), locations_count, employees_with_location. All employee operations working correctly with proper permission checks."
   
+  - task: "Employee Management - employee_number and weekly_rest Persistence"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py (EmployeeCreate model, lines 166-172)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "USER REPORT (2026-01-23): When adding shift or rest pattern data to employees, the data is added but disappears when exiting and returning to the page. Specifically testing employee_number and weekly_rest field persistence in Planning Department."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL BUG CONFIRMED (2026-01-23): Backend Pydantic model EmployeeCreate is MISSING required fields. ROOT CAUSE: The EmployeeCreate model (lines 166-172) only includes: name, job_title, department, location, shift, is_active. It is MISSING: employee_number, weekly_rest, work_tasks. EVIDENCE: (1) Created test employee 'موظف اختبار' with employee_number='99999', shift='الثانية', weekly_rest='السبت - الأحد', work_tasks='مهام تجريبية'. (2) POST /api/employees returned 200 OK (employee created). (3) Database query confirms employee exists BUT employee_number=NOT SET, weekly_rest=NOT SET, work_tasks=NOT SET. (4) Only shift='الثانية' was saved (because it's in the model). (5) Frontend cannot find employee in table because it searches by employee_number='99999' which doesn't exist. (6) Database statistics: 14 employees have employee_number field, 2 employees DON'T (including test employee). IMPACT: Users can create employees but critical fields (employee_number, weekly_rest, work_tasks) are silently ignored by backend, causing data loss. This confirms user's report that data 'disappears' - it never gets saved in the first place. FIX REQUIRED: Update EmployeeCreate model to include: employee_number: Optional[str] = None, weekly_rest: Optional[str] = None, work_tasks: Optional[str] = None. Also update EmployeeUpdate model to include these fields. TESTING DETAILS: Login as manager.planning@crowd.sa/test123 ✅, Navigate to /planning?tab=employees ✅, Existing employees show shift and weekly_rest correctly ✅, Add new employee with all fields ✅, POST API called successfully ✅, Employee created in database ✅, BUT missing fields not saved ❌, Employee not visible in table ❌, Data does not persist after reload ❌."
+  
   - task: "Gates Management with All 9 Fields"
     implemented: true
     working: true
