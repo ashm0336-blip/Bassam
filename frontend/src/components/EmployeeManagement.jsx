@@ -137,14 +137,23 @@ export default function EmployeeManagement({ department }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // تحديث الحالة تلقائياً حسب أيام الراحة
+      // Get today's day name in Arabic
       const today = new Date().toLocaleDateString('ar-SA', { weekday: 'long' }).replace('يوم ', '');
       
+      // Fetch rest patterns to get rest_days
+      const restPatternsRes = await axios.get(`${API}/${dept}/settings/rest_patterns`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => ({ data: [] }));
+      
       const updatedEmployees = response.data.map(emp => {
-        if (emp.weekly_rest && emp.weekly_rest.includes(today)) {
-          return {...emp, is_active: false, on_rest: true};
+        if (emp.weekly_rest) {
+          // Find the rest pattern for this employee
+          const restPattern = restPatternsRes.data.find(r => r.value === emp.weekly_rest);
+          if (restPattern && restPattern.rest_days && restPattern.rest_days.includes(today)) {
+            return {...emp, is_active: false, on_rest: true};
+          }
         }
-        return emp;
+        return {...emp, is_active: true, on_rest: false};
       });
       
       setEmployees(updatedEmployees);
