@@ -499,6 +499,7 @@ test_plan:
     - "Transaction Data Isolation - Admin Across All Departments"
     - "Transaction Management - Add and Edit Functionality"
     - "Transaction Duration Column Display"
+    - "Department Settings Page - Mataf"
 
 agent_communication:
   - agent: "testing"
