@@ -536,10 +536,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sidebar Menu with Expandable Submenus - UI (CRITICAL RBAC BUG)"
+    - "Sidebar Menu with Expandable Submenus - UI (CRITICAL RBAC BUG - SUBMENU ITEMS)"
     - "Mataf Department Manager - Complete End-to-End Experience"
   stuck_tasks:
     - "Sidebar Menu with Expandable Submenus - UI"
+    - "Mataf Department Manager - Complete End-to-End Experience"
   test_all: false
   test_priority: "high_first"
   completed_tests:
