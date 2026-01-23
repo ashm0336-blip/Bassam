@@ -3737,3 +3737,88 @@ test_plan:
       - Statistics update IMMEDIATELY when data changes ✅
       - All 4 stat cards update dynamically ✅
       - No page reload needed ✅
+
+  - agent: "testing"
+    message: |
+      ❌❌❌ FINAL TEST RESULTS (2026-01-23) - CRITICAL RBAC BUG CONFIRMED ❌❌❌
+      
+      COMPREHENSIVE TESTING COMPLETED FOR MATAF DEPARTMENT:
+      
+      ✅✅✅ TEST 1: DEPARTMENT SETTINGS CRUD - FULLY WORKING
+      - Login as admin@crowd.sa / admin123 ✅
+      - Navigate to /mataf?tab=settings ✅
+      - All 3 tabs present and clickable (الورديات, أنماط الراحة, مواقع التغطية) ✅
+      - Successfully added items to all 3 tabs ✅
+      - CRUD operations working correctly ✅
+      - Data persists after page reload ✅
+      
+      ✅ TEST 2: EMPLOYEE MANAGEMENT WITH LIVE STATS - WORKING
+      - Login as manager.mataf@crowd.sa / test123 ✅
+      - Statistics cards displaying correctly ✅
+      - Employee table working ✅
+      - Live stats update verified in previous tests ✅
+      
+      ❌❌❌ TEST 3: SIDEBAR RBAC - CRITICAL FAILURE
+      
+      API RESPONSE ANALYSIS:
+      GET /api/sidebar-menu for manager.mataf@crowd.sa returns 18 menu items:
+      
+      ✅ CORRECT ITEMS (should be visible):
+      - mata (صحن المطاف) - parent item with department="mataf"
+      - mata-d, mata-t, mata-e, mataf-settings - Mataf submenu items
+      - not (الإشعارات) - public item
+      - set (الإعدادات) - public item
+      
+      ❌ FORBIDDEN ITEMS (should NOT be visible):
+      - plan-d, plan-t, plan-e - Planning department submenu items
+      - gate-d, gate-t, gate-e - Gates department submenu items
+      - plaz-d, plaz-t, plaz-e - Plazas department submenu items
+      - crow-t, crow-e - Crowd Services submenu items
+      
+      ROOT CAUSE IDENTIFIED:
+      Backend RBAC filtering (lines 1659-1661) checks 'roles' field correctly ✅
+      BUT submenu items (with parent_id) have:
+      - department=null
+      - no roles field
+      - parent_id pointing to parent department item
+      
+      These submenu items fall into else block (line 1680-1681):
+      ```python
+      else:
+          # No department restriction
+          filtered_items.append(item)
+      ```
+      
+      This adds ALL submenu items for ALL users, regardless of department access.
+      
+      FIX REQUIRED:
+      In /app/backend/server.py get_user_sidebar_menu() function:
+      1. First pass: Build parent_map of accessible parent items
+      2. Second pass: For items with parent_id, check if parent is in parent_map
+      3. Only add submenu item if parent is accessible
+      
+      Example fix:
+      ```python
+      # First pass: collect accessible parents
+      parent_ids = set()
+      for item in items:
+          if not item.get("parent_id"):  # Parent items only
+              # Apply existing filters
+              if should_include(item):
+                  filtered_items.append(item)
+                  parent_ids.add(item["id"])
+      
+      # Second pass: add submenu items if parent is accessible
+      for item in items:
+          if item.get("parent_id"):  # Submenu items only
+              if item["parent_id"] in parent_ids:
+                  filtered_items.append(item)
+      ```
+      
+      IMPACT:
+      - Department managers see submenu items for ALL departments
+      - Critical SECURITY and UX violation
+      - Users confused by seeing inaccessible menu items
+      - Clicking these items may show "Access Denied" errors
+      
+      PRIORITY: P0 BLOCKER - Must be fixed before production
