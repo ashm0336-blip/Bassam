@@ -230,6 +230,7 @@ class DepartmentSetting(BaseModel):
     color: Optional[str] = None
     start_time: Optional[str] = None  # للورديات فقط
     end_time: Optional[str] = None    # للورديات فقط
+    rest_days: Optional[List[str]] = None  # For rest_patterns: ["الخميس", "الجمعة"]
     order: int = 0
     is_active: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
