@@ -442,9 +442,7 @@ metadata:
       - "Reports Page & Export Functionality"
 
 test_plan:
-  current_focus:
-    - "Transaction Management - Add and Edit Functionality"
-    - "Transaction Duration Column Display"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -465,6 +463,8 @@ test_plan:
     - "Reports Page - Export Buttons (PDF and Excel)"
     - "Responsive Design Testing - Comprehensive (Mobile, Tablet, Desktop)"
     - "Transaction Data Isolation - Admin Across All Departments"
+    - "Transaction Management - Add and Edit Functionality"
+    - "Transaction Duration Column Display"
 
 agent_communication:
   - agent: "testing"
