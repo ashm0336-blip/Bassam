@@ -357,10 +357,10 @@ frontend:
   - task: "Sidebar Menu with Expandable Submenus - UI"
     implemented: true
     working: false
-    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/context/SidebarContext.jsx, Database sidebar_menu collection"
-    stuck_count: 1
+    file: "/app/frontend/src/components/Layout.jsx, /app/frontend/src/context/SidebarContext.jsx, /app/backend/server.py (lines 1644-1679), Database sidebar_menu collection"
+    stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
@@ -371,6 +371,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL NAVIGATION BUG (2026-01-20): Planning department submenu items redirect to home page instead of staying on planning page. USER REPORT: Clicking 'المعاملات' (Transactions) or 'الورديات' (Shifts) in Planning submenu redirects to '/' instead of '/planning?tab=transactions' or '/planning?tab=shifts'. ROOT CAUSE IDENTIFIED: Database sidebar_menu collection has INCORRECT href values for Planning submenu items. ACTUAL VALUES: (1) 'المعاملات': href='/transactions?dept=planning' ❌, (2) 'الورديات': href='/shifts' ❌. EXPECTED VALUES: (1) 'المعاملات': href='/planning?tab=transactions' ✅, (2) 'الورديات': href='/planning?tab=shifts' ✅. TECHNICAL EXPLANATION: The routes '/transactions' and '/shifts' do NOT exist in App.js routing configuration. These components are only rendered within department pages via tab parameters. When users click these invalid routes, React Router cannot find a match and falls back to the catch-all route '<Navigate to=\"/\" replace />' (App.js line 134), causing redirect to home page. IMPACT: Users cannot access Transactions or Shifts tabs in Planning department via sidebar navigation. TESTING EVIDENCE: Playwright test confirmed clicking 'المعاملات' changes URL from '/planning' to '/' (home page redirect). FIX REQUIRED: Update database sidebar_menu collection to correct the href values for Planning submenu items."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL RBAC BUG - SIDEBAR MENU PERMISSIONS (2026-01-23): Department managers can see menu items they should NOT have access to. TEST SCENARIO: Login as manager.mataf@crowd.sa (Mataf department manager). EXPECTED SIDEBAR: Should show ONLY (1) صحن المطاف (their department), (2) الإشعارات (public), (3) الإعدادات (public). Should NOT show: لوحة التحكم (Dashboard - admin/general manager only), other departments. ACTUAL RESULT: Sidebar shows 'لوحة التحكم' (Dashboard) which is FORBIDDEN for department managers ❌. ROOT CAUSE IDENTIFIED: Backend RBAC filtering in /app/backend/server.py lines 1644-1679 is IGNORING the 'roles' field. TECHNICAL ANALYSIS: (1) Dashboard menu item has: admin_only=false, is_public=false, department=null, roles=['system_admin', 'general_manager']. (2) Backend filtering logic (lines 1656-1677) checks: admin_only ✅, is_public ✅, department ✅, BUT NEVER checks 'roles' field ❌. (3) Line 1676-1677: Items with department=null fall into 'else' block and are added for ALL users regardless of their role. (4) The 'roles' field exists in database but is completely ignored by backend filtering. IMPACT: Department managers see admin-only pages in sidebar (Dashboard, potentially others). This is a SECURITY and UX issue - users see menu items they cannot access. FIX REQUIRED: Add role-based filtering in /app/backend/server.py get_user_sidebar_menu() function. After line 1675, add: 'if item.get(\"roles\") and user_role not in item.get(\"roles\"): continue'. This will check if item has roles restriction and skip it if user's role is not in the allowed roles list. PRIORITY: HIGH - This is a fundamental RBAC violation affecting all department managers."
 
   - task: "Dark Mode Theme Implementation"
     implemented: true
