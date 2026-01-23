@@ -367,7 +367,7 @@ export default function EmployeeManagement({ department }) {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {!isReadOnly() && department === 'planning' ? (
+                      {!isReadOnly() ? (
                         <Select 
                           value={employee.weekly_rest || ""} 
                           onValueChange={(v) => handleQuickMove(employee.id, 'weekly_rest', v)}
