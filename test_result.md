@@ -544,6 +544,7 @@ test_plan:
     - "Department Settings Page - Mataf"
     - "Department Settings → Employee Form Integration"
     - "Employee Table Quick Edit - Inline Editing for Shift, Rest Pattern, and Location"
+    - "Live Statistics Update When Employee Data Changes"
 
 agent_communication:
   - agent: "testing"
