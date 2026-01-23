@@ -440,23 +440,6 @@ export default function EmployeeManagement({ department }) {
                     </TableCell>
                     <TableCell className="text-left">
                       <div className="flex items-center gap-2 justify-start">
-                        {!isReadOnly() && department === 'gates' && gates.length > 0 && (
-                          <Select 
-                            value={employee.location} 
-                            onValueChange={(newLocation) => handleQuickMove(employee.id, newLocation)}
-                          >
-                            <SelectTrigger className="h-8 w-32 text-xs">
-                              <SelectValue placeholder="نقل..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {gates.filter(g => g.status === 'مفتوح').map((gate) => (
-                                <SelectItem key={gate.id} value={gate.name}>
-                                  {gate.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
                         {!isReadOnly() && (
                           <>
                             <Button
