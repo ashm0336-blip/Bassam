@@ -3350,3 +3350,186 @@ test_plan:
       PRIORITY: CRITICAL - P0 BLOCKER
       
       STATUS: ❌ INTEGRATION TEST FAILED - FEATURE BROKEN
+  
+  - agent: "testing"
+    message: |
+      ✅✅✅ FINAL COMPLETE TEST - BOTH CRITICAL FIXES VERIFIED (2026-01-23) ✅✅✅
+      
+      USER REQUEST: Final Complete Test - Both Issues
+      Test two critical fixes:
+      1. Employee Status Auto-Calculation (based on weekly_rest and current day)
+      2. Sidebar Filtering for Department Manager (show only assigned department)
+      
+      TEST CREDENTIALS: manager.mataf@crowd.sa / test123
+      
+      ================================================================================
+      TEST 1: EMPLOYEE STATUS AUTO-CALCULATION
+      ================================================================================
+      
+      TEST SCENARIO:
+      - Login as manager.mataf@crowd.sa
+      - Navigate to /mataf?tab=employees
+      - Find employee "بسام اسماعيل غزاوي - 12345"
+      - Verify employee has weekly_rest: "الخميس - الجمعة"
+      - Today is Friday (الجمعة)
+      - CRITICAL CHECK: Employee status should be "غير نشط" (inactive) NOT "نشط"
+      - Look for "☕ في راحة" indicator
+      - Verify badge color is gray/secondary (not green)
+      
+      TEST RESULTS:
+      
+      ✅ STEP 1: Login successful as manager.mataf@crowd.sa
+      ✅ STEP 2: Navigated to /mataf?tab=employees
+      ✅ STEP 3: Found employee "12345 - بسام اسماعيل غزاوي" in table
+      ✅ STEP 4: Employee's rest pattern confirmed: "الخميس - الجمعة"
+      ✅ STEP 5: Today's day confirmed: "الجمعة" (Friday)
+      ✅ STEP 6: Today IS a rest day (Friday is in "الخميس - الجمعة" pattern)
+      
+      CRITICAL VALIDATION RESULTS:
+      
+      ✅ PASS: Employee status is "غير نشط" (Inactive) - CORRECT
+         - Status badge displays "غير نشط" text
+         - Badge has secondary/gray styling (not green/default)
+      
+      ✅ PASS: Rest indicator "☕ في راحة" is displayed - CORRECT
+         - Orange text indicator visible below status badge
+         - Shows "☕ في راحة" (On Rest) in Arabic
+      
+      ✅ PASS: Badge color is gray/secondary - CORRECT
+         - Badge classes: "bg-secondary text-secondary-foreground"
+         - Not using green/default styling
+      
+      TECHNICAL VERIFICATION:
+      
+      Status cell HTML structure:
+      ```html
+      <div class="flex flex-col items-center gap-1">
+        <div class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs 
+                    font-semibold transition-colors border-transparent 
+                    bg-secondary text-secondary-foreground hover:bg-secondary/80">
+          غير نشط
+        </div>
+        <span class="text-xs text-orange-600">☕ في راحة</span>
+      </div>
+      ```
+      
+      IMPLEMENTATION DETAILS:
+      
+      File: /app/frontend/src/components/EmployeeManagement.jsx
+      Lines: 143-156
+      
+      Logic:
+      1. Fetch employees from backend
+      2. Fetch rest patterns from department settings
+      3. Get today's day name in Arabic (using toLocaleDateString)
+      4. For each employee with weekly_rest:
+         - Find matching rest pattern from settings
+         - Check if rest_days array includes today
+         - If yes: Set is_active=false, on_rest=true
+         - If no: Set is_active=true, on_rest=false
+      5. Display status badge based on is_active
+      6. Display "☕ في راحة" indicator if on_rest=true
+      
+      🎉 TEST 1 OVERALL: ✅ PASS - Employee status auto-calculation is WORKING PERFECTLY
+      
+      ================================================================================
+      TEST 2: SIDEBAR FILTERING FOR DEPARTMENT MANAGER
+      ================================================================================
+      
+      TEST SCENARIO:
+      - Still logged in as manager.mataf@crowd.sa
+      - Check sidebar menu items
+      - CRITICAL CHECK: Should show ONLY "صحن المطاف" department
+      - Should NOT show: التخطيط, الأبواب, الساحات, خدمات الحشود
+      
+      TEST RESULTS:
+      
+      ✅ STEP 1: Sidebar loaded successfully
+      ✅ STEP 2: Found 12 navigation items (6 unique items, duplicated for desktop/mobile)
+      
+      SIDEBAR MENU ITEMS FOUND:
+      1. لوحة التحكم (Dashboard)
+      2. صحن المطاف (Mataf) ✅
+      3. الخريطة التفاعلية (Map)
+      4. التقارير (Reports)
+      5. الإشعارات (Notifications)
+      6. الإعدادات (Settings)
+      
+      CRITICAL VALIDATION RESULTS:
+      
+      ✅ PASS: "صحن المطاف" (Mataf) department IS visible - CORRECT
+         - Department manager can see their assigned department
+      
+      ✅ PASS: "التخطيط" (Planning) department is NOT visible - CORRECT
+         - Other departments are properly filtered out
+      
+      ✅ PASS: "الأبواب" (Gates) department is NOT visible - CORRECT
+         - Other departments are properly filtered out
+      
+      ✅ PASS: "الساحات" (Plazas) department is NOT visible - CORRECT
+         - Other departments are properly filtered out
+      
+      ✅ PASS: "خدمات الحشود" (Crowd Services) department is NOT visible - CORRECT
+         - Other departments are properly filtered out
+      
+      TECHNICAL VERIFICATION:
+      
+      Backend: /app/backend/server.py
+      Endpoint: GET /api/sidebar-menu
+      
+      RBAC Logic:
+      - If user.role == "department_manager":
+         - Filter menu items by user.department
+         - Only return items where department == user.department OR department is None
+      - If user.role == "system_admin" or "general_manager":
+         - Return all menu items
+      
+      Frontend: /app/frontend/src/components/Layout.jsx
+      Lines: 76-94
+      
+      Menu Rendering:
+      1. Fetch menu items from /api/sidebar-menu (already filtered by backend)
+      2. Convert to navigation format with language support
+      3. Filter by is_active flag
+      4. Organize into parent and children
+      5. Split into primary and secondary navigation
+      6. Render only items returned by backend
+      
+      🎉 TEST 2 OVERALL: ✅ PASS - Sidebar filtering is WORKING CORRECTLY
+      
+      ================================================================================
+      FINAL SUMMARY
+      ================================================================================
+      
+      Both critical fixes have been tested and VERIFIED WORKING:
+      
+      ✅ TEST 1: Employee Status Auto-Calculation
+         - Status correctly shows "غير نشط" when today is a rest day
+         - Rest indicator "☕ في راحة" displays correctly
+         - Badge color is gray/secondary (not green)
+         - Logic correctly checks today's day against rest_days array
+         - RESULT: ✅ WORKING PERFECTLY
+      
+      ✅ TEST 2: Sidebar Filtering for Department Manager
+         - Sidebar shows ONLY "صحن المطاف" (Mataf) department
+         - Other departments (Planning, Gates, Plazas, Crowd Services) are NOT visible
+         - RBAC filtering working correctly on backend
+         - Frontend correctly renders only filtered menu items
+         - RESULT: ✅ WORKING CORRECTLY
+      
+      EVIDENCE:
+      - Screenshot captured showing employee table with correct status
+      - Console logs confirm zero errors
+      - All API calls successful (GET /api/employees, GET /api/mataf/settings/rest_patterns)
+      - Sidebar menu items verified through DOM inspection
+      
+      RECOMMENDATION TO MAIN AGENT:
+      
+      Both critical fixes are PRODUCTION READY and WORKING CORRECTLY.
+      Please summarize these successful test results to the user and finish the task.
+      
+      The two features tested are:
+      1. ✅ Employee status auto-calculation based on weekly rest days
+      2. ✅ Sidebar filtering for department managers (show only assigned department)
+      
+      Both features are functioning as expected with no issues found.
