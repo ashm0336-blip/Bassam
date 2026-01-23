@@ -2584,3 +2584,170 @@ agent_communication:
       RECOMMENDATION TO MAIN AGENT:
       The duration display feature is working perfectly. All test scenarios passed successfully.
       Please summarize and finish this task. The feature is ready for production use.
+  
+  - agent: "testing"
+    message: |
+      EMPLOYEE MANAGEMENT - SHIFT & WEEKLY_REST PERSISTENCE TESTING COMPLETED (2026-01-23)
+      
+      ❌ CRITICAL BUG CONFIRMED - DATA LOSS ISSUE
+      
+      USER REQUEST: Test employee management functionality - specifically testing that shift and rest pattern data persists after page reload in Planning Department.
+      
+      USER REPORT: "When adding shift or rest pattern, data is added but disappears when exiting and returning to the page."
+      
+      TEST SCENARIO EXECUTED:
+      1. Login as manager.planning@crowd.sa / test123 ✅
+      2. Navigate to Planning Department → Employees tab (/planning?tab=employees) ✅
+      3. Check existing employees for shift and weekly_rest data ✅
+      4. Add new employee with all fields including shift and weekly_rest ✅
+      5. Verify employee appears in table ❌
+      6. Reload page and verify data persistence ❌
+      
+      TEST RESULTS SUMMARY:
+      
+      ✅ EXISTING EMPLOYEES HAVE DATA:
+      • All 5 checked employees have shift data displayed correctly ✅
+      • All 5 checked employees have weekly_rest data displayed correctly ✅
+      • Data is visible in the UI for existing employees ✅
+      
+      ❌ NEW EMPLOYEE CREATION FAILS:
+      • Created employee: "موظف اختبار" (Test Employee)
+      • Employee Number: "99999"
+      • Job Title: "موظف تجريبي"
+      • Location: "مكتب الإدارة"
+      • Shift: "الثانية"
+      • Weekly Rest: "السبت - الأحد"
+      • Work Tasks: "مهام تجريبية"
+      • Form filled successfully ✅
+      • POST /api/employees called ✅
+      • Backend returned 200 OK ✅
+      • BUT employee NOT found in table ❌
+      • After page reload, employee still NOT found ❌
+      
+      🔍 ROOT CAUSE ANALYSIS:
+      
+      **Backend Pydantic Model Missing Fields**
+      
+      The EmployeeCreate model (server.py lines 166-172) is defined as:
+      ```python
+      class EmployeeCreate(BaseModel):
+          name: str
+          job_title: str
+          department: str
+          location: str
+          shift: str
+          is_active: bool = True
+      ```
+      
+      **MISSING FIELDS:**
+      - employee_number ❌
+      - weekly_rest ❌
+      - work_tasks ❌
+      
+      When the frontend sends these fields, Pydantic silently ignores them because they're not in the model definition.
+      
+      **DATABASE VERIFICATION:**
+      
+      Queried the database and found the test employee:
+      ```
+      Name: موظف اختبار ✅
+      Employee Number: NOT SET ❌ (should be "99999")
+      Job Title: موظف تجريبي ✅
+      Location: مكتب الإدارة ✅
+      Shift: الثانية ✅
+      Weekly Rest: NOT SET ❌ (should be "السبت - الأحد")
+      Work Tasks: NOT SET ❌ (should be "مهام تجريبية")
+      Created At: 2026-01-23T12:15:45 ✅
+      ```
+      
+      **DATABASE STATISTICS:**
+      - Total employees: 16
+      - Employees WITH employee_number: 14
+      - Employees WITHOUT employee_number: 2 (including our test employee)
+      - Employees WITH weekly_rest: 14
+      - Employees WITHOUT weekly_rest: 2 (including our test employee)
+      - Employees WITH work_tasks: 14
+      - Employees WITHOUT work_tasks: 2 (including our test employee)
+      
+      **WHY EMPLOYEE NOT VISIBLE IN TABLE:**
+      
+      The frontend searches for employees by employee_number in the table. Since the test employee was created WITHOUT an employee_number field, it cannot be found when searching for "99999".
+      
+      **WHY DATA "DISAPPEARS":**
+      
+      The data never gets saved in the first place. The backend accepts the request (200 OK) but silently drops the fields that aren't in the Pydantic model. This creates the illusion that data is saved and then disappears, when in reality it was never saved.
+      
+      **IMPACT:**
+      
+      ❌ Users cannot save employee_number (critical for identification)
+      ❌ Users cannot save weekly_rest (critical for shift planning)
+      ❌ Users cannot save work_tasks (important for job description)
+      ❌ Employees created without these fields are "invisible" in the UI
+      ❌ Data loss occurs silently without error messages
+      ❌ This affects ALL departments (planning, gates, plazas, mataf, crowd_services)
+      
+      **FIX REQUIRED:**
+      
+      Update the backend Pydantic models in /app/backend/server.py:
+      
+      1. **EmployeeCreate model (lines 166-172):**
+      ```python
+      class EmployeeCreate(BaseModel):
+          name: str
+          job_title: str
+          department: str
+          location: str
+          shift: str
+          employee_number: Optional[str] = None  # ADD THIS
+          weekly_rest: Optional[str] = None      # ADD THIS
+          work_tasks: Optional[str] = None       # ADD THIS
+          is_active: bool = True
+      ```
+      
+      2. **EmployeeUpdate model (lines 174-179):**
+      ```python
+      class EmployeeUpdate(BaseModel):
+          name: Optional[str] = None
+          job_title: Optional[str] = None
+          location: Optional[str] = None
+          shift: Optional[str] = None
+          employee_number: Optional[str] = None  # ADD THIS
+          weekly_rest: Optional[str] = None      # ADD THIS
+          work_tasks: Optional[str] = None       # ADD THIS
+          is_active: Optional[bool] = None
+      ```
+      
+      **TESTING EVIDENCE:**
+      
+      ✅ Login successful as manager.planning@crowd.sa
+      ✅ Navigation to /planning?tab=employees working
+      ✅ Existing employees display shift and weekly_rest correctly
+      ✅ New employee dialog opens and form works
+      ✅ All form fields can be filled
+      ✅ POST /api/employees API called successfully
+      ✅ Backend returns 200 OK
+      ✅ Employee created in database
+      ❌ Employee created WITHOUT employee_number, weekly_rest, work_tasks
+      ❌ Employee not visible in table (cannot be found by employee_number)
+      ❌ Data does not persist (because it was never saved)
+      ✅ No console errors (silent failure)
+      
+      **SCREENSHOTS CAPTURED:**
+      • planning_employees_initial.png: Initial state showing existing employees with data
+      • new_employee_form_filled.png: Form filled with all fields including shift and weekly_rest
+      • employee_added_in_table.png: Table after save attempt (employee not found)
+      • employee_after_reload.png: Table after page reload (employee still not found)
+      
+      **PRIORITY: HIGH**
+      
+      This is a critical data loss bug that affects core functionality. Users are losing important employee data without any error indication.
+      
+      **RECOMMENDATION TO MAIN AGENT:**
+      
+      1. Update EmployeeCreate and EmployeeUpdate Pydantic models to include the missing fields
+      2. Test the fix by creating a new employee with all fields
+      3. Verify the employee appears in the table with all data
+      4. Verify data persists after page reload
+      5. Clean up the 2 test employees created without employee_number field
+      
+      This confirms the user's report and identifies the exact root cause. The fix is straightforward - just add the missing fields to the Pydantic models.
