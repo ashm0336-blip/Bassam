@@ -165,9 +165,12 @@ export default function EmployeeManagement({ department }) {
       setSelectedEmployee(employee);
       setFormData({
         name: employee.name,
+        employee_number: employee.employee_number || "",
         job_title: employee.job_title,
         location: employee.location || "",
-        shift: employee.shift || "صباحية",
+        shift: employee.shift || "الأولى",
+        weekly_rest: employee.weekly_rest || "",
+        work_tasks: employee.work_tasks || "",
         department: employee.department,
         is_active: employee.is_active
       });
@@ -176,9 +179,12 @@ export default function EmployeeManagement({ department }) {
       setSelectedEmployee(null);
       setFormData({
         name: "",
+        employee_number: "",
         job_title: "",
         location: "",
         shift: "الأولى",
+        weekly_rest: "",
+        work_tasks: "",
         department: department || user?.department || "planning",
         is_active: true
       });
