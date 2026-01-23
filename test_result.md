@@ -469,6 +469,7 @@ test_plan:
     - "Role-Based Access Control & Permissions System"
     - "JWT Authentication & User Management (all roles)"
     - "Employee Management with Location and Shift"
+    - "Employee Management - employee_number and weekly_rest Persistence"
     - "Gates Management with All 9 Fields"
     - "Dashboard & Stats with Employee Stats"
     - "Activity Logs with Filters"
