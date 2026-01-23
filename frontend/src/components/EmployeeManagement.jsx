@@ -54,26 +54,6 @@ const DEPARTMENTS = {
   mataf: { ar: "صحن المطاف", en: "Mataf Management" }
 };
 
-const SHIFTS = [
-  { value: "الأولى", label: "الأولى", color: "bg-blue-500" },
-  { value: "الأولى صيف", label: "الأولى صيف", color: "bg-blue-500" },
-  { value: "الأولى شتاء", label: "الأولى شتاء", color: "bg-blue-600" },
-  { value: "الثانية", label: "الثانية", color: "bg-green-500" },
-  { value: "الثانية صيف", label: "الثانية صيف", color: "bg-green-500" },
-  { value: "الثانية شتاء", label: "الثانية شتاء", color: "bg-green-600" },
-  { value: "الثالثة", label: "الثالثة", color: "bg-orange-500" },
-  { value: "الثالثة صيف", label: "الثالثة صيف", color: "bg-orange-500" },
-  { value: "الثالثة شتاء", label: "الثالثة شتاء", color: "bg-orange-600" },
-  { value: "الرابعة", label: "الرابعة", color: "bg-purple-500" }
-];
-
-const REST_PATTERNS = [
-  { value: "السبت - الأحد", label: "السبت - الأحد" },
-  { value: "الخميس - الجمعة", label: "الخميس - الجمعة" },
-  { value: "الجمعة - السبت", label: "الجمعة - السبت" },
-  { value: "الأحد - الاثنين", label: "الأحد - الاثنين" }
-];
-
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
@@ -87,12 +67,17 @@ export default function EmployeeManagement({ department }) {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   
+  // Dynamic settings from department configuration
+  const [shifts, setShifts] = useState([]);
+  const [restPatterns, setRestPatterns] = useState([]);
+  const [coverageLocations, setCoverageLocations] = useState([]);
+  
   const [formData, setFormData] = useState({
     name: "",
     employee_number: "",
     job_title: "",
     location: "",
-    shift: "الأولى",
+    shift: "",
     weekly_rest: "",
     work_tasks: "",
     department: department || user?.department || "planning"
@@ -101,10 +86,37 @@ export default function EmployeeManagement({ department }) {
   useEffect(() => {
     fetchEmployees();
     fetchStats();
+    fetchDepartmentSettings();
     if (department === 'gates') {
       fetchGates();
     }
   }, [department]);
+
+  const fetchDepartmentSettings = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const dept = department || user?.department;
+      if (!dept) return;
+
+      const [shiftsRes, restRes, locationsRes] = await Promise.all([
+        axios.get(`${API}/${dept}/settings/shifts`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] })),
+        axios.get(`${API}/${dept}/settings/rest_patterns`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] })),
+        axios.get(`${API}/${dept}/settings/coverage_locations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] }))
+      ]);
+
+      setShifts(shiftsRes.data);
+      setRestPatterns(restRes.data);
+      setCoverageLocations(locationsRes.data);
+    } catch (error) {
+      console.error("Error fetching department settings:", error);
+    }
+  };
 
   const fetchGates = async () => {
     try {
