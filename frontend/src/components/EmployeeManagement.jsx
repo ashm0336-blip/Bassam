@@ -91,6 +91,13 @@ export default function EmployeeManagement({ department }) {
     if (department === 'gates') {
       fetchGates();
     }
+    
+    // Auto-refresh settings every 5 seconds for live updates
+    const settingsInterval = setInterval(() => {
+      fetchDepartmentSettings();
+    }, 5000);
+    
+    return () => clearInterval(settingsInterval);
   }, [department]);
 
   const fetchDepartmentSettings = async () => {
