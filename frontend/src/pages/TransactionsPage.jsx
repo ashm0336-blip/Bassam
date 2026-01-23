@@ -79,7 +79,7 @@ export default function TransactionsPage({ department = null }) {
     notes: ""
   });
 
-  // Calculate transaction duration
+  // Calculate transaction duration with enhanced details
   const calculateDuration = (transaction) => {
     try {
       // Handle both old format (string like "1447/07/16") and new format (ISO datetime)
@@ -99,20 +99,51 @@ export default function TransactionsPage({ department = null }) {
       const endDate = transaction.completed_date ? new Date(transaction.completed_date) : new Date();
       const diffMs = endDate - startDate;
       
-      if (diffMs < 0) return "0س 0د";
+      if (diffMs < 0) return { text: "0 دقيقة", type: "instant", days: 0, hours: 0, minutes: 0 };
       
-      const hours = Math.floor(diffMs / 3600000);
+      const totalHours = Math.floor(diffMs / 3600000);
       const minutes = Math.floor((diffMs % 3600000) / 60000);
-      const days = Math.floor(hours / 24);
-      const remainingHours = hours % 24;
+      const days = Math.floor(totalHours / 24);
+      const remainingHours = totalHours % 24;
       
+      // Build display text
+      let displayText = "";
       if (days > 0) {
-        return `${days}ي ${remainingHours}س`;
+        displayText = `${days} ${language === 'ar' ? 'يوم' : 'day'}${days > 1 ? (language === 'ar' ? '' : 's') : ''}`;
+        if (remainingHours > 0) {
+          displayText += ` و ${remainingHours} ${language === 'ar' ? 'ساعة' : 'hr'}`;
+        }
+      } else if (totalHours > 0) {
+        displayText = `${totalHours} ${language === 'ar' ? 'ساعة' : 'hr'}`;
+        if (minutes > 0) {
+          displayText += ` و ${minutes} ${language === 'ar' ? 'دقيقة' : 'min'}`;
+        }
+      } else {
+        displayText = `${minutes} ${language === 'ar' ? 'دقيقة' : 'min'}`;
       }
-      return `${hours}س ${minutes}د`;
+      
+      // Determine duration type for styling
+      let durationType;
+      if (days > 7) {
+        durationType = "critical"; // أكثر من أسبوع
+      } else if (days > 3) {
+        durationType = "warning"; // أكثر من 3 أيام
+      } else if (days > 0 || totalHours > 12) {
+        durationType = "medium"; // أكثر من 12 ساعة
+      } else {
+        durationType = "fast"; // أقل من 12 ساعة
+      }
+      
+      return { 
+        text: displayText, 
+        type: durationType, 
+        days, 
+        hours: totalHours, 
+        minutes 
+      };
     } catch (error) {
       console.error("Error calculating duration:", error);
-      return "---";
+      return { text: "---", type: "unknown", days: 0, hours: 0, minutes: 0 };
     }
   };
 
@@ -667,9 +698,52 @@ export default function TransactionsPage({ department = null }) {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline" className="font-mono text-sm">
-                          {calculateDuration(transaction)}
-                        </Badge>
+                        {(() => {
+                          const duration = calculateDuration(transaction);
+                          const durationStyles = {
+                            fast: {
+                              bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+                              borderColor: "border-emerald-200 dark:border-emerald-700",
+                              textColor: "text-emerald-700 dark:text-emerald-400",
+                              icon: "⚡"
+                            },
+                            medium: {
+                              bgColor: "bg-blue-50 dark:bg-blue-900/20",
+                              borderColor: "border-blue-200 dark:border-blue-700",
+                              textColor: "text-blue-700 dark:text-blue-400",
+                              icon: "⏱️"
+                            },
+                            warning: {
+                              bgColor: "bg-amber-50 dark:bg-amber-900/20",
+                              borderColor: "border-amber-200 dark:border-amber-700",
+                              textColor: "text-amber-700 dark:text-amber-400",
+                              icon: "⚠️"
+                            },
+                            critical: {
+                              bgColor: "bg-red-50 dark:bg-red-900/20",
+                              borderColor: "border-red-200 dark:border-red-700",
+                              textColor: "text-red-700 dark:text-red-400",
+                              icon: "🔥"
+                            },
+                            unknown: {
+                              bgColor: "bg-gray-50 dark:bg-gray-800",
+                              borderColor: "border-gray-200 dark:border-gray-700",
+                              textColor: "text-gray-500",
+                              icon: "⏳"
+                            }
+                          };
+                          
+                          const style = durationStyles[duration.type] || durationStyles.unknown;
+                          
+                          return (
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border ${style.bgColor} ${style.borderColor}`}>
+                              <span className="text-lg">{style.icon}</span>
+                              <span className={`font-semibold text-sm ${style.textColor}`}>
+                                {duration.text}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center gap-2 justify-center">
