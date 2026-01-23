@@ -463,30 +463,35 @@ export default function EmployeeManagement({ department }) {
         </CardHeader>
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[900px]">
+            <Table className="min-w-[1100px]">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
-                  <TableHead className="text-center">
+                <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
+                  <TableHead className="text-center font-semibold">
                     <div className="flex items-center justify-center gap-1.5">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <span>{language === 'ar' ? 'وقت الوردية' : 'Shift Time'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-left">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'أيام الراحة' : 'Rest Days'}</TableHead>
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'موقع التغطية' : 'Location'}</TableHead>
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="text-right">
-                      <div>
-                        <p className="font-medium">{employee.employee_number} - {employee.name}</p>
-                        <p className="text-xs text-muted-foreground">{employee.job_title}</p>
+                  <TableRow key={employee.id} className="hover:bg-muted/50 transition-colors border-b">
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <p className="font-semibold text-sm">{employee.name}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {employee.employee_number}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{employee.job_title}</span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -613,28 +618,30 @@ export default function EmployeeManagement({ department }) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-left">
-                      <div className="flex items-center gap-2 justify-start">
+                    <TableCell className="text-center">
+                      <div className="flex items-center gap-2 justify-center">
                         {!isReadOnly() && (
                           <>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               onClick={() => handleOpenDialog(employee)}
-                              className="h-8 w-8"
+                              className="h-8"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-4 h-4 ml-1" />
+                              {language === 'ar' ? 'تعديل' : 'Edit'}
                             </Button>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               onClick={() => {
                                 setSelectedEmployee(employee);
                                 setDeleteDialogOpen(true);
                               }}
-                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              className="h-8 text-destructive hover:text-destructive"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4 ml-1" />
+                              {language === 'ar' ? 'حذف' : 'Delete'}
                             </Button>
                           </>
                         )}
