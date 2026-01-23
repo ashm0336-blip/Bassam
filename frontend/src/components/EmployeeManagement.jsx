@@ -555,7 +555,7 @@ export default function EmployeeManagement({ department }) {
                     </SelectTrigger>
                     <SelectContent>
                       {coverageLocations.map((loc) => (
-                        <SelectItem key={loc.value} value={loc.value}>
+                        <SelectItem key={loc.id} value={loc.value}>
                           {loc.label}
                         </SelectItem>
                       ))}
@@ -591,7 +591,7 @@ export default function EmployeeManagement({ department }) {
                   </SelectTrigger>
                   <SelectContent position="popper">
                     {shifts.map(shift => (
-                      <SelectItem key={shift.value} value={shift.value}>
+                      <SelectItem key={shift.id} value={shift.value}>
                         <div className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -618,7 +618,7 @@ export default function EmployeeManagement({ department }) {
                   </SelectTrigger>
                   <SelectContent position="popper">
                     {restPatterns.map(rest => (
-                      <SelectItem key={rest.value} value={rest.value}>
+                      <SelectItem key={rest.id} value={rest.value}>
                         {rest.label}
                       </SelectItem>
                     ))}
