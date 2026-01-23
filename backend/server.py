@@ -244,6 +244,7 @@ class DepartmentSettingCreate(BaseModel):
     color: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
+    rest_days: Optional[List[str]] = None  # For rest_patterns: ["الخميس", "الجمعة"]
     order: int = 0
 
 class DepartmentSettingUpdate(BaseModel):
@@ -253,6 +254,7 @@ class DepartmentSettingUpdate(BaseModel):
     color: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
+    rest_days: Optional[List[str]] = None
     order: Optional[int] = None
     is_active: Optional[bool] = None
 
