@@ -6,7 +6,6 @@ import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GatesDataManagement from "@/components/GatesDataManagement";
 import TransactionsPage from "@/pages/TransactionsPage";
-import ShiftsCalendar from "@/pages/ShiftsCalendar";
 import { 
   DoorOpen, 
   DoorClosed,
