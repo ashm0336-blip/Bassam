@@ -391,7 +391,43 @@ export default function EmployeeManagement({ department }) {
                         )
                       )}
                     </TableCell>
-                    <TableCell className="text-center text-sm">{employee.location || '-'}</TableCell>
+                    <TableCell className="text-center text-sm">
+                      {!isReadOnly() && coverageLocations.length > 0 ? (
+                        <Select 
+                          value={employee.location || ""} 
+                          onValueChange={(v) => handleQuickMove(employee.id, 'location', v)}
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue placeholder="الموقع..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {coverageLocations.map((loc) => (
+                              <SelectItem key={loc.id} value={loc.value}>
+                                {loc.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : !isReadOnly() && department === 'gates' && gates.length > 0 ? (
+                        <Select 
+                          value={employee.location || ""} 
+                          onValueChange={(v) => handleQuickMove(employee.id, 'location', v)}
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue placeholder="الباب..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {gates.filter(g => g.status === 'مفتوح').map((gate) => (
+                              <SelectItem key={gate.id} value={gate.name}>
+                                {gate.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span>{employee.location || '-'}</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-col items-center gap-1">
                         <Badge variant={employee.is_active ? "default" : "secondary"}>
