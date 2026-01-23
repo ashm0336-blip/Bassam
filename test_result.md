@@ -279,6 +279,18 @@ backend:
         comment: "✅ DURATION DISPLAY FEATURE FULLY WORKING (2026-01-23): Comprehensive testing completed for Gates Department transactions. ✅ COLUMN HEADER: Timer icon (⏱️) displayed correctly in header with 'مدة المعاملة' text. ✅ TRANSACTION 1 (12345 - Pending): Duration badge showing '10 ساعة و 54 دقيقة' with ⚡ icon, emerald/green color (fast), professional rounded border styling. ✅ TRANSACTION 2 (T-GATES-001 - Completed): Duration badge showing '2 يوم و 22 ساعة' with ⏱️ icon, blue color (medium), professional rounded border styling. ✅ STYLING: All badges have proper color-coded backgrounds (emerald for fast, blue for medium, amber for warning, red for critical), rounded borders, and appropriate icons (⚡, ⏱️, ⚠️, 🔥). ✅ ARABIC TEXT: Duration text displays correctly in Arabic format with proper time units (يوم، ساعة، دقيقة). ✅ DURATION CALCULATION: Correctly calculates duration from transaction_date to now for pending transactions, and from transaction_date to completed_date for completed transactions. ✅ API CALLS: GET /api/transactions?department=gates and GET /api/transactions/stats?department=gates working correctly. ✅ NO ERRORS: Zero console errors detected. All requirements from test scenario met successfully."
 
 frontend:
+  - task: "Department Settings Page - Mataf"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/DepartmentSettings.jsx, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL BACKEND BUG FOUND (2026-01-23): Department Settings endpoints are NOT WORKING. ROOT CAUSE: In /app/backend/server.py, the Department Settings Routes (lines 2260-2340) are defined AFTER app.include_router(api_router) on line 2238. This means these routes are NEVER registered with FastAPI and return 404 Not Found. EVIDENCE: (1) Frontend loads correctly with 3 tabs (الورديات, أنماط الراحة, مواقع التغطية) ✅. (2) Add dialogs open correctly ✅. (3) Forms can be filled ✅. (4) BUT: All API calls fail with 404: GET /api/mataf/settings/shifts ❌, GET /api/mataf/settings/rest_patterns ❌, GET /api/mataf/settings/coverage_locations ❌, POST /api/mataf/settings ❌. (5) Console logs show: 'Failed to load resource: the server responded with a status of 404' for all settings endpoints. (6) Direct curl test confirms: GET /api/mataf/settings/shifts returns {\"detail\":\"Not Found\"}. FIX REQUIRED: Move app.include_router(api_router) from line 2238 to AFTER all route definitions (after line 2340), OR move Department Settings Routes to BEFORE line 2238. IMPACT: Users cannot add, edit, or view any department settings (shifts, rest patterns, coverage locations) for ANY department. This is a P0 blocker for the Department Settings feature. UI VERIFICATION: ✅ Page loads with correct title 'إعدادات القسم', ✅ All 3 tabs present and clickable, ✅ Add buttons work ('إضافة وردية', 'إضافة نمط راحة', 'إضافة موقع'), ✅ Dialogs open correctly, ✅ Forms have all required fields (label, value, description, start_time, end_time, color, order), ✅ Form validation working. BACKEND ISSUE: ❌ Routes not registered, ❌ All endpoints return 404, ❌ No data can be saved or retrieved."
+  
   - task: "Responsive Design - Mobile Horizontal Scroll"
     implemented: true
     working: false
