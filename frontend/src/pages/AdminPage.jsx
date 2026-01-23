@@ -5,7 +5,6 @@ import {
   Users,
   Activity,
   Settings,
-  List,
   Menu,
   Map as MapIcon,
   Calendar,
@@ -16,7 +15,6 @@ import AdminDashboard from "./admin/AdminDashboard";
 import UserManagement from "./admin/UserManagement";
 import ActivityLog from "./admin/ActivityLog";
 import SystemSettings from "./admin/SystemSettings";
-import DropdownManager from "./admin/DropdownManager";
 import SidebarManager from "./admin/SidebarManager";
 import MapManager from "./admin/MapManager";
 import SeasonManager from "./admin/SeasonManager";
