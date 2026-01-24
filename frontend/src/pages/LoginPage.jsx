@@ -205,18 +205,6 @@ export default function LoginPage() {
                     'تسجيل الدخول'
                   )}
                 </Button>
-
-                {/* Demo Credentials */}
-                <div className="pt-4 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={fillDemoCredentials}
-                    className="w-full text-center text-sm text-gray-500 hover:text-primary transition-colors py-2 rounded-lg hover:bg-primary/5"
-                  >
-                    <span className="text-gray-400">حساب تجريبي:</span>
-                    <span className="font-medium text-gray-600 mr-2">admin@crowd.sa / admin123</span>
-                  </button>
-                </div>
               </form>
             </CardContent>
           </Card>
