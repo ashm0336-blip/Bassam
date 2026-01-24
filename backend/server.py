@@ -2349,6 +2349,20 @@ async def delete_department_setting(
     return {"message": "تم حذف الإعداد بنجاح"}
 
 
+# Health check endpoint for Kubernetes
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for Kubernetes liveness and readiness probes.
+    Returns 200 OK if the service is running.
+    """
+    try:
+        # Optional: Check database connection
+        await db.command("ping")
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "healthy", "database": "disconnected", "note": "Service is running"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
