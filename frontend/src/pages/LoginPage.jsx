@@ -75,14 +75,6 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  // Fill demo credentials
-  const fillDemoCredentials = () => {
-    setFormData({
-      email: 'admin@crowd.sa',
-      password: 'admin123'
-    });
-  };
-
   return (
     <div className="min-h-screen flex" dir="rtl" data-testid="login-page">
       {/* Left Side - Login Form */}
