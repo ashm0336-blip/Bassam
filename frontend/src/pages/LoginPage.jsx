@@ -17,7 +17,6 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [settingsLoading, setSettingsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [pageSettings, setPageSettings] = useState({
