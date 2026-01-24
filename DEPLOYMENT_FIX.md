@@ -84,7 +84,7 @@ CORS_ORIGINS=*
 
 **Frontend (.env):**
 ```env
-REACT_APP_BACKEND_URL=https://hajj-ops.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://workforce-hub-184.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 ENABLE_HEALTH_CHECK=false
 ```

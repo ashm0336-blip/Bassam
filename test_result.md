@@ -519,7 +519,7 @@ metadata:
     dept_manager_plazas: "manager.plazas@crowd.sa / manager123"
     field_staff: "staff.mataf@crowd.sa / staff123"
     monitoring: "monitoring@crowd.sa / monitor123"
-    base_url: "https://hajj-ops.preview.emergentagent.com"
+    base_url: "https://workforce-hub-184.preview.emergentagent.com"
   last_backend_test:
     timestamp: "2026-01-20"
     tests_run: 190
