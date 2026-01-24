@@ -77,6 +77,27 @@ export default function LoginPage() {
     });
   };
 
+  // Show loading screen while fetching settings
+  if (settingsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F8F6]" dir="rtl">
+        <div className="text-center">
+          <div 
+            className="w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6 animate-pulse shadow-xl"
+            style={{ 
+              background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` 
+            }}
+          >
+            <div className="rounded-full bg-white/30 w-16 h-16 flex items-center justify-center">
+              <span className="text-white font-cairo font-bold text-3xl">ح</span>
+            </div>
+          </div>
+          <p className="text-gray-600 font-cairo text-lg">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex" dir="rtl" data-testid="login-page">
       {/* Left Side - Login Form */}
