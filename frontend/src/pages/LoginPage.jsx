@@ -42,8 +42,7 @@ export default function LoginPage() {
       setPageSettings(response.data);
     } catch (error) {
       console.error("Error fetching login settings:", error);
-    } finally {
-      setSettingsLoading(false);
+      // استخدام الإعدادات الافتراضية في حالة الفشل
     }
   };
 
