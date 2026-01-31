@@ -1,57 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// Static page settings to prevent FOUC (Flash of Unstyled Content)
+const PAGE_SETTINGS = {
+  site_name_ar: "منصة التخطيط وخدمات الحشود",
+  site_name_en: "Planning and Crowd Services Platform",
+  subtitle_ar: "نظام متطور لإدارة تخطيط وخدمات الحشود",
+  subtitle_en: "Advanced Planning and Crowd Services Management System",
+  logo_url: "",
+  background_url: "https://images.unsplash.com/photo-1758985776354-4df674930917?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxrYWFiYSUyMG1lY2NhJTIwaXNsYW1pYyUyMG1vc3F1ZSUyMHBpbGdyaW1hZ2V8ZW58MHx8fHwxNzY4NTc2NTEwfDA&ixlib=rb-4.1.0&q=85",
+  primary_color: "#047857",
+  welcome_text_ar: "أهلاً وسهلاً",
+  welcome_text_en: "Welcome",
+  logo_size: 150
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [pageSettings, setPageSettings] = useState(null);
-
-  useEffect(() => {
-    fetchPageSettings();
-  }, []);
-
-  const fetchPageSettings = async () => {
-    try {
-      const response = await axios.get(`${API}/settings/login-page`);
-      setPageSettings(response.data);
-      setSettingsLoaded(true);
-    } catch (error) {
-      console.error("Error fetching login settings:", error);
-      setPageSettings({
-        site_name_ar: "منصة التخطيط وخدمات الحشود",
-        site_name_en: "Planning and Crowd Services Platform",
-        subtitle_ar: "نظام متطور لإدارة تخطيط وخدمات الحشود",
-        subtitle_en: "Advanced Planning and Crowd Services Management System",
-        logo_url: "",
-        background_url: "https://images.unsplash.com/photo-1758985776354-4df674930917?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxrYWFiYSUyMG1lY2NhJTIwaXNsYW1pYyUyMG1vc3F1ZSUyMHBpbGdyaW1hZ2V8ZW58MHx8fHwxNzY4NTc2NTEwfDA&ixlib=rb-4.1.0&q=85",
-        primary_color: "#047857",
-        welcome_text_ar: "أهلاً وسهلاً",
-        welcome_text_en: "Welcome",
-        logo_size: 150
-      });
-      setSettingsLoaded(true);
-    }
-  };
-  
-  if (!settingsLoaded || !pageSettings) {
-    return null;
-  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
