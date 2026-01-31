@@ -12,20 +12,6 @@ import { Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// Default fallback settings
-const DEFAULT_SETTINGS = {
-  site_name_ar: "منصة التخطيط وخدمات الحشود",
-  site_name_en: "Planning and Crowd Services Platform",
-  subtitle_ar: "نظام متطور لإدارة تخطيط وخدمات الحشود",
-  subtitle_en: "Advanced Planning and Crowd Services Management System",
-  logo_url: "",
-  background_url: "https://images.unsplash.com/photo-1758985776354-4df674930917?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwzfHxrYWFiYSUyMG1lY2NhJTIwaXNsYW1pYyUyMG1vc3F1ZSUyMHBpbGdyaW1hZ2V8ZW58MHx8fHwxNzY4NTc2NTEwfDA&ixlib=rb-4.1.0&q=85",
-  primary_color: "#047857",
-  welcome_text_ar: "أهلاً وسهلاً",
-  welcome_text_en: "Welcome",
-  logo_size: 150
-};
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -33,18 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
-  
-  // Initialize with cached settings from localStorage or defaults
-  const getCachedSettings = () => {
-    try {
-      const cached = localStorage.getItem('login_page_settings');
-      return cached ? JSON.parse(cached) : DEFAULT_SETTINGS;
-    } catch (error) {
-      return DEFAULT_SETTINGS;
-    }
-  };
-  
-  const [pageSettings, setPageSettings] = useState(getCachedSettings());
+  const [pageSettings, setPageSettings] = useState(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   useEffect(() => {
     fetchPageSettings();
@@ -53,16 +29,38 @@ export default function LoginPage() {
   const fetchPageSettings = async () => {
     try {
       const response = await axios.get(`${API}/settings/login-page`);
-      const newSettings = response.data;
-      
-      // Update state and cache
-      setPageSettings(newSettings);
-      localStorage.setItem('login_page_settings', JSON.stringify(newSettings));
+      setPageSettings(response.data);
     } catch (error) {
       console.error("Error fetching login settings:", error);
-      // Keep using cached or default settings
+    } finally {
+      setSettingsLoading(false);
     }
   };
+  
+  // Show loading screen while fetching settings
+  if (settingsLoading || !pageSettings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F8F6]" dir="rtl">
+        <div className="text-center">
+          <div 
+            className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg"
+            style={{ 
+              background: 'linear-gradient(135deg, #047857, #047857dd)',
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }}
+          >
+            <div 
+              className="rounded-full bg-white/30 flex items-center justify-center"
+              style={{ width: '56px', height: '56px' }}
+            >
+              <span className="text-white font-cairo font-bold text-2xl">ح</span>
+            </div>
+          </div>
+          <p className="text-gray-600 font-cairo">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
