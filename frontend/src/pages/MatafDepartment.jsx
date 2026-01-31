@@ -7,14 +7,7 @@ import EmployeeManagement from "@/components/EmployeeManagement";
 import TransactionsPage from "@/pages/TransactionsPage";
 import DepartmentSettings from "@/pages/DepartmentSettings";
 import { 
-  Circle, 
-  Clock,
   Users,
-  TrendingUp,
-  AlertTriangle,
-  RotateCw,
-  Layers,
-  Activity,
   UserCheck,
   UserX,
   MapPin
