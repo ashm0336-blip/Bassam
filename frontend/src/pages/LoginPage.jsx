@@ -180,7 +180,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-400 mt-10">
-            © 2024 {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
+            © 2024 {language === 'ar' ? PAGE_SETTINGS.site_name_ar : PAGE_SETTINGS.site_name_en}
           </p>
         </div>
       </div>
@@ -189,17 +189,17 @@ export default function LoginPage() {
       <div 
         className="hidden lg:flex lg:w-[55%] bg-cover bg-center relative"
         style={{ 
-          backgroundImage: `url(${pageSettings.background_url})`,
-          backgroundColor: pageSettings.primary_color 
+          backgroundImage: `url(${PAGE_SETTINGS.background_url})`,
+          backgroundColor: PAGE_SETTINGS.primary_color 
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
         <div className="relative z-10 flex flex-col items-center justify-center text-white p-12 text-center w-full">
           <h1 className="font-cairo font-bold text-5xl mb-6">
-            {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
+            {language === 'ar' ? PAGE_SETTINGS.site_name_ar : PAGE_SETTINGS.site_name_en}
           </h1>
           <p className="text-lg max-w-lg leading-relaxed text-white/90">
-            {language === 'ar' ? pageSettings.subtitle_ar : pageSettings.subtitle_en}
+            {language === 'ar' ? PAGE_SETTINGS.subtitle_ar : PAGE_SETTINGS.subtitle_en}
           </p>
         </div>
       </div>
