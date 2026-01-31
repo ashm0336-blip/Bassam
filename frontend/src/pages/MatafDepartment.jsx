@@ -93,8 +93,6 @@ export default function MatafDepartment() {
   const pageTitle = pageInfo ? (language === 'ar' ? pageInfo.name_ar : pageInfo.name_en) : (language === 'ar' ? 'صحن المطاف' : 'Mataf');
   
   const [matafLevels, setMatafLevels] = useState([]);
-  const [haramainData, setHaramainData] = useState(null);
-  const [stats, setStats] = useState(null);
   const [employeeStats, setEmployeeStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
