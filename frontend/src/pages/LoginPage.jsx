@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-// Static page settings to prevent FOUC (Flash of Unstyled Content)
-const PAGE_SETTINGS = {
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Default fallback settings
+const DEFAULT_SETTINGS = {
   site_name_ar: "منصة التخطيط وخدمات الحشود",
   site_name_en: "Planning and Crowd Services Platform",
   subtitle_ar: "نظام متطور لإدارة تخطيط وخدمات الحشود",
@@ -30,6 +33,36 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  
+  // Initialize with cached settings from localStorage or defaults
+  const getCachedSettings = () => {
+    try {
+      const cached = localStorage.getItem('login_page_settings');
+      return cached ? JSON.parse(cached) : DEFAULT_SETTINGS;
+    } catch (error) {
+      return DEFAULT_SETTINGS;
+    }
+  };
+  
+  const [pageSettings, setPageSettings] = useState(getCachedSettings());
+
+  useEffect(() => {
+    fetchPageSettings();
+  }, []);
+
+  const fetchPageSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/settings/login-page`);
+      const newSettings = response.data;
+      
+      // Update state and cache
+      setPageSettings(newSettings);
+      localStorage.setItem('login_page_settings', JSON.stringify(newSettings));
+    } catch (error) {
+      console.error("Error fetching login settings:", error);
+      // Keep using cached or default settings
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
