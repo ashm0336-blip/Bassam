@@ -66,5 +66,21 @@
   <body>
     <noscript>يجب تفعيل JavaScript لتشغيل هذا التطبيق.</noscript>
     <div id="root"></div>
+    
+    <script>
+      // Remove skeleton on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Wait for React to mount
+        setTimeout(function() {
+          var skeleton = document.getElementById('login-skeleton');
+          if (skeleton) {
+            skeleton.classList.add('hidden');
+            setTimeout(function() {
+              skeleton.remove();
+            }, 300);
+          }
+        }, 100);
+      });
+    </script>
   </body>
 </html>
