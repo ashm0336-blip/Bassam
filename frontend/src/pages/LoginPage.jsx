@@ -93,36 +93,36 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-10">
-            <a href={PAGE_SETTINGS.logo_link || "/"} className="inline-block">
-              {PAGE_SETTINGS.logo_url ? (
+            <a href={pageSettings.logo_link || "/"} className="inline-block">
+              {pageSettings.logo_url ? (
                 <img 
-                  src={PAGE_SETTINGS.logo_url} 
+                  src={pageSettings.logo_url} 
                   alt="Logo" 
                   className="mx-auto mb-5 object-contain cursor-pointer hover:opacity-90 transition-opacity"
                   style={{ 
-                    width: `${PAGE_SETTINGS.logo_size || 150}px`,
-                    height: `${PAGE_SETTINGS.logo_size || 150}px`
+                    width: `${pageSettings.logo_size || 150}px`,
+                    height: `${pageSettings.logo_size || 150}px`
                   }}
                 />
               ) : (
                 <div 
                   className="rounded-full mx-auto flex items-center justify-center mb-5 shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
                   style={{ 
-                    width: `${PAGE_SETTINGS.logo_size || 150}px`,
-                    height: `${PAGE_SETTINGS.logo_size || 150}px`,
-                    background: `linear-gradient(135deg, ${PAGE_SETTINGS.primary_color}, ${PAGE_SETTINGS.primary_color}dd)` 
+                    width: `${pageSettings.logo_size || 150}px`,
+                    height: `${pageSettings.logo_size || 150}px`,
+                    background: `linear-gradient(135deg, ${pageSettings.primary_color}, ${pageSettings.primary_color}dd)` 
                   }}
                 >
                   <div 
                     className="rounded-full bg-white/30 flex items-center justify-center"
                     style={{
-                      width: `${(PAGE_SETTINGS.logo_size || 150) * 0.7}px`,
-                      height: `${(PAGE_SETTINGS.logo_size || 150) * 0.7}px`
+                      width: `${(pageSettings.logo_size || 150) * 0.7}px`,
+                      height: `${(pageSettings.logo_size || 150) * 0.7}px`
                     }}
                   >
                     <span 
                       className="text-white font-cairo font-bold"
-                      style={{ fontSize: `${(PAGE_SETTINGS.logo_size || 150) * 0.35}px` }}
+                      style={{ fontSize: `${(pageSettings.logo_size || 150) * 0.35}px` }}
                     >
                       ح
                     </span>
@@ -134,9 +134,9 @@ export default function LoginPage() {
               {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
             </h1>
             <p className="text-sm text-gray-500">
-              {language === 'ar' ? PAGE_SETTINGS.welcome_text_ar : PAGE_SETTINGS.welcome_text_en} 
+              {language === 'ar' ? pageSettings.welcome_text_ar : pageSettings.welcome_text_en} 
               {' '}
-              {language === 'ar' ? PAGE_SETTINGS.site_name_ar : PAGE_SETTINGS.site_name_en}
+              {language === 'ar' ? pageSettings.site_name_ar : pageSettings.site_name_en}
             </p>
           </div>
 
