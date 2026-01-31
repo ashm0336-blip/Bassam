@@ -13,6 +13,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <title>منصة خدمات الحشود | Al-Haram OS</title>
+    <style>
+      /* Critical CSS to prevent FOUC */
+      #root {
+        min-height: 100vh;
+        background-color: #F8F8F6;
+      }
+      
+      /* Hide content until React hydrates */
+      .login-skeleton {
+        display: flex;
+        min-height: 100vh;
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+      }
+      
+      .login-skeleton.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      .skeleton-pulse {
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes skeleton-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+      }
+    </style>
     <script>
       // Suppress ResizeObserver errors
       window.addEventListener('error', e => {
