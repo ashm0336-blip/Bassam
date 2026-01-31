@@ -121,14 +121,13 @@ export default function LoginPage() {
                       id="email"
                       type="email"
                       placeholder="admin@crowd.sa"
-                      className="h-12 pr-4 pl-12 bg-white border-gray-200 focus:border-primary focus:ring-primary/20 text-left"
+                      className="h-12 pr-10 pl-4 bg-white border-gray-200 focus:border-primary focus:ring-primary/20 text-left"
                       dir="ltr"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
                       data-testid="login-email"
                     />
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
                 </div>
                 
