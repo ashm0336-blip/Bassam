@@ -35,39 +35,7 @@
     </script>
   </head>
   <body>
-    <!-- Initial Loading Screen -->
-    <div class="initial-loader" id="initial-loader">
-      <div class="spinner">
-        <div class="spinner-inner">
-          <div class="spinner-text">ح</div>
-        </div>
-      </div>
-      <div class="loading-text">جاري التحميل...</div>
-    </div>
-    
     <noscript>يجب تفعيل JavaScript لتشغيل هذا التطبيق.</noscript>
     <div id="root"></div>
-    
-    <script>
-      // Remove loader and show root when React is ready
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          const loader = document.getElementById('initial-loader');
-          const root = document.getElementById('root');
-          
-          if (loader) {
-            loader.style.transition = 'opacity 0.3s ease-out';
-            loader.style.opacity = '0';
-            setTimeout(function() {
-              loader.style.display = 'none';
-            }, 300);
-          }
-          
-          if (root) {
-            root.classList.add('loaded');
-          }
-        }, 100);
-      });
-    </script>
   </body>
 </html>
