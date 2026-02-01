@@ -38,37 +38,43 @@
         }
         _error.apply(console, args);
       };
-      
+    </script>
+    <script>
       // Pre-load login settings BEFORE React renders (prevents FOUC)
+      window.__LOGIN_SETTINGS__ = {
+        primary_color: "#047857",
+        background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
+        logo_url: "",
+        logo_size: 150,
+        logo_link: "/",
+        site_name_ar: "منصة خدمات الحشود",
+        site_name_en: "Crowd Services Platform",
+        subtitle_ar: "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
+        subtitle_en: "General Administration for Planning and Crowd Services at the Grand Mosque",
+        welcome_text_ar: "مرحباً بك في",
+        welcome_text_en: "Welcome to"
+      };
+      
+      // Fetch actual settings asynchronously and update if different
       (function() {
-        var defaultSettings = {
-          primary_color: "#047857",
-          background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
-          logo_url: "",
-          logo_size: 150,
-          logo_link: "/",
-          site_name_ar: "منصة خدمات الحشود",
-          site_name_en: "Crowd Services Platform",
-          subtitle_ar: "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
-          subtitle_en: "General Administration for Planning and Crowd Services at the Grand Mosque",
-          welcome_text_ar: "مرحباً بك في",
-          welcome_text_en: "Welcome to"
-        };
-        
         try {
-          var xhr = new XMLHttpRequest();
-          var backendUrl = '%REACT_APP_BACKEND_URL%';
-          xhr.open('GET', backendUrl + '/api/settings/login-page', false); // synchronous
-          xhr.send();
-          
-          if (xhr.status === 200) {
-            window.__LOGIN_SETTINGS__ = JSON.parse(xhr.responseText);
-          } else {
-            window.__LOGIN_SETTINGS__ = defaultSettings;
-          }
+          fetch(window.location.origin + '/api/settings/login-page')
+            .then(function(response) {
+              if (response.ok) {
+                return response.json();
+              }
+              throw new Error('Failed to fetch settings');
+            })
+            .then(function(settings) {
+              window.__LOGIN_SETTINGS__ = settings;
+              // Trigger a custom event for React to potentially re-render if needed
+              window.dispatchEvent(new CustomEvent('loginSettingsLoaded', { detail: settings }));
+            })
+            .catch(function(e) {
+              console.warn('Using default login settings:', e);
+            });
         } catch (e) {
-          console.warn('Failed to load login settings, using defaults:', e);
-          window.__LOGIN_SETTINGS__ = defaultSettings;
+          console.warn('Failed to load login settings:', e);
         }
       })();
     </script>
