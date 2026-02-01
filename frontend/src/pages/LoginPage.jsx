@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -17,9 +17,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   
-  // Read settings from window object (injected by backend)
-  // This eliminates FOUC by having settings available immediately
-  const pageSettings = window.__LOGIN_SETTINGS__ || {
+  // Read settings from window object (pre-loaded in index.html)
+  // This eliminates FOUC by having default settings available immediately
+  const [pageSettings, setPageSettings] = useState(window.__LOGIN_SETTINGS__ || {
     primary_color: "#047857",
     background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
     logo_url: "",
@@ -31,7 +31,17 @@ export default function LoginPage() {
     subtitle_en: "General Administration for Planning and Crowd Services at the Grand Mosque",
     welcome_text_ar: "مرحباً بك في",
     welcome_text_en: "Welcome to"
-  };
+  });
+  
+  // Listen for settings updates from async fetch
+  useEffect(() => {
+    const handleSettingsUpdate = (event) => {
+      setPageSettings(event.detail);
+    };
+    
+    window.addEventListener('loginSettingsLoaded', handleSettingsUpdate);
+    return () => window.removeEventListener('loginSettingsLoaded', handleSettingsUpdate);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
