@@ -161,6 +161,11 @@ export default function CrowdServicesDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="crowd_services" />
       )}
+      
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <DepartmentSettings department="crowd_services" />
+      )}
     </div>
   );
 }
