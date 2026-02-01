@@ -5,6 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import TransactionsPage from "@/pages/TransactionsPage";
+import DepartmentSettings from "@/pages/DepartmentSettings";
 import { 
   Users, 
   HeartPulse,
