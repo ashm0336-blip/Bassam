@@ -9,8 +9,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
