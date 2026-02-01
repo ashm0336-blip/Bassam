@@ -521,11 +521,14 @@ metadata:
     monitoring: "monitoring@crowd.sa / monitor123"
     base_url: "https://crowdmgmt.preview.emergentagent.com"
   last_backend_test:
-    timestamp: "2026-01-20"
-    tests_run: 190
-    tests_passed: 190
-    success_rate: 100.0
+    timestamp: "2026-02-01"
+    tests_run: 256
+    tests_passed: 221
+    success_rate: 86.3
     categories_tested:
+      - "Login Page Settings (FOUC Prevention) - PRIORITY TEST"
+      - "Department Settings for All 5 Departments - PRIORITY TEST"
+      - "Sidebar Menu - Department Settings Items - PRIORITY TEST"
       - "Authentication & Authorization (all user roles)"
       - "User Management (System Admin only)"
       - "Employee Management (with location and shift)"
@@ -535,7 +538,11 @@ metadata:
       - "Alerts/Notifications"
       - "RBAC Report Filtering"
       - "Sidebar Menu with Expandable Submenus"
-      - "Transaction Data Isolation (Admin across all departments)"
+      - "Dropdown Options Management"
+      - "Header Customization"
+      - "Interactive Maps"
+      - "Employee-Gate Relationship"
+      - "Transaction Data Isolation"
   last_frontend_test:
     timestamp: "2026-01-17"
     tests_run: 15
