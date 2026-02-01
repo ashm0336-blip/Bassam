@@ -2545,6 +2545,20 @@ class AlHaramAPITester:
         # Category 1: Authentication & Authorization (all user roles)
         self.test_authentication_endpoints()
         
+        # ===== PRIORITY TESTS FROM REVIEW REQUEST =====
+        print("\n" + "="*80)
+        print("🎯 PRIORITY TESTS - Review Request Features")
+        print("="*80)
+        
+        # Test 1: Login Page Settings (FOUC Prevention)
+        self.test_login_page_settings_fouc_prevention()
+        
+        # Test 2: Department Settings for all 5 departments
+        self.test_department_settings_all_departments()
+        
+        # Test 3: Sidebar Menu - Department Settings Items
+        self.test_sidebar_menu_department_settings_items()
+        
         # Category 2: User Management (System Admin only)
         self.test_user_management_endpoints()
         self.test_permission_validation()
