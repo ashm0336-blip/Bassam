@@ -2337,6 +2337,205 @@ class AlHaramAPITester:
             
             self.auth_token = temp_token
 
+    def test_login_page_settings_fouc_prevention(self):
+        """Test login page settings endpoint for FOUC prevention"""
+        print("\n🎨 Testing Login Page Settings (FOUC Prevention)...")
+        
+        # Test 1: GET /api/settings/login-page - Public access (no auth required)
+        success, settings_data = self.test_endpoint(
+            "GET /api/settings/login-page - Get Login Page Settings (Public)",
+            "settings/login-page",
+            auth_required=False,
+            expected_status=200
+        )
+        
+        if success and isinstance(settings_data, dict):
+            # Verify all required fields for FOUC prevention
+            required_fields = [
+                "site_name_ar", "site_name_en", "subtitle_ar", "subtitle_en",
+                "logo_url", "logo_link", "logo_size", "background_url",
+                "primary_color", "welcome_text_ar", "welcome_text_en"
+            ]
+            
+            missing_fields = [field for field in required_fields if field not in settings_data]
+            if not missing_fields:
+                self.log_result("Login Settings - All Fields Present", True, 
+                              f"All {len(required_fields)} fields present for FOUC prevention")
+            else:
+                self.log_result("Login Settings - All Fields Present", False, 
+                              f"Missing fields: {missing_fields}")
+            
+            # Verify critical styling fields have values
+            if settings_data.get("primary_color"):
+                self.log_result("Login Settings - Primary Color Set", True, 
+                              f"Primary color: {settings_data.get('primary_color')}")
+            else:
+                self.log_result("Login Settings - Primary Color Set", False, 
+                              "Primary color is missing or empty")
+            
+            # Verify logo settings
+            if "logo_size" in settings_data:
+                self.log_result("Login Settings - Logo Size Configured", True, 
+                              f"Logo size: {settings_data.get('logo_size')}px")
+            
+            # Verify bilingual support
+            if settings_data.get("site_name_ar") and settings_data.get("site_name_en"):
+                self.log_result("Login Settings - Bilingual Support", True, 
+                              f"AR: {settings_data.get('site_name_ar')}, EN: {settings_data.get('site_name_en')}")
+        
+        # Test 2: Verify settings can be updated by admin
+        if self.auth_token:
+            update_data = {
+                "primary_color": "#DC2626",
+                "logo_size": 150
+            }
+            
+            success, updated_settings = self.test_endpoint(
+                "PUT /api/admin/settings/login-page - Update Login Settings (Admin)",
+                "admin/settings/login-page",
+                method="PUT",
+                data=update_data,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            if success and isinstance(updated_settings, dict):
+                if updated_settings.get("primary_color") == "#DC2626":
+                    self.log_result("Login Settings - Update Verification", True, 
+                                  "Settings updated successfully")
+    
+    def test_department_settings_all_departments(self):
+        """Test department settings for all 5 departments (Mataf, Gates, Plazas, Planning, Crowd Services)"""
+        print("\n⚙️ Testing Department Settings for All 5 Departments...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping department settings tests")
+            return
+        
+        departments = ["mataf", "gates", "plazas", "planning", "crowd_services"]
+        setting_types = ["shifts", "rest_patterns", "coverage_locations"]
+        
+        for department in departments:
+            print(f"\n  📂 Testing {department.upper()} Department Settings...")
+            
+            for setting_type in setting_types:
+                # Test GET endpoint
+                success, settings_data = self.test_endpoint(
+                    f"GET /api/{department}/settings/{setting_type} - Get {setting_type}",
+                    f"{department}/settings/{setting_type}",
+                    auth_required=True,
+                    expected_status=200
+                )
+                
+                if success and isinstance(settings_data, list):
+                    self.log_result(f"{department.capitalize()} - {setting_type} Retrieved", True, 
+                                  f"Found {len(settings_data)} {setting_type}")
+            
+            # Test POST endpoint - Create a test setting
+            test_setting = {
+                "department": department,
+                "setting_type": "shifts",
+                "value": f"test_shift_{department}",
+                "label": f"وردية اختبار - {department}",
+                "description": "Test shift for automated testing",
+                "color": "#3b82f6",
+                "start_time": "08:00",
+                "end_time": "16:00",
+                "order": 99
+            }
+            
+            success, created_setting = self.test_endpoint(
+                f"POST /api/{department}/settings - Create Test Setting",
+                f"{department}/settings",
+                method="POST",
+                data=test_setting,
+                auth_required=True,
+                expected_status=200
+            )
+            
+            setting_id = None
+            if success and "id" in created_setting:
+                setting_id = created_setting["id"]
+                self.log_result(f"{department.capitalize()} - Setting Created", True, 
+                              f"Created setting with ID: {setting_id}")
+            
+            # Test PUT endpoint - Update the setting
+            if setting_id:
+                update_data = {
+                    "label": f"وردية محدثة - {department}",
+                    "color": "#ef4444"
+                }
+                
+                success, updated_setting = self.test_endpoint(
+                    f"PUT /api/{department}/settings/{setting_id} - Update Setting",
+                    f"{department}/settings/{setting_id}",
+                    method="PUT",
+                    data=update_data,
+                    auth_required=True,
+                    expected_status=200
+                )
+            
+            # Test DELETE endpoint - Clean up test setting
+            if setting_id:
+                success, delete_response = self.test_endpoint(
+                    f"DELETE /api/{department}/settings/{setting_id} - Delete Test Setting",
+                    f"{department}/settings/{setting_id}",
+                    method="DELETE",
+                    auth_required=True,
+                    expected_status=200
+                )
+    
+    def test_sidebar_menu_department_settings_items(self):
+        """Test sidebar menu includes 'Department Settings' for all 5 departments"""
+        print("\n📋 Testing Sidebar Menu - Department Settings Items...")
+        
+        if not self.auth_token:
+            print("⚠️ No auth token available, skipping sidebar menu tests")
+            return
+        
+        # Test GET /api/sidebar-menu
+        success, menu_items = self.test_endpoint(
+            "GET /api/sidebar-menu - Get Sidebar Menu",
+            "sidebar-menu",
+            auth_required=True,
+            expected_status=200
+        )
+        
+        if success and isinstance(menu_items, list):
+            # Check for department settings items
+            departments_to_check = ["mataf", "gates", "plazas", "planning", "crowd_services"]
+            
+            for dept in departments_to_check:
+                # Find department settings item
+                dept_settings_items = [
+                    item for item in menu_items 
+                    if "settings" in item.get("href", "").lower() and dept in item.get("href", "").lower()
+                ]
+                
+                if dept_settings_items:
+                    self.log_result(f"Sidebar - {dept.capitalize()} Department Settings Item", True, 
+                                  f"Found {len(dept_settings_items)} settings item(s)")
+                else:
+                    # Check if there's a generic settings submenu
+                    settings_items = [
+                        item for item in menu_items 
+                        if "إعدادات القسم" in item.get("name_ar", "") or "Department Settings" in item.get("name_en", "")
+                    ]
+                    
+                    if settings_items:
+                        self.log_result(f"Sidebar - {dept.capitalize()} Department Settings", True, 
+                                      f"Found generic settings item")
+                    else:
+                        self.log_result(f"Sidebar - {dept.capitalize()} Department Settings", False, 
+                                      f"No settings item found for {dept}")
+            
+            # Verify sidebar menu structure
+            parent_items = [item for item in menu_items if not item.get("parent_id")]
+            submenu_items = [item for item in menu_items if item.get("parent_id")]
+            
+            self.log_result("Sidebar Menu Structure", True, 
+                          f"Total: {len(menu_items)} items ({len(parent_items)} parents, {len(submenu_items)} submenus)")
+
     def run_all_tests(self):
         """Run all API tests - Comprehensive Testing for Review Request"""
         print("🚀 Starting Crowd Services Platform Comprehensive Testing...")
