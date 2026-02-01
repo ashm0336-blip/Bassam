@@ -351,6 +351,18 @@ frontend:
         agent: "testing"
         comment: "✅✅✅ FULLY WORKING - SHIFT TIME COLUMN IMPLEMENTED AND TESTED (2026-01-23): USER REQUEST: Test shift time column dynamic update when shift changes. COMPREHENSIVE TESTING COMPLETED: (1) Login as manager.mataf@crowd.sa/test123 ✅. (2) Navigate to /mataf?tab=employees ✅. (3) TABLE STRUCTURE VERIFIED: 7 headers match 7 cells (previously 7 headers vs 6 cells - now FIXED) ✅. (4) SHIFT TIME COLUMN VISIBLE: Employee 12345 shows initial shift time '07:00 - 14:00' in purple badge with clock icon ✅. (5) SHIFT CHANGE TEST: Changed shift from 'الوردية الأولى' to 'الوردية الثانية' using quick edit dropdown ✅. (6) SUCCESS TOAST: 'تم التحديث' (Updated) toast appeared ✅. (7) CRITICAL - IMMEDIATE UPDATE: Shift time updated IMMEDIATELY from '07:00 - 14:00' to '14:00 - 21:00' WITHOUT page reload ✅. (8) TIME FORMAT: Correct format (HH:MM - HH:MM) verified ✅. (9) PROFESSIONAL STYLING: Purple background (bg-purple-100), purple text (text-purple-700), purple border (border-purple-300), clock icon present, rounded border applied ✅. FIX APPLIED: Added missing TableCell after line 527 in EmployeeManagement.jsx. The cell uses a Badge component with purple styling and Clock icon, dynamically displays shift time from shifts array (shiftData.start_time - shiftData.end_time), and updates immediately when shift changes via handleQuickMove(). EXPECTED RESULTS ALL MET: ✅ Shift time column visible with header icon. ✅ Time displays for employees with shifts. ✅ Time updates IMMEDIATELY when shift changes (no reload). ✅ Professional styling with purple theme and clock icon. CONCLUSION: Feature is PRODUCTION READY and working perfectly."
   
+  - task: "Planning Department - Employee Management with Shifts"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/pages/PlanningDepartment.jsx, /app/frontend/src/components/EmployeeManagement.jsx, /app/backend/server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE (2026-02-01): Planning department shift dropdown is EMPTY. ROOT CAUSE: No shifts configured for Planning department. GET /api/planning/settings/shifts returns empty array []. User mentioned duplicate shifts were deleted and new shifts should be created (الأولى, الثانية, الثالثة, الرابعة), but shifts were NOT re-created. IMPACT: Users cannot assign shifts to employees in Planning department. Shift dropdown exists but shows 0 options. This is a P0 BLOCKER. FIX REQUIRED: Create 4 shifts for Planning department via POST /api/planning/settings. POSITIVE FINDINGS: ✅ Employee status calculation working correctly (shows نشط/غير نشط/☕ في راحة). ✅ Rest patterns configured correctly with rest_days field. ✅ Mataf department has correct 4 shifts for comparison. ✅ UI structure consistent between Planning and Mataf."
+  
   - task: "Mataf Department Manager - Complete End-to-End Experience"
     implemented: true
     working: false
