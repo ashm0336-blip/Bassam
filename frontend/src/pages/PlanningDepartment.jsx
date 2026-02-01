@@ -246,6 +246,11 @@ export default function PlanningDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="planning" />
       )}
+      
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <DepartmentSettings department="planning" />
+      )}
     </div>
   );
 }

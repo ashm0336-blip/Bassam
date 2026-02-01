@@ -315,6 +315,11 @@ export default function PlazasDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="plazas" />
       )}
+      
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <DepartmentSettings department="plazas" />
+      )}
     </div>
   );
 }

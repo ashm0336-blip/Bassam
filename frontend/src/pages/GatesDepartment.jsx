@@ -469,6 +469,11 @@ export default function GatesDepartment() {
       {activeTab === 'transactions' && (
         <TransactionsPage department="gates" />
       )}
+      
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <DepartmentSettings department="gates" />
+      )}
     </div>
   );
 }
