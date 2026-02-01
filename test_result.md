@@ -3993,3 +3993,62 @@ test_plan:
         agent: "testing"
         comment: "✅ FULLY WORKING (2026-02-01): GET /api/sidebar-menu endpoint tested successfully. All 5 departments have settings items in sidebar menu. Sidebar structure verified: 31 total items (11 parents, 20 submenus). Department settings navigation links present for all departments: mataf, gates, plazas, planning, crowd_services. Menu items include proper href links to department settings pages (e.g., /mataf?tab=settings). Parent-child relationships working correctly. Backend API provides correct menu structure for frontend to render department settings navigation."
 
+
+  - agent: "testing"
+    message: |
+      ✅ COMPREHENSIVE FRONTEND TESTING COMPLETED (2026-02-01) ✅
+      
+      ARABIC TEST REQUEST: اختبار شامل للواجهة الأمامية - منصة خدمات الحشود
+      Focus: (1) FOUC Fix on Login Page, (2) Sidebar Menu - Department Settings, (3) Department Settings Pages
+      
+      TEST 1 - FOUC (FLASH OF UNSTYLED CONTENT) - ✅ PASS:
+      - window.__LOGIN_SETTINGS__ exists BEFORE React loads ✅
+      - Settings pre-loaded with actual database data ✅
+      - Logo displays immediately (base64 encoded image) ✅
+      - Site name "منصة التخطيط وخدمات الحشود" displays immediately ✅
+      - Primary color #DC2626 applied immediately ✅
+      - NO FLASH or flicker detected ✅
+      - CONCLUSION: FOUC fix is WORKING PERFECTLY - settings load before React renders
+      
+      TEST 2 - LOGIN - ✅ PASS:
+      - Login with admin@crowd.sa / admin123 successful ✅
+      - Redirect to dashboard working ✅
+      
+      TEST 3 - SIDEBAR MENU - ⚠️ INCOMPLETE:
+      - Admin user sees 12 menu items (expected for admin role) ✅
+      - Could NOT test "إعدادات القسم" submenu items because admin user doesn't have access to department menus (RBAC by design)
+      - RECOMMENDATION: Need to test with department manager account (e.g., manager.mataf@crowd.sa) to verify submenu items
+      
+      TEST 4 - DEPARTMENT SETTINGS PAGES - ✅ PASS (ALL 5 DEPARTMENTS):
+      - Mataf (/mataf?tab=settings): Page loads ✅, Title "صحن المطاف" ✅, 3 tabs present ✅
+      - Gates (/gates?tab=settings): Page loads ✅, Title "إدارة الأبواب" ✅, 3 tabs present ✅
+      - Plazas (/plazas?tab=settings): Page loads ✅, Title "إدارة الساحات" ✅, 3 tabs present ✅
+      - Planning (/planning?tab=settings): Page loads ✅, Title "تخطيط خدمات الحشود" ✅, 3 tabs present ✅
+      - Crowd Services (/crowd-services?tab=settings): Page loads ✅, Title "خدمات الحشود" ✅, 3 tabs present ✅
+      - All tabs: الورديات (Shifts), أنماط الراحة (Rest Patterns), مواقع التغطية (Coverage Locations) ✅
+      
+      MINOR ISSUE FOUND:
+      - Background image on login page: background_url is set in settings but not loading (hasImage=False)
+      - This is a COSMETIC issue only, does not affect functionality
+      - Logo, colors, and text all display correctly
+      
+      SCREENSHOTS CAPTURED:
+      - fouc_initial.png: Login page initial load
+      - fouc_final.png: Login page after full load
+      - after_login.png: Dashboard after login
+      - sidebar_menu.png: Sidebar menu items
+      - mataf_settings.png: Mataf department settings page
+      - gates_settings.png: Gates department settings page
+      - plazas_settings.png: Plazas department settings page
+      - planning_settings.png: Planning department settings page
+      - crowd_services_settings.png: Crowd Services department settings page
+      
+      OVERALL ASSESSMENT:
+      ✅ FOUC FIX: WORKING PERFECTLY - Highest priority requirement MET
+      ✅ DEPARTMENT SETTINGS PAGES: ALL 5 WORKING - All pages accessible with 3 tabs each
+      ⚠️ SIDEBAR MENU: INCOMPLETE TESTING - Need department manager account to verify submenu items
+      
+      NEXT STEPS:
+      1. Test sidebar menu with department manager account to verify "إعدادات القسم" submenu appears
+      2. (Optional) Fix background image loading on login page (minor cosmetic issue)
+
