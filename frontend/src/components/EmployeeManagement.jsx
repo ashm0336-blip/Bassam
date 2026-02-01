@@ -297,23 +297,29 @@ export default function EmployeeManagement({ department }) {
     const activeEmployees = employees.filter(e => e.is_active).length;
     const inactiveEmployees = employees.filter(e => !e.is_active).length;
     
-    // Stats by shift
-    const shiftStats = shifts.map(shift => ({
-      ...shift,
-      count: employees.filter(e => e.shift === shift.value).length
-    }));
+    // Stats by shift - only show shifts with employees (count > 0)
+    const shiftStats = shifts
+      .map(shift => ({
+        ...shift,
+        count: employees.filter(e => e.shift === shift.value).length
+      }))
+      .filter(shift => shift.count > 0);
     
-    // Stats by location
-    const locationStats = coverageLocations.map(loc => ({
-      ...loc,
-      count: employees.filter(e => e.location === loc.value).length
-    }));
+    // Stats by location - only show locations with employees (count > 0)
+    const locationStats = coverageLocations
+      .map(loc => ({
+        ...loc,
+        count: employees.filter(e => e.location === loc.value).length
+      }))
+      .filter(loc => loc.count > 0);
     
-    // Stats by rest pattern
-    const restPatternStats = restPatterns.map(rest => ({
-      ...rest,
-      count: employees.filter(e => e.weekly_rest === rest.value).length
-    }));
+    // Stats by rest pattern - only show patterns with employees (count > 0)
+    const restPatternStats = restPatterns
+      .map(rest => ({
+        ...rest,
+        count: employees.filter(e => e.weekly_rest === rest.value).length
+      }))
+      .filter(rest => rest.count > 0);
     
     return {
       totalEmployees,
