@@ -19,48 +19,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [pageSettings, setPageSettings] = useState(null);
-  const [settingsLoading, setSettingsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchPageSettings();
-  }, []);
-
-  const fetchPageSettings = async () => {
-    try {
-      const response = await axios.get(`${API}/settings/login-page`);
-      setPageSettings(response.data);
-    } catch (error) {
-      console.error("Error fetching login settings:", error);
-    } finally {
-      setSettingsLoading(false);
-    }
-  };
   
-  // Show loading screen while fetching settings
-  if (settingsLoading || !pageSettings) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F8F6]" dir="rtl">
-        <div className="text-center">
-          <div 
-            className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg"
-            style={{ 
-              background: 'linear-gradient(135deg, #047857, #047857dd)',
-              animation: 'pulse 1.5s ease-in-out infinite'
-            }}
-          >
-            <div 
-              className="rounded-full bg-white/30 flex items-center justify-center"
-              style={{ width: '56px', height: '56px' }}
-            >
-              <span className="text-white font-cairo font-bold text-2xl">ح</span>
-            </div>
-          </div>
-          <p className="text-gray-600 font-cairo">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
+  // Read settings from window object (injected by backend)
+  // This eliminates FOUC by having settings available immediately
+  const pageSettings = window.__LOGIN_SETTINGS__ || {
+    primary_color: "#047857",
+    background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
+    logo_url: "",
+    logo_size: 150,
+    logo_link: "/",
+    site_name_ar: "منصة خدمات الحشود",
+    site_name_en: "Crowd Services Platform",
+    subtitle_ar: "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
+    subtitle_en: "General Administration for Planning and Crowd Services at the Grand Mosque",
+    welcome_text_ar: "مرحباً بك في",
+    welcome_text_en: "Welcome to"
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
