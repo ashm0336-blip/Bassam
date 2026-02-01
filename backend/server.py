@@ -2352,6 +2352,60 @@ async def delete_department_setting(
     return {"message": "تم حذف الإعداد بنجاح"}
 
 
+# ============= Frontend Serving with Injected Settings =============
+@app.get("/", response_class=HTMLResponse)
+@app.get("/login", response_class=HTMLResponse)
+async def serve_frontend_with_settings(request: Request):
+    """
+    Serve the React app's index.html with login settings pre-injected.
+    This eliminates FOUC by ensuring settings are available before React renders.
+    """
+    # Read the index.html file
+    frontend_path = Path(__file__).parent.parent / "frontend" / "build" / "index.html"
+    
+    # Fallback to development if build doesn't exist
+    if not frontend_path.exists():
+        frontend_path = Path(__file__).parent.parent / "frontend" / "public" / "index.html"
+    
+    if not frontend_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend not found")
+    
+    html_content = frontend_path.read_text()
+    
+    # Fetch login settings from database
+    settings = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    
+    if not settings:
+        # Use default settings
+        from pydantic import BaseModel
+        class DefaultSettings(BaseModel):
+            primary_color: str = "#047857"
+            background_url: str = "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80"
+            logo_url: str = ""
+            logo_size: int = 150
+            logo_link: str = "/"
+            site_name_ar: str = "منصة خدمات الحشود"
+            site_name_en: str = "Crowd Services Platform"
+            subtitle_ar: str = "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف"
+            subtitle_en: str = "General Administration for Planning and Crowd Services at the Grand Mosque"
+            welcome_text_ar: str = "مرحباً بك في"
+            welcome_text_en: str = "Welcome to"
+        
+        settings = DefaultSettings().model_dump()
+    
+    # Inject settings as a global JavaScript variable before the closing </head> tag
+    settings_script = f"""
+    <script>
+        window.__LOGIN_SETTINGS__ = {json.dumps(settings)};
+    </script>
+    """
+    
+    # Insert the script before </head>
+    html_content = html_content.replace('</head>', f'{settings_script}</head>')
+    
+    return HTMLResponse(content=html_content)
+
+
 # Health check endpoint for Kubernetes
 @app.get("/health")
 async def health_check():
