@@ -570,13 +570,14 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Planning Department - Employee Management with Shifts (CRITICAL - NO SHIFTS CONFIGURED)"
     - "Sidebar Menu with Expandable Submenus - UI (CRITICAL RBAC BUG - SUBMENU ITEMS)"
     - "Mataf Department Manager - Complete End-to-End Experience"
   stuck_tasks:
     - "Sidebar Menu with Expandable Submenus - UI"
     - "Mataf Department Manager - Complete End-to-End Experience"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
   completed_tests:
     - "Admin Panel - User Management (CRUD Operations)"
     - "Role-Based Access Control & Permissions System"
