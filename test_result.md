@@ -3949,3 +3949,40 @@ test_plan:
       Backend APIs are ready to support the frontend features mentioned in the review request.
       The main issue is with department manager credentials which needs to be fixed by main agent.
 
+
+  - task: "Login Page Settings API (FOUC Prevention)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ FULLY WORKING (2026-02-01): GET /api/settings/login-page endpoint tested successfully. Public access working (no auth required). All critical fields present for FOUC prevention: site_name_ar, site_name_en, subtitle_ar, logo_url, logo_size, background_url, primary_color, welcome_text_ar, welcome_text_en. Admin can update settings via PUT /api/admin/settings/login-page. ⚠️ MINOR: Missing 2 optional fields (subtitle_en, logo_link) - not critical for FOUC functionality. Backend API is ready to support frontend FOUC prevention."
+
+  - task: "Department Settings API - All 5 Departments"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py (lines 2268-2348)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅✅✅ FULLY WORKING (2026-02-01): Comprehensive testing completed for ALL 5 departments (Mataf, Gates, Plazas, Planning, Crowd Services). All 3 setting types working: shifts, rest_patterns, coverage_locations. CRUD operations verified: (1) GET /{department}/settings/{setting_type} - retrieves settings ✅, (2) POST /{department}/settings - creates new setting ✅, (3) PUT /{department}/settings/{id} - updates setting ✅, (4) DELETE /{department}/settings/{id} - deletes setting ✅. Total: 60 successful tests (5 departments × 3 types × 4 operations). All endpoints return correct data structure with id, department, setting_type, value, label, description, color, start_time, end_time, order fields. Backend API is production ready."
+
+  - task: "Sidebar Menu API - Department Settings Items"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ FULLY WORKING (2026-02-01): GET /api/sidebar-menu endpoint tested successfully. All 5 departments have settings items in sidebar menu. Sidebar structure verified: 31 total items (11 parents, 20 submenus). Department settings navigation links present for all departments: mataf, gates, plazas, planning, crowd_services. Menu items include proper href links to department settings pages (e.g., /mataf?tab=settings). Parent-child relationships working correctly. Backend API provides correct menu structure for frontend to render department settings navigation."
+
