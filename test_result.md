@@ -720,6 +720,84 @@ agent_communication:
   
   - agent: "testing"
     message: |
+      ❌❌❌ PLANNING DEPARTMENT - SHIFT DROPDOWN EMPTY (2026-02-01) ❌❌❌
+      
+      USER REQUEST: Test Planning Department employee page fixes
+      - Test shift dropdown (should show 4 shifts: الأولى, الثانية, الثالثة, الرابعة)
+      - Test employee status (active/rest) calculation
+      - Compare with Mataf department
+      
+      TEST RESULTS SUMMARY:
+      ❌ CRITICAL FAILURE: Planning department shift dropdown is EMPTY (0 options)
+      ✅ Employee status calculation working correctly
+      ✅ Rest indicator "☕ في راحة" working correctly
+      ✅ Mataf department has correct 4 shifts
+      
+      DETAILED FINDINGS:
+      
+      ❌ SHIFT DROPDOWN - CRITICAL ISSUE:
+      - Planning department shift dropdown exists but shows 0 options ❌
+      - Expected: 4 shifts (الأولى, الثانية, الثالثة, الرابعة)
+      - Actual: Empty dropdown (no options)
+      - ROOT CAUSE: GET /api/planning/settings/shifts returns empty array []
+      - Backend verification: curl shows NO shifts configured for Planning department
+      - Mataf comparison: GET /api/mataf/settings/shifts returns 4 shifts correctly ✅
+      
+      ✅ EMPLOYEE STATUS - WORKING CORRECTLY:
+      - Employee status column displays correctly ✅
+      - Shows "نشط" (Active) for active employees ✅
+      - Shows "غير نشط" (Inactive) for inactive employees ✅
+      - Shows "☕ في راحة" (On Rest) indicator when employee is on rest day ✅
+      - Today is Sunday (الأحد) - tested with employees having different rest patterns ✅
+      - Status calculation based on rest_days field working correctly ✅
+      
+      ✅ REST PATTERNS - WORKING CORRECTLY:
+      - Planning department has 5 rest patterns configured ✅
+      - All rest patterns have rest_days field populated ✅
+      - Rest patterns: الخميس - الجمعة, السبت - الأحد, الأربعاء - الخميس, الجمعة - السبت, الأحد - الإثنين ✅
+      - Rest pattern dropdown in employee table working ✅
+      
+      ✅ MATAF COMPARISON - WORKING CORRECTLY:
+      - Mataf department has 4 shifts configured correctly ✅
+      - Shift values: الوردية الأولى, الوردية الثانية, الوردية الثالثة, الوردية الرابعة ✅
+      - Each shift has start_time and end_time ✅
+      - Mataf shift dropdown shows all 4 options correctly ✅
+      - UI structure is consistent between Planning and Mataf ✅
+      
+      API VERIFICATION:
+      - GET /api/planning/settings/shifts: [] (EMPTY) ❌
+      - GET /api/planning/settings/rest_patterns: 5 patterns with rest_days ✅
+      - GET /api/mataf/settings/shifts: 4 shifts with times ✅
+      
+      ROOT CAUSE ANALYSIS:
+      The user mentioned that duplicate shift settings were deleted and new correct shifts should be created.
+      However, the shifts were DELETED but NOT RE-CREATED for Planning department.
+      
+      The Planning department needs 4 shifts to be created via Department Settings:
+      1. الأولى (First) - e.g., 07:00 - 14:00
+      2. الثانية (Second) - e.g., 14:00 - 21:00
+      3. الثالثة (Third) - e.g., 20:00 - 02:00
+      4. الرابعة (Fourth) - e.g., 02:00 - 08:00
+      
+      FIX REQUIRED:
+      Main agent needs to create 4 shifts for Planning department using the Department Settings API:
+      POST /api/planning/settings with setting_type="shifts"
+      
+      IMPACT:
+      - Users CANNOT assign shifts to employees in Planning department ❌
+      - Shift dropdown is empty, preventing employee management ❌
+      - This is a P0 BLOCKER for Planning department employee management ❌
+      
+      PRIORITY: CRITICAL - Planning department cannot manage employee shifts
+      
+      RECOMMENDATION TO MAIN AGENT:
+      1. Create 4 shifts for Planning department immediately (الأولى, الثانية, الثالثة, الرابعة)
+      2. Use same structure as Mataf shifts (with start_time, end_time, color)
+      3. After creating shifts, re-test to verify dropdown shows all 4 options
+      4. Verify existing employees can be assigned to new shifts
+  
+  - agent: "testing"
+    message: |
       ✅✅✅ QUICK EDIT FEATURE COMPLETE - ALL 3 COLUMNS WORKING FOR MATAF (2026-01-23) ✅✅✅
       
       USER REQUEST: Test quick edit from employee table for all 3 columns (shift, rest pattern, location)
