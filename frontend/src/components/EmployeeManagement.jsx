@@ -472,7 +472,7 @@ export default function EmployeeManagement({ department }) {
             <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
-                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
+                  <TableHead className="text-right font-semibold">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className="text-center font-semibold">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
                   <TableHead className="text-center font-semibold">
                     <div className="flex items-center justify-center gap-1.5">
@@ -489,8 +489,8 @@ export default function EmployeeManagement({ department }) {
               <TableBody>
                 {employees.map((employee) => (
                   <TableRow key={employee.id} className="hover:bg-muted/50 transition-colors border-b">
-                    <TableCell className="text-center">
-                      <div className="flex flex-col items-center gap-1">
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-end gap-1">
                         <p className="font-semibold text-sm">{employee.name}</p>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs font-mono">
