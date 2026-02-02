@@ -490,7 +490,7 @@ export default function EmployeeManagement({ department }) {
                 {employees.map((employee) => (
                   <TableRow key={employee.id} className="hover:bg-muted/50 transition-colors border-b">
                     <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-start gap-1">
                         <p className="font-semibold text-sm">{employee.name}</p>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs font-mono">
