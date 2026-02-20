@@ -970,7 +970,7 @@ export default function MapManagementPage() {
                 </Button>[?2004l
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
-              <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" />
+              <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" data-testid="floor-image-url-input" />
               {floorForm.image_url && <img src={floorForm.image_url} alt="" className="w-full h-24 object-contain rounded border mt-2" />}
             </div>
           </div>
