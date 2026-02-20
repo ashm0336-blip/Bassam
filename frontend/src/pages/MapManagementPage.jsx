@@ -155,6 +155,20 @@ export default function MapManagementPage() {
 
   const getDistance = (p1, p2) => Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
 
+  const getHitPointIndex = (points, pos) => {
+    if (!points?.length) return -1;
+    const radius = 2 / Math.max(zoom, 0.5);
+    return points.findIndex((p) => getDistance(pos, p) < radius);
+  };
+
+  const getCrowdStatus = (current, max) => {
+    const ratio = max > 0 ? current / max : 0;
+    if (ratio < 0.5) return { label_ar: "طبيعي", label_en: "Normal", color: "#22c55e" };
+    if (ratio < 0.7) return { label_ar: "متوسط", label_en: "Medium", color: "#f59e0b" };
+    if (ratio < 0.85) return { label_ar: "مزدحم", label_en: "Crowded", color: "#f97316" };
+    return { label_ar: "حرج", label_en: "Critical", color: "#ef4444" };
+  };
+
   // Mouse handlers
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
