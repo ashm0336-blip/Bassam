@@ -437,7 +437,7 @@ export default function MapManagementPage() {
         <div>
           <h1 className="font-cairo font-bold text-2xl">{language === "ar" ? "إدارة الخرائط التفاعلية" : "Interactive Map Management"}</h1>
         </div>
-        <Button variant="outline" onClick={fetchFloors}><RefreshCw className="w-4 h-4 ml-2" />{language === "ar" ? "تحديث" : "Refresh"}</Button>
+        <Button variant="outline" onClick={fetchFloors} data-testid="refresh-floors-button"><RefreshCw className="w-4 h-4 ml-2" />{language === "ar" ? "تحديث" : "Refresh"}</Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
