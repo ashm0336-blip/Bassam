@@ -182,13 +182,11 @@ export default function MapManagementPage() {
     else if (mode === "edit" && selectedZoneId) {
       // Check if clicking on a point handle
       const zone = zones.find(z => z.id === selectedZoneId);
-      if (zone?.polygon_points) {
-        for (let i = 0; i < zone.polygon_points.length; i++) {
-          if (getDistance(pos, zone.polygon_points[i]) < 2) {
-            setDraggingPoint(i);
-            return;
-          }
-        }
+      const hitIndex = getHitPointIndex(zone?.polygon_points, pos);
+      if (hitIndex !== -1) {
+        setDraggingPoint(hitIndex);
+        setHoveredPoint(hitIndex);
+        return;
       }
     }
   };
