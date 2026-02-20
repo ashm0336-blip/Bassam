@@ -480,12 +480,12 @@ export default function MapManagementPage() {
           {/* Toolbar */}
           <div className="flex justify-between items-center flex-wrap gap-3 bg-gray-50 p-3 rounded-lg">
             <div className="flex items-center gap-3">
-              <Select value={selectedFloor?.id || ""} onValueChange={(v) => { setSelectedFloor(floors.find(f => f.id === v)); setDrawingPoints([]); setMode("pan"); }}>
-                <SelectTrigger className="w-40"><SelectValue placeholder={language === "ar" ? "اختر الطابق" : "Select"} /></SelectTrigger>
+              [?2004l[?2004l<Select value={selectedFloor?.id || ""} onValueChange={(v) => { setSelectedFloor(floors.find(f => f.id === v)); setDrawingPoints([]); setMode("pan"); }}>
+                <SelectTrigger className="w-40" data-testid="zones-floor-select"><SelectValue placeholder={language === "ar" ? "اختر الطابق" : "Select"} /></SelectTrigger>
                 <SelectContent>
-                  {floors.map(f => <SelectItem key={f.id} value={f.id}>{language === "ar" ? f.name_ar : f.name_en}</SelectItem>)}
+                  {floors.map(f => <SelectItem key={f.id} value={f.id} data-testid={`zones-floor-option-${f.id}`}>{language === "ar" ? f.name_ar : f.name_en}</SelectItem>)}
                 </SelectContent>
-              </Select>
+              </Select>[?2004l
               <Badge variant="secondary">{zones.length} {language === "ar" ? "منطقة" : "zones"}</Badge>
             </div>
 
