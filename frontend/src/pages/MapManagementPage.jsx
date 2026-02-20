@@ -465,9 +465,9 @@ export default function MapManagementPage() {
                 <CardContent>
                   {floor.image_url && <img src={floor.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" />}
                   <div className="flex gap-2">
-                    [?2004l[?2004l<Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedFloor(floor)} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedFloor(floor)} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={() => { setEditingFloor(floor); setFloorForm({ ...floor }); setShowFloorDialog(true); }} data-testid={`floor-edit-${floor.id}`}><Edit2 className="w-4 h-4" /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteFloor(floor.id)} data-testid={`floor-delete-${floor.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button>[?2004l
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteFloor(floor.id)} data-testid={`floor-delete-${floor.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button> 
                   </div>
                 </CardContent>
               </Card>
@@ -480,12 +480,12 @@ export default function MapManagementPage() {
           {/* Toolbar */}
           <div className="flex justify-between items-center flex-wrap gap-3 bg-gray-50 p-3 rounded-lg">
             <div className="flex items-center gap-3">
-              [?2004l[?2004l<Select value={selectedFloor?.id || ""} onValueChange={(v) => { setSelectedFloor(floors.find(f => f.id === v)); setDrawingPoints([]); setMode("pan"); }}>
+                <Select value={selectedFloor?.id || ""} onValueChange={(v) => { setSelectedFloor(floors.find(f => f.id === v)); setDrawingPoints([]); setMode("pan"); }}>
                 <SelectTrigger className="w-40" data-testid="zones-floor-select"><SelectValue placeholder={language === "ar" ? "اختر الطابق" : "Select"} /></SelectTrigger>
                 <SelectContent>
                   {floors.map(f => <SelectItem key={f.id} value={f.id} data-testid={`zones-floor-option-${f.id}`}>{language === "ar" ? f.name_ar : f.name_en}</SelectItem>)}
                 </SelectContent>
-              </Select>[?2004l
+              </Select> 
               <Badge variant="secondary">{zones.length} {language === "ar" ? "منطقة" : "zones"}</Badge>
             </div>
 
