@@ -73,6 +73,7 @@ export default function MapManagementPage() {
   const { toast } = useToast();
   const mapContainerRef = useRef(null);
   const imageRef = useRef(null);
+  const svgRef = useRef(null);
 
   // Data state
   const [floors, setFloors] = useState([]);
