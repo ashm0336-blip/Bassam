@@ -959,7 +959,7 @@ export default function MapManagementPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "رقم الطابق" : "Floor #"}</Label><Input type="number" value={floorForm.floor_number} onChange={e => setFloorForm(p => ({ ...p, floor_number: parseInt(e.target.value) || 0 }))} data-testid="floor-number-input" /></div>
-              <div><Label>{language === "ar" ? "الترتيب" : "Order"}</Label><Input type="number" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} /></div>
+              <div><Label>{language === "ar" ? "الترتيب" : "Order"}</Label><Input type="number" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} data-testid="floor-order-input" /></div>
             </div>
             <div>
               <Label>{language === "ar" ? "الصورة" : "Image"}</Label>
