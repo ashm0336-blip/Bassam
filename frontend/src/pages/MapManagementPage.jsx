@@ -955,7 +955,7 @@ export default function MapManagementPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "الاسم بالعربية" : "Arabic"}</Label><Input value={floorForm.name_ar} onChange={e => setFloorForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="floor-name-ar-input" /></div>
-              <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={floorForm.name_en} onChange={e => setFloorForm(p => ({ ...p, name_en: e.target.value }))} /></div>
+              <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={floorForm.name_en} onChange={e => setFloorForm(p => ({ ...p, name_en: e.target.value }))} data-testid="floor-name-en-input" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "رقم الطابق" : "Floor #"}</Label><Input type="number" value={floorForm.floor_number} onChange={e => setFloorForm(p => ({ ...p, floor_number: parseInt(e.target.value) || 0 }))} /></div>
