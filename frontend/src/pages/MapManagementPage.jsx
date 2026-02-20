@@ -452,7 +452,7 @@ export default function MapManagementPage() {
         <TabsContent value="floors" className="space-y-4">
           <div className="flex justify-between">
             <h2 className="font-cairo font-semibold">{language === "ar" ? "قائمة الطوابق" : "Floors"}</h2>
-            <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setShowFloorDialog(true); }}>
+            <Button data-testid="add-floor-button" onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setShowFloorDialog(true); }}>
               <Plus className="w-4 h-4 ml-2" />{language === "ar" ? "إضافة" : "Add"}
             </Button>
           </div>
