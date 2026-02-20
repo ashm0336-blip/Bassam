@@ -2098,8 +2098,9 @@ async def delete_zone(zone_id: str, admin: dict = Depends(require_admin)):
     return {"message": "تم حذف المنطقة بنجاح"}
 
 @api_router.put("/admin/zones/bulk-update-crowd")
-async def bulk_update_zone_crowd(updates: List[dict], admin: dict = Depends(require_admin)):
+async def bulk_update_zone_crowd(request: Request, admin: dict = Depends(require_admin)):
     """Bulk update crowd data for multiple zones"""
+    updates = await request.json()
     updated_count = 0
     for update in updates:
         zone_id = update.get("zone_id")
