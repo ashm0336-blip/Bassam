@@ -25,6 +25,8 @@ import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import TransactionsPage from "@/pages/TransactionsPage";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
+import HaramMapPage from "@/pages/HaramMapPage";
+import MapManagementPage from "@/pages/MapManagementPage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
