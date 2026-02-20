@@ -495,9 +495,9 @@ export default function MapManagementPage() {
                 <Button variant={mode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-pan-button">
                   <Hand className="w-4 h-4" />
                 </Button>
-                <Button variant={mode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} disabled={!selectedFloor}>
+                [?2004l[?2004l[?2004l<Button variant={mode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} disabled={!selectedFloor} data-testid="mode-draw-button">
                   <Pencil className="w-4 h-4" />
-                </Button>
+                </Button>[?2004l
                 <Button variant={mode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("edit"); setDrawingPoints([]); }}>
                   <MousePointer className="w-4 h-4" />
                 </Button>
