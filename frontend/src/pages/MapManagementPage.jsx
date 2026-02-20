@@ -397,6 +397,16 @@ export default function MapManagementPage() {
   // Bulk crowd update
   const [bulkUpdates, setBulkUpdates] = useState([]);
   const [crowdEdits, setCrowdEdits] = useState({});
+  const handleCrowdChange = (zoneId, value) => {
+    setCrowdEdits(prev => ({ ...prev, [zoneId]: value }));
+    setBulkUpdates(prev => {
+      const exists = prev.find(u => u.zone_id === zoneId);
+      if (exists) {
+        return prev.map(u => u.zone_id === zoneId ? { ...u, current_crowd: value } : u);
+      }
+      return [...prev, { zone_id: zoneId, current_crowd: value }];
+    });
+  };
   const handleBulkUpdate = async () => {
     for (const u of bulkUpdates) {
       await axios.put(`${API}/admin/zones/${u.zone_id}`, { current_crowd: u.current_crowd }, getAuthHeaders());
