@@ -515,9 +515,9 @@ export default function MapManagementPage() {
             <div className="flex gap-2">
               {mode === "draw" && drawingPoints.length > 0 && (
                 <>
-                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))}><Undo2 className="w-4 h-4 ml-1" />{language === "ar" ? "تراجع" : "Undo"}</Button>
-                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints([])}><X className="w-4 h-4 ml-1" />{language === "ar" ? "مسح" : "Clear"}</Button>
-                  {drawingPoints.length >= 3 && <Button size="sm" onClick={() => setShowZoneDialog(true)}><Check className="w-4 h-4 ml-1" />{language === "ar" ? "حفظ" : "Save"}</Button>}
+                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))} data-testid="drawing-undo-button"><Undo2 className="w-4 h-4 ml-1" />{language === "ar" ? "تراجع" : "Undo"}</Button>
+                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints([])} data-testid="drawing-clear-button"><X className="w-4 h-4 ml-1" />{language === "ar" ? "مسح" : "Clear"}</Button>
+                  {drawingPoints.length >= 3 && <Button size="sm" onClick={() => setShowZoneDialog(true)} data-testid="drawing-save-button"><Check className="w-4 h-4 ml-1" />{language === "ar" ? "حفظ" : "Save"}</Button>}
                 </>
               )}
               {mode === "edit" && selectedZoneId && (
