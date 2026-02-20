@@ -66,6 +66,12 @@ const ZONE_TYPES = [
   { value: "expansion", label_ar: "توسعة", label_en: "Expansion", color: "#64748b" },
 ];
 
+const CROWD_PRESETS = [
+  { label_ar: "طبيعي", label_en: "Normal", ratio: 0.4 },
+  { label_ar: "متوسط", label_en: "Medium", ratio: 0.65 },
+  { label_ar: "مزدحم", label_en: "Crowded", ratio: 0.85 },
+];
+
 const SNAP_DISTANCE = 3;
 
 export default function MapManagementPage() {
