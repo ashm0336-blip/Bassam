@@ -427,6 +427,10 @@ export default function MapManagementPage() {
     return d;
   };
 
+  const totalCrowd = zones.reduce((sum, z) => sum + (crowdEdits[z.id] ?? z.current_crowd ?? 0), 0);
+  const totalCapacity = zones.reduce((sum, z) => sum + (z.max_capacity || 0), 0);
+  const overallPercent = totalCapacity ? Math.round((totalCrowd / totalCapacity) * 100) : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
