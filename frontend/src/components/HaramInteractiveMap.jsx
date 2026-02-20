@@ -324,7 +324,6 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
                       className="absolute inset-0 w-full h-full"
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
-                      style={{ pointerEvents: "none" }}
                     >
                       {filteredZones.map((zone) => (
                         <TooltipProvider key={zone.id}>
