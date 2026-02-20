@@ -586,6 +586,8 @@ export default function MapManagementPage() {
 
                     {/* SVG overlay */}
                     <svg
+                      ref={svgRef}
+                      data-testid="map-editor-svg"
                       className="absolute inset-0 w-full h-full"
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
