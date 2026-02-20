@@ -671,13 +671,17 @@ export default function MapManagementPage() {
 
                       {/* Drawing polygon */}
                       {mode === "draw" && drawingPoints.length > 0 && (
-                        <g>
+                        <g data-testid="drawing-layer">
                           {/* Lines between points */}
                           <path
                             d={getPath(drawingPoints, false)}
                             fill="none"
                             stroke="#3b82f6"
-                            strokeWidth="0.4"
+                            strokeWidth="0.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                            data-testid="drawing-polyline"
                           />
                           
                           {/* Preview line to mouse */}
@@ -687,8 +691,10 @@ export default function MapManagementPage() {
                             x2={mousePos.x}
                             y2={mousePos.y}
                             stroke="#3b82f6"
-                            strokeWidth="0.3"
+                            strokeWidth="0.4"
                             strokeDasharray="1 0.5"
+                            vectorEffect="non-scaling-stroke"
+                            data-testid="drawing-preview-line"
                           />
                           
                           {/* Close preview when near start */}
@@ -698,21 +704,34 @@ export default function MapManagementPage() {
                               fill={zoneForm.fill_color}
                               fillOpacity={0.3}
                               stroke="#22c55e"
-                              strokeWidth="0.5"
+                              strokeWidth="0.6"
+                              vectorEffect="non-scaling-stroke"
                             />
                           )}
                           
                           {/* Points */}
                           {drawingPoints.map((pt, i) => (
-                            <circle
-                              key={i}
-                              cx={pt.x}
-                              cy={pt.y}
-                              r={i === 0 ? (nearStart ? "1.5" : "1") : "0.8"}
-                              fill={i === 0 ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
-                              stroke="white"
-                              strokeWidth="0.2"
-                            />
+                            <g key={i} data-testid={`drawing-point-${i}`}>
+                              <circle
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={i === 0 ? (nearStart ? "1.6" : "1.2") : "1"}
+                                fill={i === 0 ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
+                                stroke="white"
+                                strokeWidth="0.2"
+                              />
+                              <text
+                                x={pt.x}
+                                y={pt.y - 1.6}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize="1.4"
+                                fill="#0f172a"
+                                fontWeight="600"
+                              >
+                                {i + 1}
+                              </text>
+                            </g>
                           ))}
                         </g>
                       )}
