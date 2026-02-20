@@ -425,6 +425,87 @@ class InteractiveMapCreate(BaseModel):
     width: Optional[int] = 1920
     height: Optional[int] = 1080
 
+class InteractiveMapUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    image_url: Optional[str] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    is_active: Optional[bool] = None
+
+# ============= Floor/Layer Models =============
+class MapFloor(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name_ar: str
+    name_en: str
+    floor_number: int  # -1 للبدروم، 0 للأرضي، 1 للأول، إلخ
+    image_url: str
+    is_active: bool = True
+    order: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MapFloorCreate(BaseModel):
+    name_ar: str
+    name_en: str
+    floor_number: int
+    image_url: str
+    order: Optional[int] = 0
+
+# ============= Interactive Zone Models =============
+class MapZone(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    floor_id: str  # Which floor this zone belongs to
+    zone_code: str  # e.g., "1-0-2", "5-0-4"
+    name_ar: str
+    name_en: str
+    zone_type: str  # men_prayer, women_prayer, mataf, masaa, service, entry, exit, escalator
+    # Polygon coordinates as percentage of image dimensions
+    polygon_points: List[dict]  # [{"x": 10.5, "y": 20.3}, {"x": 15.2, "y": 20.3}, ...]
+    fill_color: str = "#22c55e"  # Default green
+    stroke_color: str = "#000000"
+    opacity: float = 0.4
+    # Live data
+    current_crowd: int = 0
+    max_capacity: int = 1000
+    crowd_status: str = "normal"  # normal, moderate, crowded, critical
+    assigned_employees: int = 0
+    # Metadata
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MapZoneCreate(BaseModel):
+    floor_id: str
+    zone_code: str
+    name_ar: str
+    name_en: str
+    zone_type: str
+    polygon_points: List[dict]
+    fill_color: Optional[str] = "#22c55e"
+    stroke_color: Optional[str] = "#000000"
+    opacity: Optional[float] = 0.4
+    max_capacity: Optional[int] = 1000
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
+
+class MapZoneUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    zone_type: Optional[str] = None
+    polygon_points: Optional[List[dict]] = None
+    fill_color: Optional[str] = None
+    stroke_color: Optional[str] = None
+    opacity: Optional[float] = None
+    current_crowd: Optional[int] = None
+    max_capacity: Optional[int] = None
+    crowd_status: Optional[str] = None
+    assigned_employees: Optional[int] = None
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
+    is_active: Optional[bool] = None
+
 # ============= Transaction Models =============
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
