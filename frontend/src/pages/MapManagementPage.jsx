@@ -492,7 +492,7 @@ export default function MapManagementPage() {
             {/* Mode buttons */}
             <div className="flex items-center gap-2">
               <div className="flex border rounded-lg overflow-hidden">
-                <Button variant={mode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }}>
+                <Button variant={mode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-pan-button">
                   <Hand className="w-4 h-4" />
                 </Button>
                 <Button variant={mode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} disabled={!selectedFloor}>
