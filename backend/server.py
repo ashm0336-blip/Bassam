@@ -2710,6 +2710,70 @@ async def health_check():
     except Exception as e:
         return {"status": "healthy", "database": "disconnected", "note": "Service is running"}
 
+# ============= File Upload for Map Images =============
+UPLOADS_DIR = ROOT_DIR / "uploads" / "maps"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Serve uploaded files statically
+app.mount("/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
+
+@api_router.post("/admin/upload/map-image")
+async def upload_map_image(
+    file: UploadFile = File(...),
+    admin: dict = Depends(require_admin)
+):
+    """Upload a map image and return its URL"""
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"نوع الملف غير مدعوم. الأنواع المدعومة: {', '.join(allowed_types)}"
+        )
+    
+    # Generate unique filename
+    file_ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    unique_filename = f"{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOADS_DIR / unique_filename
+    
+    try:
+        # Save the file
+        async with aiofiles.open(file_path, 'wb') as out_file:
+            content = await file.read()
+            await out_file.write(content)
+        
+        # Return the URL
+        # Use relative path that will work with the backend URL
+        file_url = f"/uploads/maps/{unique_filename}"
+        
+        await log_activity("رفع صورة خريطة", admin, unique_filename, file.filename)
+        
+        return {
+            "success": True,
+            "filename": unique_filename,
+            "original_name": file.filename,
+            "url": file_url,
+            "content_type": file.content_type,
+            "size": len(content)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في رفع الملف: {str(e)}")
+
+@api_router.delete("/admin/upload/map-image/{filename}")
+async def delete_map_image(filename: str, admin: dict = Depends(require_admin)):
+    """Delete a map image"""
+    file_path = UPLOADS_DIR / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="الملف غير موجود")
+    
+    try:
+        file_path.unlink()
+        await log_activity("حذف صورة خريطة", admin, filename, "تم الحذف")
+        return {"success": True, "message": "تم حذف الملف بنجاح"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في حذف الملف: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
