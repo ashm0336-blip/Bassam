@@ -101,6 +101,7 @@ export default function MapManagementPage() {
   const [drawingPoints, setDrawingPoints] = useState([]);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [draggingPoint, setDraggingPoint] = useState(null);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
 
