@@ -360,6 +360,7 @@ export default function MapManagementPage() {
 
   // Bulk crowd update
   const [bulkUpdates, setBulkUpdates] = useState([]);
+  const [crowdEdits, setCrowdEdits] = useState({});
   const handleBulkUpdate = async () => {
     for (const u of bulkUpdates) {
       await axios.put(`${API}/admin/zones/${u.zone_id}`, { current_crowd: u.current_crowd }, getAuthHeaders());
