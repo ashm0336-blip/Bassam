@@ -12,10 +12,13 @@ import {
   RefreshCw,
   Eye,
   Settings,
-  ChevronDown,
-  Palette,
-  Move,
-  Maximize2
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Undo2,
+  MousePointer,
+  Check,
+  Image as ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +37,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -45,6 +47,7 @@ import {
 } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { Progress } from "@/components/ui/progress";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -62,11 +65,14 @@ const ZONE_TYPES = [
   { value: "expansion", label_ar: "توسعة", label_en: "Expansion", color: "#64748b" },
 ];
 
+// Snap distance in percentage (for closing polygon)
+const SNAP_DISTANCE = 2;
+
 export default function MapManagementPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const canvasRef = useRef(null);
-  const imageRef = useRef(null);
+  const containerRef = useRef(null);
 
   // State
   const [floors, setFloors] = useState([]);
@@ -86,6 +92,8 @@ export default function MapManagementPage() {
     order: 0,
   });
   const [editingFloor, setEditingFloor] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Zone form state
   const [showZoneDialog, setShowZoneDialog] = useState(false);
@@ -103,10 +111,16 @@ export default function MapManagementPage() {
   });
   const [editingZone, setEditingZone] = useState(null);
 
-  // Drawing state
+  // Drawing state - Enhanced
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPolygon, setCurrentPolygon] = useState([]);
   const [drawMode, setDrawMode] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [nearStartPoint, setNearStartPoint] = useState(false);
 
   // Get token from localStorage
   const getAuthHeaders = () => {
@@ -151,6 +165,69 @@ export default function MapManagementPage() {
       fetchZones();
     }
   }, [selectedFloor, fetchZones]);
+
+  // Handle image upload
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" 
+          ? "نوع الملف غير مدعوم. استخدم PNG أو JPG أو WEBP" 
+          : "File type not supported. Use PNG, JPG, or WEBP",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await axios.post(
+        `${API}/admin/upload/map-image`,
+        formData,
+        {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+
+      // Construct full URL
+      const imageUrl = `${process.env.REACT_APP_BACKEND_URL}${response.data.url}`;
+      setFloorForm({ ...floorForm, image_url: imageUrl });
+
+      toast({
+        title: language === "ar" ? "تم الرفع" : "Uploaded",
+        description: language === "ar" ? "تم رفع الصورة بنجاح" : "Image uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: error.response?.data?.detail || "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+      setUploadProgress(0);
+    }
+  };
 
   // Floor CRUD
   const handleSaveFloor = async () => {
@@ -303,42 +380,141 @@ export default function MapManagementPage() {
     setDrawMode(false);
   };
 
-  // Canvas drawing handlers
+  // Calculate distance between two points
+  const getDistance = (p1, p2) => {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  };
+
+  // Convert screen coordinates to percentage
+  const screenToPercent = (clientX, clientY) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    
+    // Adjust for zoom and pan
+    const adjustedX = (x - (pan.x / rect.width) * 100) / zoom;
+    const adjustedY = (y - (pan.y / rect.height) * 100) / zoom;
+    
+    return {
+      x: parseFloat(Math.max(0, Math.min(100, adjustedX)).toFixed(2)),
+      y: parseFloat(Math.max(0, Math.min(100, adjustedY)).toFixed(2))
+    };
+  };
+
+  // Canvas click handler - add point
   const handleCanvasClick = (e) => {
     if (!drawMode || !canvasRef.current) return;
+    
+    const point = screenToPercent(e.clientX, e.clientY);
+    
+    // Check if near start point (to close polygon)
+    if (currentPolygon.length >= 3) {
+      const startPoint = currentPolygon[0];
+      const distance = getDistance(point, startPoint);
+      
+      if (distance < SNAP_DISTANCE) {
+        // Close the polygon - open save dialog
+        setShowZoneDialog(true);
+        setDrawMode(false);
+        return;
+      }
+    }
+    
+    // Add new point
+    setCurrentPolygon((prev) => [...prev, point]);
+  };
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+  // Mouse move handler - track cursor and check proximity to start
+  const handleCanvasMouseMove = (e) => {
+    if (!canvasRef.current) return;
+    
+    const point = screenToPercent(e.clientX, e.clientY);
+    setCursorPosition(point);
+    
+    // Check if near start point
+    if (drawMode && currentPolygon.length >= 3) {
+      const startPoint = currentPolygon[0];
+      const distance = getDistance(point, startPoint);
+      setNearStartPoint(distance < SNAP_DISTANCE);
+    } else {
+      setNearStartPoint(false);
+    }
+    
+    // Handle panning
+    if (isPanning && !drawMode) {
+      const dx = e.clientX - lastPanPoint.x;
+      const dy = e.clientY - lastPanPoint.y;
+      setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
 
-    setCurrentPolygon((prev) => [...prev, { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) }]);
+  // Mouse down for panning
+  const handleMouseDown = (e) => {
+    if (drawMode) return;
+    if (e.button === 0) {
+      setIsPanning(true);
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Wheel handler for zoom
+  const handleWheel = (e) => {
+    if (!containerRef.current) return;
+    e.preventDefault();
+    
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.max(0.5, Math.min(5, zoom + delta));
+    setZoom(newZoom);
+  };
+
+  // Zoom controls
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 5));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.5));
+  const handleResetView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   const handleUndoPoint = () => {
     setCurrentPolygon((prev) => prev.slice(0, -1));
+    setNearStartPoint(false);
   };
 
   const handleClearPolygon = () => {
     setCurrentPolygon([]);
+    setNearStartPoint(false);
   };
 
-  const getPolygonPath = (points) => {
+  const getPolygonPath = (points, close = false) => {
     if (!points || points.length < 2) return "";
-    return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + (points.length > 2 ? " Z" : "");
+    const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+    return close && points.length > 2 ? path + " Z" : path;
   };
 
   // Bulk update crowd data
-  const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
   const [bulkUpdates, setBulkUpdates] = useState([]);
 
   const handleBulkUpdate = async () => {
     try {
-      await axios.put(`${API}/admin/zones/bulk-update-crowd`, bulkUpdates, getAuthHeaders());
+      // Update each zone individually
+      for (const update of bulkUpdates) {
+        await axios.put(
+          `${API}/admin/zones/${update.zone_id}`,
+          { current_crowd: update.current_crowd },
+          getAuthHeaders()
+        );
+      }
       toast({
         title: language === "ar" ? "تم التحديث" : "Updated",
         description: language === "ar" ? "تم تحديث بيانات الكثافة بنجاح" : "Crowd data updated successfully",
       });
-      setShowBulkUpdateDialog(false);
       setBulkUpdates([]);
       fetchZones();
     } catch (error) {
@@ -473,13 +649,17 @@ export default function MapManagementPage() {
           </div>
         </TabsContent>
 
-        {/* Zones Tab */}
+        {/* Zones Tab - Enhanced with zoom and precise drawing */}
         <TabsContent value="zones" className="space-y-4">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <Select
                 value={selectedFloor?.id || ""}
-                onValueChange={(val) => setSelectedFloor(floors.find((f) => f.id === val))}
+                onValueChange={(val) => {
+                  setSelectedFloor(floors.find((f) => f.id === val));
+                  setCurrentPolygon([]);
+                  setDrawMode(false);
+                }}
               >
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder={language === "ar" ? "اختر الطابق" : "Select Floor"} />
@@ -496,127 +676,231 @@ export default function MapManagementPage() {
                 {zones.length} {language === "ar" ? "منطقة" : "zones"}
               </span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {/* Zoom controls */}
+              <div className="flex items-center gap-1 border rounded-lg p-1">
+                <Button variant="ghost" size="icon" onClick={handleZoomOut} title="Zoom Out">
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <span className="text-xs w-14 text-center">{Math.round(zoom * 100)}%</span>
+                <Button variant="ghost" size="icon" onClick={handleZoomIn} title="Zoom In">
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleResetView} title="Reset View">
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+              </div>
+              
               <Button
                 variant={drawMode ? "default" : "outline"}
                 onClick={() => {
                   setDrawMode(!drawMode);
-                  if (!drawMode) setCurrentPolygon([]);
+                  if (!drawMode) {
+                    setCurrentPolygon([]);
+                    setNearStartPoint(false);
+                  }
                 }}
                 disabled={!selectedFloor}
               >
-                <MapPin className="w-4 h-4 ml-2" />
+                <MousePointer className="w-4 h-4 ml-2" />
                 {drawMode
                   ? language === "ar" ? "إيقاف الرسم" : "Stop Drawing"
                   : language === "ar" ? "رسم منطقة" : "Draw Zone"}
               </Button>
-              {drawMode && currentPolygon.length >= 3 && (
+              
+              {drawMode && currentPolygon.length > 0 && (
+                <>
+                  <Button variant="outline" onClick={handleUndoPoint}>
+                    <Undo2 className="w-4 h-4 ml-1" />
+                    {language === "ar" ? "تراجع" : "Undo"}
+                  </Button>
+                  <Button variant="outline" onClick={handleClearPolygon}>
+                    <X className="w-4 h-4 ml-1" />
+                    {language === "ar" ? "مسح" : "Clear"}
+                  </Button>
+                </>
+              )}
+              
+              {currentPolygon.length >= 3 && (
                 <Button onClick={() => setShowZoneDialog(true)}>
-                  <Save className="w-4 h-4 ml-2" />
+                  <Check className="w-4 h-4 ml-2" />
                   {language === "ar" ? "حفظ المنطقة" : "Save Zone"}
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Map Canvas */}
+          {/* Drawing instructions */}
+          {drawMode && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-700">
+                <MousePointer className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {language === "ar" ? "وضع الرسم نشط" : "Drawing Mode Active"}
+                </span>
+              </div>
+              <ul className="text-xs text-blue-600 mt-2 space-y-1 list-disc list-inside">
+                <li>{language === "ar" ? "انقر لإضافة نقطة جديدة" : "Click to add a new point"}</li>
+                <li>{language === "ar" ? "استخدم عجلة الماوس للتكبير والتصغير" : "Use mouse wheel to zoom in/out"}</li>
+                <li>{language === "ar" ? "عند الانتهاء، انقر على النقطة الأولى لإغلاق المنطقة" : "When done, click on the first point to close the zone"}</li>
+                <li>{language === "ar" ? `النقاط الحالية: ${currentPolygon.length}` : `Current points: ${currentPolygon.length}`}</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Map Canvas - Enhanced */}
           {selectedFloor ? (
-            <Card>
+            <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div
-                  ref={canvasRef}
-                  className={`relative w-full bg-gray-100 overflow-hidden ${drawMode ? "cursor-crosshair" : "cursor-default"}`}
-                  style={{ height: "500px" }}
-                  onClick={handleCanvasClick}
+                  ref={containerRef}
+                  className={`relative w-full bg-gray-100 overflow-hidden ${
+                    drawMode ? "cursor-crosshair" : isPanning ? "cursor-grabbing" : "cursor-grab"
+                  }`}
+                  style={{ height: "600px" }}
+                  onWheel={handleWheel}
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
                 >
-                  <img
-                    ref={imageRef}
-                    src={selectedFloor.image_url}
-                    alt={selectedFloor.name_ar}
-                    className="w-full h-full object-contain pointer-events-none"
-                    draggable={false}
-                  />
-
-                  {/* Existing Zones */}
-                  <svg
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
+                  <div
+                    ref={canvasRef}
+                    className="absolute inset-0 transition-transform duration-100"
+                    style={{
+                      transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                      transformOrigin: "center center",
+                    }}
+                    onClick={handleCanvasClick}
+                    onMouseMove={handleCanvasMouseMove}
                   >
-                    {zones.map((zone) => (
-                      <g key={zone.id}>
-                        <path
-                          d={getPolygonPath(zone.polygon_points)}
-                          fill={zone.fill_color}
-                          fillOpacity={zone.opacity}
-                          stroke={zone.stroke_color}
-                          strokeWidth="0.2"
-                          style={{ pointerEvents: "auto", cursor: "pointer" }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!drawMode) {
-                              setSelectedZone(zone);
-                            }
-                          }}
-                        />
-                        <text
-                          x={zone.polygon_points?.length > 0 ? zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length : 0}
-                          y={zone.polygon_points?.length > 0 ? zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length : 0}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="2"
-                          fill="#000"
-                          fontWeight="bold"
-                        >
-                          {zone.zone_code}
-                        </text>
-                      </g>
-                    ))}
+                    <img
+                      src={selectedFloor.image_url}
+                      alt={selectedFloor.name_ar}
+                      className="w-full h-full object-contain pointer-events-none select-none"
+                      draggable={false}
+                    />
 
-                    {/* Current drawing polygon */}
-                    {drawMode && currentPolygon.length > 0 && (
-                      <>
-                        <path
-                          d={getPolygonPath(currentPolygon)}
-                          fill={zoneForm.fill_color}
-                          fillOpacity={0.3}
-                          stroke="#fbbf24"
-                          strokeWidth="0.3"
-                          strokeDasharray="1 0.5"
-                        />
-                        {currentPolygon.map((point, i) => (
-                          <circle
-                            key={i}
-                            cx={point.x}
-                            cy={point.y}
-                            r="0.8"
-                            fill="#fbbf24"
-                            stroke="#000"
-                            strokeWidth="0.1"
+                    {/* Existing Zones */}
+                    <svg
+                      className="absolute inset-0 w-full h-full pointer-events-none"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                    >
+                      {zones.map((zone) => (
+                        <g key={zone.id}>
+                          <path
+                            d={getPolygonPath(zone.polygon_points, true)}
+                            fill={zone.fill_color}
+                            fillOpacity={zone.opacity}
+                            stroke={zone.stroke_color}
+                            strokeWidth={0.3 / zoom}
+                            style={{ pointerEvents: drawMode ? "none" : "auto", cursor: drawMode ? "crosshair" : "pointer" }}
+                            onClick={(e) => {
+                              if (!drawMode) {
+                                e.stopPropagation();
+                                setSelectedZone(zone);
+                              }
+                            }}
                           />
-                        ))}
-                      </>
-                    )}
-                  </svg>
-                </div>
+                          <text
+                            x={zone.polygon_points?.length > 0 ? zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length : 0}
+                            y={zone.polygon_points?.length > 0 ? zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length : 0}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize={2 / zoom}
+                            fill="#000"
+                            fontWeight="bold"
+                            style={{ pointerEvents: "none" }}
+                          >
+                            {zone.zone_code}
+                          </text>
+                        </g>
+                      ))}
 
-                {/* Drawing controls */}
-                {drawMode && (
-                  <div className="p-3 bg-yellow-50 border-t flex items-center gap-4">
-                    <span className="text-sm">
-                      {language === "ar" ? `النقاط: ${currentPolygon.length}` : `Points: ${currentPolygon.length}`}
-                    </span>
-                    <Button variant="outline" size="sm" onClick={handleUndoPoint} disabled={currentPolygon.length === 0}>
-                      {language === "ar" ? "تراجع" : "Undo"}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleClearPolygon} disabled={currentPolygon.length === 0}>
-                      {language === "ar" ? "مسح الكل" : "Clear All"}
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {language === "ar" ? "اضغط على الخريطة لإضافة نقاط. 3 نقاط على الأقل لحفظ المنطقة." : "Click on the map to add points. At least 3 points to save."}
-                    </span>
+                      {/* Current drawing polygon */}
+                      {drawMode && currentPolygon.length > 0 && (
+                        <>
+                          {/* Lines */}
+                          <path
+                            d={getPolygonPath(currentPolygon, false)}
+                            fill="none"
+                            stroke="#fbbf24"
+                            strokeWidth={0.4 / zoom}
+                            strokeDasharray={`${1 / zoom} ${0.5 / zoom}`}
+                          />
+                          
+                          {/* Preview line to cursor */}
+                          {currentPolygon.length > 0 && (
+                            <line
+                              x1={currentPolygon[currentPolygon.length - 1].x}
+                              y1={currentPolygon[currentPolygon.length - 1].y}
+                              x2={cursorPosition.x}
+                              y2={cursorPosition.y}
+                              stroke="#fbbf24"
+                              strokeWidth={0.2 / zoom}
+                              strokeDasharray={`${0.5 / zoom} ${0.3 / zoom}`}
+                              opacity={0.6}
+                            />
+                          )}
+                          
+                          {/* Fill preview when near start */}
+                          {nearStartPoint && currentPolygon.length >= 3 && (
+                            <path
+                              d={getPolygonPath(currentPolygon, true)}
+                              fill={zoneForm.fill_color}
+                              fillOpacity={0.3}
+                              stroke="#22c55e"
+                              strokeWidth={0.5 / zoom}
+                            />
+                          )}
+                          
+                          {/* Points */}
+                          {currentPolygon.map((point, i) => (
+                            <circle
+                              key={i}
+                              cx={point.x}
+                              cy={point.y}
+                              r={i === 0 && nearStartPoint ? 1.2 / zoom : 0.8 / zoom}
+                              fill={i === 0 ? (nearStartPoint ? "#22c55e" : "#ef4444") : "#fbbf24"}
+                              stroke="#000"
+                              strokeWidth={0.15 / zoom}
+                              className={i === 0 && nearStartPoint ? "animate-pulse" : ""}
+                            />
+                          ))}
+                          
+                          {/* Point numbers */}
+                          {currentPolygon.map((point, i) => (
+                            <text
+                              key={`num-${i}`}
+                              x={point.x + 1.5 / zoom}
+                              y={point.y - 1 / zoom}
+                              fontSize={1.5 / zoom}
+                              fill="#000"
+                              fontWeight="bold"
+                            >
+                              {i + 1}
+                            </text>
+                          ))}
+                        </>
+                      )}
+                    </svg>
                   </div>
-                )}
+
+                  {/* Coordinates display */}
+                  {drawMode && (
+                    <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-mono">
+                      X: {cursorPosition.x.toFixed(1)}% | Y: {cursorPosition.y.toFixed(1)}%
+                      {nearStartPoint && (
+                        <span className="text-green-400 mr-2"> • انقر للإغلاق</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Zoom indicator */}
+                  <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                    {Math.round(zoom * 100)}%
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -694,6 +978,9 @@ export default function MapManagementPage() {
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {language === "ar" ? zone.name_ar : zone.name_en}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {zone.polygon_points?.length || 0} {language === "ar" ? "نقطة" : "points"}
                       </p>
                     </div>
                   ))}
@@ -796,9 +1083,9 @@ export default function MapManagementPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Floor Dialog */}
+      {/* Floor Dialog - Enhanced with upload */}
       <Dialog open={showFloorDialog} onOpenChange={setShowFloorDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-cairo">
               {editingFloor
@@ -844,27 +1131,96 @@ export default function MapManagementPage() {
                 />
               </div>
             </div>
-            <div>
-              <Label>{language === "ar" ? "رابط الصورة" : "Image URL"}</Label>
+            
+            {/* Image Upload Section */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "صورة الخريطة" : "Map Image"}</Label>
+              
+              {/* Upload button */}
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={uploadingImage}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={(e) => e.currentTarget.parentElement.querySelector('input').click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                        {language === "ar" ? "جاري الرفع..." : "Uploading..."}
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 ml-2" />
+                        {language === "ar" ? "رفع صورة" : "Upload Image"}
+                      </>
+                    )}
+                  </Button>
+                </label>
+              </div>
+              
+              {/* Upload progress */}
+              {uploadingImage && (
+                <div className="space-y-1">
+                  <Progress value={uploadProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground text-center">{uploadProgress}%</p>
+                </div>
+              )}
+              
+              {/* Or enter URL */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    {language === "ar" ? "أو أدخل رابط" : "or enter URL"}
+                  </span>
+                </div>
+              </div>
+              
               <Input
                 value={floorForm.image_url}
                 onChange={(e) => setFloorForm({ ...floorForm, image_url: e.target.value })}
                 placeholder="https://..."
+                dir="ltr"
               />
             </div>
+            
+            {/* Image preview */}
             {floorForm.image_url && (
-              <img
-                src={floorForm.image_url}
-                alt="Preview"
-                className="w-full h-32 object-contain rounded border"
-              />
+              <div className="relative">
+                <img
+                  src={floorForm.image_url}
+                  alt="Preview"
+                  className="w-full h-40 object-contain rounded border bg-gray-50"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6"
+                  onClick={() => setFloorForm({ ...floorForm, image_url: "" })}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowFloorDialog(false)}>
               {language === "ar" ? "إلغاء" : "Cancel"}
             </Button>
-            <Button onClick={handleSaveFloor}>
+            <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url}>
               <Save className="w-4 h-4 ml-2" />
               {language === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -873,13 +1229,18 @@ export default function MapManagementPage() {
       </Dialog>
 
       {/* Zone Dialog */}
-      <Dialog open={showZoneDialog} onOpenChange={setShowZoneDialog}>
+      <Dialog open={showZoneDialog} onOpenChange={(open) => {
+        setShowZoneDialog(open);
+        if (!open && !editingZone) {
+          // Don't clear polygon when closing if editing
+        }
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-cairo">
               {editingZone
                 ? language === "ar" ? "تعديل المنطقة" : "Edit Zone"
-                : language === "ar" ? "إضافة منطقة جديدة" : "Add New Zone"}
+                : language === "ar" ? "حفظ المنطقة الجديدة" : "Save New Zone"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
@@ -953,6 +1314,7 @@ export default function MapManagementPage() {
                     value={zoneForm.fill_color}
                     onChange={(e) => setZoneForm({ ...zoneForm, fill_color: e.target.value })}
                     className="flex-1"
+                    dir="ltr"
                   />
                 </div>
               </div>
@@ -969,6 +1331,7 @@ export default function MapManagementPage() {
                     value={zoneForm.stroke_color}
                     onChange={(e) => setZoneForm({ ...zoneForm, stroke_color: e.target.value })}
                     className="flex-1"
+                    dir="ltr"
                   />
                 </div>
               </div>
@@ -1009,20 +1372,20 @@ export default function MapManagementPage() {
               </div>
             </div>
             {!editingZone && currentPolygon.length > 0 && (
-              <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-700">
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-700 font-medium">
                   {language === "ar"
-                    ? `تم رسم ${currentPolygon.length} نقطة`
-                    : `${currentPolygon.length} points drawn`}
+                    ? `✓ تم رسم ${currentPolygon.length} نقطة`
+                    : `✓ ${currentPolygon.length} points drawn`}
                 </p>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowZoneDialog(false); resetZoneForm(); }}>
+            <Button variant="outline" onClick={() => { setShowZoneDialog(false); if (!editingZone) resetZoneForm(); }}>
               {language === "ar" ? "إلغاء" : "Cancel"}
             </Button>
-            <Button onClick={handleSaveZone}>
+            <Button onClick={handleSaveZone} disabled={!zoneForm.zone_code || !zoneForm.name_ar}>
               <Save className="w-4 h-4 ml-2" />
               {language === "ar" ? "حفظ" : "Save"}
             </Button>
