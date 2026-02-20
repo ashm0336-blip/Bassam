@@ -552,6 +552,7 @@ export default function MapManagementPage() {
               <CardContent className="p-0">
                 <div
                   ref={mapContainerRef}
+                  data-testid="map-editor-container"
                   className="relative bg-gray-100 overflow-hidden"
                   style={{ 
                     height: "600px",
