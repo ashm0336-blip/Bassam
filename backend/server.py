@@ -1952,6 +1952,212 @@ async def delete_marker(marker_id: str, admin: dict = Depends(require_admin)):
     await log_activity("حذف علامة من الخريطة", admin, marker_id, "تم الحذف")
     return {"message": "تم حذف العلامة بنجاح"}
 
+# ============= Floor/Layer Management Routes =============
+@api_router.get("/floors")
+async def get_floors():
+    """Get all floors/layers"""
+    floors = await db.map_floors.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    return floors
+
+@api_router.get("/floors/{floor_id}")
+async def get_floor(floor_id: str):
+    """Get a specific floor"""
+    floor = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    return floor
+
+@api_router.post("/admin/floors")
+async def create_floor(floor_data: MapFloorCreate, admin: dict = Depends(require_admin)):
+    """Create a new floor (admin only)"""
+    floor_dict = floor_data.model_dump()
+    floor_obj = MapFloor(**floor_dict)
+    doc = floor_obj.model_dump()
+    
+    await db.map_floors.insert_one(doc)
+    await log_activity("إضافة طابق", admin, floor_obj.id, f"طابق {floor_data.name_ar}")
+    
+    return floor_obj
+
+@api_router.put("/admin/floors/{floor_id}")
+async def update_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_admin)):
+    """Update a floor (admin only)"""
+    existing = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    
+    update_data = {k: v for k, v in floor_data.items() if v is not None}
+    if update_data:
+        await db.map_floors.update_one({"id": floor_id}, {"$set": update_data})
+    
+    updated = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/floors/{floor_id}")
+async def delete_floor(floor_id: str, admin: dict = Depends(require_admin)):
+    """Delete a floor (admin only)"""
+    result = await db.map_floors.delete_one({"id": floor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    
+    # Also delete all zones on this floor
+    await db.map_zones.delete_many({"floor_id": floor_id})
+    
+    await log_activity("حذف طابق", admin, floor_id, "تم الحذف")
+    return {"message": "تم حذف الطابق بنجاح"}
+
+# ============= Zone Management Routes =============
+@api_router.get("/zones")
+async def get_all_zones(floor_id: Optional[str] = None, zone_type: Optional[str] = None):
+    """Get all zones with optional filtering"""
+    query = {"is_active": True}
+    if floor_id:
+        query["floor_id"] = floor_id
+    if zone_type:
+        query["zone_type"] = zone_type
+    
+    zones = await db.map_zones.find(query, {"_id": 0}).to_list(500)
+    
+    # Calculate crowd percentage for each zone
+    for zone in zones:
+        max_cap = zone.get("max_capacity", 1) or 1
+        current = zone.get("current_crowd", 0)
+        percentage = round((current / max_cap) * 100, 1)
+        zone["percentage"] = percentage
+        
+        # Auto-update crowd status based on percentage
+        if percentage < 50:
+            zone["crowd_status"] = "normal"
+        elif percentage < 70:
+            zone["crowd_status"] = "moderate"
+        elif percentage < 85:
+            zone["crowd_status"] = "crowded"
+        else:
+            zone["crowd_status"] = "critical"
+    
+    return zones
+
+@api_router.get("/floors/{floor_id}/zones")
+async def get_floor_zones(floor_id: str):
+    """Get all zones for a specific floor"""
+    zones = await db.map_zones.find({"floor_id": floor_id, "is_active": True}, {"_id": 0}).to_list(500)
+    
+    # Calculate crowd percentage for each zone
+    for zone in zones:
+        max_cap = zone.get("max_capacity", 1) or 1
+        current = zone.get("current_crowd", 0)
+        percentage = round((current / max_cap) * 100, 1)
+        zone["percentage"] = percentage
+    
+    return zones
+
+@api_router.get("/zones/{zone_id}")
+async def get_zone(zone_id: str):
+    """Get a specific zone by ID"""
+    zone = await db.map_zones.find_one({"id": zone_id}, {"_id": 0})
+    if not zone:
+        raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
+    return zone
+
+@api_router.post("/admin/zones")
+async def create_zone(zone_data: MapZoneCreate, admin: dict = Depends(require_admin)):
+    """Create a new zone (admin only)"""
+    zone_dict = zone_data.model_dump()
+    zone_obj = MapZone(**zone_dict)
+    doc = zone_obj.model_dump()
+    
+    await db.map_zones.insert_one(doc)
+    await log_activity("إضافة منطقة", admin, zone_obj.id, f"منطقة {zone_data.name_ar} ({zone_data.zone_code})")
+    
+    return zone_obj
+
+@api_router.put("/admin/zones/{zone_id}")
+async def update_zone(zone_id: str, zone_data: MapZoneUpdate, admin: dict = Depends(require_admin)):
+    """Update a zone (admin only)"""
+    existing = await db.map_zones.find_one({"id": zone_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
+    
+    update_data = {k: v for k, v in zone_data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    if update_data:
+        await db.map_zones.update_one({"id": zone_id}, {"$set": update_data})
+    
+    updated = await db.map_zones.find_one({"id": zone_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/zones/{zone_id}")
+async def delete_zone(zone_id: str, admin: dict = Depends(require_admin)):
+    """Delete a zone (admin only)"""
+    result = await db.map_zones.delete_one({"id": zone_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
+    
+    await log_activity("حذف منطقة", admin, zone_id, "تم الحذف")
+    return {"message": "تم حذف المنطقة بنجاح"}
+
+@api_router.put("/admin/zones/bulk-update-crowd")
+async def bulk_update_zone_crowd(updates: List[dict], admin: dict = Depends(require_admin)):
+    """Bulk update crowd data for multiple zones"""
+    updated_count = 0
+    for update in updates:
+        zone_id = update.get("zone_id")
+        if zone_id:
+            update_data = {
+                "current_crowd": update.get("current_crowd", 0),
+                "crowd_status": update.get("crowd_status", "normal"),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            result = await db.map_zones.update_one({"id": zone_id}, {"$set": update_data})
+            if result.modified_count > 0:
+                updated_count += 1
+    
+    await log_activity("تحديث كثافة المناطق", admin, "bulk", f"تم تحديث {updated_count} منطقة")
+    return {"message": f"تم تحديث {updated_count} منطقة"}
+
+@api_router.get("/zones/stats/summary")
+async def get_zones_stats():
+    """Get summary statistics for all zones"""
+    zones = await db.map_zones.find({"is_active": True}, {"_id": 0}).to_list(500)
+    
+    total_current = sum(z.get("current_crowd", 0) for z in zones)
+    total_max = sum(z.get("max_capacity", 0) for z in zones) or 1
+    
+    # Count by zone type
+    zone_types = {}
+    for zone in zones:
+        zt = zone.get("zone_type", "other")
+        if zt not in zone_types:
+            zone_types[zt] = {"count": 0, "current_crowd": 0, "max_capacity": 0}
+        zone_types[zt]["count"] += 1
+        zone_types[zt]["current_crowd"] += zone.get("current_crowd", 0)
+        zone_types[zt]["max_capacity"] += zone.get("max_capacity", 0)
+    
+    # Count by status
+    status_counts = {"normal": 0, "moderate": 0, "crowded": 0, "critical": 0}
+    for zone in zones:
+        max_cap = zone.get("max_capacity", 1) or 1
+        current = zone.get("current_crowd", 0)
+        pct = (current / max_cap) * 100
+        if pct < 50:
+            status_counts["normal"] += 1
+        elif pct < 70:
+            status_counts["moderate"] += 1
+        elif pct < 85:
+            status_counts["crowded"] += 1
+        else:
+            status_counts["critical"] += 1
+    
+    return {
+        "total_zones": len(zones),
+        "total_current_crowd": total_current,
+        "total_max_capacity": total_max,
+        "overall_percentage": round((total_current / total_max) * 100, 1),
+        "by_zone_type": zone_types,
+        "by_status": status_counts
+    }
+
 # ============= External Data - Haramain Density =============
 @api_router.get("/external/haramain-density")
 async def get_haramain_density():
