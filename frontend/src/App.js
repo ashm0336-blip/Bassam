@@ -143,6 +143,12 @@ function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="haram-map" element={<HaramMapPage />} />
+        <Route path="map-management" element={
+          <AdminProtectedRoute>
+            <MapManagementPage />
+          </AdminProtectedRoute>
+        } />
         <Route path="admin" element={
           <AdminProtectedRoute>
             <AdminPage />
