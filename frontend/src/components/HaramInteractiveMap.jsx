@@ -176,9 +176,21 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
 
   // Get zone color based on crowd status or type
   const getZoneColor = (zone) => {
-    const baseColor = ZONE_TYPES[zone.zone_type]?.color || "#6b7280";
-    const statusColor = CROWD_STATUS_COLORS[zone.crowd_status] || baseColor;
-    return statusColor;
+    // For Kaaba, always use black
+    if (zone.zone_type === "kaaba") {
+      return "#1a1a1a";
+    }
+    
+    // Calculate crowd percentage
+    const maxCap = zone.max_capacity || 1;
+    const current = zone.current_crowd || 0;
+    const percentage = (current / maxCap) * 100;
+    
+    // Return color based on percentage thresholds
+    if (percentage < 50) return CROWD_STATUS_COLORS.normal;
+    if (percentage < 70) return CROWD_STATUS_COLORS.moderate;
+    if (percentage < 85) return CROWD_STATUS_COLORS.crowded;
+    return CROWD_STATUS_COLORS.critical;
   };
 
   // Convert polygon points to SVG path
