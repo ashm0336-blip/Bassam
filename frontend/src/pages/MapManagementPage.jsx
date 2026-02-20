@@ -266,6 +266,7 @@ export default function MapManagementPage() {
     
     setIsPanning(false);
     setDraggingPoint(null);
+    setHoveredPoint(null);
   };
 
   const handleMapClick = (e) => {
