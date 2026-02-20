@@ -759,6 +759,7 @@ export default function MapManagementPage() {
               {zones.map(zone => (
                 <div
                   key={zone.id}
+                  data-testid={`zone-list-item-${zone.id}`}
                   className={`p-2 border rounded cursor-pointer text-center ${selectedZoneId === zone.id ? "border-blue-500 bg-blue-50" : "hover:bg-gray-50"}`}
                   onClick={() => { setSelectedZoneId(zone.id); setMode("edit"); }}
                 >
