@@ -137,22 +137,19 @@ export default function MapManagementPage() {
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { if (selectedFloor) fetchZones(); }, [selectedFloor, fetchZones]);
 
-  // Convert mouse event to SVG percentage coordinates
+  // Convert mouse event to SVG coordinates (0-100)
   const getMousePercent = (e) => {
-    if (!mapContainerRef.current) return { x: 0, y: 0 };
-    const rect = mapContainerRef.current.getBoundingClientRect();
-    
-    // Get position relative to container
-    const relX = e.clientX - rect.left;
-    const relY = e.clientY - rect.top;
-    
-    // Convert to percentage (0-100) accounting for zoom and pan
-    const x = ((relX - panOffset.x) / zoom / rect.width) * 100;
-    const y = ((relY - panOffset.y) / zoom / rect.height) * 100;
-    
-    return { 
-      x: Math.max(0, Math.min(100, x)), 
-      y: Math.max(0, Math.min(100, y)) 
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const svg = svgRef.current;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const point = svg.createSVGPoint();
+    point.x = e.clientX;
+    point.y = e.clientY;
+    const transformed = point.matrixTransform(ctm.inverse());
+    return {
+      x: Math.max(0, Math.min(100, transformed.x)),
+      y: Math.max(0, Math.min(100, transformed.y))
     };
   };
 
