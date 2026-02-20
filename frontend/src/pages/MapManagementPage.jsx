@@ -217,6 +217,15 @@ export default function MapManagementPage() {
       setZones(newZones);
       return;
     }
+
+    // Hover highlight for edit handles
+    if (mode === "edit" && selectedZoneId) {
+      const zone = zones.find(z => z.id === selectedZoneId);
+      const hitIndex = getHitPointIndex(zone?.polygon_points, pos);
+      setHoveredPoint(hitIndex !== -1 ? hitIndex : null);
+    } else if (hoveredPoint !== null) {
+      setHoveredPoint(null);
+    }
     
     // Check near start point when drawing
     if (mode === "draw" && drawingPoints.length >= 3) {
