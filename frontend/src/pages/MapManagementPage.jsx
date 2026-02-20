@@ -778,46 +778,173 @@ export default function MapManagementPage() {
         </TabsContent>
 
         {/* Crowd Tab */}
-        <TabsContent value="crowd" className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle>{language === "ar" ? "تحديث الكثافة" : "Update Crowd"}</CardTitle></CardHeader>
-            <CardContent>
-              <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
-                <SelectTrigger className="w-48 mb-4"><SelectValue placeholder={language === "ar" ? "اختر" : "Select"} /></SelectTrigger>
-                <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id}>{language === "ar" ? f.name_ar : f.name_en}</SelectItem>)}</SelectContent>
-              </Select>
-              {selectedFloor && zones.length > 0 && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {zones.map(zone => (
-                      <div key={zone.id} className="p-3 border rounded">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 rounded" style={{ backgroundColor: zone.fill_color }} />
-                          <span className="font-medium">{zone.zone_code}</span>
-                        </div>
+        <TabsContent value="crowd" className="space-y-6" data-testid="crowd-tab-content">
+          <div className="relative overflow-hidden rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6">
+            <div className="absolute -top-16 -left-16 h-40 w-40 rounded-full bg-amber-200/50 blur-3xl" />
+            <div className="absolute -bottom-20 -right-16 h-52 w-52 rounded-full bg-emerald-200/40 blur-3xl" />
+            <div className="relative flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 className="font-cairo text-2xl font-bold text-slate-900">
+                  {language === "ar" ? "لوحة التحكم بالكثافة" : "Crowd Control Center"}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {language === "ar"
+                    ? "تحكم مباشر في كثافة المناطق مع مؤشرات واضحة للحالة." 
+                    : "Fine-tune zone density with clear status signals."}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
+                  <SelectTrigger className="w-52" data-testid="crowd-floor-select">
+                    <SelectValue placeholder={language === "ar" ? "اختر الطابق" : "Select floor"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {floors.map(f => (
+                      <SelectItem key={f.id} value={f.id} data-testid={`crowd-floor-option-${f.id}`}>
+                        {language === "ar" ? f.name_ar : f.name_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleBulkUpdate} disabled={bulkUpdates.length === 0} data-testid="crowd-save-button">
+                  <Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ التغييرات" : "Save changes"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-xl border bg-white/70 p-4 shadow-sm">
+                <p className="text-xs text-slate-500">{language === "ar" ? "إجمالي المناطق" : "Total zones"}</p>
+                <p className="text-2xl font-bold text-slate-900" data-testid="crowd-total-zones">{zones.length}</p>
+              </div>
+              <div className="rounded-xl border bg-white/70 p-4 shadow-sm">
+                <p className="text-xs text-slate-500">{language === "ar" ? "إجمالي الحشود" : "Total crowd"}</p>
+                <p className="text-2xl font-bold text-slate-900" data-testid="crowd-total-current">{totalCrowd.toLocaleString("ar-SA")}</p>
+              </div>
+              <div className="rounded-xl border bg-white/70 p-4 shadow-sm">
+                <p className="text-xs text-slate-500">{language === "ar" ? "معدل الإشغال العام" : "Overall occupancy"}</p>
+                <div className="flex items-end gap-2">
+                  <p className="text-2xl font-bold text-slate-900" data-testid="crowd-overall-percent">{overallPercent}%</p>
+                  <span className="text-xs text-slate-500">/ 100%</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${Math.min(overallPercent, 100)}%`,
+                      background: "linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {selectedFloor && zones.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {zones.map(zone => {
+                const currentValue = crowdEdits[zone.id] ?? zone.current_crowd ?? 0;
+                const maxCap = zone.max_capacity || 0;
+                const safeValue = Math.max(0, Math.min(currentValue, maxCap || currentValue));
+                const percent = maxCap ? Math.min(100, Math.round((safeValue / maxCap) * 100)) : 0;
+                const status = getCrowdStatus(safeValue, maxCap);
+                const step = Math.max(10, Math.round((maxCap || 1000) * 0.01));
+
+                return (
+                  <div key={zone.id} className="relative overflow-hidden rounded-2xl border bg-white/90 p-4 shadow-sm" data-testid={`crowd-zone-card-${zone.id}`}>
+                    <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: status.color }} />
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs text-slate-500">{language === "ar" ? zone.name_ar : zone.name_en}</p>
+                        <p className="text-lg font-bold text-slate-900" data-testid={`crowd-zone-code-${zone.id}`}>{zone.zone_code}</p>
+                      </div>
+                      <Badge
+                        className="border"
+                        style={{ backgroundColor: `${status.color}1A`, color: status.color, borderColor: `${status.color}40` }}
+                        data-testid={`crowd-status-${zone.id}`}
+                      >
+                        {language === "ar" ? status.label_ar : status.label_en}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 flex items-end gap-2">
+                      <span className="text-3xl font-semibold text-slate-900" data-testid={`crowd-current-${zone.id}`}>{safeValue}</span>
+                      <span className="text-xs text-slate-500">/ {maxCap.toLocaleString("ar-SA")}</span>
+                      <span className="text-xs text-slate-500">({percent}%)</span>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCrowdChange(zone.id, Math.max(0, safeValue - step))}
+                          data-testid={`crowd-decrement-${zone.id}`}
+                        >
+                          -
+                        </Button>
                         <Input
                           type="number"
-                          defaultValue={zone.current_crowd || 0}
+                          dir="ltr"
+                          value={safeValue}
+                          min={0}
+                          max={maxCap || 100000}
                           onChange={(e) => {
-                            const val = parseInt(e.target.value) || 0;
-                            setBulkUpdates(prev => {
-                              const exists = prev.find(u => u.zone_id === zone.id);
-                              if (exists) return prev.map(u => u.zone_id === zone.id ? { ...u, current_crowd: val } : u);
-                              return [...prev, { zone_id: zone.id, current_crowd: val }];
-                            });
+                            const val = Math.min(maxCap || 100000, Math.max(0, parseInt(e.target.value) || 0));
+                            handleCrowdChange(zone.id, val);
                           }}
+                          data-testid={`crowd-input-${zone.id}`}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Max: {zone.max_capacity}</p>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCrowdChange(zone.id, Math.min(maxCap || safeValue + step, safeValue + step))}
+                          data-testid={`crowd-increment-${zone.id}`}
+                        >
+                          +
+                        </Button>
                       </div>
-                    ))}
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxCap || 100000}
+                        value={safeValue}
+                        onChange={(e) => handleCrowdChange(zone.id, parseInt(e.target.value))}
+                        className="w-full accent-emerald-600"
+                        data-testid={`crowd-range-${zone.id}`}
+                      />
+                      <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div className="h-full" style={{ width: `${percent}%`, backgroundColor: status.color }} />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {CROWD_PRESETS.map((preset) => (
+                        <Button
+                          key={preset.label_en}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleCrowdChange(zone.id, Math.round((maxCap || 0) * preset.ratio))}
+                          data-testid={`crowd-preset-${preset.label_en.toLowerCase()}-${zone.id}`}
+                        >
+                          {language === "ar" ? preset.label_ar : preset.label_en}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  <Button onClick={handleBulkUpdate} disabled={bulkUpdates.length === 0}>
-                    <Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground" data-testid="crowd-empty-state">
+                {language === "ar" ? "اختر طابقاً لعرض المناطق" : "Select a floor to view zones"}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
