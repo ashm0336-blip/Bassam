@@ -432,7 +432,7 @@ export default function MapManagementPage() {
   const overallPercent = totalCapacity ? Math.round((totalCrowd / totalCapacity) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="map-management-page">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-cairo font-bold text-2xl">{language === "ar" ? "إدارة الخرائط التفاعلية" : "Interactive Map Management"}</h1>
