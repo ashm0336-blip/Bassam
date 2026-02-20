@@ -137,6 +137,24 @@ export default function MapManagementPage() {
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { if (selectedFloor) fetchZones(); }, [selectedFloor, fetchZones]);
 
+  useEffect(() => {
+    setBulkUpdates([]);
+    setCrowdEdits({});
+  }, [selectedFloor?.id]);
+
+  useEffect(() => {
+    if (!zones.length) return;
+    setCrowdEdits(prev => {
+      const next = { ...prev };
+      zones.forEach(z => {
+        if (next[z.id] === undefined) {
+          next[z.id] = z.current_crowd || 0;
+        }
+      });
+      return next;
+    });
+  }, [zones]);
+
   // Convert mouse event to SVG coordinates (0-100)
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
