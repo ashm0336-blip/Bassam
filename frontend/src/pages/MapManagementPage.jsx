@@ -975,8 +975,8 @@ export default function MapManagementPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowFloorDialog(false)}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url}><Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}</Button>
+            <Button variant="outline" onClick={() => setShowFloorDialog(false)} data-testid="floor-dialog-cancel-button">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url} data-testid="floor-dialog-save-button"><Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
