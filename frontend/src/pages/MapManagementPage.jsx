@@ -987,7 +987,7 @@ export default function MapManagementPage() {
           <DialogHeader><DialogTitle>{language === "ar" ? "حفظ المنطقة" : "Save Zone"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>{language === "ar" ? "الكود" : "Code"}</Label><Input value={zoneForm.zone_code} onChange={e => setZoneForm(p => ({ ...p, zone_code: e.target.value }))} /></div>
+              <div><Label>{language === "ar" ? "الكود" : "Code"}</Label><Input value={zoneForm.zone_code} onChange={e => setZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="zone-code-input" /></div>
               <div>
                 <Label>{language === "ar" ? "النوع" : "Type"}</Label>
                 <Select value={zoneForm.zone_type} onValueChange={v => { const t = ZONE_TYPES.find(x => x.value === v); setZoneForm(p => ({ ...p, zone_type: v, fill_color: t?.color || p.fill_color })); }}>
