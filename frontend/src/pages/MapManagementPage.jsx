@@ -964,10 +964,10 @@ export default function MapManagementPage() {
             <div>
               <Label>{language === "ar" ? "الصورة" : "Image"}</Label>
               <label className="block">
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                <Button type="button" variant="outline" className="w-full" onClick={e => e.currentTarget.parentElement.querySelector('input').click()} disabled={uploadingImage}>
+                [?2004l[?2004l[?2004l<input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" data-testid="floor-image-file-input" />
+                <Button type="button" variant="outline" className="w-full" onClick={e => e.currentTarget.parentElement.querySelector('input').click()} disabled={uploadingImage} data-testid="floor-image-upload-button">
                   {uploadingImage ? `${uploadProgress}%` : <><Upload className="w-4 h-4 ml-2" />{language === "ar" ? "رفع" : "Upload"}</>}
-                </Button>
+                </Button>[?2004l
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" />
