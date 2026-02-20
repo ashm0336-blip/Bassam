@@ -504,10 +504,10 @@ export default function MapManagementPage() {
               </div>
 
               <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z - 0.2))}><ZoomOut className="w-4 h-4" /></Button>
-                <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.min(4, z + 0.2))}><ZoomIn className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }}><Maximize2 className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z - 0.2))} data-testid="zoom-out-button"><ZoomOut className="w-4 h-4" /></Button>
+                <span className="text-xs w-12 text-center" data-testid="zoom-percent-label">{Math.round(zoom * 100)}%</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.min(4, z + 0.2))} data-testid="zoom-in-button"><ZoomIn className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }} data-testid="zoom-reset-button"><Maximize2 className="w-4 h-4" /></Button>
               </div>
             </div>
 
