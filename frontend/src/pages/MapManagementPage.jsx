@@ -597,15 +597,26 @@ export default function MapManagementPage() {
                       {zones.map(zone => {
                         const isSelected = zone.id === selectedZoneId;
                         return (
-                          <g key={zone.id}>
+                          <g key={zone.id} data-testid={`zone-shape-${zone.id}`}>
                             <path
                               d={getPath(zone.polygon_points)}
                               fill={zone.fill_color}
                               fillOpacity={zone.opacity}
                               stroke={isSelected ? "#3b82f6" : zone.stroke_color}
-                              strokeWidth={isSelected ? 0.5 : 0.3}
+                              strokeWidth={isSelected ? 0.6 : 0.3}
                               strokeDasharray={isSelected ? "1 0.5" : "none"}
+                              vectorEffect="non-scaling-stroke"
                             />
+                            {isSelected && mode === "edit" && (
+                              <path
+                                d={getPath(zone.polygon_points)}
+                                fill="none"
+                                stroke="#0ea5e9"
+                                strokeWidth="0.6"
+                                strokeDasharray="1.5 1"
+                                vectorEffect="non-scaling-stroke"
+                              />
+                            )}
                             {zone.polygon_points?.length > 0 && (
                               <text
                                 x={zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length}
@@ -615,23 +626,45 @@ export default function MapManagementPage() {
                                 fontSize="2"
                                 fill="#000"
                                 fontWeight="bold"
+                                data-testid={`zone-label-${zone.id}`}
                               >
                                 {zone.zone_code}
                               </text>
                             )}
-                            {/* Edit handles */}
-                            {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => (
-                              <circle
-                                key={i}
-                                cx={pt.x}
-                                cy={pt.y}
-                                r="1"
-                                fill="white"
-                                stroke="#3b82f6"
-                                strokeWidth="0.3"
-                                style={{ cursor: "move" }}
-                              />
-                            ))}
+                            {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
+                              const isActive = i === draggingPoint || i === hoveredPoint;
+                              return (
+                                <g key={i} data-testid={`zone-handle-${zone.id}-${i}`}>
+                                  <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r={isActive ? "1.6" : "1.2"}
+                                    fill="white"
+                                    stroke="#0ea5e9"
+                                    strokeWidth="0.35"
+                                  />
+                                  <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r={isActive ? "0.9" : "0.7"}
+                                    fill="#0ea5e9"
+                                    stroke="white"
+                                    strokeWidth="0.2"
+                                  />
+                                  <text
+                                    x={pt.x}
+                                    y={pt.y - 1.6}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    fontSize="1.4"
+                                    fill="#0f172a"
+                                    fontWeight="600"
+                                  >
+                                    {i + 1}
+                                  </text>
+                                </g>
+                              );
+                            })}
                           </g>
                         );
                       })}
