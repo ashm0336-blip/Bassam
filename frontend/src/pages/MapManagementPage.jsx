@@ -1035,6 +1035,26 @@ export default function MapManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Zone Dialog */}
+      <Dialog open={showDeleteZoneDialog} onOpenChange={setShowDeleteZoneDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground" data-testid="delete-zone-dialog-text">
+            {language === "ar" ? "هل تريد حذف المنطقة المحددة نهائياً؟" : "Do you want to delete the selected zone permanently?"}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteZoneDialog(false)} data-testid="delete-zone-cancel-button">
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteZone} disabled={isDeletingZone} data-testid="delete-zone-confirm-button">
+              {isDeletingZone ? (language === "ar" ? "جاري الحذف" : "Deleting") : (language === "ar" ? "حذف" : "Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
