@@ -1028,12 +1028,30 @@ export default function MapManagementPage() {
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" data-testid="floor-image-url-input" />
-              {floorForm.image_url && <img src={floorForm.image_url} alt="" className="w-full h-24 object-contain rounded border mt-2" />}
+              {floorForm.image_url && <img src={floorForm.image_url} alt="" className="w-full h-24 object-contain rounded border mt-2" data-testid="floor-image-preview" />}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowFloorDialog(false)} data-testid="floor-dialog-cancel-button">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url} data-testid="floor-dialog-save-button"><Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Floor Dialog */}
+      <Dialog open={!!deleteFloorId} onOpenChange={(open) => { if (!open) setDeleteFloorId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تأكيد حذف الطابق" : "Confirm floor deletion"}</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground" data-testid="delete-floor-dialog-text">
+            {language === "ar" ? `هل تريد حذف الطابق ${floors.find(f => f.id === deleteFloorId)?.name_ar || ""}؟ سيتم حذف المناطق التابعة له.` : "Delete this floor and all its zones?"}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteFloorId(null)} data-testid="delete-floor-cancel-button">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button variant="destructive" onClick={() => handleDeleteFloor(deleteFloorId)} disabled={isDeletingFloor} data-testid="delete-floor-confirm-button">
+              {isDeletingFloor ? (language === "ar" ? "جاري الحذف" : "Deleting") : (language === "ar" ? "حذف" : "Delete")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
