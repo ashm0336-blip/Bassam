@@ -737,7 +737,7 @@ export default function MapManagementPage() {
                             const isStart = i === 0;
                             const radius = isStart ? (nearStart ? 0.7 : 0.45) : DRAW_POINT_RADIUS;
                             return (
-                              [?2004l[?2004l[?2004l[?2004l[?2004l[?2004l<circle
+                              <circle
                                 key={i}
                                 cx={pt.x}
                                 cy={pt.y}
@@ -748,7 +748,7 @@ export default function MapManagementPage() {
                                 strokeWidth="0.1"
                                 vectorEffect="non-scaling-stroke"
                                 data-testid={`drawing-point-${i}`}
-                              />[?2004l
+                              />
                             );
                           })}
                         </g>
