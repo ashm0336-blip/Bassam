@@ -527,7 +527,7 @@ export default function MapManagementPage() {
                 <CardContent>
                   {floor.image_url && <img src={normalizeImageUrl(floor.image_url)} alt="" className="w-full h-24 object-cover rounded mb-2" data-testid={`floor-image-${floor.id}`} />}
                   <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedFloor(floor)} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedFloor(floor); setActiveTab("zones"); }} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={() => { setEditingFloor(floor); setFloorForm({ ...floor, image_url: normalizeImageUrl(floor.image_url) }); setShowFloorDialog(true); }} data-testid={`floor-edit-${floor.id}`}><Edit2 className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={() => requestDeleteFloor(floor.id)} data-testid={`floor-delete-${floor.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button> 
                   </div>
