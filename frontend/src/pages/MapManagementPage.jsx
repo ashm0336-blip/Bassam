@@ -552,7 +552,9 @@ export default function MapManagementPage() {
                 </>
               )}
               {mode === "edit" && selectedZoneId && (
-                   <Button variant="destructive" size="sm" onClick={handleDeleteZone} data-testid="zone-delete-button"><Trash2 className="w-4 h-4 ml-1" />{language === "ar" ? "حذف" : "Delete"}</Button> 
+                <Button variant="destructive" size="sm" onClick={requestDeleteZone} data-testid="zone-delete-button">
+                  <Trash2 className="w-4 h-4 ml-1" />{language === "ar" ? "حذف" : "Delete"}
+                </Button>
               )}
             </div>
           </div>
