@@ -2716,6 +2716,7 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Serve uploaded files statically
 app.mount("/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="api-uploads")
 
 @api_router.post("/admin/upload/map-image")
 async def upload_map_image(
@@ -2744,7 +2745,7 @@ async def upload_map_image(
         
         # Return the URL
         # Use relative path that will work with the backend URL
-        file_url = f"/uploads/maps/{unique_filename}"
+        file_url = f"/api/uploads/maps/{unique_filename}"
         
         await log_activity("رفع صورة خريطة", admin, unique_filename, file.filename)
         
