@@ -350,6 +350,7 @@ export default function MapManagementPage() {
       toast({ title: language === "ar" ? "اختر منطقة أولاً" : "Select a zone first", variant: "destructive" });
       return;
     }
+    toast({ title: language === "ar" ? "جارٍ الحذف..." : "Deleting..." });
     try {
       await axios.delete(`${API}/admin/zones/${selectedZoneId}`, getAuthHeaders());
       setZones(prev => prev.filter(z => z.id !== selectedZoneId));
@@ -358,7 +359,7 @@ export default function MapManagementPage() {
       fetchZones();
       toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
     } catch (e) { 
-      toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail, variant: "destructive" });
+      toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail || e.message, variant: "destructive" });
     }
   };
 
