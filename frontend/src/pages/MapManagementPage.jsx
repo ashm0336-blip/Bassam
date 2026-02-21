@@ -998,7 +998,7 @@ export default function MapManagementPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "الاسم بالعربية" : "Arabic"}</Label><Input value={zoneForm.name_ar} onChange={e => setZoneForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="zone-name-ar-input" /></div>
-              <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={zoneForm.name_en} onChange={e => setZoneForm(p => ({ ...p, name_en: e.target.value }))} /></div>
+              <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={zoneForm.name_en} onChange={e => setZoneForm(p => ({ ...p, name_en: e.target.value }))} data-testid="zone-name-en-input" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "اللون" : "Color"}</Label><div className="flex gap-2"><input type="color" value={zoneForm.fill_color} onChange={e => setZoneForm(p => ({ ...p, fill_color: e.target.value }))} className="w-10 h-10 rounded" /><Input value={zoneForm.fill_color} onChange={e => setZoneForm(p => ({ ...p, fill_color: e.target.value }))} /></div></div>
