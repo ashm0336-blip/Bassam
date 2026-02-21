@@ -36,6 +36,20 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const normalizeImageUrl = (url) => {
+  if (!url) return url;
+  let value = url;
+  if (value.startsWith("/")) {
+    value = `${process.env.REACT_APP_BACKEND_URL}${value}`;
+  } else if (value.startsWith("uploads/")) {
+    value = `${process.env.REACT_APP_BACKEND_URL}/${value}`;
+  }
+  if (value.includes("/uploads/") && !value.includes("/api/uploads/")) {
+    value = value.replace("/uploads/", "/api/uploads/");
+  }
+  return value;
+};
+
 // Zone type colors and labels
 const ZONE_TYPES = {
   men_prayer: { color: "#22c55e", label_ar: "مصلى رجال", label_en: "Men Prayer Area" },
@@ -87,9 +101,13 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
   const fetchFloors = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/floors`);
-      setFloors(response.data);
-      if (response.data.length > 0 && !selectedFloor) {
-        setSelectedFloor(response.data[0]);
+      const normalized = response.data.map((floor) => ({
+        ...floor,
+        image_url: normalizeImageUrl(floor.image_url)
+      }));
+      setFloors(normalized);
+      if (normalized.length > 0 && !selectedFloor) {
+        setSelectedFloor(normalized[0]);
       }
     } catch (error) {
       console.error("Error fetching floors:", error);
