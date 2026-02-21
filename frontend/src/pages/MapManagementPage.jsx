@@ -90,6 +90,8 @@ export default function MapManagementPage() {
 
   // Floor dialog
   const [showFloorDialog, setShowFloorDialog] = useState(false);
+  const [deleteFloorId, setDeleteFloorId] = useState(null);
+  const [isDeletingFloor, setIsDeletingFloor] = useState(false);
   const [floorForm, setFloorForm] = useState({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 });
   const [editingFloor, setEditingFloor] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -121,6 +123,13 @@ export default function MapManagementPage() {
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return { headers: { Authorization: `Bearer ${token}` } };
+  };
+
+  const normalizeImageUrl = (url) => {
+    if (!url) return url;
+    if (url.startsWith("/")) return `${process.env.REACT_APP_BACKEND_URL}${url}`;
+    if (url.startsWith("uploads/")) return `${process.env.REACT_APP_BACKEND_URL}/${url}`;
+    return url;
   };
 
   // Fetch data
