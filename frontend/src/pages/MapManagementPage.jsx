@@ -997,7 +997,7 @@ export default function MapManagementPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>{language === "ar" ? "الاسم بالعربية" : "Arabic"}</Label><Input value={zoneForm.name_ar} onChange={e => setZoneForm(p => ({ ...p, name_ar: e.target.value }))} /></div>
+              <div><Label>{language === "ar" ? "الاسم بالعربية" : "Arabic"}</Label><Input value={zoneForm.name_ar} onChange={e => setZoneForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="zone-name-ar-input" /></div>
               <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={zoneForm.name_en} onChange={e => setZoneForm(p => ({ ...p, name_en: e.target.value }))} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
