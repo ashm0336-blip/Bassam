@@ -1002,7 +1002,7 @@ export default function MapManagementPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>{language === "ar" ? "اللون" : "Color"}</Label><div className="flex gap-2"><input type="color" value={zoneForm.fill_color} onChange={e => setZoneForm(p => ({ ...p, fill_color: e.target.value }))} className="w-10 h-10 rounded" data-testid="zone-color-picker" /><Input value={zoneForm.fill_color} onChange={e => setZoneForm(p => ({ ...p, fill_color: e.target.value }))} data-testid="zone-color-hex-input" /></div></div>
-              <div><Label>{language === "ar" ? "السعة" : "Capacity"}</Label><Input type="number" value={zoneForm.max_capacity} onChange={e => setZoneForm(p => ({ ...p, max_capacity: parseInt(e.target.value) || 1000 }))} /></div>
+              <div><Label>{language === "ar" ? "السعة" : "Capacity"}</Label><Input type="number" value={zoneForm.max_capacity} onChange={e => setZoneForm(p => ({ ...p, max_capacity: parseInt(e.target.value) || 1000 }))} data-testid="zone-capacity-input" /></div>
             </div>
             <div className="p-3 bg-green-50 rounded border border-green-200">
               <p className="text-sm text-green-700">✓ {drawingPoints.length} {language === "ar" ? "نقطة" : "points"}</p>
