@@ -1009,8 +1009,8 @@ export default function MapManagementPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowZoneDialog(false)}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button onClick={handleSaveZone} disabled={!zoneForm.zone_code || !zoneForm.name_ar}><Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}</Button>
+            <Button variant="outline" onClick={() => setShowZoneDialog(false)} data-testid="zone-dialog-cancel-button">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button onClick={handleSaveZone} disabled={!zoneForm.zone_code || !zoneForm.name_ar} data-testid="zone-dialog-save-button"><Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
