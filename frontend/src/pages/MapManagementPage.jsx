@@ -291,6 +291,7 @@ export default function MapManagementPage() {
       setDrawingPoints(prev => [...prev, { x: pos.x, y: pos.y }]);
     }
     else if (mode === "edit") {
+      if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
       // Select zone by clicking inside it
       let found = null;
       for (const zone of zones) {
@@ -659,7 +660,7 @@ export default function MapManagementPage() {
                             {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
                               const isActive = i === draggingPoint || i === hoveredPoint;
                               return (
-                                <g key={i} data-testid={`zone-handle-${zone.id}-${i}`}>
+                                <g key={i} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none">
                                   <circle
                                     cx={pt.x}
                                     cy={pt.y}
@@ -667,6 +668,7 @@ export default function MapManagementPage() {
                                     fill="white"
                                     stroke="#0ea5e9"
                                     strokeWidth="0.35"
+                                    vectorEffect="non-scaling-stroke"
                                   />
                                   <circle
                                     cx={pt.x}
@@ -675,18 +677,8 @@ export default function MapManagementPage() {
                                     fill="#0ea5e9"
                                     stroke="white"
                                     strokeWidth="0.2"
+                                    vectorEffect="non-scaling-stroke"
                                   />
-                                  <text
-                                    x={pt.x}
-                                    y={pt.y - 1.6}
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize="1.4"
-                                    fill="#0f172a"
-                                    fontWeight="600"
-                                  >
-                                    {i + 1}
-                                  </text>
                                 </g>
                               );
                             })}
@@ -745,7 +737,7 @@ export default function MapManagementPage() {
                                 cy={pt.y}
                                 r={radius}
                                 fill={isStart ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
-                                fillOpacity={isStart ? 0.9 : 0.25}
+                                fillOpacity={isStart ? 0.85 : 0.2}
                                 stroke="white"
                                 strokeWidth="0.1"
                                 vectorEffect="non-scaling-stroke"
