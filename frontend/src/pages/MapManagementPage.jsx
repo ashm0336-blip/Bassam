@@ -349,7 +349,7 @@ export default function MapManagementPage() {
   // Delete zone
   const handleDeleteZone = async () => {
     if (!selectedZoneId) return;
-    if (!window.confirm(language === "ar" ? "حذف هذه المنطقة؟" : "Delete this zone?")) return;
+    setIsDeletingZone(true);
     try {
       await axios.delete(`${API}/admin/zones/${selectedZoneId}`, getAuthHeaders());
       setZones(prev => prev.filter(z => z.id !== selectedZoneId));
@@ -357,8 +357,11 @@ export default function MapManagementPage() {
       setMode("pan");
       fetchZones();
       toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
+      setShowDeleteZoneDialog(false);
     } catch (e) { 
       toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail, variant: "destructive" });
+    } finally {
+      setIsDeletingZone(false);
     }
   };
 
@@ -413,6 +416,14 @@ export default function MapManagementPage() {
       fetchFloors();
       toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
     } catch (e) { toast({ title: language === "ar" ? "تعذر الحذف" : "Error", variant: "destructive" }); }
+  };
+
+  const requestDeleteZone = () => {
+    if (!selectedZoneId) {
+      toast({ title: language === "ar" ? "اختر منطقة أولاً" : "Select a zone first" , variant: "destructive"});
+      return;
+    }
+    setShowDeleteZoneDialog(true);
   };
 
   // Bulk crowd update
