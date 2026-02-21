@@ -110,7 +110,7 @@ export default function MapManagementPage() {
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
-  const DRAW_POINT_RADIUS = 0.35;
+  const DRAW_POINT_RADIUS = 0.25;
 
   // Zoom/Pan
   const [zoom, setZoom] = useState(1);
@@ -616,6 +616,7 @@ export default function MapManagementPage() {
                         return (
                           <g key={zone.id} data-testid={`zone-shape-${zone.id}`}>
                             <path
+                              data-zone-id={zone.id}
                               d={getPath(zone.polygon_points)}
                               fill={zone.fill_color}
                               fillOpacity={zone.opacity}
@@ -650,6 +651,7 @@ export default function MapManagementPage() {
                                 fill="#000"
                                 fontWeight="bold"
                                 data-testid={`zone-label-${zone.id}`}
+                                pointerEvents="none"
                               >
                                 {zone.zone_code}
                               </text>
