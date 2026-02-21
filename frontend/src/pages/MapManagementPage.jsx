@@ -110,6 +110,7 @@ export default function MapManagementPage() {
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
+  const DRAW_POINT_RADIUS = 0.35;
 
   // Zoom/Pan
   const [zoom, setZoom] = useState(1);
@@ -348,10 +349,14 @@ export default function MapManagementPage() {
     if (!window.confirm(language === "ar" ? "حذف هذه المنطقة؟" : "Delete this zone?")) return;
     try {
       await axios.delete(`${API}/admin/zones/${selectedZoneId}`, getAuthHeaders());
+      setZones(prev => prev.filter(z => z.id !== selectedZoneId));
       setSelectedZoneId(null);
       setMode("pan");
       fetchZones();
-    } catch (e) { console.error(e); }
+      toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
+    } catch (e) { 
+      toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail, variant: "destructive" });
+    }
   };
 
   // Upload image
@@ -381,24 +386,30 @@ export default function MapManagementPage() {
   const handleSaveFloor = async () => {
     try {
       if (editingFloor) {
-        await axios.put(`${API}/admin/floors/${editingFloor.id}`, floorForm, getAuthHeaders());
+        const res = await axios.put(`${API}/admin/floors/${editingFloor.id}`, floorForm, getAuthHeaders());
+        setFloors(prev => prev.map(f => f.id === editingFloor.id ? res.data : f));
       } else {
-        await axios.post(`${API}/admin/floors`, floorForm, getAuthHeaders());
+        const res = await axios.post(`${API}/admin/floors`, floorForm, getAuthHeaders());
+        setFloors(prev => [res.data, ...prev]);
+        setSelectedFloor(res.data);
       }
       setShowFloorDialog(false);
       setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 });
       setEditingFloor(null);
       fetchFloors();
-    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
+      toast({ title: language === "ar" ? "تم الحفظ" : "Saved" });
+    } catch (e) { toast({ title: language === "ar" ? "تعذر الحفظ" : "Error", variant: "destructive" }); }
   };
 
   const handleDeleteFloor = async (id) => {
     if (!window.confirm(language === "ar" ? "حذف؟" : "Delete?")) return;
     try {
       await axios.delete(`${API}/admin/floors/${id}`, getAuthHeaders());
+      setFloors(prev => prev.filter(f => f.id !== id));
       if (selectedFloor?.id === id) setSelectedFloor(null);
       fetchFloors();
-    } catch (e) { console.error(e); }
+      toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
+    } catch (e) { toast({ title: language === "ar" ? "تعذر الحذف" : "Error", variant: "destructive" }); }
   };
 
   // Bulk crowd update
