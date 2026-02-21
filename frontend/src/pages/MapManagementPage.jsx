@@ -412,11 +412,14 @@ export default function MapManagementPage() {
     try {
       if (editingFloor) {
         const res = await axios.put(`${API}/admin/floors/${editingFloor.id}`, floorForm, getAuthHeaders());
-        setFloors(prev => prev.map(f => f.id === editingFloor.id ? res.data : f));
+        const updated = { ...res.data, image_url: normalizeImageUrl(res.data.image_url) };
+        setFloors(prev => prev.map(f => f.id === editingFloor.id ? updated : f));
+        setSelectedFloor(prev => prev?.id === editingFloor.id ? updated : prev);
       } else {
         const res = await axios.post(`${API}/admin/floors`, floorForm, getAuthHeaders());
-        setFloors(prev => [res.data, ...prev]);
-        setSelectedFloor(res.data);
+        const created = { ...res.data, image_url: normalizeImageUrl(res.data.image_url) };
+        setFloors(prev => [created, ...prev]);
+        setSelectedFloor(created);
       }
       setShowFloorDialog(false);
       setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 });
@@ -427,14 +430,24 @@ export default function MapManagementPage() {
   };
 
   const handleDeleteFloor = async (id) => {
-    if (!window.confirm(language === "ar" ? "حذف؟" : "Delete?")) return;
+    const floorId = id || deleteFloorId;
+    if (!floorId) return;
+    setIsDeletingFloor(true);
     try {
-      await axios.delete(`${API}/admin/floors/${id}`, getAuthHeaders());
-      setFloors(prev => prev.filter(f => f.id !== id));
-      if (selectedFloor?.id === id) setSelectedFloor(null);
+      await axios.delete(`${API}/admin/floors/${floorId}`, getAuthHeaders());
+      setFloors(prev => prev.filter(f => f.id !== floorId));
+      if (selectedFloor?.id === floorId) setSelectedFloor(null);
       fetchFloors();
       toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
     } catch (e) { toast({ title: language === "ar" ? "تعذر الحذف" : "Error", variant: "destructive" }); }
+    finally {
+      setIsDeletingFloor(false);
+      setDeleteFloorId(null);
+    }
+  };
+
+  const requestDeleteFloor = (id) => {
+    setDeleteFloorId(id);
   };
 
   // Bulk crowd update
