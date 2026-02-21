@@ -97,6 +97,8 @@ export default function MapManagementPage() {
 
   // Zone dialog
   const [showZoneDialog, setShowZoneDialog] = useState(false);
+  const [showDeleteZoneDialog, setShowDeleteZoneDialog] = useState(false);
+  const [isDeletingZone, setIsDeletingZone] = useState(false);
   const [zoneForm, setZoneForm] = useState({
     zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer",
     fill_color: "#22c55e", stroke_color: "#000000", opacity: 0.4, max_capacity: 1000
@@ -110,7 +112,7 @@ export default function MapManagementPage() {
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
-  const DRAW_POINT_RADIUS = 0.25;
+  const DRAW_POINT_RADIUS = 0.18;
 
   // Zoom/Pan
   const [zoom, setZoom] = useState(1);
