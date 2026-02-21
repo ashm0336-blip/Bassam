@@ -518,7 +518,7 @@ export default function MapManagementPage() {
                   <CardTitle className="text-base" data-testid={`floor-name-${floor.id}`}>{language === "ar" ? floor.name_ar : floor.name_en}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {floor.image_url && <img src={floor.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" data-testid={`floor-image-${floor.id}`} />}
+                  {floor.image_url && <img src={normalizeImageUrl(floor.image_url)} alt="" className="w-full h-24 object-cover rounded mb-2" data-testid={`floor-image-${floor.id}`} />}
                   <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedFloor(floor)} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={() => { setEditingFloor(floor); setFloorForm({ ...floor }); setShowFloorDialog(true); }} data-testid={`floor-edit-${floor.id}`}><Edit2 className="w-4 h-4" /></Button>
@@ -1028,7 +1028,7 @@ export default function MapManagementPage() {
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" data-testid="floor-image-url-input" />
-              {floorForm.image_url && <img src={floorForm.image_url} alt="" className="w-full h-24 object-contain rounded border mt-2" data-testid="floor-image-preview" />}
+              {floorForm.image_url && <img src={normalizeImageUrl(floorForm.image_url)} alt="" className="w-full h-24 object-contain rounded border mt-2" data-testid="floor-image-preview" />}
             </div>
           </div>
           <DialogFooter>
