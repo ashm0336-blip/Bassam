@@ -501,9 +501,9 @@ export default function MapManagementPage() {
                 <Button variant={mode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-pan-button">
                   <Hand className="w-4 h-4" />
                 </Button>
-                [?2004l[?2004l[?2004l<Button variant={mode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} disabled={!selectedFloor} data-testid="mode-draw-button">
+                   <Button variant={mode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} disabled={!selectedFloor} data-testid="mode-draw-button">
                   <Pencil className="w-4 h-4" />
-                </Button>[?2004l
+                </Button> 
                 <Button variant={mode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMode("edit"); setDrawingPoints([]); }} data-testid="mode-edit-button">
                   <MousePointer className="w-4 h-4" />
                 </Button>
@@ -527,7 +527,7 @@ export default function MapManagementPage() {
                 </>
               )}
               {mode === "edit" && selectedZoneId && (
-                [?2004l[?2004l[?2004l<Button variant="destructive" size="sm" onClick={handleDeleteZone} data-testid="zone-delete-button"><Trash2 className="w-4 h-4 ml-1" />{language === "ar" ? "حذف" : "Delete"}</Button>[?2004l
+                   <Button variant="destructive" size="sm" onClick={handleDeleteZone} data-testid="zone-delete-button"><Trash2 className="w-4 h-4 ml-1" />{language === "ar" ? "حذف" : "Delete"}</Button> 
               )}
             </div>
           </div>
@@ -964,10 +964,10 @@ export default function MapManagementPage() {
             <div>
               <Label>{language === "ar" ? "الصورة" : "Image"}</Label>
               <label className="block">
-                [?2004l[?2004l[?2004l<input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" data-testid="floor-image-file-input" />
+                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" data-testid="floor-image-file-input" />
                 <Button type="button" variant="outline" className="w-full" onClick={e => e.currentTarget.parentElement.querySelector('input').click()} disabled={uploadingImage} data-testid="floor-image-upload-button">
                   {uploadingImage ? `${uploadProgress}%` : <><Upload className="w-4 h-4 ml-2" />{language === "ar" ? "رفع" : "Upload"}</>}
-                </Button>[?2004l
+                </Button> 
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" data-testid="floor-image-url-input" />
@@ -990,10 +990,10 @@ export default function MapManagementPage() {
               <div><Label>{language === "ar" ? "الكود" : "Code"}</Label><Input value={zoneForm.zone_code} onChange={e => setZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="zone-code-input" /></div>
               <div>
                 <Label>{language === "ar" ? "النوع" : "Type"}</Label>
-                [?2004l[?2004l[?2004l[?2004l[?2004l[?2004l<Select value={zoneForm.zone_type} onValueChange={v => { const t = ZONE_TYPES.find(x => x.value === v); setZoneForm(p => ({ ...p, zone_type: v, fill_color: t?.color || p.fill_color })); }}>
+                      <Select value={zoneForm.zone_type} onValueChange={v => { const t = ZONE_TYPES.find(x => x.value === v); setZoneForm(p => ({ ...p, zone_type: v, fill_color: t?.color || p.fill_color })); }}>
                   <SelectTrigger data-testid="zone-type-select"><SelectValue /></SelectTrigger>
                   <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value} data-testid={`zone-type-option-${t.value}`}>{language === "ar" ? t.label_ar : t.label_en}</SelectItem>)}</SelectContent>
-                </Select>[?2004l
+                </Select> 
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
