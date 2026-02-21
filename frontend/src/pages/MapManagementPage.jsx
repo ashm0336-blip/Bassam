@@ -344,23 +344,29 @@ export default function MapManagementPage() {
     }
   };
 
+  const deleteZoneById = async (zoneId) => {
+    toast({ title: language === "ar" ? "جارٍ الحذف..." : "Deleting..." });
+    try {
+      await axios.delete(`${API}/admin/zones/${zoneId}`, getAuthHeaders());
+      setZones(prev => prev.filter(z => z.id !== zoneId));
+      if (selectedZoneId === zoneId) {
+        setSelectedZoneId(null);
+        setMode("pan");
+      }
+      fetchZones();
+      toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
+    } catch (e) { 
+      toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail || e.message, variant: "destructive" });
+    }
+  };
+
   // Delete zone
   const handleDeleteZone = async () => {
     if (!selectedZoneId) {
       toast({ title: language === "ar" ? "اختر منطقة أولاً" : "Select a zone first", variant: "destructive" });
       return;
     }
-    toast({ title: language === "ar" ? "جارٍ الحذف..." : "Deleting..." });
-    try {
-      await axios.delete(`${API}/admin/zones/${selectedZoneId}`, getAuthHeaders());
-      setZones(prev => prev.filter(z => z.id !== selectedZoneId));
-      setSelectedZoneId(null);
-      setMode("pan");
-      fetchZones();
-      toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
-    } catch (e) { 
-      toast({ title: language === "ar" ? "تعذر الحذف" : "Error", description: e.response?.data?.detail || e.message, variant: "destructive" });
-    }
+    await deleteZoneById(selectedZoneId);
   };
 
   // Upload image
@@ -777,9 +783,21 @@ export default function MapManagementPage() {
                 <div
                   key={zone.id}
                   data-testid={`zone-list-item-${zone.id}`}
-                  className={`p-2 border rounded cursor-pointer text-center ${selectedZoneId === zone.id ? "border-blue-500 bg-blue-50" : "hover:bg-gray-50"}`}
+                  className={`relative p-2 border rounded cursor-pointer text-center ${selectedZoneId === zone.id ? "border-blue-500 bg-blue-50" : "hover:bg-gray-50"}`}
                   onClick={() => { setSelectedZoneId(zone.id); setMode("edit"); }}
                 >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 text-red-500 hover:text-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteZoneById(zone.id);
+                    }}
+                    data-testid={`zone-list-delete-${zone.id}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                   <div className="w-4 h-4 rounded mx-auto mb-1" style={{ backgroundColor: zone.fill_color }} />
                   <span className="text-sm font-medium">{zone.zone_code}</span>
                 </div>
