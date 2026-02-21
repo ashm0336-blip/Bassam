@@ -127,9 +127,16 @@ export default function MapManagementPage() {
 
   const normalizeImageUrl = (url) => {
     if (!url) return url;
-    if (url.startsWith("/")) return `${process.env.REACT_APP_BACKEND_URL}${url}`;
-    if (url.startsWith("uploads/")) return `${process.env.REACT_APP_BACKEND_URL}/${url}`;
-    return url;
+    let value = url;
+    if (value.startsWith("/")) {
+      value = `${process.env.REACT_APP_BACKEND_URL}${value}`;
+    } else if (value.startsWith("uploads/")) {
+      value = `${process.env.REACT_APP_BACKEND_URL}/${value}`;
+    }
+    if (value.includes("/uploads/") && !value.includes("/api/uploads/")) {
+      value = value.replace("/uploads/", "/api/uploads/");
+    }
+    return value;
   };
 
   // Fetch data
