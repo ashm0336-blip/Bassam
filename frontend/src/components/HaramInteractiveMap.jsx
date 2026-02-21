@@ -331,7 +331,7 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
                   >
                     {/* Background Image */}
                     <img
-                      src={selectedFloor.image_url}
+                      src={normalizeImageUrl(selectedFloor.image_url)}
                       alt={language === "ar" ? selectedFloor.name_ar : selectedFloor.name_en}
                       className="w-full h-full object-contain pointer-events-none"
                       draggable={false}
