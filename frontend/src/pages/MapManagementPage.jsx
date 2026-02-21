@@ -136,8 +136,14 @@ export default function MapManagementPage() {
   const fetchFloors = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/floors`);
-      setFloors(res.data);
-      if (res.data.length > 0 && !selectedFloor) setSelectedFloor(res.data[0]);
+      const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
+      setFloors(normalized);
+      if (normalized.length > 0 && !selectedFloor) {
+        setSelectedFloor(normalized[0]);
+      } else if (selectedFloor) {
+        const matched = normalized.find(f => f.id === selectedFloor.id);
+        if (matched) setSelectedFloor(matched);
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [selectedFloor]);
