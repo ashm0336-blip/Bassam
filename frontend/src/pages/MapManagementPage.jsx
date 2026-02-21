@@ -623,6 +623,12 @@ export default function MapManagementPage() {
                               strokeWidth={isSelected ? 0.6 : 0.3}
                               strokeDasharray={isSelected ? "1 0.5" : "none"}
                               vectorEffect="non-scaling-stroke"
+                              onClick={(e) => {
+                                if (mode === "edit") {
+                                  e.stopPropagation();
+                                  setSelectedZoneId(zone.id);
+                                }
+                              }}
                             />
                             {isSelected && mode === "edit" && (
                               <path
