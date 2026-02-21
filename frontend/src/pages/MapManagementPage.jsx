@@ -990,10 +990,10 @@ export default function MapManagementPage() {
               <div><Label>{language === "ar" ? "الكود" : "Code"}</Label><Input value={zoneForm.zone_code} onChange={e => setZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="zone-code-input" /></div>
               <div>
                 <Label>{language === "ar" ? "النوع" : "Type"}</Label>
-                <Select value={zoneForm.zone_type} onValueChange={v => { const t = ZONE_TYPES.find(x => x.value === v); setZoneForm(p => ({ ...p, zone_type: v, fill_color: t?.color || p.fill_color })); }}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{language === "ar" ? t.label_ar : t.label_en}</SelectItem>)}</SelectContent>
-                </Select>
+                [?2004l[?2004l[?2004l[?2004l[?2004l[?2004l<Select value={zoneForm.zone_type} onValueChange={v => { const t = ZONE_TYPES.find(x => x.value === v); setZoneForm(p => ({ ...p, zone_type: v, fill_color: t?.color || p.fill_color })); }}>
+                  <SelectTrigger data-testid="zone-type-select"><SelectValue /></SelectTrigger>
+                  <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value} data-testid={`zone-type-option-${t.value}`}>{language === "ar" ? t.label_ar : t.label_en}</SelectItem>)}</SelectContent>
+                </Select>[?2004l
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
