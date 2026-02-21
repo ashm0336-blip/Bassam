@@ -513,16 +513,16 @@ export default function MapManagementPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {floors.map(floor => (
-              <Card key={floor.id} className={selectedFloor?.id === floor.id ? "border-primary" : ""}>
+              <Card key={floor.id} className={selectedFloor?.id === floor.id ? "border-primary" : ""} data-testid={`floor-card-${floor.id}`}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{language === "ar" ? floor.name_ar : floor.name_en}</CardTitle>
+                  <CardTitle className="text-base" data-testid={`floor-name-${floor.id}`}>{language === "ar" ? floor.name_ar : floor.name_en}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {floor.image_url && <img src={floor.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" />}
+                  {floor.image_url && <img src={floor.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" data-testid={`floor-image-${floor.id}`} />}
                   <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedFloor(floor)} data-testid={`floor-view-${floor.id}`}><Eye className="w-4 h-4" /></Button>
                     <Button variant="outline" size="sm" onClick={() => { setEditingFloor(floor); setFloorForm({ ...floor }); setShowFloorDialog(true); }} data-testid={`floor-edit-${floor.id}`}><Edit2 className="w-4 h-4" /></Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteFloor(floor.id)} data-testid={`floor-delete-${floor.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button> 
+                    <Button variant="outline" size="sm" onClick={() => requestDeleteFloor(floor.id)} data-testid={`floor-delete-${floor.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button> 
                   </div>
                 </CardContent>
               </Card>
