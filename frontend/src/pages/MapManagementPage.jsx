@@ -733,29 +733,23 @@ export default function MapManagementPage() {
                           )}
                           
                           {/* Points */}
-                          {drawingPoints.map((pt, i) => (
-                            <g key={i} data-testid={`drawing-point-${i}`}>
+                          {drawingPoints.map((pt, i) => {
+                            const isStart = i === 0;
+                            const radius = isStart ? (nearStart ? 0.7 : 0.45) : DRAW_POINT_RADIUS;
+                            return (
                               <circle
+                                key={i}
                                 cx={pt.x}
                                 cy={pt.y}
-                                r={i === 0 ? (nearStart ? "1.6" : "1.2") : "1"}
-                                fill={i === 0 ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
+                                r={radius}
+                                fill={isStart ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
+                                fillOpacity={isStart ? 0.9 : 0.25}
                                 stroke="white"
-                                strokeWidth="0.2"
+                                strokeWidth="0.1"
+                                vectorEffect="non-scaling-stroke"
                               />
-                              <text
-                                x={pt.x}
-                                y={pt.y - 1.6}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fontSize="1.4"
-                                fill="#0f172a"
-                                fontWeight="600"
-                              >
-                                {i + 1}
-                              </text>
-                            </g>
-                          ))}
+                            );
+                          })}
                         </g>
                       )}
                     </svg>
