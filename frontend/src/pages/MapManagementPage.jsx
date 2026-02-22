@@ -1449,9 +1449,8 @@ export default function MapManagementPage() {
               </div>
 
               {/* Info */}
-              <div className="text-xs text-muted-foreground flex items-center gap-4">
+              <div className="text-xs text-muted-foreground">
                 <span>{language === "ar" ? "النقاط" : "Points"}: {editingZone.polygon_points?.length || 0}</span>
-                {editingZone.current_crowd != null && <span>{language === "ar" ? "الحشود الحالية" : "Current"}: {editingZone.current_crowd}</span>}
               </div>
             </div>
           )}
