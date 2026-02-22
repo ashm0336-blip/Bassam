@@ -1278,8 +1278,15 @@ export default function MapManagementPage() {
                   onMouseLeave={handleCrowdMouseLeave}
                 >
                   <div style={{ transform: `translate(${crowdPan.x}px, ${crowdPan.y}px) scale(${crowdZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", position: "relative" }}>
-                    <img src={selectedFloor.image_url} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false} />
-                    <svg ref={crowdSvgRef} className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <img ref={crowdImgRef} src={selectedFloor.image_url} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false}
+                      onLoad={(e) => { if (!imgNatural) setImgNatural({ w: e.target.naturalWidth, h: e.target.naturalHeight }); }} />
+                    {(() => {
+                      const layout = getImgLayout(crowdMapRef.current);
+                      const svgStyle = layout
+                        ? { position: "absolute", left: layout.left, top: layout.top, width: layout.width, height: layout.height }
+                        : { position: "absolute", inset: 0, width: "100%", height: "100%" };
+                      return (
+                    <svg ref={crowdSvgRef} style={svgStyle} viewBox="0 0 100 100" preserveAspectRatio="none">
                       {zones.map(zone => {
                         const cv = crowdEdits[zone.id] ?? zone.current_crowd ?? 0;
                         const mc = zone.max_capacity || 1;
