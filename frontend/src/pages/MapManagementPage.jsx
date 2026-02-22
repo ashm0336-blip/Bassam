@@ -135,6 +135,11 @@ export default function MapManagementPage() {
   const normalizeImageUrl = (url) => {
     if (!url) return url;
     let value = url;
+    // Replace old preview domain URLs with current domain
+    if (value.includes(".preview.emergentagent.com") && !value.startsWith(process.env.REACT_APP_BACKEND_URL)) {
+      const pathMatch = value.match(/\/(?:api\/)?uploads\/.+$/);
+      if (pathMatch) value = `${process.env.REACT_APP_BACKEND_URL}${pathMatch[0].startsWith("/api") ? pathMatch[0] : "/api" + pathMatch[0]}`;
+    }
     if (value.startsWith("/")) {
       value = `${process.env.REACT_APP_BACKEND_URL}${value}`;
     } else if (value.startsWith("uploads/")) {
