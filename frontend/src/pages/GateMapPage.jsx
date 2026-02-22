@@ -561,6 +561,11 @@ export default function GateMapPage() {
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
                           const s = isSelected ? 2.6 : isHovered ? 2.3 : 2.0;
+                          // Lucide door-open SVG path (24x24 viewBox)
+                          const doorPath = m.status === "closed"
+                            ? "M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14 M2 20h20 M14 12v.01"
+                            : "M13 4h3a2 2 0 0 1 2 2v14 M2 20h3 M13 20h9 M10 12v.01 M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z";
+                          const iconScale = s * 0.038;
                           return (
                             <g key={m.id} data-testid={`gate-marker-${m.id}`}
                               style={{ cursor: "pointer" }}
@@ -579,26 +584,10 @@ export default function GateMapPage() {
                                 </circle>
                               )}
                               {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.6} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
-                              {/* Circle bg */}
-                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} stroke="white" strokeWidth="0.3" />
-                              {/* Door icon - double leaf inward opening */}
-                              <g transform={`translate(${m.x}, ${m.y})`} pointerEvents="none">
-                                {/* Threshold base line */}
-                                <line x1={-s*0.5} y1={s*0.45} x2={s*0.5} y2={s*0.45} stroke="white" strokeWidth={s*0.08} strokeLinecap="round" />
-                                {/* Left jamb */}
-                                <line x1={-s*0.5} y1={s*0.45} x2={-s*0.5} y2={-s*0.45} stroke="white" strokeWidth={s*0.08} strokeLinecap="round" />
-                                {/* Right jamb */}
-                                <line x1={s*0.5} y1={s*0.45} x2={s*0.5} y2={-s*0.45} stroke="white" strokeWidth={s*0.08} strokeLinecap="round" />
-                                {/* Left door leaf (slightly open inward - perspective) */}
-                                <path d={`M ${-s*0.48} ${-s*0.43} L ${-s*0.15} ${-s*0.35} L ${-s*0.15} ${s*0.43} L ${-s*0.48} ${s*0.43} Z`}
-                                  fill="white" fillOpacity="0.35" stroke="white" strokeWidth={s*0.06} strokeLinejoin="round" />
-                                {/* Right door leaf (open inward more - perspective) */}
-                                <path d={`M ${s*0.48} ${-s*0.43} L ${s*0.12} ${-s*0.33} L ${s*0.12} ${s*0.43} L ${s*0.48} ${s*0.43} Z`}
-                                  fill="white" fillOpacity="0.25" stroke="white" strokeWidth={s*0.06} strokeLinejoin="round" />
-                                {/* Left door handle */}
-                                <circle cx={-s*0.18} cy={s*0.05} r={s*0.055} fill="white" />
-                                {/* Right door handle */}
-                                <circle cx={s*0.15} cy={s*0.05} r={s*0.055} fill="white" />
+                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} stroke="white" strokeWidth="0.35" />
+                              {/* Lucide door icon */}
+                              <g transform={`translate(${m.x - 12 * iconScale}, ${m.y - 12 * iconScale}) scale(${iconScale})`} pointerEvents="none">
+                                <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                               </g>
                             </g>
                           );
