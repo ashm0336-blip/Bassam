@@ -497,7 +497,8 @@ export default function MapManagementPage() {
       await axios.put(`${API}/admin/zones/${id}`, {
         zone_code: data.zone_code, name_ar: data.name_ar, name_en: data.name_en,
         zone_type: data.zone_type, fill_color: data.fill_color, stroke_color: data.stroke_color,
-        opacity: data.opacity, max_capacity: data.max_capacity, area_sqm: data.area_sqm
+        opacity: data.opacity, stroke_opacity: data.stroke_opacity,
+        max_capacity: data.max_capacity, area_sqm: data.area_sqm, per_person_sqm: data.per_person_sqm
       }, getAuthHeaders());
       toast({ title: language === "ar" ? "تم الحفظ" : "Saved" });
       setShowEditZoneDialog(false);
