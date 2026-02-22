@@ -3103,6 +3103,120 @@ async def delete_map_session(session_id: str, admin: dict = Depends(require_admi
     await log_activity("حذف جلسة خريطة", admin, session_id, "تم الحذف")
     return {"message": "تم حذف الجلسة بنجاح"}
 
+@api_router.post("/admin/map-sessions/batch")
+async def batch_create_sessions(request: Request, admin: dict = Depends(require_admin)):
+    """Create multiple sessions for a date range"""
+    body = await request.json()
+    start_date = body.get("start_date")
+    end_date = body.get("end_date")
+    floor_id = body.get("floor_id")
+    clone_from = body.get("clone_from", "master")
+
+    if not start_date or not end_date or not floor_id:
+        raise HTTPException(status_code=400, detail="يجب تحديد تاريخ البداية والنهاية والطابق")
+
+    floor = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+
+    # Build zones template once
+    zones_template = []
+    if clone_from == "empty":
+        pass
+    elif clone_from == "master":
+        master_zones = await db.map_zones.find({"floor_id": floor_id, "is_active": True}, {"_id": 0}).to_list(500)
+        for z in master_zones:
+            zones_template.append({
+                "original_zone_id": z.get("id"),
+                "floor_id": z.get("floor_id"),
+                "zone_code": z.get("zone_code", ""),
+                "name_ar": z.get("name_ar", ""),
+                "name_en": z.get("name_en", ""),
+                "zone_type": z.get("zone_type", "service"),
+                "polygon_points": z.get("polygon_points", []),
+                "fill_color": z.get("fill_color", "#22c55e"),
+                "stroke_color": z.get("stroke_color", "#000000"),
+                "opacity": z.get("opacity", 0.4),
+                "stroke_opacity": z.get("stroke_opacity", 1.0),
+                "max_capacity": z.get("max_capacity", 1000),
+                "area_sqm": z.get("area_sqm", 0),
+                "per_person_sqm": z.get("per_person_sqm", 0.8),
+                "description_ar": z.get("description_ar"),
+                "description_en": z.get("description_en"),
+                "change_type": "unchanged",
+                "is_removed": False,
+            })
+    else:
+        prev_session = await db.map_sessions.find_one({"id": clone_from}, {"_id": 0})
+        if prev_session and prev_session.get("zones"):
+            for z in prev_session["zones"]:
+                if z.get("is_removed"):
+                    continue
+                zones_template.append({
+                    "original_zone_id": z.get("original_zone_id"),
+                    "floor_id": z.get("floor_id"),
+                    "zone_code": z.get("zone_code", ""),
+                    "name_ar": z.get("name_ar", ""),
+                    "name_en": z.get("name_en", ""),
+                    "zone_type": z.get("zone_type", "service"),
+                    "polygon_points": z.get("polygon_points", []),
+                    "fill_color": z.get("fill_color", "#22c55e"),
+                    "stroke_color": z.get("stroke_color", "#000000"),
+                    "opacity": z.get("opacity", 0.4),
+                    "stroke_opacity": z.get("stroke_opacity", 1.0),
+                    "max_capacity": z.get("max_capacity", 1000),
+                    "area_sqm": z.get("area_sqm", 0),
+                    "per_person_sqm": z.get("per_person_sqm", 0.8),
+                    "description_ar": z.get("description_ar"),
+                    "description_en": z.get("description_en"),
+                    "change_type": "unchanged",
+                    "is_removed": False,
+                })
+
+    # Generate date range
+    from datetime import date as date_type
+    start = date_type.fromisoformat(start_date)
+    end = date_type.fromisoformat(end_date)
+    if end < start:
+        raise HTTPException(status_code=400, detail="تاريخ النهاية يجب أن يكون بعد تاريخ البداية")
+    if (end - start).days > 60:
+        raise HTTPException(status_code=400, detail="الحد الأقصى 60 يوماً")
+
+    created = []
+    skipped = []
+    current = start
+    while current <= end:
+        date_str = current.isoformat()
+        existing = await db.map_sessions.find_one({"date": date_str, "floor_id": floor_id}, {"_id": 0})
+        if existing:
+            skipped.append(date_str)
+            current += timedelta(days=1)
+            continue
+
+        import copy
+        session_zones = []
+        for zt in zones_template:
+            zone_copy = copy.deepcopy(zt)
+            zone_copy["id"] = str(uuid.uuid4())
+            session_zones.append(zone_copy)
+
+        session = MapSession(
+            date=date_str,
+            floor_id=floor_id,
+            floor_name=floor.get("name_ar", ""),
+            status="draft",
+            created_by=admin.get("name", ""),
+            zones=session_zones,
+            changes_summary={"added": 0, "removed": 0, "modified": 0, "unchanged": len(session_zones)}
+        )
+        doc = session.model_dump()
+        await db.map_sessions.insert_one(doc)
+        created.append(date_str)
+        current += timedelta(days=1)
+
+    await log_activity("إنشاء جلسات متعددة", admin, floor_id, f"تم إنشاء {len(created)} جلسة")
+    return {"created": created, "skipped": skipped, "total_created": len(created), "total_skipped": len(skipped)}
+
 @api_router.put("/admin/map-sessions/{session_id}/zones/{zone_id}")
 async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUpdate, admin: dict = Depends(require_admin)):
     """Update a zone within a session"""
