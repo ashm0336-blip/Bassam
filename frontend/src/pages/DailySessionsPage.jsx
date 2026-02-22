@@ -804,14 +804,83 @@ export default function DailySessionsPage() {
 
                 {/* MAP TAB */}
                 <TabsContent value="map" className="space-y-3">
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.5, p * 0.8); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }} data-testid="zoom-out-btn"><ZoomOut className="w-4 h-4" /></Button>
-                      <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.min(6, p * 1.25); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }} data-testid="zoom-in-btn"><ZoomIn className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }} data-testid="zoom-reset-btn"><Maximize2 className="w-4 h-4" /></Button>
+                  {/* Toolbar */}
+                  {activeSession?.status === "draft" && (
+                    <div className="flex justify-between items-center flex-wrap gap-3 bg-slate-50 p-3 rounded-lg">
+                      {/* Mode buttons */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex border rounded-lg overflow-hidden">
+                          <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-pan-btn">
+                            <Hand className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-draw-btn">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("edit"); setDrawingPoints([]); }} data-testid="mode-edit-btn">
+                            <MousePointer className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {/* Zoom controls */}
+                        <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.5, p * 0.8); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }} data-testid="zoom-out-btn"><ZoomOut className="w-4 h-4" /></Button>
+                          <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.min(6, p * 1.25); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }} data-testid="zoom-in-btn"><ZoomIn className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }} data-testid="zoom-reset-btn"><Maximize2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        {mapMode === "draw" && (
+                          <>
+                            {drawingPoints.length === 0 && (
+                              <div className="flex border rounded-lg overflow-hidden">
+                                <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("circle")} title={isAr ? "دائرة" : "Circle"} data-testid="shape-circle-btn"><Circle className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" className="rounded-none border-x" onClick={() => generateShape("rectangle")} title={isAr ? "مربع" : "Rectangle"} data-testid="shape-rect-btn"><Square className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("triangle")} title={isAr ? "مثلث" : "Triangle"} data-testid="shape-triangle-btn"><Triangle className="w-4 h-4" /></Button>
+                              </div>
+                            )}
+                            {drawingPoints.length > 0 && (
+                              <>
+                                <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))} data-testid="drawing-undo-btn"><Undo2 className="w-4 h-4 ml-1" />{isAr ? "تراجع" : "Undo"}</Button>
+                                <Button variant="outline" size="sm" onClick={() => setDrawingPoints([])} data-testid="drawing-clear-btn"><X className="w-4 h-4 ml-1" />{isAr ? "مسح" : "Clear"}</Button>
+                                {drawingPoints.length >= 3 && <Button size="sm" onClick={() => setShowNewZoneDialog(true)} data-testid="drawing-save-btn"><Check className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>}
+                              </>
+                            )}
+                          </>
+                        )}
+                        {mapMode === "edit" && selectedZoneId && (
+                          <Button variant="destructive" size="sm" onClick={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); setMapMode("pan"); }} data-testid="edit-delete-zone-btn">
+                            <Trash2 className="w-4 h-4 ml-1" />{isAr ? "إزالة" : "Remove"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Instructions */}
+                  {activeSession?.status === "draft" && mapMode === "draw" && (
+                    <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-700"><Pencil className="w-3.5 h-3.5 inline ml-1" />{isAr ? `انقر على الخريطة لإضافة نقاط. انقر على النقطة الأولى لإغلاق الشكل. (${drawingPoints.length} نقطة)` : `Click to add points. Click first point to close. (${drawingPoints.length})`}</p>
+                    </div>
+                  )}
+                  {activeSession?.status === "draft" && mapMode === "edit" && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-xs text-amber-700"><MousePointer className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على منطقة لتحديدها، اسحب النقاط لتعديلها، انقر مزدوج لتعديل التفاصيل" : "Click zone to select, drag points to edit, double-click for details"}</p>
+                    </div>
+                  )}
+
+                  {/* Zoom-only controls for completed sessions */}
+                  {activeSession?.status === "completed" && (
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.5, p * 0.8); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }}><ZoomOut className="w-4 h-4" /></Button>
+                        <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c = mapContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.min(6, p * 1.25); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }}><ZoomIn className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  )}
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden">
                       <CardContent className="p-0">
