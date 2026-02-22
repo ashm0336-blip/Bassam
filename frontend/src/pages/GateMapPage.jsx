@@ -612,23 +612,37 @@ export default function GateMapPage() {
                     const dir = DIRECTIONS.find(d => d.value === m.direction);
                     const cls = CLASSIFICATIONS.find(c => c.value === m.classification);
                     const gt = GATE_TYPES.find(t => t.value === m.gate_type);
+                    const gate = getGateData(m);
+                    const emps = getGateEmployees(m);
+                    const isUnstaffed = m.status === "open" && emps.length === 0;
                     const pct = m.max_flow ? Math.round((m.current_flow / m.max_flow) * 100) : 0;
                     return (
                       <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
-                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[200px]" style={{ borderTopColor: st.color, borderTopWidth: 3 }}>
+                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[220px] max-w-[280px]" style={{ borderTopColor: st.color, borderTopWidth: 3 }}>
                           <div className="flex items-center justify-between gap-3 mb-1.5">
                             <span className="font-bold text-sm">{language === "ar" ? m.name_ar : m.name_en || m.name_ar}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${st.color}20`, color: st.color }}>{language === "ar" ? st.label_ar : st.label_en}</span>
                           </div>
                           <div className="space-y-1 text-[11px]">
+                            {gate?.number && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "رقم الباب" : "Number"}</span><span className="font-semibold">{gate.number}</span></div>}
                             {gt && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "النوع" : "Type"}</span><span>{language === "ar" ? gt.label_ar : gt.label_en}</span></div>}
                             {dir && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "الاتجاه" : "Direction"}</span><span>{language === "ar" ? dir.label_ar : dir.label_en}</span></div>}
                             {cls && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "التصنيف" : "Class"}</span><span>{language === "ar" ? cls.label_ar : cls.label_en}</span></div>}
+                            {gate?.plaza && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "الساحة" : "Plaza"}</span><span>{gate.plaza}</span></div>}
+                            {gate?.category?.length > 0 && <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "الفئة" : "Category"}</span><span>{gate.category.join("، ")}</span></div>}
                             <div className="flex justify-between"><span className="text-slate-500">{language === "ar" ? "التدفق" : "Flow"}</span><span className="font-semibold">{m.current_flow} / {m.max_flow}</span></div>
                             <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                               <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: st.color }} />
                             </div>
-                            {m.gate_id && <div className="text-[10px] text-emerald-600 mt-1">{language === "ar" ? "مرتبط بقائمة الأبواب" : "Linked to gates list"}</div>}
+                            {/* Employees */}
+                            <div className="pt-1 border-t mt-1">
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">{language === "ar" ? "الموظفين" : "Staff"}</span>
+                                <span className={`font-semibold ${isUnstaffed ? "text-amber-600" : "text-slate-700"}`}>{emps.length}</span>
+                              </div>
+                              {isUnstaffed && <p className="text-[10px] text-amber-600 font-medium mt-0.5">{language === "ar" ? "تنبيه: لا يوجد موظفين!" : "Warning: No staff!"}</p>}
+                              {emps.length > 0 && <div className="text-[10px] text-slate-400 mt-0.5">{emps.map(e => e.name).join("، ")}</div>}
+                            </div>
                           </div>
                         </div>
                       </div>
