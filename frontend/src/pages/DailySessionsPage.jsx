@@ -1286,6 +1286,49 @@ export default function DailySessionsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* New Zone Dialog (for drawn zones) */}
+      <Dialog open={showNewZoneDialog} onOpenChange={(open) => { setShowNewZoneDialog(open); if (!open) { setDrawingPoints([]); setMapMode("pan"); } }}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-cairo flex items-center gap-2">
+              <Plus className="w-5 h-5 text-emerald-600" />{isAr ? "إضافة منطقة جديدة" : "Add New Zone"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+              <p className="text-xs text-emerald-700"><CheckCircle2 className="w-4 h-4 inline ml-1" />{isAr ? `تم رسم الشكل بـ ${drawingPoints.length} نقطة. أكمل البيانات التالية:` : `Shape drawn with ${drawingPoints.length} points. Fill in the details:`}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">{isAr ? "كود المنطقة" : "Zone Code"}</Label>
+              <Input className="mt-1" placeholder={isAr ? "مثال: Z-001" : "e.g., Z-001"} value={newZoneForm.zone_code} onChange={(e) => setNewZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="new-zone-code" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">{isAr ? "اسم المنطقة" : "Zone Name"}</Label>
+              <Input className="mt-1" placeholder={isAr ? "مثال: مصلى رجال 5" : "e.g., Men Prayer 5"} value={newZoneForm.name_ar} onChange={(e) => setNewZoneForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="new-zone-name" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">{isAr ? "الفئة" : "Category"}</Label>
+              <Select value={newZoneForm.zone_type} onValueChange={(v) => setNewZoneForm(p => ({ ...p, zone_type: v, fill_color: ZONE_TYPES.find(t => t.value === v)?.color || "#22c55e" }))}>
+                <SelectTrigger className="mt-1" data-testid="new-zone-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ZONE_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: t.color }} />{isAr ? t.label_ar : t.label_en}</div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveNewZone} className="bg-emerald-600 hover:bg-emerald-700" data-testid="confirm-new-zone">
+              <Plus className="w-4 h-4 ml-1" />{isAr ? "إضافة المنطقة" : "Add Zone"}
+            </Button>
+            <Button variant="outline" onClick={() => { setShowNewZoneDialog(false); setDrawingPoints([]); }}>{isAr ? "إلغاء" : "Cancel"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Notes Dialog */}
       <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
         <DialogContent className="max-w-md" dir="rtl">
