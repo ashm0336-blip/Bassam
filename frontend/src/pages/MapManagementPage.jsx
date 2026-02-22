@@ -1033,30 +1033,34 @@ export default function MapManagementPage() {
 
           {/* Zone list */}
           {zones.length > 0 && (
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-              {zones.map(zone => (
-                <div
-                  key={zone.id}
-                  data-testid={`zone-list-item-${zone.id}`}
-                  className={`relative p-2 border rounded cursor-pointer text-center ${selectedZoneId === zone.id ? "border-blue-500 bg-blue-50" : "hover:bg-gray-50"}`}
-                  onClick={() => { setSelectedZoneId(zone.id); setMode("edit"); }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 text-red-500 hover:text-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteZoneById(zone.id);
-                    }}
-                    data-testid={`zone-list-delete-${zone.id}`}
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
+              {zones.map(zone => {
+                const typeInfo = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                return (
+                  <div
+                    key={zone.id}
+                    data-testid={`zone-list-item-${zone.id}`}
+                    className={`relative p-3 border rounded-lg cursor-pointer transition-all ${selectedZoneId === zone.id ? "border-blue-500 bg-blue-50 shadow-sm" : "hover:bg-gray-50 hover:border-gray-300"}`}
+                    onClick={() => openEditZone(zone)}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                  <div className="w-4 h-4 rounded mx-auto mb-1" style={{ backgroundColor: zone.fill_color }} />
-                  <span className="text-sm font-medium">{zone.zone_code}</span>
-                </div>
-              ))}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 left-1 h-5 w-5 text-red-400 hover:text-red-600"
+                      onClick={(e) => { e.stopPropagation(); deleteZoneById(zone.id); }}
+                      data-testid={`zone-list-delete-${zone.id}`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-3 h-3 rounded-sm border" style={{ backgroundColor: zone.fill_color, borderColor: zone.stroke_color }} />
+                      <span className="text-sm font-bold">{zone.zone_code}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{language === "ar" ? zone.name_ar : zone.name_en}</p>
+                    {typeInfo && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "ar" ? typeInfo.label_ar : typeInfo.label_en}</p>}
+                  </div>
+                );
+              })}
             </div>
           )}
         </TabsContent>
