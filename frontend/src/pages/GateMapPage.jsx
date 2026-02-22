@@ -558,6 +558,8 @@ export default function GateMapPage() {
                           const st = STATUS_CONFIG[m.status] || STATUS_CONFIG.open;
                           const isSelected = m.id === selectedMarkerId;
                           const isHovered = m.id === hoveredMarkerId;
+                          const emps = getGateEmployees(m);
+                          const isUnstaffed = m.status === "open" && emps.length === 0;
                           const r = isSelected ? 1.8 : isHovered ? 1.5 : 1.2;
                           return (
                             <g key={m.id} data-testid={`gate-marker-${m.id}`}>
@@ -566,6 +568,12 @@ export default function GateMapPage() {
                                 <circle cx={m.x} cy={m.y} r="2.5" fill={st.color} fillOpacity="0.15" vectorEffect="non-scaling-stroke">
                                   <animate attributeName="r" values="1.5;3;1.5" dur="2s" repeatCount="indefinite" />
                                   <animate attributeName="fill-opacity" values="0.2;0;0.2" dur="2s" repeatCount="indefinite" />
+                                </circle>
+                              )}
+                              {/* Warning ring for unstaffed open gates */}
+                              {isUnstaffed && (
+                                <circle cx={m.x} cy={m.y} r="2.8" fill="none" stroke="#f59e0b" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke">
+                                  <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
                                 </circle>
                               )}
                               {/* Selection ring */}
