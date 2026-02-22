@@ -584,7 +584,7 @@ export default function GateMapPage() {
                                 </circle>
                               )}
                               {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.6} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
-                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} stroke="white" strokeWidth="0.35" />
+                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} />
                               {/* Lucide door icon */}
                               <g transform={`translate(${m.x - 12 * iconScale}, ${m.y - 12 * iconScale}) scale(${iconScale})`} pointerEvents="none">
                                 <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
