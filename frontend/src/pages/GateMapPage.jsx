@@ -812,6 +812,23 @@ export default function GateMapPage() {
                 <div><Label className="text-xs">{language === "ar" ? "التدفق الحالي" : "Current Flow"}</Label><Input type="number" value={editingMarker.current_flow ?? 0} onChange={e => setEditingMarker(p => ({ ...p, current_flow: parseInt(e.target.value) || 0 }))} /></div>
                 <div><Label className="text-xs">{language === "ar" ? "أقصى تدفق" : "Max Flow"}</Label><Input type="number" value={editingMarker.max_flow ?? 5000} onChange={e => setEditingMarker(p => ({ ...p, max_flow: parseInt(e.target.value) || 5000 }))} /></div>
               </div>
+              {/* Link info */}
+              {editingMarker.gate_id ? (
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                  <div className="text-xs text-emerald-700">
+                    <span className="font-medium">{language === "ar" ? "مرتبط بـ:" : "Linked to:"} </span>
+                    {existingGates.find(g => g.id === editingMarker.gate_id)?.name || editingMarker.gate_id}
+                  </div>
+                  <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => {
+                    const gate = existingGates.find(g => g.id === editingMarker.gate_id);
+                    if (gate) { const mapped = mapGateToMarker(gate); setEditingMarker(p => ({ ...p, ...mapped })); }
+                  }}><RefreshCw className="w-3 h-3 ml-1" />{language === "ar" ? "مزامنة" : "Sync"}</Button>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500">
+                  {language === "ar" ? "غير مرتبط بقائمة الأبواب (إدخال يدوي)" : "Not linked (manual entry)"}
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
