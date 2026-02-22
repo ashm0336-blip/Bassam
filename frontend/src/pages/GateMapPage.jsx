@@ -573,19 +573,13 @@ export default function GateMapPage() {
                               onDoubleClick={(e) => { e.stopPropagation(); openEditMarker(m); }}
                               onClick={(e) => { if (mode === "edit") { e.stopPropagation(); setSelectedMarkerId(m.id); } }}
                             >
-                              {m.status === "open" && (
-                                <ellipse cx={m.x} cy={m.y} rx={rx + 1} ry={(rx + 1) * ar} fill={st.color} fillOpacity="0.08">
-                                  <animate attributeName="rx" values={`${rx};${rx + 2.5};${rx}`} dur="2s" repeatCount="indefinite" />
-                                  <animate attributeName="ry" values={`${ry};${(rx + 2.5) * ar};${ry}`} dur="2s" repeatCount="indefinite" />
-                                  <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
-                                </ellipse>
-                              )}
-                              {isUnstaffed && (
-                                <ellipse cx={m.x} cy={m.y} rx={rx + 1.5} ry={(rx + 1.5) * ar} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3">
-                                  <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
-                                </ellipse>
-                              )}
-                              {isSelected && <ellipse cx={m.x} cy={m.y} rx={rx + 0.6} ry={(rx + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
+                              {/* Pulse by status color */}
+                              <ellipse cx={m.x} cy={m.y} rx={rx + 1} ry={(rx + 1) * ar} fill={st.color} fillOpacity="0.08">
+                                <animate attributeName="rx" values={`${rx};${rx + 2};${rx}`} dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="ry" values={`${ry};${(rx + 2) * ar};${ry}`} dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
+                              </ellipse>
+                              {isSelected && <ellipse cx={m.x} cy={m.y} rx={rx + 0.6} ry={(rx + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.25" />}
                               <ellipse cx={m.x} cy={m.y} rx={rx} ry={ry} fill={st.color} />
                               <g transform={`translate(${m.x - 12 * iconS}, ${m.y - 12 * iconS * ar}) scale(${iconS}, ${iconS * ar})`} pointerEvents="none">
                                 <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
