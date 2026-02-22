@@ -1293,16 +1293,25 @@ export default function MapManagementPage() {
                   onMouseUp={handleCrowdMouseUp}
                   onMouseLeave={handleCrowdMouseLeave}
                 >
-                  <div style={{ transform: `translate(${crowdPan.x}px, ${crowdPan.y}px) scale(${crowdZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", position: "relative" }}>
-                    <img ref={crowdImgRef} src={selectedFloor.image_url} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false}
-                      onLoad={(e) => { if (!imgNatural) setImgNatural({ w: e.target.naturalWidth, h: e.target.naturalHeight }); }} />
+                  <div style={{ transform: `translate(${crowdPan.x}px, ${crowdPan.y}px) scale(${crowdZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {(() => {
-                      const layout = getImgLayout(crowdMapRef.current);
-                      const svgStyle = layout
-                        ? { position: "absolute", left: layout.left, top: layout.top, width: layout.width, height: layout.height }
-                        : { position: "absolute", inset: 0, width: "100%", height: "100%" };
+                      const containerEl = crowdMapRef.current;
+                      let wrapStyle = { position: "relative", width: "100%", height: "100%" };
+                      if (imgRatio && containerEl) {
+                        const cw = containerEl.clientWidth;
+                        const ch = containerEl.clientHeight;
+                        const containerRatio = cw / ch;
+                        if (containerRatio > imgRatio) {
+                          wrapStyle = { position: "relative", height: "100%", width: ch * imgRatio };
+                        } else {
+                          wrapStyle = { position: "relative", width: "100%", height: cw / imgRatio };
+                        }
+                      }
                       return (
-                    <svg ref={crowdSvgRef} style={svgStyle} viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <div style={wrapStyle}>
+                    <img ref={crowdImgRef} src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block" }} className="pointer-events-none" draggable={false}
+                      onLoad={(e) => { if (!imgRatio) setImgRatio(e.target.naturalWidth / e.target.naturalHeight); }} />
+                    <svg ref={crowdSvgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
                       {zones.map(zone => {
                         const cv = crowdEdits[zone.id] ?? zone.current_crowd ?? 0;
                         const mc = zone.max_capacity || 1;
@@ -1317,6 +1326,7 @@ export default function MapManagementPage() {
                         );
                       })}
                     </svg>
+                    </div>
                       );
                     })()}
                   </div>
