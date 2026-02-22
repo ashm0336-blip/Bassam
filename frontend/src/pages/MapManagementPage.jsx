@@ -107,8 +107,12 @@ export default function MapManagementPage() {
   const [showZoneDialog, setShowZoneDialog] = useState(false);
   const [zoneForm, setZoneForm] = useState({
     zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer",
-    fill_color: "#22c55e", stroke_color: "#000000", opacity: 0.4, max_capacity: 1000
+    fill_color: "#22c55e", stroke_color: "#000000", opacity: 0.4, max_capacity: 1000, area_sqm: 0
   });
+
+  // Zone edit dialog
+  const [showEditZoneDialog, setShowEditZoneDialog] = useState(false);
+  const [editingZone, setEditingZone] = useState(null);
 
   // Drawing state
   const [mode, setMode] = useState("pan"); // pan, draw, edit
