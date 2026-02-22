@@ -922,6 +922,18 @@ async def update_gate(gate_id: str, gate: GateUpdate, user: dict = Depends(requi
     result = await db.gates.update_one({"id": gate_id}, {"$set": update_data})
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="الباب غير موجود")
+    # Sync status to gate map marker
+    status_map = {"مفتوح": "open", "متاح": "open", "مغلق": "closed", "مزدحم": "crowded", "صيانة": "maintenance"}
+    marker_update = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if "status" in update_data:
+        marker_update["status"] = status_map.get(update_data["status"], "open")
+    if "current_flow" in update_data:
+        marker_update["current_flow"] = update_data["current_flow"]
+    if "max_flow" in update_data:
+        marker_update["max_flow"] = update_data["max_flow"]
+    if "name" in update_data:
+        marker_update["name_ar"] = update_data["name"]
+    await db.gate_markers.update_many({"gate_id": gate_id}, {"$set": marker_update})
     return {"message": "تم تحديث الباب بنجاح"}
 
 @api_router.delete("/admin/gates/{gate_id}")
