@@ -176,6 +176,8 @@ export default function MapManagementPage() {
       const res = await axios.get(`${API}/floors`);
       const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
       setFloors(normalized);
+      // Preload all floor images
+      normalized.forEach(f => { if (f.image_url) { const img = new Image(); img.src = f.image_url; } });
       setSelectedFloor(prev => {
         if (prev) {
           const matched = normalized.find(f => f.id === prev.id);
