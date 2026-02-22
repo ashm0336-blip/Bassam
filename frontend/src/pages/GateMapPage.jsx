@@ -397,11 +397,18 @@ export default function GateMapPage() {
     return () => window.removeEventListener("resize", fn);
   }, []);
 
-  // Stats
+  // Stats & helpers
+  const getGateData = (marker) => marker.gate_id ? existingGates.find(g => g.id === marker.gate_id) : null;
+  const getGateEmployees = (marker) => {
+    const gate = getGateData(marker);
+    if (!gate) return [];
+    return employees.filter(e => e.location === gate.name || e.location === marker.name_ar);
+  };
   const openGates = markers.filter(m => m.status === "open").length;
   const closedGates = markers.filter(m => m.status === "closed").length;
   const crowdedGates = markers.filter(m => m.status === "crowded").length;
   const totalFlow = markers.reduce((s, m) => s + (m.current_flow || 0), 0);
+  const unstaffedOpen = markers.filter(m => m.status === "open" && getGateEmployees(m).length === 0).length;
 
   return (
     <div className="space-y-6" data-testid="gate-map-page">
