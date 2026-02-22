@@ -228,20 +228,7 @@ export default function DailySessionsPage() {
     return () => node.removeEventListener("wheel", handler);
   }, []);
 
-  // Pan
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return;
-    setIsPanning(true);
-    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-  };
-  const handleMouseMove = (e) => {
-    if (isPanning) setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
-    if (mapContainerRef.current) {
-      const rect = mapContainerRef.current.getBoundingClientRect();
-      setTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
-    }
-  };
-  const handleMouseUp = () => setIsPanning(false);
+  // Pan (old handlers removed - now using handleMapMouseDown/Move/Up)
   const getPath = (points, close = true) => {
     if (!points || points.length === 0) return "";
     let d = `M ${points[0].x} ${points[0].y}`;
