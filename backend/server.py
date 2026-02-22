@@ -471,6 +471,7 @@ class MapZone(BaseModel):
     current_crowd: int = 0
     max_capacity: int = 1000
     area_sqm: float = 0  # Area in square meters
+    per_person_sqm: float = 0.8  # Space per person in m²
     crowd_status: str = "normal"  # normal, moderate, crowded, critical
     assigned_employees: int = 0
     # Metadata
