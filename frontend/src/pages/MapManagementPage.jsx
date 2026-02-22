@@ -84,6 +84,20 @@ export default function MapManagementPage() {
   const mapContainerRef = useRef(null);
   const imageRef = useRef(null);
   const svgRef = useRef(null);
+  const crowdImgRef = useRef(null);
+
+  // Image layout - SVG must match image position exactly
+  const [imgNatural, setImgNatural] = useState(null);
+
+  const getImgLayout = useCallback((containerEl) => {
+    if (!imgNatural || !containerEl) return null;
+    const cw = containerEl.clientWidth;
+    const ch = containerEl.clientHeight;
+    const scale = Math.min(cw / imgNatural.w, ch / imgNatural.h);
+    const rw = imgNatural.w * scale;
+    const rh = imgNatural.h * scale;
+    return { left: (cw - rw) / 2, top: (ch - rh) / 2, width: rw, height: rh };
+  }, [imgNatural]);
 
   // Data state
   const [floors, setFloors] = useState([]);
