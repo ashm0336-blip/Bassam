@@ -2243,6 +2243,101 @@ async def get_zones_stats():
         "by_status": status_counts
     }
 
+# ============= Gate Map Routes =============
+@api_router.get("/gate-map/floors")
+async def get_gate_map_floors():
+    floors = await db.gate_map_floors.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    return floors
+
+@api_router.post("/admin/gate-map/floors")
+async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = Depends(require_admin)):
+    floor = GateMapFloor(**floor_data.model_dump())
+    doc = floor.model_dump()
+    await db.gate_map_floors.insert_one(doc)
+    return doc
+
+@api_router.delete("/admin/gate-map/floors/{floor_id}")
+async def delete_gate_map_floor(floor_id: str, admin: dict = Depends(require_admin)):
+    await db.gate_map_floors.delete_one({"id": floor_id})
+    await db.gate_markers.delete_many({"floor_id": floor_id})
+    return {"message": "تم الحذف"}
+
+@api_router.get("/gate-map/markers")
+async def get_gate_markers(floor_id: Optional[str] = None):
+    query = {}
+    if floor_id:
+        query["floor_id"] = floor_id
+    markers = await db.gate_markers.find(query, {"_id": 0}).to_list(500)
+    return markers
+
+@api_router.post("/admin/gate-map/markers")
+async def create_gate_marker(data: GateMarkerCreate, admin: dict = Depends(require_admin)):
+    marker = GateMarker(**data.model_dump())
+    doc = marker.model_dump()
+    await db.gate_markers.insert_one(doc)
+    return doc
+
+@api_router.put("/admin/gate-map/markers/{marker_id}")
+async def update_gate_marker(marker_id: str, data: GateMarkerUpdate, admin: dict = Depends(require_admin)):
+    update = {k: v for k, v in data.model_dump().items() if v is not None}
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.gate_markers.update_one({"id": marker_id}, {"$set": update})
+    updated = await db.gate_markers.find_one({"id": marker_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/gate-map/markers/{marker_id}")
+async def delete_gate_marker(marker_id: str, admin: dict = Depends(require_admin)):
+    await db.gate_markers.delete_one({"id": marker_id})
+    return {"message": "تم الحذف"}
+
+@api_router.put("/admin/gate-map/markers/bulk-status")
+async def bulk_update_gate_markers(request: Request, admin: dict = Depends(require_admin)):
+    updates = await request.json()
+    count = 0
+    for u in updates:
+        mid = u.get("id")
+        if mid:
+            upd = {k: v for k, v in u.items() if k != "id" and v is not None}
+            upd["updated_at"] = datetime.now(timezone.utc).isoformat()
+            r = await db.gate_markers.update_one({"id": mid}, {"$set": upd})
+            if r.modified_count: count += 1
+    return {"message": f"تم تحديث {count} باب"}
+
+# Gate Daily Log
+@api_router.get("/gate-map/daily-logs")
+async def get_gate_daily_logs(limit: int = 30):
+    logs = await db.gate_daily_logs.find({}, {"_id": 0}).sort("date", -1).to_list(limit)
+    return logs
+
+@api_router.post("/admin/gate-map/daily-logs")
+async def create_gate_daily_log(request: Request, admin: dict = Depends(require_admin)):
+    data = await request.json()
+    log = GateDailyLog(**data)
+    existing = await db.gate_daily_logs.find_one({"date": log.date}, {"_id": 0})
+    if existing:
+        await db.gate_daily_logs.update_one({"date": log.date}, {"$set": log.model_dump()})
+    else:
+        await db.gate_daily_logs.insert_one(log.model_dump())
+    return log.model_dump()
+
+@api_router.post("/admin/gate-map/auto-log")
+async def auto_create_daily_log(admin: dict = Depends(require_admin)):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    markers = await db.gate_markers.find({}, {"_id": 0}).to_list(500)
+    total = len(markers)
+    open_g = sum(1 for m in markers if m.get("status") == "open")
+    closed_g = sum(1 for m in markers if m.get("status") == "closed")
+    total_flow = sum(m.get("current_flow", 0) for m in markers)
+    log = GateDailyLog(date=today, total_gates=total, open_gates=open_g, closed_gates=closed_g, total_flow=total_flow)
+    existing = await db.gate_daily_logs.find_one({"date": today}, {"_id": 0})
+    if existing:
+        await db.gate_daily_logs.update_one({"date": today}, {"$set": log.model_dump()})
+    else:
+        await db.gate_daily_logs.insert_one(log.model_dump())
+    return log.model_dump()
+
+
+
 # ============= External Data - Haramain Density =============
 @api_router.get("/external/haramain-density")
 async def get_haramain_density():
