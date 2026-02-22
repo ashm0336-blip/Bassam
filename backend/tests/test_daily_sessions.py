@@ -340,10 +340,12 @@ class TestSessionComparison:
         assert "added" in data, "Response should have 'added' field"
         assert "removed" in data, "Response should have 'removed' field"
         assert "modified" in data, "Response should have 'modified' field"
-        assert "unchanged" in data, "Response should have 'unchanged' field"
+        assert "unchanged_count" in data, "Response should have 'unchanged_count' field"
         assert isinstance(data["added"], list), "'added' should be a list"
         assert isinstance(data["removed"], list), "'removed' should be a list"
-        print(f"✓ GET /api/map-sessions/compare - Added: {len(data['added'])}, Removed: {len(data['removed'])}, Modified: {len(data['modified'])}")
+        assert "session_1" in data, "Response should have session_1 info"
+        assert "session_2" in data, "Response should have session_2 info"
+        print(f"✓ GET /api/map-sessions/compare - Added: {len(data['added'])}, Removed: {len(data['removed'])}, Modified: {len(data['modified'])}, Unchanged: {data['unchanged_count']}")
 
 
 class TestSessionCleanup:
