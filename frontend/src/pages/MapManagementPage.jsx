@@ -899,12 +899,9 @@ export default function MapManagementPage() {
                             {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
                               const isActive = i === draggingPoint || i === hoveredPoint;
                               return (
-                                <g key={`v-${i}`} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none">
-                                  <circle cx={pt.x} cy={pt.y} r={isActive ? "0.5" : "0.35"}
-                                    fill="white" stroke="#0ea5e9" strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
-                                  <circle cx={pt.x} cy={pt.y} r={isActive ? "0.28" : "0.18"}
-                                    fill="#0ea5e9" stroke="white" strokeWidth="0.08" vectorEffect="non-scaling-stroke" />
-                                </g>
+                                <circle key={`v-${i}`} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none"
+                                  cx={pt.x} cy={pt.y} r={isActive ? "0.35" : "0.22"}
+                                  fill="#ef4444" stroke="white" strokeWidth="0.08" vectorEffect="non-scaling-stroke" />
                               );
                             })}
                             {/* Midpoint handles for subdivision / curve creation */}
@@ -914,10 +911,10 @@ export default function MapManagementPage() {
                               const mx = (pt.x + nx.x) / 2;
                               const my = (pt.y + nx.y) / 2;
                               return (
-                                <rect key={`m-${i}`} x={mx - 0.2} y={my - 0.2} width="0.4" height="0.4"
+                                <rect key={`m-${i}`} x={mx - 0.12} y={my - 0.12} width="0.24" height="0.24"
                                   transform={`rotate(45 ${mx} ${my})`}
-                                  fill="white" stroke="#0ea5e9" strokeWidth="0.1" strokeDasharray="0.2 0.15"
-                                  vectorEffect="non-scaling-stroke" opacity="0.6" pointerEvents="none"
+                                  fill="#ef4444" stroke="white" strokeWidth="0.06"
+                                  vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none"
                                   data-testid={`zone-midpoint-${zone.id}-${i}`}
                                 />
                               );
