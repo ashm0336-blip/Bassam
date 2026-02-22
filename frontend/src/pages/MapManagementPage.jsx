@@ -453,13 +453,13 @@ export default function MapManagementPage() {
     }));
   }, []);
 
-  // Attach wheel listener - re-run when selectedFloor changes (container mounts/unmounts)
-  useEffect(() => {
-    const container = mapContainerRef.current;
-    if (!container) return;
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => container.removeEventListener("wheel", handleWheel);
-  }, [handleWheel, selectedFloor, activeTab]);
+  // Attach wheel listener - use callback ref for reliable attachment
+  const wheelRef = useCallback((node) => {
+    if (node) {
+      node.addEventListener("wheel", handleWheel, { passive: false });
+      mapContainerRef.current = node;
+    }
+  }, [handleWheel]);
 
   // Escape key resets drawing / deselects zone
   useEffect(() => {
