@@ -20,7 +20,11 @@ import {
   Check,
   Pencil,
   Hand,
-  Move
+  Move,
+  Circle,
+  Square,
+  Triangle,
+  Spline
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,7 +76,7 @@ const CROWD_PRESETS = [
   { label_ar: "مزدحم", label_en: "Crowded", ratio: 0.85 },
 ];
 
-const SNAP_DISTANCE = 3;
+const SNAP_DISTANCE = 1.2;
 
 export default function MapManagementPage() {
   const { language } = useLanguage();
@@ -114,7 +118,7 @@ export default function MapManagementPage() {
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
-  const DRAW_POINT_RADIUS = 0.18;
+  const DRAW_POINT_RADIUS = 0.08;
 
   // Zoom/Pan
   const [zoom, setZoom] = useState(1);
