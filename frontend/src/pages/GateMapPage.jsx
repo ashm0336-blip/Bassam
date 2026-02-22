@@ -584,9 +584,10 @@ export default function GateMapPage() {
                                 </circle>
                               )}
                               {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.6} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
-                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} />
-                              {/* Lucide door icon */}
-                              <g transform={`translate(${m.x - 12 * iconScale}, ${m.y - 12 * iconScale}) scale(${iconScale})`} pointerEvents="none">
+                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} vectorEffect="non-scaling-stroke" />
+                              {/* Lucide door icon - cliped to circle */}
+                              <clipPath id={`clip-${m.id}`}><circle cx={m.x} cy={m.y} r={s} /></clipPath>
+                              <g transform={`translate(${m.x - 12 * iconScale}, ${m.y - 12 * iconScale}) scale(${iconScale})`} pointerEvents="none" clipPath={`url(#clip-${m.id})`}>
                                 <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                               </g>
                             </g>
