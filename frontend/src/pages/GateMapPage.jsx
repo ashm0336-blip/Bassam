@@ -560,7 +560,7 @@ export default function GateMapPage() {
                           const isHovered = m.id === hoveredMarkerId;
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
-                          const s = isSelected ? 1.6 : isHovered ? 1.4 : 1.0;
+                          const s = isSelected ? 1.2 : isHovered ? 1.0 : 0.6;
                           const ar = imgRatio || 1;
                           const rx = s, ry = s * ar;
                           const doorPath = m.status === "closed"
