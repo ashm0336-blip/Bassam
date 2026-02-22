@@ -867,9 +867,29 @@ async def create_gate(gate: GateCreate, user: dict = Depends(require_admin)):
     }
     await db.gates.insert_one(gate_doc)
     
-    # Log activity
-    await log_activity("gate_created", user, gate.name, f"تم إضافة باب جديد: {gate.name} (رقم {gate.number})")
+    # Auto-create marker on gate map (first available floor)
+    first_floor = await db.gate_map_floors.find_one({}, {"_id": 0}, sort=[("order", 1)])
+    if first_floor:
+        type_map = {"رئيسي": "main", "فرعي": "secondary", "سلم كهربائي": "escalator", "مصعد": "elevator", "درج": "stairs", "جسر": "bridge", "عربات": "wheelchair", "طوارئ": "emergency"}
+        dir_map = {"دخول": "entry", "خروج": "exit", "دخول وخروج": "both"}
+        status_map = {"مفتوح": "open", "متاح": "open", "مغلق": "closed", "مزدحم": "crowded", "صيانة": "maintenance"}
+        class_map = {"عام": "general", "رجال": "men", "نساء": "women", "طوارئ": "emergency", "جنائز": "funeral"}
+        # Count existing markers to position new one
+        count = await db.gate_markers.count_documents({"floor_id": first_floor["id"]})
+        col = count % 5
+        row = count // 5
+        marker_doc = GateMarker(
+            floor_id=first_floor["id"], gate_id=gate_id, name_ar=gate.name, name_en="",
+            x=10 + col * 18, y=10 + row * 16,
+            gate_type=type_map.get(gate.gate_type, "main"),
+            direction=dir_map.get(gate.direction, "both"),
+            classification=class_map.get(gate.classification, "general"),
+            status=status_map.get(gate.status, "open"),
+            current_flow=gate.current_flow, max_flow=gate.max_flow
+        ).model_dump()
+        await db.gate_markers.insert_one(marker_doc)
     
+    await log_activity("gate_created", user, gate.name, f"تم إضافة باب جديد: {gate.name} (رقم {gate.number})")
     return {"message": "تم إضافة الباب بنجاح", "id": gate_id}
 
 @api_router.put("/admin/gates/{gate_id}")
