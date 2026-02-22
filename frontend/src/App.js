@@ -27,6 +27,7 @@ import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 import HaramMapPage from "@/pages/HaramMapPage";
 import MapManagementPage from "@/pages/MapManagementPage";
+import GateMapPage from "@/pages/GateMapPage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
