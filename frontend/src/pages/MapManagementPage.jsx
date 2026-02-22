@@ -326,6 +326,22 @@ export default function MapManagementPage() {
     if (mode === "draw" && drawingPoints.length >= 3) {
       setNearStart(getDistance(pos, drawingPoints[0]) < SNAP_DISTANCE);
     }
+
+    // Zone hover tooltip
+    if (mode !== "draw" && draggingPoint === null && !isPanning) {
+      const container = mapContainerRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        setTooltipPos({ x: e.clientX - rect.left + 15, y: e.clientY - rect.top - 10 });
+      }
+      let found = null;
+      for (const zone of zones) {
+        if (isPointInPolygon(pos, zone.polygon_points)) { found = zone.id; break; }
+      }
+      if (found !== hoveredZoneId) setHoveredZoneId(found);
+    } else if (hoveredZoneId) {
+      setHoveredZoneId(null);
+    }
   };
 
   const handleMouseUp = async () => {
