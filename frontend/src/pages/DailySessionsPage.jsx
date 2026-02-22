@@ -975,6 +975,16 @@ export default function DailySessionsPage() {
                                         })}
                                       </g>
                                     )}
+                                    {/* Rectangle drag preview */}
+                                    {mapMode === "rect" && rectStart && rectEnd && (
+                                      <rect
+                                        x={Math.min(rectStart.x, rectEnd.x)} y={Math.min(rectStart.y, rectEnd.y)}
+                                        width={Math.abs(rectEnd.x - rectStart.x)} height={Math.abs(rectEnd.y - rectStart.y)}
+                                        fill={newZoneForm.fill_color} fillOpacity={0.3}
+                                        stroke="#3b82f6" strokeWidth="0.5" strokeDasharray="1 0.5"
+                                        vectorEffect="non-scaling-stroke" data-testid="rect-preview"
+                                      />
+                                    )}
                                   </svg>
                                 </div>
                               );
