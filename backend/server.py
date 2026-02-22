@@ -929,6 +929,8 @@ async def delete_gate(gate_id: str, user: dict = Depends(require_admin)):
     result = await db.gates.delete_one({"id": gate_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="الباب غير موجود")
+    # Auto-delete linked markers from gate map
+    await db.gate_markers.delete_many({"gate_id": gate_id})
     return {"message": "تم حذف الباب بنجاح"}
 
 # ============= Admin Routes - Plazas =============
