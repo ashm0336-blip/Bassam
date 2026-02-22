@@ -518,6 +518,78 @@ class MapZoneUpdate(BaseModel):
     description_en: Optional[str] = None
     is_active: Optional[bool] = None
 
+
+# ============= Gate Map Models =============
+class GateMapFloor(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name_ar: str
+    name_en: str = ""
+    image_url: str = ""
+    order: int = 0
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class GateMapFloorCreate(BaseModel):
+    name_ar: str
+    name_en: str = ""
+    image_url: str = ""
+    order: int = 0
+
+class GateMarker(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    floor_id: str
+    gate_id: Optional[str] = None
+    name_ar: str
+    name_en: str = ""
+    x: float
+    y: float
+    gate_type: str = "main"
+    direction: str = "both"
+    classification: str = "general"
+    status: str = "open"
+    current_flow: int = 0
+    max_flow: int = 5000
+    icon_size: float = 2.0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class GateMarkerCreate(BaseModel):
+    floor_id: str
+    gate_id: Optional[str] = None
+    name_ar: str
+    name_en: str = ""
+    x: float
+    y: float
+    gate_type: str = "main"
+    direction: str = "both"
+    classification: str = "general"
+    status: str = "open"
+    current_flow: int = 0
+    max_flow: int = 5000
+
+class GateMarkerUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    x: Optional[float] = None
+    y: Optional[float] = None
+    gate_type: Optional[str] = None
+    direction: Optional[str] = None
+    classification: Optional[str] = None
+    status: Optional[str] = None
+    current_flow: Optional[int] = None
+    max_flow: Optional[int] = None
+    gate_id: Optional[str] = None
+
+class GateDailyLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    total_gates: int = 0
+    open_gates: int = 0
+    closed_gates: int = 0
+    total_flow: int = 0
+    notes: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # ============= Transaction Models =============
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
