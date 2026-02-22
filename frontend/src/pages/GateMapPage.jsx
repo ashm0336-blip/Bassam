@@ -68,6 +68,7 @@ export default function GateMapPage() {
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "map");
   const [imgRatio, setImgRatio] = useState(null);
   const [existingGates, setExistingGates] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
   // Map state
   const zoomRef = useRef(1);
