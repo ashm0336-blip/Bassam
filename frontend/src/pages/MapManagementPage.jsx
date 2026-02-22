@@ -431,6 +431,27 @@ export default function MapManagementPage() {
     return () => container.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
+  // Escape key resets drawing / deselects zone
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (drawingPoints.length > 0) {
+          setDrawingPoints([]);
+          setNearStart(false);
+        } else if (selectedZoneId) {
+          setSelectedZoneId(null);
+        } else if (mode !== "pan") {
+          setMode("pan");
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [drawingPoints.length, selectedZoneId, mode]);
+
+  // Keep zoomRef in sync
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+
   // Save new zone
   const handleSaveZone = async () => {
     if (!selectedFloor || drawingPoints.length < 3) return;
