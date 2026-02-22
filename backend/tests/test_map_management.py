@@ -261,7 +261,7 @@ class TestMapManagementAPI:
         stats = response.json()
         assert "total_zones" in stats
         assert "overall_percentage" in stats
-        assert "status_distribution" in stats
+        assert "by_status" in stats  # API uses 'by_status' not 'status_distribution'
         print(f"✓ GET /api/zones/stats/summary: total_zones={stats['total_zones']}, overall_percentage={stats['overall_percentage']}%")
         
     # ============= IMAGE UPLOAD TEST =============
