@@ -415,9 +415,10 @@ export default function MapManagementPage() {
     const rect = container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    // Google Maps style: multiplicative zoom
+    const factor = e.deltaY > 0 ? 0.85 : 1.18;
     const prevZoom = zoomRef.current;
-    const newZoom = Math.max(0.5, Math.min(4, prevZoom + delta));
+    const newZoom = Math.max(0.5, Math.min(6, prevZoom * factor));
     if (newZoom === prevZoom) return;
     const scale = newZoom / prevZoom;
     zoomRef.current = newZoom;
@@ -428,13 +429,13 @@ export default function MapManagementPage() {
     }));
   }, []);
 
-  // Attach wheel listener with passive:false to properly prevent page scroll
+  // Attach wheel listener - re-run when selectedFloor changes (container mounts/unmounts)
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container) return;
     container.addEventListener("wheel", handleWheel, { passive: false });
     return () => container.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
+  }, [handleWheel, selectedFloor, activeTab]);
 
   // Escape key resets drawing / deselects zone
   useEffect(() => {
