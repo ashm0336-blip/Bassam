@@ -1243,10 +1243,18 @@ export default function MapManagementPage() {
           {selectedFloor && zones.length > 0 && (
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="relative bg-gray-100" style={{ height: "400px" }}>
-                  <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                <div
+                  ref={crowdMapWheelRef}
+                  className="relative bg-gray-100 overflow-hidden"
+                  style={{ height: "400px", cursor: crowdPanning ? "grabbing" : "grab" }}
+                  onMouseDown={handleCrowdMouseDown}
+                  onMouseMove={handleCrowdMouseMove}
+                  onMouseUp={handleCrowdMouseUp}
+                  onMouseLeave={handleCrowdMouseLeave}
+                >
+                  <div style={{ transform: `translate(${crowdPan.x}px, ${crowdPan.y}px) scale(${crowdZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", position: "relative" }}>
                     <img src={selectedFloor.image_url} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false} />
-                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <svg ref={crowdSvgRef} className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                       {zones.map(zone => {
                         const cv = crowdEdits[zone.id] ?? zone.current_crowd ?? 0;
                         const mc = zone.max_capacity || 1;
@@ -1254,17 +1262,10 @@ export default function MapManagementPage() {
                         const color = cv === 0 ? "#9ca3af" : st.color;
                         const opacity = cv === 0 ? 0.25 : 0.5;
                         return (
-                          <path
-                            key={zone.id}
-                            d={getPath(zone.polygon_points)}
-                            fill={color}
-                            fillOpacity={opacity}
-                            stroke={color}
-                            strokeWidth="0.4"
-                            strokeOpacity={0.8}
-                            vectorEffect="non-scaling-stroke"
-                            data-testid={`crowd-map-zone-${zone.id}`}
-                          />
+                          <path key={zone.id} d={getPath(zone.polygon_points)}
+                            fill={color} fillOpacity={opacity} stroke={color} strokeWidth="0.4" strokeOpacity={0.8}
+                            vectorEffect="non-scaling-stroke" style={{ cursor: "pointer" }}
+                            data-testid={`crowd-map-zone-${zone.id}`} />
                         );
                       })}
                     </svg>
@@ -1277,6 +1278,45 @@ export default function MapManagementPage() {
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-orange-500" />{language === "ar" ? "مزدحم" : "Crowded"}</span>
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500" />{language === "ar" ? "حرج" : "Critical"}</span>
                   </div>
+                  {/* Crowd hover tooltip */}
+                  {crowdHoveredZone && (() => {
+                    const hz = zones.find(z => z.id === crowdHoveredZone);
+                    if (!hz) return null;
+                    const cv = crowdEdits[hz.id] ?? hz.current_crowd ?? 0;
+                    const mc = hz.max_capacity || 1;
+                    const st = getCrowdStatus(cv, mc);
+                    const color = cv === 0 ? "#9ca3af" : st.color;
+                    const statusLabel = cv === 0 ? (language === "ar" ? "غير مفعل" : "Inactive") : (language === "ar" ? st.label_ar : st.label_en);
+                    const percent = mc ? Math.round((cv / mc) * 100) : 0;
+                    const typeInfo = ZONE_TYPES.find(t => t.value === hz.zone_type);
+                    return (
+                      <div className="absolute pointer-events-none z-50" style={{ left: crowdTooltipPos.x, top: crowdTooltipPos.y }}>
+                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[180px]" style={{ borderTopColor: color, borderTopWidth: 3 }}>
+                          <div className="flex items-center justify-between gap-3 mb-1.5">
+                            <span className="font-bold text-sm">{hz.zone_code}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${color}20`, color }}>{statusLabel}</span>
+                          </div>
+                          <p className="text-xs text-slate-700 mb-1">{language === "ar" ? hz.name_ar : hz.name_en}</p>
+                          {typeInfo && <p className="text-[10px] text-slate-400 mb-2">{language === "ar" ? typeInfo.label_ar : typeInfo.label_en}</p>}
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px]">
+                              <span className="text-slate-500">{language === "ar" ? "الإشغال" : "Occupancy"}</span>
+                              <span className="font-semibold">{cv} / {(mc || 0).toLocaleString()} ({percent}%)</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(percent, 100)}%`, backgroundColor: color }} />
+                            </div>
+                            {hz.area_sqm > 0 && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-500">{language === "ar" ? "المساحة" : "Area"}</span>
+                                <span>{hz.area_sqm} {language === "ar" ? "م²" : "m²"}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
