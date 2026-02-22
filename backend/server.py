@@ -2320,7 +2320,9 @@ async def create_gate_daily_log(request: Request, admin: dict = Depends(require_
         await db.gate_daily_logs.update_one({"date": log.date}, {"$set": log.model_dump()})
     else:
         await db.gate_daily_logs.insert_one(log.model_dump())
-    return log.model_dump()
+    result = log.model_dump()
+    result.pop("_id", None)
+    return result
 
 @api_router.post("/admin/gate-map/auto-log")
 async def auto_create_daily_log(admin: dict = Depends(require_admin)):
@@ -2336,7 +2338,9 @@ async def auto_create_daily_log(admin: dict = Depends(require_admin)):
         await db.gate_daily_logs.update_one({"date": today}, {"$set": log.model_dump()})
     else:
         await db.gate_daily_logs.insert_one(log.model_dump())
-    return log.model_dump()
+    result = log.model_dump()
+    result.pop("_id", None)
+    return result
 
 
 
