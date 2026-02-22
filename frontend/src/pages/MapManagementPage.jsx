@@ -720,7 +720,7 @@ export default function MapManagementPage() {
                   const rect = container.getBoundingClientRect();
                   const cx = rect.width / 2, cy = rect.height / 2;
                   const prev = zoomRef.current;
-                  const nz = Math.max(0.5, prev - 0.2);
+                  const nz = Math.max(0.5, prev * 0.8);
                   const s = nz / prev;
                   zoomRef.current = nz;
                   setZoom(nz);
@@ -733,7 +733,7 @@ export default function MapManagementPage() {
                   const rect = container.getBoundingClientRect();
                   const cx = rect.width / 2, cy = rect.height / 2;
                   const prev = zoomRef.current;
-                  const nz = Math.min(4, prev + 0.2);
+                  const nz = Math.min(6, prev * 1.25);
                   const s = nz / prev;
                   zoomRef.current = nz;
                   setZoom(nz);
