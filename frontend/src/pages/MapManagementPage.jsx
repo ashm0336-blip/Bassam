@@ -911,10 +911,10 @@ export default function MapManagementPage() {
                               const mx = (pt.x + nx.x) / 2;
                               const my = (pt.y + nx.y) / 2;
                               return (
-                                <rect key={`m-${i}`} x={mx - 0.12} y={my - 0.12} width="0.24" height="0.24"
+                                <rect key={`m-${i}`} x={mx - 0.07} y={my - 0.07} width="0.14" height="0.14"
                                   transform={`rotate(45 ${mx} ${my})`}
-                                  fill="#ef4444" stroke="white" strokeWidth="0.06"
-                                  vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none"
+                                  fill="#ef4444" stroke="white" strokeWidth="0.03"
+                                  vectorEffect="non-scaling-stroke" opacity="0.4" pointerEvents="none"
                                   data-testid={`zone-midpoint-${zone.id}-${i}`}
                                 />
                               );
