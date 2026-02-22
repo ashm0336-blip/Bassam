@@ -402,10 +402,17 @@ export default function MapManagementPage() {
   };
 
   // Upload image
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const uploadImageFile = async (file) => {
     if (!file) return;
+    if (file.type && !file.type.startsWith("image/")) {
+      toast({ title: language === "ar" ? "نوع ملف غير مدعوم" : "Unsupported file", variant: "destructive" });
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    if (localImagePreview) URL.revokeObjectURL(localImagePreview);
+    setLocalImagePreview(previewUrl);
     setUploadingImage(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -414,14 +421,40 @@ export default function MapManagementPage() {
         headers: { ...getAuthHeaders().headers, "Content-Type": "multipart/form-data" },
         onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total))
       });
-      setFloorForm(prev => ({ ...prev, image_url: `${process.env.REACT_APP_BACKEND_URL}${res.data.url}` }));
+      setFloorForm(prev => ({ ...prev, image_url: res.data.url }));
+      setLocalImagePreview(null);
       toast({ title: language === "ar" ? "تم الرفع" : "Uploaded" });
     } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: language === "ar" ? "تعذر الرفع" : "Error", variant: "destructive" });
     } finally {
       setUploadingImage(false);
       setUploadProgress(0);
     }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadImageFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadImageFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
   };
 
   // Floor CRUD
