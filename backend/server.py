@@ -469,6 +469,7 @@ class MapZone(BaseModel):
     # Live data
     current_crowd: int = 0
     max_capacity: int = 1000
+    area_sqm: float = 0  # Area in square meters
     crowd_status: str = "normal"  # normal, moderate, crowded, critical
     assigned_employees: int = 0
     # Metadata
@@ -489,10 +490,12 @@ class MapZoneCreate(BaseModel):
     stroke_color: Optional[str] = "#000000"
     opacity: Optional[float] = 0.4
     max_capacity: Optional[int] = 1000
+    area_sqm: Optional[float] = 0
     description_ar: Optional[str] = None
     description_en: Optional[str] = None
 
 class MapZoneUpdate(BaseModel):
+    zone_code: Optional[str] = None
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
     zone_type: Optional[str] = None
@@ -502,6 +505,7 @@ class MapZoneUpdate(BaseModel):
     opacity: Optional[float] = None
     current_crowd: Optional[int] = None
     max_capacity: Optional[int] = None
+    area_sqm: Optional[float] = None
     crowd_status: Optional[str] = None
     assigned_employees: Optional[int] = None
     description_ar: Optional[str] = None
