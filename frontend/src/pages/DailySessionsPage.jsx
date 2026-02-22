@@ -30,7 +30,13 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ZONE_TYPES = [
   { value: "men_prayer", label_ar: "مصلى رجال", label_en: "Men Prayer", color: "#22c55e", icon: "M" },
-  { value: "women_prayer", label_ar: "مصلى نساء", label_en: "Women Prayer", color: "#3b82f6", icon: "W" },
+  { value: "women_prayer", label_ar: "مصلى نساء", label_en: "Women Prayer", color: "#93c5fd", icon: "W" },
+  { value: "men_rakatayn", label_ar: "مصلى الركعتين للرجال", label_en: "Two-Rak'ah Men", color: "#16a34a", icon: "R" },
+  { value: "women_rakatayn", label_ar: "مصلى الركعتين للنساء", label_en: "Two-Rak'ah Women", color: "#60a5fa", icon: "Q" },
+  { value: "men_tasks", label_ar: "مصلى مهمات رجال", label_en: "Men Tasks Prayer", color: "#9ca3af", icon: "H" },
+  { value: "women_tasks", label_ar: "مصلى مهمات نساء", label_en: "Women Tasks Prayer", color: "#fdba74", icon: "N" },
+  { value: "emergency", label_ar: "مجمعات خدمات الطوارئ", label_en: "Emergency Services", color: "#78350f", icon: "!" },
+  { value: "vip", label_ar: "مصلى رؤساء الدول", label_en: "VIP / Heads of State", color: "#1e3a5f", icon: "V" },
   { value: "mataf", label_ar: "صحن المطاف", label_en: "Mataf", color: "#84cc16", icon: "T" },
   { value: "masaa", label_ar: "المسعى", label_en: "Masa'a", color: "#06b6d4", icon: "S" },
   { value: "service", label_ar: "منطقة خدمات", label_en: "Service", color: "#6b7280", icon: "X" },
