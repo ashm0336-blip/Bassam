@@ -289,13 +289,13 @@ export default function GateMapPage() {
   const handleSaveMarker = async () => {
     if (!selectedFloor || !pendingPoint) return;
     try {
-      await axios.post(`${API}/admin/gate-map/markers`, {
-        ...markerForm, floor_id: selectedFloor.id, x: pendingPoint.x, y: pendingPoint.y
-      }, getAuthHeaders());
+      const payload = { ...markerForm, floor_id: selectedFloor.id, x: pendingPoint.x, y: pendingPoint.y };
+      if (!payload.gate_id) delete payload.gate_id;
+      await axios.post(`${API}/admin/gate-map/markers`, payload, getAuthHeaders());
       toast({ title: language === "ar" ? "تم الإضافة" : "Added" });
       setShowMarkerDialog(false);
       setPendingPoint(null);
-      setMarkerForm({ name_ar: "", name_en: "", gate_type: "main", direction: "both", classification: "general", max_flow: 5000 });
+      setMarkerForm({ name_ar: "", name_en: "", gate_type: "main", direction: "both", classification: "general", max_flow: 5000, gate_id: null });
       fetchMarkers();
     } catch (e) { toast({ title: "Error", variant: "destructive" }); }
   };
