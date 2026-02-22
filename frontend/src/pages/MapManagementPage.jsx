@@ -1038,15 +1038,6 @@ export default function MapManagementPage() {
                     </svg>
                   </div>
 
-                  {/* Info bar */}
-                  <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-mono" data-testid="map-editor-coordinates">
-                    X: {mousePos.x.toFixed(1)}% | Y: {mousePos.y.toFixed(1)}%
-                    {nearStart && <span className="text-green-400 mr-2"> • {language === "ar" ? "انقر للإغلاق" : "Click to close"}</span>}
-                  </div>
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs" data-testid="map-editor-zoom">
-                    {Math.round(zoom * 100)}%
-                  </div>
-
                   {/* Zone hover tooltip */}
                   {hoveredZoneId && (() => {
                     const hz = zones.find(z => z.id === hoveredZoneId);
