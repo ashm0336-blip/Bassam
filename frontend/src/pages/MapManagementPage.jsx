@@ -118,6 +118,17 @@ export default function MapManagementPage() {
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
+  // Crowd map state
+  const crowdMapRef = useRef(null);
+  const crowdSvgRef = useRef(null);
+  const crowdZoomRef = useRef(1);
+  const [crowdZoom, setCrowdZoom] = useState(1);
+  const [crowdPan, setCrowdPan] = useState({ x: 0, y: 0 });
+  const [crowdPanning, setCrowdPanning] = useState(false);
+  const [crowdPanStart, setCrowdPanStart] = useState({ x: 0, y: 0 });
+  const [crowdHoveredZone, setCrowdHoveredZone] = useState(null);
+  const [crowdTooltipPos, setCrowdTooltipPos] = useState({ x: 0, y: 0 });
+
   // Drawing state
   const [mode, setMode] = useState("pan"); // pan, draw, edit
   const [drawingPoints, setDrawingPoints] = useState([]);
