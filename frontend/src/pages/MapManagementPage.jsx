@@ -373,6 +373,34 @@ export default function MapManagementPage() {
     return inside;
   };
 
+  // Shape generators
+  const generateShape = (type) => {
+    const cx = 50, cy = 50;
+    let points;
+    if (type === "circle") {
+      const r = 15;
+      points = Array.from({ length: 36 }, (_, i) => {
+        const a = (2 * Math.PI * i) / 36;
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+      });
+    } else if (type === "rectangle") {
+      points = [
+        { x: cx - 20, y: cy - 15 }, { x: cx + 20, y: cy - 15 },
+        { x: cx + 20, y: cy + 15 }, { x: cx - 20, y: cy + 15 }
+      ];
+    } else if (type === "triangle") {
+      const r = 18;
+      points = Array.from({ length: 3 }, (_, i) => {
+        const a = (2 * Math.PI * i) / 3 - Math.PI / 2;
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+      });
+    }
+    if (points) {
+      setDrawingPoints(points);
+      setShowZoneDialog(true);
+    }
+  };
+
   const handleWheel = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
