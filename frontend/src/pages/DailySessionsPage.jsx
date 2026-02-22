@@ -98,6 +98,19 @@ export default function DailySessionsPage() {
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
 
+  // Drawing state
+  const [mapMode, setMapMode] = useState("pan"); // pan, draw, edit
+  const [drawingPoints, setDrawingPoints] = useState([]);
+  const [selectedZoneId, setSelectedZoneId] = useState(null);
+  const [draggingPoint, setDraggingPoint] = useState(null);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [nearStart, setNearStart] = useState(false);
+  const [showNewZoneDialog, setShowNewZoneDialog] = useState(false);
+  const [newZoneForm, setNewZoneForm] = useState({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e" });
+  const DRAW_POINT_RADIUS = 0.08;
+  const SNAP_DISTANCE = 1.2;
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return { headers: { Authorization: `Bearer ${token}` } };
