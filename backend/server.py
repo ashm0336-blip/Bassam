@@ -490,8 +490,10 @@ class MapZoneCreate(BaseModel):
     fill_color: Optional[str] = "#22c55e"
     stroke_color: Optional[str] = "#000000"
     opacity: Optional[float] = 0.4
+    stroke_opacity: Optional[float] = 1.0
     max_capacity: Optional[int] = 1000
     area_sqm: Optional[float] = 0
+    per_person_sqm: Optional[float] = 0.8
     description_ar: Optional[str] = None
     description_en: Optional[str] = None
 
@@ -504,9 +506,11 @@ class MapZoneUpdate(BaseModel):
     fill_color: Optional[str] = None
     stroke_color: Optional[str] = None
     opacity: Optional[float] = None
+    stroke_opacity: Optional[float] = None
     current_crowd: Optional[int] = None
     max_capacity: Optional[int] = None
     area_sqm: Optional[float] = None
+    per_person_sqm: Optional[float] = None
     crowd_status: Optional[str] = None
     assigned_employees: Optional[int] = None
     description_ar: Optional[str] = None
