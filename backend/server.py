@@ -2913,6 +2913,361 @@ async def delete_department_setting(
     return {"message": "تم حذف الإعداد بنجاح"}
 
 
+# ============= Daily Map Sessions Routes =============
+@api_router.get("/map-sessions")
+async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60):
+    """Get all map sessions, optionally filtered by floor"""
+    query = {}
+    if floor_id:
+        query["floor_id"] = floor_id
+    sessions = await db.map_sessions.find(query, {"_id": 0}).sort("date", -1).to_list(limit)
+    return sessions
+
+@api_router.get("/map-sessions/{session_id}")
+async def get_map_session(session_id: str):
+    """Get a single map session with its zones"""
+    session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    return session
+
+@api_router.post("/admin/map-sessions")
+async def create_map_session(data: MapSessionCreate, admin: dict = Depends(require_admin)):
+    """Create a new daily map session"""
+    # Check if session already exists for this date and floor
+    existing = await db.map_sessions.find_one(
+        {"date": data.date, "floor_id": data.floor_id}, {"_id": 0}
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="توجد جلسة بالفعل لهذا التاريخ والطابق")
+
+    # Get floor info
+    floor = await db.map_floors.find_one({"id": data.floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+
+    zones_snapshot = []
+    changes_summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
+
+    if data.clone_from == "master":
+        # Clone from master zones
+        master_zones = await db.map_zones.find({"floor_id": data.floor_id, "is_active": True}, {"_id": 0}).to_list(500)
+        for z in master_zones:
+            sz = SessionZone(
+                original_zone_id=z.get("id"),
+                floor_id=z.get("floor_id"),
+                zone_code=z.get("zone_code", ""),
+                name_ar=z.get("name_ar", ""),
+                name_en=z.get("name_en", ""),
+                zone_type=z.get("zone_type", "service"),
+                polygon_points=z.get("polygon_points", []),
+                fill_color=z.get("fill_color", "#22c55e"),
+                stroke_color=z.get("stroke_color", "#000000"),
+                opacity=z.get("opacity", 0.4),
+                stroke_opacity=z.get("stroke_opacity", 1.0),
+                max_capacity=z.get("max_capacity", 1000),
+                area_sqm=z.get("area_sqm", 0),
+                per_person_sqm=z.get("per_person_sqm", 0.8),
+                description_ar=z.get("description_ar"),
+                description_en=z.get("description_en"),
+                change_type="unchanged"
+            )
+            zones_snapshot.append(sz.model_dump())
+        changes_summary["unchanged"] = len(zones_snapshot)
+    elif data.clone_from:
+        # Clone from a previous session
+        prev_session = await db.map_sessions.find_one({"id": data.clone_from}, {"_id": 0})
+        if prev_session and prev_session.get("zones"):
+            for z in prev_session["zones"]:
+                if z.get("is_removed"):
+                    continue
+                sz = SessionZone(
+                    original_zone_id=z.get("original_zone_id"),
+                    floor_id=z.get("floor_id"),
+                    zone_code=z.get("zone_code", ""),
+                    name_ar=z.get("name_ar", ""),
+                    name_en=z.get("name_en", ""),
+                    zone_type=z.get("zone_type", "service"),
+                    polygon_points=z.get("polygon_points", []),
+                    fill_color=z.get("fill_color", "#22c55e"),
+                    stroke_color=z.get("stroke_color", "#000000"),
+                    opacity=z.get("opacity", 0.4),
+                    stroke_opacity=z.get("stroke_opacity", 1.0),
+                    max_capacity=z.get("max_capacity", 1000),
+                    area_sqm=z.get("area_sqm", 0),
+                    per_person_sqm=z.get("per_person_sqm", 0.8),
+                    description_ar=z.get("description_ar"),
+                    description_en=z.get("description_en"),
+                    change_type="unchanged"
+                )
+                zones_snapshot.append(sz.model_dump())
+            changes_summary["unchanged"] = len(zones_snapshot)
+    else:
+        # Try to find the most recent session for this floor and clone it
+        prev = await db.map_sessions.find_one(
+            {"floor_id": data.floor_id, "date": {"$lt": data.date}},
+            {"_id": 0},
+            sort=[("date", -1)]
+        )
+        if prev and prev.get("zones"):
+            for z in prev["zones"]:
+                if z.get("is_removed"):
+                    continue
+                sz = SessionZone(
+                    original_zone_id=z.get("original_zone_id"),
+                    floor_id=z.get("floor_id"),
+                    zone_code=z.get("zone_code", ""),
+                    name_ar=z.get("name_ar", ""),
+                    name_en=z.get("name_en", ""),
+                    zone_type=z.get("zone_type", "service"),
+                    polygon_points=z.get("polygon_points", []),
+                    fill_color=z.get("fill_color", "#22c55e"),
+                    stroke_color=z.get("stroke_color", "#000000"),
+                    opacity=z.get("opacity", 0.4),
+                    stroke_opacity=z.get("stroke_opacity", 1.0),
+                    max_capacity=z.get("max_capacity", 1000),
+                    area_sqm=z.get("area_sqm", 0),
+                    per_person_sqm=z.get("per_person_sqm", 0.8),
+                    description_ar=z.get("description_ar"),
+                    description_en=z.get("description_en"),
+                    change_type="unchanged"
+                )
+                zones_snapshot.append(sz.model_dump())
+            changes_summary["unchanged"] = len(zones_snapshot)
+        else:
+            # No previous session, clone from master
+            master_zones = await db.map_zones.find({"floor_id": data.floor_id, "is_active": True}, {"_id": 0}).to_list(500)
+            for z in master_zones:
+                sz = SessionZone(
+                    original_zone_id=z.get("id"),
+                    floor_id=z.get("floor_id"),
+                    zone_code=z.get("zone_code", ""),
+                    name_ar=z.get("name_ar", ""),
+                    name_en=z.get("name_en", ""),
+                    zone_type=z.get("zone_type", "service"),
+                    polygon_points=z.get("polygon_points", []),
+                    fill_color=z.get("fill_color", "#22c55e"),
+                    stroke_color=z.get("stroke_color", "#000000"),
+                    opacity=z.get("opacity", 0.4),
+                    stroke_opacity=z.get("stroke_opacity", 1.0),
+                    max_capacity=z.get("max_capacity", 1000),
+                    area_sqm=z.get("area_sqm", 0),
+                    per_person_sqm=z.get("per_person_sqm", 0.8),
+                    description_ar=z.get("description_ar"),
+                    description_en=z.get("description_en"),
+                    change_type="unchanged"
+                )
+                zones_snapshot.append(sz.model_dump())
+            changes_summary["unchanged"] = len(zones_snapshot)
+
+    session = MapSession(
+        date=data.date,
+        floor_id=data.floor_id,
+        floor_name=floor.get("name_ar", ""),
+        status="draft",
+        created_by=admin.get("name", ""),
+        zones=zones_snapshot,
+        changes_summary=changes_summary
+    )
+    doc = session.model_dump()
+    await db.map_sessions.insert_one(doc)
+    await log_activity("إنشاء جلسة خريطة يومية", admin, session.id, f"تاريخ: {data.date}")
+    
+    result = doc.copy()
+    result.pop("_id", None)
+    return result
+
+@api_router.put("/admin/map-sessions/{session_id}")
+async def update_map_session(session_id: str, data: MapSessionUpdate, admin: dict = Depends(require_admin)):
+    """Update session metadata (status, notes)"""
+    existing = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.map_sessions.update_one({"id": session_id}, {"$set": update_data})
+
+    updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/map-sessions/{session_id}")
+async def delete_map_session(session_id: str, admin: dict = Depends(require_admin)):
+    """Delete a map session"""
+    result = await db.map_sessions.delete_one({"id": session_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    await log_activity("حذف جلسة خريطة", admin, session_id, "تم الحذف")
+    return {"message": "تم حذف الجلسة بنجاح"}
+
+@api_router.put("/admin/map-sessions/{session_id}/zones/{zone_id}")
+async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUpdate, admin: dict = Depends(require_admin)):
+    """Update a zone within a session"""
+    session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+
+    zones = session.get("zones", [])
+    zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
+    if zone_idx is None:
+        raise HTTPException(status_code=404, detail="المنطقة غير موجودة في هذه الجلسة")
+
+    update_fields = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    # Determine change type
+    zone = zones[zone_idx]
+    if update_fields.get("is_removed"):
+        zone["change_type"] = "removed"
+    elif update_fields.get("zone_type") and update_fields["zone_type"] != zone.get("zone_type"):
+        zone["change_type"] = "category_changed"
+    elif update_fields.get("polygon_points"):
+        zone["change_type"] = "moved"
+    elif any(k in update_fields for k in ["name_ar", "name_en", "fill_color"]):
+        zone["change_type"] = "modified"
+
+    for k, v in update_fields.items():
+        zone[k] = v
+
+    zones[zone_idx] = zone
+
+    # Recalculate changes summary
+    summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
+    for z in zones:
+        ct = z.get("change_type", "unchanged")
+        if ct == "added":
+            summary["added"] += 1
+        elif ct in ("removed",):
+            summary["removed"] += 1
+        elif ct in ("modified", "category_changed", "moved"):
+            summary["modified"] += 1
+        else:
+            summary["unchanged"] += 1
+
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
+
+@api_router.post("/admin/map-sessions/{session_id}/zones")
+async def add_session_zone(session_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Add a new zone to a session"""
+    session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+
+    body = await request.json()
+    new_zone = SessionZone(
+        floor_id=session["floor_id"],
+        zone_code=body.get("zone_code", "NEW"),
+        name_ar=body.get("name_ar", "منطقة جديدة"),
+        name_en=body.get("name_en", "New Zone"),
+        zone_type=body.get("zone_type", "men_prayer"),
+        polygon_points=body.get("polygon_points", []),
+        fill_color=body.get("fill_color", "#22c55e"),
+        stroke_color=body.get("stroke_color", "#000000"),
+        opacity=body.get("opacity", 0.4),
+        stroke_opacity=body.get("stroke_opacity", 1.0),
+        max_capacity=body.get("max_capacity", 1000),
+        area_sqm=body.get("area_sqm", 0),
+        change_type="added"
+    )
+
+    zones = session.get("zones", [])
+    zones.append(new_zone.model_dump())
+
+    # Recalculate changes summary
+    summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
+    for z in zones:
+        ct = z.get("change_type", "unchanged")
+        if ct == "added":
+            summary["added"] += 1
+        elif ct in ("removed",):
+            summary["removed"] += 1
+        elif ct in ("modified", "category_changed", "moved"):
+            summary["modified"] += 1
+        else:
+            summary["unchanged"] += 1
+
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/map-sessions/{session_id}/zones/{zone_id}")
+async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depends(require_admin)):
+    """Permanently remove a zone from a session"""
+    session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+
+    zones = [z for z in session.get("zones", []) if z["id"] != zone_id]
+
+    summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
+    for z in zones:
+        ct = z.get("change_type", "unchanged")
+        if ct == "added":
+            summary["added"] += 1
+        elif ct in ("removed",):
+            summary["removed"] += 1
+        elif ct in ("modified", "category_changed", "moved"):
+            summary["modified"] += 1
+        else:
+            summary["unchanged"] += 1
+
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "تم حذف المنطقة من الجلسة"}
+
+@api_router.get("/map-sessions/compare/{session_id_1}/{session_id_2}")
+async def compare_sessions(session_id_1: str, session_id_2: str):
+    """Compare zones between two sessions"""
+    s1 = await db.map_sessions.find_one({"id": session_id_1}, {"_id": 0})
+    s2 = await db.map_sessions.find_one({"id": session_id_2}, {"_id": 0})
+    if not s1 or not s2:
+        raise HTTPException(status_code=404, detail="إحدى الجلستين غير موجودة")
+
+    zones1 = {z.get("original_zone_id") or z["id"]: z for z in s1.get("zones", []) if not z.get("is_removed")}
+    zones2 = {z.get("original_zone_id") or z["id"]: z for z in s2.get("zones", []) if not z.get("is_removed")}
+
+    added = []
+    removed = []
+    modified = []
+    unchanged = []
+
+    all_keys = set(list(zones1.keys()) + list(zones2.keys()))
+    for key in all_keys:
+        in_s1 = key in zones1
+        in_s2 = key in zones2
+        if in_s1 and not in_s2:
+            removed.append(zones1[key])
+        elif in_s2 and not in_s1:
+            added.append(zones2[key])
+        else:
+            z1 = zones1[key]
+            z2 = zones2[key]
+            if z1.get("zone_type") != z2.get("zone_type") or z1.get("name_ar") != z2.get("name_ar"):
+                modified.append({"before": z1, "after": z2})
+            else:
+                unchanged.append(z2)
+
+    return {
+        "session_1": {"id": s1["id"], "date": s1["date"]},
+        "session_2": {"id": s2["id"], "date": s2["date"]},
+        "added": added,
+        "removed": removed,
+        "modified": modified,
+        "unchanged_count": len(unchanged)
+    }
+
+
 # ============= Frontend Serving with Injected Settings =============
 @app.get("/", response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
