@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   Plus, Trash2, Save, X, Upload, Layers, Eye, RefreshCw, ZoomIn, ZoomOut,
