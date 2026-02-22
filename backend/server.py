@@ -466,6 +466,7 @@ class MapZone(BaseModel):
     fill_color: str = "#22c55e"  # Default green
     stroke_color: str = "#000000"
     opacity: float = 0.4
+    stroke_opacity: float = 1.0
     # Live data
     current_crowd: int = 0
     max_capacity: int = 1000
