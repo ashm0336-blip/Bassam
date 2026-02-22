@@ -293,6 +293,9 @@ export default function DailySessionsPage() {
     if (mapMode === "pan") {
       setIsPanning(true);
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    } else if (mapMode === "rect") {
+      setRectStart(pos);
+      setRectEnd(pos);
     } else if (mapMode === "edit" && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (!zone?.polygon_points) return;
