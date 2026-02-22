@@ -234,6 +234,7 @@ export default function MapManagementPage() {
   // Mouse handlers
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
+    e.preventDefault();
     
     const pos = getMousePercent(e);
     
@@ -242,13 +243,31 @@ export default function MapManagementPage() {
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
     } 
     else if (mode === "edit" && selectedZoneId) {
-      // Check if clicking on a point handle
       const zone = zones.find(z => z.id === selectedZoneId);
-      const hitIndex = getHitPointIndex(zone?.polygon_points, pos);
+      if (!zone?.polygon_points) return;
+      // Check vertex handles first
+      const hitIndex = getHitPointIndex(zone.polygon_points, pos);
       if (hitIndex !== -1) {
         setDraggingPoint(hitIndex);
         setHoveredPoint(hitIndex);
         return;
+      }
+      // Check midpoint handles - clicking inserts a new vertex
+      const pts = zone.polygon_points;
+      const midRadius = 1.5 / Math.max(zoom, 0.5);
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        const mx = (pts[i].x + pts[j].x) / 2;
+        const my = (pts[i].y + pts[j].y) / 2;
+        if (getDistance(pos, { x: mx, y: my }) < midRadius) {
+          const newPoints = [...pts];
+          newPoints.splice(j, 0, { x: pos.x, y: pos.y });
+          const newZones = zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z);
+          setZones(newZones);
+          setDraggingPoint(j);
+          setHoveredPoint(j);
+          return;
+        }
       }
     }
   };
