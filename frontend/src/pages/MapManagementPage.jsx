@@ -410,16 +410,17 @@ export default function MapManagementPage() {
     const rect = container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(prevZoom => {
-      const newZoom = Math.max(0.5, Math.min(4, prevZoom + delta));
-      const scale = newZoom / prevZoom;
-      setPanOffset(prev => ({
-        x: mouseX - scale * (mouseX - prev.x),
-        y: mouseY - scale * (mouseY - prev.y)
-      }));
-      return newZoom;
-    });
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    const prevZoom = zoomRef.current;
+    const newZoom = Math.max(0.5, Math.min(4, prevZoom + delta));
+    if (newZoom === prevZoom) return;
+    const scale = newZoom / prevZoom;
+    zoomRef.current = newZoom;
+    setZoom(newZoom);
+    setPanOffset(prev => ({
+      x: mouseX - scale * (mouseX - prev.x),
+      y: mouseY - scale * (mouseY - prev.y)
+    }));
   }, []);
 
   // Attach wheel listener with passive:false to properly prevent page scroll
