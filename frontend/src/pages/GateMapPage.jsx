@@ -560,7 +560,7 @@ export default function GateMapPage() {
                           const isHovered = m.id === hoveredMarkerId;
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
-                          const s = isSelected ? 2.6 : isHovered ? 2.3 : 2.0;
+                          const s = isSelected ? 1.6 : isHovered ? 1.4 : 1.0;
                           // Lucide door-open SVG path (24x24 viewBox)
                           const doorPath = m.status === "closed"
                             ? "M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14 M2 20h20 M14 12v.01"
