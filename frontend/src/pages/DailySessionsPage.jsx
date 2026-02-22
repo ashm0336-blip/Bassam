@@ -5,7 +5,8 @@ import {
   Eye, Clock, FileText, CheckCircle2, AlertCircle, ArrowLeftRight, MapPin,
   RefreshCw, Edit2, MessageSquare, Layers, ZoomIn, ZoomOut, Maximize2,
   RotateCcw, Check, CircleDot, CircleOff, ArrowRight, Tag, Copy,
-  CalendarRange, FileStack, Database
+  CalendarRange, FileStack, Database, Hand, Pencil, MousePointer,
+  Undo2, Circle, Square, Triangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
