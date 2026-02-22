@@ -1395,6 +1395,10 @@ export default function MapManagementPage() {
                       <input type="color" value={editingZone.fill_color} onChange={e => setEditingZone(p => ({ ...p, fill_color: e.target.value }))} className="w-9 h-9 rounded border cursor-pointer" data-testid="edit-zone-fill-color" />
                       <Input value={editingZone.fill_color} onChange={e => setEditingZone(p => ({ ...p, fill_color: e.target.value }))} className="font-mono text-xs" dir="ltr" data-testid="edit-zone-fill-hex" />
                     </div>
+                    <div className="mt-1">
+                      <span className="text-[11px] text-muted-foreground">{language === "ar" ? "شفافية التعبئة" : "Fill opacity"}: {Math.round((editingZone.opacity ?? 0.4) * 100)}%</span>
+                      <input type="range" min="0" max="100" value={Math.round((editingZone.opacity ?? 0.4) * 100)} onChange={e => setEditingZone(p => ({ ...p, opacity: parseInt(e.target.value) / 100 }))} className="w-full accent-emerald-600" data-testid="edit-zone-opacity" />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <span className="text-[11px] text-muted-foreground">{language === "ar" ? "لون الحدود" : "Stroke"}</span>
@@ -1402,24 +1406,46 @@ export default function MapManagementPage() {
                       <input type="color" value={editingZone.stroke_color} onChange={e => setEditingZone(p => ({ ...p, stroke_color: e.target.value }))} className="w-9 h-9 rounded border cursor-pointer" data-testid="edit-zone-stroke-color" />
                       <Input value={editingZone.stroke_color} onChange={e => setEditingZone(p => ({ ...p, stroke_color: e.target.value }))} className="font-mono text-xs" dir="ltr" data-testid="edit-zone-stroke-hex" />
                     </div>
+                    <div className="mt-1">
+                      <span className="text-[11px] text-muted-foreground">{language === "ar" ? "شفافية الحدود" : "Stroke opacity"}: {Math.round((editingZone.stroke_opacity ?? 1) * 100)}%</span>
+                      <input type="range" min="0" max="100" value={Math.round((editingZone.stroke_opacity ?? 1) * 100)} onChange={e => setEditingZone(p => ({ ...p, stroke_opacity: parseInt(e.target.value) / 100 }))} className="w-full accent-emerald-600" data-testid="edit-zone-stroke-opacity" />
+                    </div>
                   </div>
-                </div>
-                <div className="mt-3">
-                  <span className="text-[11px] text-muted-foreground">{language === "ar" ? "الشفافية" : "Opacity"}: {Math.round((editingZone.opacity ?? 0.4) * 100)}%</span>
-                  <input type="range" min="0" max="100" value={Math.round((editingZone.opacity ?? 0.4) * 100)} onChange={e => setEditingZone(p => ({ ...p, opacity: parseInt(e.target.value) / 100 }))} className="w-full accent-emerald-600 mt-1" data-testid="edit-zone-opacity" />
                 </div>
               </div>
 
-              {/* Capacity & Area */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-medium">{language === "ar" ? "السعة القصوى" : "Max Capacity"}</Label>
-                  <Input type="number" value={editingZone.max_capacity ?? 0} onChange={e => setEditingZone(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))} data-testid="edit-zone-capacity" />
+              {/* Capacity & Area with auto-calculation */}
+              <div>
+                <Label className="text-xs font-medium mb-2 block">{language === "ar" ? "حساب السعة" : "Capacity Calculator"}</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <span className="text-[11px] text-muted-foreground">{language === "ar" ? "المساحة (م²)" : "Area (m²)"}</span>
+                    <Input type="number" value={editingZone.area_sqm ?? 0} onChange={e => {
+                      const area = parseFloat(e.target.value) || 0;
+                      const pp = editingZone.per_person_sqm || 0.8;
+                      setEditingZone(p => ({ ...p, area_sqm: area, max_capacity: pp > 0 ? Math.round(area / pp) : p.max_capacity }));
+                    }} data-testid="edit-zone-area" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-muted-foreground">{language === "ar" ? "نصيب الفرد (م²)" : "Per person"}</span>
+                    <Input type="number" step="0.1" min="0.1" value={editingZone.per_person_sqm ?? 0.8} onChange={e => {
+                      const pp = parseFloat(e.target.value) || 0.8;
+                      const area = editingZone.area_sqm || 0;
+                      setEditingZone(p => ({ ...p, per_person_sqm: pp, max_capacity: pp > 0 && area > 0 ? Math.round(area / pp) : p.max_capacity }));
+                    }} data-testid="edit-zone-per-person" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-muted-foreground">{language === "ar" ? "السعة القصوى" : "Capacity"}</span>
+                    <Input type="number" value={editingZone.max_capacity ?? 0} className="font-bold" onChange={e => setEditingZone(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))} data-testid="edit-zone-capacity" />
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs font-medium">{language === "ar" ? "المساحة (م²)" : "Area (m²)"}</Label>
-                  <Input type="number" value={editingZone.area_sqm ?? 0} onChange={e => setEditingZone(p => ({ ...p, area_sqm: parseFloat(e.target.value) || 0 }))} data-testid="edit-zone-area" />
-                </div>
+                {(editingZone.area_sqm > 0 && editingZone.per_person_sqm > 0) && (
+                  <div className="mt-2 p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+                    {language === "ar"
+                      ? `${editingZone.area_sqm} م² ÷ ${editingZone.per_person_sqm} م²/فرد = ${Math.round(editingZone.area_sqm / editingZone.per_person_sqm)} مصلي`
+                      : `${editingZone.area_sqm} m² ÷ ${editingZone.per_person_sqm} m²/person = ${Math.round(editingZone.area_sqm / editingZone.per_person_sqm)} capacity`}
+                  </div>
+                )}
               </div>
 
               {/* Info */}
