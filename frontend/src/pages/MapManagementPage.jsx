@@ -1131,8 +1131,10 @@ export default function MapManagementPage() {
                         </g>
                       )}
                     </svg>
-                      );
-                    })()}
+                    </div>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   {/* Zone hover tooltip */}
