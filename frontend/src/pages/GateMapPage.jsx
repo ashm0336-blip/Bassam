@@ -618,7 +618,7 @@ export default function GateMapPage() {
                     const pct = m.max_flow ? Math.round((m.current_flow / m.max_flow) * 100) : 0;
                     return (
                       <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
-                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[220px] max-w-[280px]" style={{ borderTopColor: st.color, borderTopWidth: 3 }}>
+                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[220px] max-w-[280px]" dir="rtl" style={{ borderTopColor: st.color, borderTopWidth: 3 }}>
                           <div className="flex items-center justify-between gap-3 mb-1.5">
                             <span className="font-bold text-sm">{language === "ar" ? m.name_ar : m.name_en || m.name_ar}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${st.color}20`, color: st.color }}>{language === "ar" ? st.label_ar : st.label_en}</span>
