@@ -350,11 +350,33 @@ export default function MapManagementPage() {
     return inside;
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(prev => Math.max(0.5, Math.min(4, prev + delta)));
-  };
+    setZoom(prevZoom => {
+      const newZoom = Math.max(0.5, Math.min(4, prevZoom + delta));
+      const scale = newZoom / prevZoom;
+      setPanOffset(prev => ({
+        x: mouseX - scale * (mouseX - prev.x),
+        y: mouseY - scale * (mouseY - prev.y)
+      }));
+      return newZoom;
+    });
+  }, []);
+
+  // Attach wheel listener with passive:false to properly prevent page scroll
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   // Save new zone
   const handleSaveZone = async () => {
