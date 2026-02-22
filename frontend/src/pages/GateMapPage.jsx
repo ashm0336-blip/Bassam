@@ -576,6 +576,7 @@ export default function GateMapPage() {
                             <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                               <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: st.color }} />
                             </div>
+                            {m.gate_id && <div className="text-[10px] text-emerald-600 mt-1">{language === "ar" ? "مرتبط بقائمة الأبواب" : "Linked to gates list"}</div>}
                           </div>
                         </div>
                       </div>
