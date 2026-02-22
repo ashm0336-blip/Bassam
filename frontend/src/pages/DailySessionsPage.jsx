@@ -322,6 +322,7 @@ export default function DailySessionsPage() {
     const pos = getMousePercent(e);
     setMousePos(pos);
     if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
+    if (mapMode === "rect" && rectStart) { setRectEnd(pos); return; }
     if (draggingPoint !== null && selectedZoneId) {
       const updatedSession = { ...activeSession, zones: activeSession.zones.map(z => {
         if (z.id !== selectedZoneId) return z;
