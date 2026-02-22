@@ -900,8 +900,8 @@ export default function MapManagementPage() {
                               const isActive = i === draggingPoint || i === hoveredPoint;
                               return (
                                 <circle key={`v-${i}`} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none"
-                                  cx={pt.x} cy={pt.y} r={isActive ? "0.35" : "0.22"}
-                                  fill="#ef4444" stroke="white" strokeWidth="0.08" vectorEffect="non-scaling-stroke" />
+                                  cx={pt.x} cy={pt.y} r={isActive ? "0.18" : "0.1"}
+                                  fill="#ef4444" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
                               );
                             })}
                             {/* Midpoint handles for subdivision / curve creation */}
