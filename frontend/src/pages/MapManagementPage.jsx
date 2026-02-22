@@ -214,6 +214,14 @@ export default function MapManagementPage() {
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { if (selectedFloor) fetchZones(); }, [selectedFloor, fetchZones]);
 
+  // Recalculate SVG layout on resize
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const onResize = () => forceUpdate(n => n + 1);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   useEffect(() => {
     setBulkUpdates([]);
     setCrowdEdits({});
