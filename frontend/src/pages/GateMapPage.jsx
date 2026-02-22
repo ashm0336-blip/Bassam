@@ -158,7 +158,14 @@ export default function GateMapPage() {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { fetchFloors(); fetchExistingGates(); }, [fetchFloors, fetchExistingGates]);
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/employees`, getAuthHeaders());
+      setEmployees(res.data);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { fetchFloors(); fetchExistingGates(); fetchEmployees(); }, [fetchFloors, fetchExistingGates, fetchEmployees]);
   useEffect(() => { if (selectedFloor) { fetchMarkers(); setImgRatio(null); } }, [selectedFloor, fetchMarkers]);
   useEffect(() => { if (activeTab === "logs") fetchLogs(); }, [activeTab, fetchLogs]);
 
