@@ -897,9 +897,30 @@ export default function DailySessionsPage() {
                                     {activeZones.map(zone => {
                                       const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
                                       const ch = zone.change_type && zone.change_type !== "unchanged";
+                                      const isSelected = zone.id === selectedZoneId;
                                       return (
-                                        <g key={zone.id} data-testid={`session-zone-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }} style={{ cursor: "pointer" }}>
-                                          <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4} stroke={ch ? cl.color : (zone.stroke_color || "#000")} strokeWidth={ch ? 0.8 : 0.3} strokeOpacity={zone.stroke_opacity ?? 1} strokeDasharray={zone.change_type === "added" ? "1.5 0.8" : "none"} vectorEffect="non-scaling-stroke" />
+                                        <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
+                                          onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
+                                          onMouseLeave={() => setHoveredZone(null)}
+                                          onClick={(e) => { if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
+                                          onDoubleClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
+                                          style={{ cursor: mapMode === "edit" || activeSession?.status === "draft" ? "pointer" : "default" }}>
+                                          <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
+                                            stroke={isSelected ? "#3b82f6" : ch ? cl.color : (zone.stroke_color || "#000")}
+                                            strokeWidth={isSelected ? 0.6 : ch ? 0.8 : 0.3}
+                                            strokeOpacity={isSelected ? 1 : (zone.stroke_opacity ?? 1)}
+                                            strokeDasharray={isSelected ? "1 0.5" : zone.change_type === "added" ? "1.5 0.8" : "none"}
+                                            vectorEffect="non-scaling-stroke" />
+                                          {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
+                                            const isActive = i === draggingPoint || i === hoveredPoint;
+                                            return <circle key={`v-${i}`} pointerEvents="none" cx={pt.x} cy={pt.y} r={isActive ? "0.18" : "0.1"} fill="#ef4444" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />;
+                                          })}
+                                          {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
+                                            const j = (i + 1) % zone.polygon_points.length;
+                                            const nx = zone.polygon_points[j];
+                                            const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
+                                            return <rect key={`m-${i}`} x={mx - 0.07} y={my - 0.07} width="0.14" height="0.14" transform={`rotate(45 ${mx} ${my})`} fill="#ef4444" stroke="white" strokeWidth="0.03" vectorEffect="non-scaling-stroke" opacity="0.4" pointerEvents="none" />;
+                                          })}
                                         </g>
                                       );
                                     })}
@@ -909,6 +930,19 @@ export default function DailySessionsPage() {
                                         {zone.polygon_points?.length > 0 && (() => { const cx = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx-0.8} y1={cy-0.8} x2={cx+0.8} y2={cy+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx+0.8} y1={cy-0.8} x2={cx-0.8} y2={cy+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
                                       </g>
                                     ))}
+                                    {/* Drawing polygon */}
+                                    {mapMode === "draw" && drawingPoints.length > 0 && (
+                                      <g data-testid="drawing-layer">
+                                        <path d={getPath(drawingPoints, false)} fill="none" stroke="#3b82f6" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                                        <line x1={drawingPoints[drawingPoints.length-1].x} y1={drawingPoints[drawingPoints.length-1].y} x2={mousePos.x} y2={mousePos.y} stroke="#3b82f6" strokeWidth="0.4" strokeDasharray="1 0.5" vectorEffect="non-scaling-stroke" />
+                                        {nearStart && drawingPoints.length >= 3 && <path d={getPath(drawingPoints)} fill={newZoneForm.fill_color} fillOpacity={0.3} stroke="#22c55e" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />}
+                                        {drawingPoints.map((pt, i) => {
+                                          const isStart = i === 0;
+                                          const r = isStart ? (nearStart ? 0.3 : 0.15) : DRAW_POINT_RADIUS;
+                                          return <circle key={i} cx={pt.x} cy={pt.y} r={r} fill={isStart ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"} fillOpacity={isStart ? 0.8 : 0.25} stroke="white" strokeWidth="0.08" vectorEffect="non-scaling-stroke" />;
+                                        })}
+                                      </g>
+                                    )}
                                   </svg>
                                 </div>
                               );
