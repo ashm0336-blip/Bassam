@@ -575,9 +575,9 @@ export default function GateMapPage() {
                             >
                               {/* Pulse by status color */}
                               <ellipse cx={m.x} cy={m.y} rx={rx + 1} ry={(rx + 1) * ar} fill={st.color} fillOpacity="0.08">
-                                <animate attributeName="rx" values={`${rx};${rx + 2};${rx}`} dur="2s" repeatCount="indefinite" />
-                                <animate attributeName="ry" values={`${ry};${(rx + 2) * ar};${ry}`} dur="2s" repeatCount="indefinite" />
-                                <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="rx" values={`${rx};${rx + 3};${rx}`} dur="1.5s" repeatCount="indefinite" />
+                                <animate attributeName="ry" values={`${ry};${(rx + 3) * ar};${ry}`} dur="1.5s" repeatCount="indefinite" />
+                                <animate attributeName="fill-opacity" values="0.25;0;0.25" dur="1.5s" repeatCount="indefinite" />
                               </ellipse>
                               {isSelected && <ellipse cx={m.x} cy={m.y} rx={rx + 0.6} ry={(rx + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.25" />}
                               <ellipse cx={m.x} cy={m.y} rx={rx} ry={ry} fill={st.color} />
