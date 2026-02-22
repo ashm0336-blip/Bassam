@@ -1166,6 +1166,49 @@ export default function MapManagementPage() {
             </div>
           </div>
 
+          {/* Crowd density map */}
+          {selectedFloor && zones.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative bg-gray-100" style={{ height: "400px" }}>
+                  <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                    <img src={selectedFloor.image_url} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false} />
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      {zones.map(zone => {
+                        const cv = crowdEdits[zone.id] ?? zone.current_crowd ?? 0;
+                        const mc = zone.max_capacity || 1;
+                        const st = getCrowdStatus(cv, mc);
+                        const color = cv === 0 ? "#9ca3af" : st.color;
+                        const opacity = cv === 0 ? 0.25 : 0.5;
+                        return (
+                          <path
+                            key={zone.id}
+                            d={getPath(zone.polygon_points)}
+                            fill={color}
+                            fillOpacity={opacity}
+                            stroke={color}
+                            strokeWidth="0.4"
+                            strokeOpacity={0.8}
+                            vectorEffect="non-scaling-stroke"
+                            data-testid={`crowd-map-zone-${zone.id}`}
+                          />
+                        );
+                      })}
+                    </svg>
+                  </div>
+                  {/* Legend */}
+                  <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 flex gap-3 text-[10px]">
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gray-400" />{language === "ar" ? "غير مفعل" : "Inactive"}</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500" />{language === "ar" ? "طبيعي" : "Normal"}</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />{language === "ar" ? "متوسط" : "Medium"}</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-orange-500" />{language === "ar" ? "مزدحم" : "Crowded"}</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500" />{language === "ar" ? "حرج" : "Critical"}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {selectedFloor && zones.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {zones.map(zone => {
