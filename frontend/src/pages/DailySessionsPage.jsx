@@ -250,6 +250,174 @@ export default function DailySessionsPage() {
     return d;
   };
 
+  // SVG coordinate helpers
+  const getMousePercent = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const ctm = svgRef.current.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const t = pt.matrixTransform(ctm.inverse());
+    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+  };
+  const getDistance = (p1, p2) => Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+  const getHitPointIndex = (points, pos) => {
+    if (!points?.length) return -1;
+    const radius = 2 / Math.max(zoom, 0.5);
+    return points.findIndex((p) => getDistance(pos, p) < radius);
+  };
+  const isPointInPolygon = (point, polygon) => {
+    if (!polygon || polygon.length < 3) return false;
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i].x, yi = polygon[i].y;
+      const xj = polygon[j].x, yj = polygon[j].y;
+      if (((yi > point.y) !== (yj > point.y)) && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  };
+
+  // Session zones as mutable local state for editing
+  const sessionZones = activeSession?.zones || [];
+
+  // Shape generators
+  const generateShape = (type) => {
+    const cx = 50, cy = 50;
+    let points;
+    if (type === "circle") points = Array.from({ length: 24 }, (_, i) => ({ x: cx + 15 * Math.cos(2 * Math.PI * i / 24), y: cy + 15 * Math.sin(2 * Math.PI * i / 24) }));
+    else if (type === "rectangle") points = [{ x: cx - 20, y: cy - 15 }, { x: cx + 20, y: cy - 15 }, { x: cx + 20, y: cy + 15 }, { x: cx - 20, y: cy + 15 }];
+    else if (type === "triangle") points = Array.from({ length: 3 }, (_, i) => ({ x: cx + 18 * Math.cos(2 * Math.PI * i / 3 - Math.PI / 2), y: cy + 18 * Math.sin(2 * Math.PI * i / 3 - Math.PI / 2) }));
+    if (points) { setDrawingPoints(points); setShowNewZoneDialog(true); }
+  };
+
+  // Map mouse handlers for drawing/editing
+  const handleMapMouseDown = (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const pos = getMousePercent(e);
+    if (mapMode === "pan") {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    } else if (mapMode === "edit" && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (!zone?.polygon_points) return;
+      const hitIndex = getHitPointIndex(zone.polygon_points, pos);
+      if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
+      // Midpoint handle
+      const pts = zone.polygon_points;
+      const midRadius = 1.5 / Math.max(zoom, 0.5);
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
+        if (getDistance(pos, { x: mx, y: my }) < midRadius) {
+          const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
+          // Update zone in session locally
+          const updatedSession = { ...activeSession, zones: activeSession.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) };
+          setActiveSession(updatedSession);
+          setDraggingPoint(j); setHoveredPoint(j); return;
+        }
+      }
+    }
+  };
+
+  const handleMapMouseMove = (e) => {
+    const pos = getMousePercent(e);
+    setMousePos(pos);
+    if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
+    if (draggingPoint !== null && selectedZoneId) {
+      const updatedSession = { ...activeSession, zones: activeSession.zones.map(z => {
+        if (z.id !== selectedZoneId) return z;
+        const newPts = [...z.polygon_points]; newPts[draggingPoint] = { x: pos.x, y: pos.y };
+        return { ...z, polygon_points: newPts };
+      })};
+      setActiveSession(updatedSession);
+      return;
+    }
+    if (mapMode === "edit" && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      const hit = getHitPointIndex(zone?.polygon_points, pos);
+      setHoveredPoint(hit !== -1 ? hit : null);
+    }
+    if (mapMode === "draw" && drawingPoints.length >= 3) setNearStart(getDistance(pos, drawingPoints[0]) < SNAP_DISTANCE);
+    // Tooltip
+    if (mapMode !== "draw" && draggingPoint === null && !isPanning) {
+      if (mapContainerRef.current) {
+        const rect = mapContainerRef.current.getBoundingClientRect();
+        setTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
+      }
+      let found = null;
+      for (const zone of sessionZones) {
+        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
+      }
+      if (found?.id !== hoveredZone?.id) setHoveredZone(found || null);
+    } else if (hoveredZone) setHoveredZone(null);
+  };
+
+  const handleMapMouseUp = async () => {
+    if (draggingPoint !== null && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (zone) {
+        try {
+          const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, { polygon_points: zone.polygon_points }, getAuthHeaders());
+          setActiveSession(res.data);
+        } catch (e) { console.error(e); }
+      }
+    }
+    setIsPanning(false); setDraggingPoint(null); setHoveredPoint(null);
+  };
+
+  const handleMapClick = (e) => {
+    if (isPanning || draggingPoint !== null) return;
+    e.preventDefault();
+    const pos = getMousePercent(e);
+    if (mapMode === "draw") {
+      if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
+      setDrawingPoints(prev => [...prev, { x: pos.x, y: pos.y }]);
+    } else if (mapMode === "edit") {
+      if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
+      let found = null;
+      for (const zone of sessionZones) {
+        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
+      }
+      setSelectedZoneId(found?.id || null);
+    }
+  };
+
+  // Save new drawn zone to session
+  const handleSaveNewZone = async () => {
+    if (!activeSession || drawingPoints.length < 3) return;
+    const typeInfo = ZONE_TYPES.find(t => t.value === newZoneForm.zone_type);
+    try {
+      const res = await axios.post(`${API}/admin/map-sessions/${activeSession.id}/zones`, {
+        zone_code: newZoneForm.zone_code || `Z-${Date.now().toString(36).slice(-4).toUpperCase()}`,
+        name_ar: newZoneForm.name_ar || (isAr ? typeInfo?.label_ar : typeInfo?.label_en) || "منطقة جديدة",
+        name_en: newZoneForm.name_en || typeInfo?.label_en || "New Zone",
+        zone_type: newZoneForm.zone_type,
+        polygon_points: drawingPoints,
+        fill_color: typeInfo?.color || newZoneForm.fill_color,
+      }, getAuthHeaders());
+      setActiveSession(res.data);
+      setShowNewZoneDialog(false);
+      setDrawingPoints([]);
+      setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e" });
+      setMapMode("pan");
+      toast.success(isAr ? "تم إضافة المنطقة" : "Zone added");
+    } catch (e) { toast.error(isAr ? "تعذرت الإضافة" : "Error adding zone"); }
+  };
+
+  // Escape key handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
+        else if (selectedZoneId) setSelectedZoneId(null);
+        else if (mapMode !== "pan") setMapMode("pan");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [drawingPoints.length, selectedZoneId, mapMode]);
+
   // Resolve clone source for API call
   const resolveCloneFrom = () => {
     if (cloneSource === "auto") {
