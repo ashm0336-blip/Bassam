@@ -834,13 +834,16 @@ export default function DailySessionsPage() {
                       {/* Mode buttons */}
                       <div className="flex items-center gap-2">
                         <div className="flex border rounded-lg overflow-hidden">
-                          <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-pan-btn">
+                          <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-pan-btn">
                             <Hand className="w-4 h-4" />
                           </Button>
-                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); }} data-testid="mode-draw-btn">
+                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-draw-btn">
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("edit"); setDrawingPoints([]); }} data-testid="mode-edit-btn">
+                          <Button variant={mapMode === "rect" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("rect"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-rect-btn" title={isAr ? "رسم مستطيل بالسحب" : "Draw Rectangle"}>
+                            <Square className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("edit"); setDrawingPoints([]); setRectStart(null); }} data-testid="mode-edit-btn">
                             <MousePointer className="w-4 h-4" />
                           </Button>
                         </div>
