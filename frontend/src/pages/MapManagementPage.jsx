@@ -1301,8 +1301,9 @@ export default function MapManagementPage() {
                         );
                       })}
                     </svg>
+                      );
+                    })()}
                   </div>
-                  {/* Legend */}
                   <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 flex gap-3 text-[10px]">
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gray-400" />{language === "ar" ? "غير مفعل" : "Inactive"}</span>
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500" />{language === "ar" ? "طبيعي" : "Normal"}</span>
