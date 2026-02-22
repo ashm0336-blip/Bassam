@@ -96,6 +96,8 @@ export default function MapManagementPage() {
   const [editingFloor, setEditingFloor] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [localImagePreview, setLocalImagePreview] = useState(null);
 
   // Zone dialog
   const [showZoneDialog, setShowZoneDialog] = useState(false);
@@ -172,17 +174,12 @@ export default function MapManagementPage() {
   }, [selectedFloor?.id]);
 
   useEffect(() => {
-    if (!zones.length) return;
-    setCrowdEdits(prev => {
-      const next = { ...prev };
-      zones.forEach(z => {
-        if (next[z.id] === undefined) {
-          next[z.id] = z.current_crowd || 0;
-        }
-      });
-      return next;
-    });
-  }, [zones]);
+    return () => {
+      if (localImagePreview) {
+        URL.revokeObjectURL(localImagePreview);
+      }
+    };
+  }, [localImagePreview]);
 
   // Convert mouse event to SVG coordinates (0-100)
   const getMousePercent = (e) => {
