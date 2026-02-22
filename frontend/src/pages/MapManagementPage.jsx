@@ -967,25 +967,20 @@ export default function MapManagementPage() {
                       justifyContent: "center"
                     }}
                   >
-                    {/* Image + SVG wrapper - same element, perfect alignment */}
-                    <div style={{ position: "relative", width: imgRatio ? undefined : "100%", height: imgRatio ? undefined : "100%", maxWidth: "100%", maxHeight: "100%", aspectRatio: imgRatio || undefined, ...(imgRatio ? { width: "100%", height: "100%" } : {}) }}>
-                      {(() => {
-                        // Compute wrapper sizing based on container and image aspect ratio
-                        const containerEl = mapContainerRef.current;
-                        let wrapStyle = { position: "relative", width: "100%", height: "100%" };
-                        if (imgRatio && containerEl) {
-                          const cw = containerEl.clientWidth;
-                          const ch = containerEl.clientHeight;
-                          const containerRatio = cw / ch;
-                          if (containerRatio > imgRatio) {
-                            // Container is wider - height limited
-                            wrapStyle = { position: "relative", height: "100%", width: ch * imgRatio };
-                          } else {
-                            // Container is taller - width limited
-                            wrapStyle = { position: "relative", width: "100%", height: cw / imgRatio };
-                          }
+                    {(() => {
+                      const containerEl = mapContainerRef.current;
+                      let wrapStyle = { position: "relative", width: "100%", height: "100%" };
+                      if (imgRatio && containerEl) {
+                        const cw = containerEl.clientWidth;
+                        const ch = containerEl.clientHeight;
+                        const containerRatio = cw / ch;
+                        if (containerRatio > imgRatio) {
+                          wrapStyle = { position: "relative", height: "100%", width: ch * imgRatio };
+                        } else {
+                          wrapStyle = { position: "relative", width: "100%", height: cw / imgRatio };
                         }
-                        return (
+                      }
+                      return (
                     <div style={wrapStyle}>
                     <img
                       ref={imageRef}
