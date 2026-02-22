@@ -2949,7 +2949,10 @@ async def create_map_session(data: MapSessionCreate, admin: dict = Depends(requi
     zones_snapshot = []
     changes_summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
 
-    if data.clone_from == "master":
+    if data.clone_from == "empty":
+        # Start with no zones
+        pass
+    elif data.clone_from == "master":
         # Clone from master zones
         master_zones = await db.map_zones.find({"floor_id": data.floor_id, "is_active": True}, {"_id": 0}).to_list(500)
         for z in master_zones:
