@@ -150,6 +150,11 @@ function AppRoutes() {
             <MapManagementPage />
           </AdminProtectedRoute>
         } />
+        <Route path="gate-map" element={
+          <AdminProtectedRoute>
+            <GateMapPage />
+          </AdminProtectedRoute>
+        } />
         <Route path="admin" element={
           <AdminProtectedRoute>
             <AdminPage />
