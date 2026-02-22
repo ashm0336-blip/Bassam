@@ -334,6 +334,7 @@ export default function MapManagementPage() {
 
   const handleMapClick = (e) => {
     if (isPanning || draggingPoint !== null) return;
+    e.preventDefault();
     
     const pos = getMousePercent(e);
     
@@ -348,7 +349,6 @@ export default function MapManagementPage() {
     }
     else if (mode === "edit") {
       if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
-      // Select zone by clicking inside it
       let found = null;
       for (const zone of zones) {
         if (isPointInPolygon(pos, zone.polygon_points)) {
