@@ -533,6 +533,8 @@ export default function MapManagementPage() {
     return d;
   };
 
+  const floorPreviewUrl = localImagePreview || (floorForm.image_url ? normalizeImageUrl(floorForm.image_url) : "");
+
   const totalCrowd = zones.reduce((sum, z) => sum + (crowdEdits[z.id] ?? z.current_crowd ?? 0), 0);
   const totalCapacity = zones.reduce((sum, z) => sum + (z.max_capacity || 0), 0);
   const overallPercent = totalCapacity ? Math.round((totalCrowd / totalCapacity) * 100) : 0;
