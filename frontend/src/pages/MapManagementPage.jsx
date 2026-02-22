@@ -695,7 +695,6 @@ export default function MapManagementPage() {
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
                   onClick={handleMapClick}
-                  onWheel={handleWheel}
                 >
                   {/* Transformed container */}
                   <div
