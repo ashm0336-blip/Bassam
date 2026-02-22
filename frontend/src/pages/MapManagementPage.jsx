@@ -971,16 +971,23 @@ export default function MapManagementPage() {
                       alt=""
                       className="w-full h-full object-contain pointer-events-none"
                       draggable={false}
+                      onLoad={(e) => setImgNatural({ w: e.target.naturalWidth, h: e.target.naturalHeight })}
                     />
 
-                    {/* SVG overlay */}
+                    {/* SVG overlay - positioned to match image exactly */}
+                    {(() => {
+                      const transformDiv = mapContainerRef.current;
+                      const layout = getImgLayout(transformDiv);
+                      const svgStyle = layout
+                        ? { position: "absolute", left: layout.left, top: layout.top, width: layout.width, height: layout.height, overflow: "visible" }
+                        : { position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" };
+                      return (
                     <svg
                       ref={svgRef}
                       data-testid="map-editor-svg"
-                      className="absolute inset-0 w-full h-full"
+                      style={svgStyle}
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
-                      style={{ overflow: "visible" }}
                     >
                       {/* Existing zones */}
                       {zones.map(zone => {
