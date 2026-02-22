@@ -932,21 +932,6 @@ export default function MapManagementPage() {
                                 vectorEffect="non-scaling-stroke"
                               />
                             )}
-                            {zone.polygon_points?.length > 0 && (
-                              <text
-                                x={zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length}
-                                y={zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fontSize="2"
-                                fill="#000"
-                                fontWeight="bold"
-                                data-testid={`zone-label-${zone.id}`}
-                                pointerEvents="none"
-                              >
-                                {zone.zone_code}
-                              </text>
-                            )}
                             {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
                               const isActive = i === draggingPoint || i === hoveredPoint;
                               return (
