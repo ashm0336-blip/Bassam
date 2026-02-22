@@ -852,7 +852,7 @@ export default function MapManagementPage() {
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div
-                  ref={mapContainerRef}
+                  ref={wheelRef}
                   data-testid="map-editor-container"
                   className="relative bg-gray-100 overflow-hidden"
                   style={{ 
