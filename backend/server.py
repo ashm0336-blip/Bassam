@@ -2725,11 +2725,10 @@ async def upload_map_image(
 ):
     """Upload a map image and return its URL"""
     # Validate file type
-    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
-    if file.content_type not in allowed_types:
+    if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
-            detail=f"نوع الملف غير مدعوم. الأنواع المدعومة: {', '.join(allowed_types)}"
+            detail="نوع الملف غير مدعوم. الرجاء رفع ملف صورة"
         )
     
     # Generate unique filename
