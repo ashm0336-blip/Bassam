@@ -222,13 +222,23 @@ export default function GateMapPage() {
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
-    if (mode === "view") {
+    if (mode === "edit") {
+      const pos = getMousePercent(e);
+      // Find closest marker to drag
+      let closest = null, minDist = 3;
+      for (const m of markers) {
+        const d = Math.hypot(m.x - pos.x, m.y - pos.y);
+        if (d < minDist) { closest = m; minDist = d; }
+      }
+      if (closest) {
+        setDraggingMarker(closest.id);
+        setSelectedMarkerId(closest.id);
+        return;
+      }
+    }
+    if (mode === "view" || (mode === "edit" && !draggingMarker)) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (mode === "edit" && selectedMarkerId) {
-      const pos = getMousePercent(e);
-      const hit = markers.find(m => m.id === selectedMarkerId && Math.hypot(m.x - pos.x, m.y - pos.y) < 3);
-      if (hit) setDraggingMarker(hit.id);
     }
   };
 
