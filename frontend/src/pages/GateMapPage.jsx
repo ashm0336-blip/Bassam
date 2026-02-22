@@ -561,11 +561,12 @@ export default function GateMapPage() {
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
                           const s = isSelected ? 1.6 : isHovered ? 1.4 : 1.0;
-                          // Lucide door-open SVG path (24x24 viewBox)
+                          const ar = imgRatio || 1;
+                          const rx = s, ry = s * ar;
                           const doorPath = m.status === "closed"
                             ? "M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14 M2 20h20 M14 12v.01"
                             : "M13 4h3a2 2 0 0 1 2 2v14 M2 20h3 M13 20h9 M10 12v.01 M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z";
-                          const iconScale = s * 0.038;
+                          const iconS = s * 0.038;
                           return (
                             <g key={m.id} data-testid={`gate-marker-${m.id}`}
                               style={{ cursor: "pointer" }}
@@ -573,21 +574,20 @@ export default function GateMapPage() {
                               onClick={(e) => { if (mode === "edit") { e.stopPropagation(); setSelectedMarkerId(m.id); } }}
                             >
                               {m.status === "open" && (
-                                <circle cx={m.x} cy={m.y} r={s + 1} fill={st.color} fillOpacity="0.08">
-                                  <animate attributeName="r" values={`${s};${s + 2.5};${s}`} dur="2s" repeatCount="indefinite" />
+                                <ellipse cx={m.x} cy={m.y} rx={rx + 1} ry={(rx + 1) * ar} fill={st.color} fillOpacity="0.08">
+                                  <animate attributeName="rx" values={`${rx};${rx + 2.5};${rx}`} dur="2s" repeatCount="indefinite" />
+                                  <animate attributeName="ry" values={`${ry};${(rx + 2.5) * ar};${ry}`} dur="2s" repeatCount="indefinite" />
                                   <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
-                                </circle>
+                                </ellipse>
                               )}
                               {isUnstaffed && (
-                                <circle cx={m.x} cy={m.y} r={s + 1.5} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3">
+                                <ellipse cx={m.x} cy={m.y} rx={rx + 1.5} ry={(rx + 1.5) * ar} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3">
                                   <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
-                                </circle>
+                                </ellipse>
                               )}
-                              {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.6} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
-                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} vectorEffect="non-scaling-stroke" />
-                              {/* Lucide door icon - cliped to circle */}
-                              <clipPath id={`clip-${m.id}`}><circle cx={m.x} cy={m.y} r={s} /></clipPath>
-                              <g transform={`translate(${m.x - 12 * iconScale}, ${m.y - 12 * iconScale}) scale(${iconScale})`} pointerEvents="none" clipPath={`url(#clip-${m.id})`}>
+                              {isSelected && <ellipse cx={m.x} cy={m.y} rx={rx + 0.6} ry={(rx + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" />}
+                              <ellipse cx={m.x} cy={m.y} rx={rx} ry={ry} fill={st.color} />
+                              <g transform={`translate(${m.x - 12 * iconS}, ${m.y - 12 * iconS * ar}) scale(${iconS}, ${iconS * ar})`} pointerEvents="none">
                                 <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                               </g>
                             </g>
