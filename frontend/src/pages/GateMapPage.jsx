@@ -150,9 +150,35 @@ export default function GateMapPage() {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { fetchFloors(); }, [fetchFloors]);
+  const fetchExistingGates = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/gates`, getAuthHeaders());
+      setExistingGates(res.data);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { fetchFloors(); fetchExistingGates(); }, [fetchFloors, fetchExistingGates]);
   useEffect(() => { if (selectedFloor) { fetchMarkers(); setImgRatio(null); } }, [selectedFloor, fetchMarkers]);
   useEffect(() => { if (activeTab === "logs") fetchLogs(); }, [activeTab, fetchLogs]);
+
+  // Map Arabic gate values to marker values
+  const mapGateToMarker = (gate) => {
+    const typeMap = { "رئيسي": "main", "فرعي": "secondary", "سلم كهربائي": "escalator", "مصعد": "elevator", "درج": "stairs", "جسر": "bridge", "عربات": "wheelchair", "طوارئ": "emergency" };
+    const dirMap = { "دخول": "entry", "خروج": "exit", "دخول وخروج": "both" };
+    const statusMap = { "مفتوح": "open", "متاح": "open", "مغلق": "closed", "مزدحم": "crowded", "صيانة": "maintenance", "متوسط": "crowded" };
+    const classMap = { "عام": "general", "رجال": "men", "نساء": "women", "طوارئ": "emergency", "جنائز": "funeral", "خدمات": "general" };
+    return {
+      name_ar: gate.name || "",
+      name_en: gate.name_en || "",
+      gate_type: typeMap[gate.gate_type] || "main",
+      direction: dirMap[gate.direction] || "both",
+      classification: classMap[gate.classification] || "general",
+      status: statusMap[gate.status] || statusMap[gate.current_indicator] || "open",
+      current_flow: gate.current_flow || 0,
+      max_flow: gate.max_flow || 5000,
+      gate_id: gate.id,
+    };
+  };
 
   // SVG coordinate helper
   const getMousePercent = (e) => {
