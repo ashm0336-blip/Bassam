@@ -147,15 +147,16 @@ export default function MapManagementPage() {
       const res = await axios.get(`${API}/floors`);
       const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
       setFloors(normalized);
-      if (normalized.length > 0 && !selectedFloor) {
-        setSelectedFloor(normalized[0]);
-      } else if (selectedFloor) {
-        const matched = normalized.find(f => f.id === selectedFloor.id);
-        if (matched) setSelectedFloor(matched);
-      }
+      setSelectedFloor(prev => {
+        if (prev) {
+          const matched = normalized.find(f => f.id === prev.id);
+          return matched || (normalized.length > 0 ? normalized[0] : null);
+        }
+        return normalized.length > 0 ? normalized[0] : null;
+      });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [selectedFloor]);
+  }, []);
 
   const fetchZones = useCallback(async () => {
     if (!selectedFloor) return;
