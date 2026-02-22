@@ -419,14 +419,15 @@ export default function DailySessionsPage() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
+        if (rectStart) { setRectStart(null); setRectEnd(null); }
+        else if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
         else if (selectedZoneId) setSelectedZoneId(null);
         else if (mapMode !== "pan") setMapMode("pan");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawingPoints.length, selectedZoneId, mapMode]);
+  }, [drawingPoints.length, selectedZoneId, mapMode, rectStart]);
 
   // Resolve clone source for API call
   const resolveCloneFrom = () => {
