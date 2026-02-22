@@ -353,6 +353,17 @@ export default function DailySessionsPage() {
   };
 
   const handleMapMouseUp = async () => {
+    // Rectangle mode: finalize and open dialog
+    if (mapMode === "rect" && rectStart && rectEnd) {
+      const x1 = Math.min(rectStart.x, rectEnd.x), y1 = Math.min(rectStart.y, rectEnd.y);
+      const x2 = Math.max(rectStart.x, rectEnd.x), y2 = Math.max(rectStart.y, rectEnd.y);
+      if (Math.abs(x2 - x1) > 1 && Math.abs(y2 - y1) > 1) {
+        setDrawingPoints([{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }]);
+        setShowNewZoneDialog(true);
+      }
+      setRectStart(null); setRectEnd(null);
+      return;
+    }
     if (draggingPoint !== null && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (zone) {
