@@ -853,26 +853,27 @@ export default function MapManagementPage() {
                             {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
                               const isActive = i === draggingPoint || i === hoveredPoint;
                               return (
-                                <g key={i} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none">
-                                  <circle
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r={isActive ? "1.6" : "1.2"}
-                                    fill="white"
-                                    stroke="#0ea5e9"
-                                    strokeWidth="0.35"
-                                    vectorEffect="non-scaling-stroke"
-                                  />
-                                  <circle
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r={isActive ? "0.9" : "0.7"}
-                                    fill="#0ea5e9"
-                                    stroke="white"
-                                    strokeWidth="0.2"
-                                    vectorEffect="non-scaling-stroke"
-                                  />
+                                <g key={`v-${i}`} data-testid={`zone-handle-${zone.id}-${i}`} pointerEvents="none">
+                                  <circle cx={pt.x} cy={pt.y} r={isActive ? "1.0" : "0.7"}
+                                    fill="white" stroke="#0ea5e9" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+                                  <circle cx={pt.x} cy={pt.y} r={isActive ? "0.55" : "0.4"}
+                                    fill="#0ea5e9" stroke="white" strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
                                 </g>
+                              );
+                            })}
+                            {/* Midpoint handles for subdivision / curve creation */}
+                            {isSelected && mode === "edit" && zone.polygon_points?.map((pt, i) => {
+                              const j = (i + 1) % zone.polygon_points.length;
+                              const nx = zone.polygon_points[j];
+                              const mx = (pt.x + nx.x) / 2;
+                              const my = (pt.y + nx.y) / 2;
+                              return (
+                                <rect key={`m-${i}`} x={mx - 0.4} y={my - 0.4} width="0.8" height="0.8"
+                                  transform={`rotate(45 ${mx} ${my})`}
+                                  fill="white" stroke="#0ea5e9" strokeWidth="0.2" strokeDasharray="0.3 0.2"
+                                  vectorEffect="non-scaling-stroke" opacity="0.7" pointerEvents="none"
+                                  data-testid={`zone-midpoint-${zone.id}-${i}`}
+                                />
                               );
                             })}
                           </g>
