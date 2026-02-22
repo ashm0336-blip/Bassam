@@ -89,15 +89,15 @@ export default function MapManagementPage() {
   // Image layout - track natural dimensions per floor
   const [imgRatio, setImgRatio] = useState(null);
 
-  // Reset when floor changes
-  useEffect(() => { setImgRatio(null); }, [selectedFloor?.id]);
-
   // Data state
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("floors");
+
+  // Reset imgRatio when floor changes
+  useEffect(() => { setImgRatio(null); }, [selectedFloor?.id]);
 
   // Floor dialog
   const [showFloorDialog, setShowFloorDialog] = useState(false);
