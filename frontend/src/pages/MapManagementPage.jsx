@@ -753,7 +753,7 @@ export default function MapManagementPage() {
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-700">
                 <MousePointer className="w-4 h-4 inline ml-1" />
-                {language === "ar" ? "انقر على منطقة لتحديدها، ثم اسحب النقاط لتعديلها" : "Click a zone to select, then drag points to edit"}
+                {language === "ar" ? "انقر على منطقة لتحديدها، اسحب النقاط لتعديلها، أو اسحب نقاط الوسط (◇) لإضافة تفاصيل ومنحنيات" : "Click a zone to select, drag points to edit, or drag midpoints (◇) to add detail and curves"}
               </p>
             </div>
           )}
