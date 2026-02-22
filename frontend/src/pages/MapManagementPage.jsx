@@ -634,9 +634,21 @@ export default function MapManagementPage() {
               </div>
 
               <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z - 0.2))} data-testid="zoom-out-button"><ZoomOut className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                  const container = mapContainerRef.current;
+                  if (!container) { setZoom(z => Math.max(0.5, z - 0.2)); return; }
+                  const rect = container.getBoundingClientRect();
+                  const cx = rect.width / 2, cy = rect.height / 2;
+                  setZoom(prev => { const nz = Math.max(0.5, prev - 0.2); const s = nz / prev; setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) })); return nz; });
+                }} data-testid="zoom-out-button"><ZoomOut className="w-4 h-4" /></Button>
                 <span className="text-xs w-12 text-center" data-testid="zoom-percent-label">{Math.round(zoom * 100)}%</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(z => Math.min(4, z + 0.2))} data-testid="zoom-in-button"><ZoomIn className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                  const container = mapContainerRef.current;
+                  if (!container) { setZoom(z => Math.min(4, z + 0.2)); return; }
+                  const rect = container.getBoundingClientRect();
+                  const cx = rect.width / 2, cy = rect.height / 2;
+                  setZoom(prev => { const nz = Math.min(4, prev + 0.2); const s = nz / prev; setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) })); return nz; });
+                }} data-testid="zoom-in-button"><ZoomIn className="w-4 h-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }} data-testid="zoom-reset-button"><Maximize2 className="w-4 h-4" /></Button>
               </div>
             </div>
