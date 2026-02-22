@@ -217,11 +217,16 @@ export default function GateMapPage() {
     setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
   }, []);
 
+  const prevNodeRef = useRef(null);
   const wheelRef = useCallback((node) => {
+    if (prevNodeRef.current) {
+      prevNodeRef.current.removeEventListener("wheel", handleWheel);
+    }
     if (node) {
       node.addEventListener("wheel", handleWheel, { passive: false });
       mapContainerRef.current = node;
     }
+    prevNodeRef.current = node;
   }, [handleWheel]);
 
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
