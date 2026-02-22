@@ -427,7 +427,7 @@ export default function GateMapPage() {
         {/* Map Tab */}
         <TabsContent value="map" className="space-y-4">
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <div className="rounded-xl border bg-white p-3 shadow-sm">
               <p className="text-[11px] text-slate-500">{language === "ar" ? "إجمالي الأبواب" : "Total"}</p>
               <p className="text-xl font-bold">{markers.length}</p>
@@ -448,7 +448,26 @@ export default function GateMapPage() {
               <p className="text-[11px] text-slate-500">{language === "ar" ? "إجمالي التدفق" : "Total Flow"}</p>
               <p className="text-xl font-bold text-blue-600">{totalFlow.toLocaleString()}</p>
             </div>
+            <div className={`rounded-xl border p-3 shadow-sm ${unstaffedOpen > 0 ? "bg-amber-50 border-amber-300" : "bg-white"}`}>
+              <p className="text-[11px] text-slate-500">{language === "ar" ? "بدون موظفين" : "Unstaffed"}</p>
+              <p className={`text-xl font-bold ${unstaffedOpen > 0 ? "text-amber-600" : "text-slate-400"}`}>{unstaffedOpen}</p>
+            </div>
           </div>
+
+          {/* Alert for unstaffed gates */}
+          {unstaffedOpen > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-bold">{unstaffedOpen}</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-800">{language === "ar" ? "تنبيه: أبواب مفتوحة بدون موظفين!" : "Alert: Open gates without staff!"}</p>
+                <p className="text-xs text-amber-600">
+                  {markers.filter(m => m.status === "open" && getGateEmployees(m).length === 0).map(m => m.name_ar).join(" - ")}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Toolbar */}
           <div className="flex justify-between items-center flex-wrap gap-3 bg-gray-50 p-3 rounded-lg">
