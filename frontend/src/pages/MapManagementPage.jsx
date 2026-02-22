@@ -1046,6 +1046,46 @@ export default function MapManagementPage() {
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs" data-testid="map-editor-zoom">
                     {Math.round(zoom * 100)}%
                   </div>
+
+                  {/* Zone hover tooltip */}
+                  {hoveredZoneId && (() => {
+                    const hz = zones.find(z => z.id === hoveredZoneId);
+                    if (!hz) return null;
+                    const status = getCrowdStatus(hz.current_crowd || 0, hz.max_capacity || 1);
+                    const typeInfo = ZONE_TYPES.find(t => t.value === hz.zone_type);
+                    const percent = hz.max_capacity ? Math.round(((hz.current_crowd || 0) / hz.max_capacity) * 100) : 0;
+                    return (
+                      <div
+                        className="absolute pointer-events-none z-50"
+                        style={{ left: tooltipPos.x, top: tooltipPos.y }}
+                        data-testid="zone-hover-tooltip"
+                      >
+                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[180px]" style={{ borderTopColor: hz.fill_color, borderTopWidth: 3 }}>
+                          <div className="flex items-center justify-between gap-3 mb-1.5">
+                            <span className="font-bold text-sm">{hz.zone_code}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${status.color}20`, color: status.color }}>{language === "ar" ? status.label_ar : status.label_en}</span>
+                          </div>
+                          <p className="text-xs text-slate-700 mb-1">{language === "ar" ? hz.name_ar : hz.name_en}</p>
+                          {typeInfo && <p className="text-[10px] text-slate-400 mb-2">{language === "ar" ? typeInfo.label_ar : typeInfo.label_en}</p>}
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px]">
+                              <span className="text-slate-500">{language === "ar" ? "الإشغال" : "Occupancy"}</span>
+                              <span className="font-semibold">{hz.current_crowd || 0} / {(hz.max_capacity || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(percent, 100)}%`, backgroundColor: status.color }} />
+                            </div>
+                            {hz.area_sqm > 0 && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-500">{language === "ar" ? "المساحة" : "Area"}</span>
+                                <span>{hz.area_sqm} {language === "ar" ? "م²" : "m²"}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
