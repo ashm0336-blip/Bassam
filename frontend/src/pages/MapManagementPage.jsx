@@ -962,31 +962,44 @@ export default function MapManagementPage() {
                       transformOrigin: "0 0",
                       width: "100%",
                       height: "100%",
-                      position: "relative"
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
                     }}
                   >
-                    {/* Background image */}
+                    {/* Image + SVG wrapper - same element, perfect alignment */}
+                    <div style={{ position: "relative", width: imgRatio ? undefined : "100%", height: imgRatio ? undefined : "100%", maxWidth: "100%", maxHeight: "100%", aspectRatio: imgRatio || undefined, ...(imgRatio ? { width: "100%", height: "100%" } : {}) }}>
+                      {(() => {
+                        // Compute wrapper sizing based on container and image aspect ratio
+                        const containerEl = mapContainerRef.current;
+                        let wrapStyle = { position: "relative", width: "100%", height: "100%" };
+                        if (imgRatio && containerEl) {
+                          const cw = containerEl.clientWidth;
+                          const ch = containerEl.clientHeight;
+                          const containerRatio = cw / ch;
+                          if (containerRatio > imgRatio) {
+                            // Container is wider - height limited
+                            wrapStyle = { position: "relative", height: "100%", width: ch * imgRatio };
+                          } else {
+                            // Container is taller - width limited
+                            wrapStyle = { position: "relative", width: "100%", height: cw / imgRatio };
+                          }
+                        }
+                        return (
+                    <div style={wrapStyle}>
                     <img
                       ref={imageRef}
                       src={selectedFloor.image_url}
                       alt=""
-                      className="w-full h-full object-contain pointer-events-none"
+                      style={{ width: "100%", height: "100%", display: "block" }}
                       draggable={false}
-                      onLoad={(e) => setImgNatural({ w: e.target.naturalWidth, h: e.target.naturalHeight })}
+                      className="pointer-events-none"
+                      onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)}
                     />
-
-                    {/* SVG overlay - positioned to match image exactly */}
-                    {(() => {
-                      const transformDiv = mapContainerRef.current;
-                      const layout = getImgLayout(transformDiv);
-                      const svgStyle = layout
-                        ? { position: "absolute", left: layout.left, top: layout.top, width: layout.width, height: layout.height, overflow: "visible" }
-                        : { position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" };
-                      return (
                     <svg
                       ref={svgRef}
                       data-testid="map-editor-svg"
-                      style={svgStyle}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
                     >
