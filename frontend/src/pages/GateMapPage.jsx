@@ -594,6 +594,7 @@ export default function GateMapPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
               {markers.map(m => {
                 const st = STATUS_CONFIG[m.status] || STATUS_CONFIG.open;
+                const linkedGate = m.gate_id ? existingGates.find(g => g.id === m.gate_id) : null;
                 return (
                   <div key={m.id} className={`relative p-3 border rounded-lg cursor-pointer transition-all ${selectedMarkerId === m.id ? "border-blue-500 bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}
                     onClick={() => openEditMarker(m)} data-testid={`gate-list-item-${m.id}`}>
@@ -604,6 +605,7 @@ export default function GateMapPage() {
                       <span className="text-sm font-bold">{language === "ar" ? m.name_ar : m.name_en || m.name_ar}</span>
                     </div>
                     <p className="text-[10px] text-muted-foreground">{language === "ar" ? st.label_ar : st.label_en}</p>
+                    {linkedGate && <p className="text-[9px] text-emerald-600 mt-0.5">{language === "ar" ? "مرتبط" : "Linked"} #{linkedGate.number}</p>}
                   </div>
                 );
               })}
