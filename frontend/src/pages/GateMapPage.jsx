@@ -560,31 +560,45 @@ export default function GateMapPage() {
                           const isHovered = m.id === hoveredMarkerId;
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
-                          const r = isSelected ? 1.8 : isHovered ? 1.5 : 1.2;
+                          const s = isSelected ? 2.2 : isHovered ? 1.9 : 1.6;
                           return (
-                            <g key={m.id} data-testid={`gate-marker-${m.id}`}>
-                              {/* Pulse animation for open gates */}
+                            <g key={m.id} data-testid={`gate-marker-${m.id}`}
+                              style={{ cursor: "pointer" }}
+                              onDoubleClick={(e) => { e.stopPropagation(); openEditMarker(m); }}
+                              onClick={(e) => { if (mode === "edit") { e.stopPropagation(); setSelectedMarkerId(m.id); } }}
+                            >
+                              {/* Pulse for open */}
                               {m.status === "open" && (
-                                <circle cx={m.x} cy={m.y} r="2.5" fill={st.color} fillOpacity="0.15" vectorEffect="non-scaling-stroke">
-                                  <animate attributeName="r" values="1.5;3;1.5" dur="2s" repeatCount="indefinite" />
-                                  <animate attributeName="fill-opacity" values="0.2;0;0.2" dur="2s" repeatCount="indefinite" />
+                                <circle cx={m.x} cy={m.y} r="3" fill={st.color} fillOpacity="0.1" vectorEffect="non-scaling-stroke">
+                                  <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" />
+                                  <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
                                 </circle>
                               )}
-                              {/* Warning ring for unstaffed open gates */}
+                              {/* Unstaffed warning */}
                               {isUnstaffed && (
-                                <circle cx={m.x} cy={m.y} r="2.8" fill="none" stroke="#f59e0b" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke">
+                                <circle cx={m.x} cy={m.y} r={s + 1.2} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke">
                                   <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
                                 </circle>
                               )}
                               {/* Selection ring */}
-                              {isSelected && <circle cx={m.x} cy={m.y} r="2.2" fill="none" stroke="#3b82f6" strokeWidth="0.3" strokeDasharray="0.8 0.4" vectorEffect="non-scaling-stroke" />}
-                              {/* Main dot */}
-                              <circle cx={m.x} cy={m.y} r={r} fill={st.color} stroke="white" strokeWidth="0.3" vectorEffect="non-scaling-stroke" style={{ cursor: "pointer" }}
-                                onDoubleClick={(e) => { e.stopPropagation(); openEditMarker(m); }}
-                                onClick={(e) => { if (mode === "edit") { e.stopPropagation(); setSelectedMarkerId(m.id); } }}
+                              {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.8} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" />}
+                              {/* Pin drop shape */}
+                              <path
+                                d={`M ${m.x} ${m.y + s * 0.9} 
+                                    C ${m.x - s * 0.3} ${m.y + s * 0.4}, ${m.x - s} ${m.y + s * 0.1}, ${m.x - s} ${m.y - s * 0.3}
+                                    C ${m.x - s} ${m.y - s * 1.1}, ${m.x - s * 0.55} ${m.y - s * 1.4}, ${m.x} ${m.y - s * 1.4}
+                                    C ${m.x + s * 0.55} ${m.y - s * 1.4}, ${m.x + s} ${m.y - s * 1.1}, ${m.x + s} ${m.y - s * 0.3}
+                                    C ${m.x + s} ${m.y + s * 0.1}, ${m.x + s * 0.3} ${m.y + s * 0.4}, ${m.x} ${m.y + s * 0.9} Z`}
+                                fill={st.color} stroke="white" strokeWidth="0.25" vectorEffect="non-scaling-stroke"
                               />
-                              {/* Inner icon dot */}
-                              <circle cx={m.x} cy={m.y} r={r * 0.4} fill="white" vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                              {/* Door icon inside pin */}
+                              <rect x={m.x - s * 0.35} y={m.y - s * 1.05} width={s * 0.7} height={s * 0.9} rx={s * 0.08}
+                                fill="white" fillOpacity="0.9" vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                              <rect x={m.x - s * 0.25} y={m.y - s * 0.95} width={s * 0.5} height={s * 0.7} rx={s * 0.05}
+                                fill={st.color} fillOpacity="0.3" vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                              {/* Door handle */}
+                              <circle cx={m.x + s * 0.12} cy={m.y - s * 0.55} r={s * 0.07}
+                                fill="white" vectorEffect="non-scaling-stroke" pointerEvents="none" />
                             </g>
                           );
                         })}
