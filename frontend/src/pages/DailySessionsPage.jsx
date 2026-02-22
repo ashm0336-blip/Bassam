@@ -891,6 +891,11 @@ export default function DailySessionsPage() {
                       <p className="text-xs text-blue-700"><Pencil className="w-3.5 h-3.5 inline ml-1" />{isAr ? `انقر على الخريطة لإضافة نقاط. انقر على النقطة الأولى لإغلاق الشكل. (${drawingPoints.length} نقطة)` : `Click to add points. Click first point to close. (${drawingPoints.length})`}</p>
                     </div>
                   )}
+                  {activeSession?.status === "draft" && mapMode === "rect" && (
+                    <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <p className="text-xs text-indigo-700"><Square className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر واسحب لرسم مستطيل. حرر الماوس لإنهاء الشكل." : "Click and drag to draw a rectangle. Release to finish."}</p>
+                    </div>
+                  )}
                   {activeSession?.status === "draft" && mapMode === "edit" && (
                     <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-xs text-amber-700"><MousePointer className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على منطقة لتحديدها، اسحب النقاط لتعديلها، انقر مزدوج لتعديل التفاصيل" : "Click zone to select, drag points to edit, double-click for details"}</p>
