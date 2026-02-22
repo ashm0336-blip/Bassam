@@ -706,11 +706,28 @@ export default function MapManagementPage() {
 
             {/* Actions */}
             <div className="flex gap-2">
-              {mode === "draw" && drawingPoints.length > 0 && (
+              {mode === "draw" && (
                 <>
-                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))} data-testid="drawing-undo-button"><Undo2 className="w-4 h-4 ml-1" />{language === "ar" ? "تراجع" : "Undo"}</Button>
-                  <Button variant="outline" size="sm" onClick={() => setDrawingPoints([])} data-testid="drawing-clear-button"><X className="w-4 h-4 ml-1" />{language === "ar" ? "مسح" : "Clear"}</Button>
-                  {drawingPoints.length >= 3 && <Button size="sm" onClick={() => setShowZoneDialog(true)} data-testid="drawing-save-button"><Check className="w-4 h-4 ml-1" />{language === "ar" ? "حفظ" : "Save"}</Button>}
+                  {drawingPoints.length === 0 && (
+                    <div className="flex border rounded-lg overflow-hidden">
+                      <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("circle")} title={language === "ar" ? "دائرة" : "Circle"} data-testid="shape-circle-button">
+                        <Circle className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="rounded-none border-x" onClick={() => generateShape("rectangle")} title={language === "ar" ? "مربع" : "Rectangle"} data-testid="shape-rect-button">
+                        <Square className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("triangle")} title={language === "ar" ? "مثلث" : "Triangle"} data-testid="shape-triangle-button">
+                        <Triangle className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  {drawingPoints.length > 0 && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))} data-testid="drawing-undo-button"><Undo2 className="w-4 h-4 ml-1" />{language === "ar" ? "تراجع" : "Undo"}</Button>
+                      <Button variant="outline" size="sm" onClick={() => setDrawingPoints([])} data-testid="drawing-clear-button"><X className="w-4 h-4 ml-1" />{language === "ar" ? "مسح" : "Clear"}</Button>
+                      {drawingPoints.length >= 3 && <Button size="sm" onClick={() => setShowZoneDialog(true)} data-testid="drawing-save-button"><Check className="w-4 h-4 ml-1" />{language === "ar" ? "حفظ" : "Save"}</Button>}
+                    </>
+                  )}
                 </>
               )}
               {mode === "edit" && selectedZoneId && (
