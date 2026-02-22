@@ -2276,6 +2276,7 @@ async def create_gate_marker(data: GateMarkerCreate, admin: dict = Depends(requi
     marker = GateMarker(**data.model_dump())
     doc = marker.model_dump()
     await db.gate_markers.insert_one(doc)
+    doc.pop("_id", None)
     return doc
 
 @api_router.put("/admin/gate-map/markers/{marker_id}")
