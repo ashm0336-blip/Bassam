@@ -472,6 +472,68 @@ export default function MapManagementPage() {
     }
   }, [handleWheel]);
 
+  // Crowd map wheel handler
+  const handleCrowdWheel = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const container = crowdMapRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const factor = e.deltaY > 0 ? 0.85 : 1.18;
+    const prev = crowdZoomRef.current;
+    const nz = Math.max(0.5, Math.min(6, prev * factor));
+    if (nz === prev) return;
+    const s = nz / prev;
+    crowdZoomRef.current = nz;
+    setCrowdZoom(nz);
+    setCrowdPan(p => ({ x: mouseX - s * (mouseX - p.x), y: mouseY - s * (mouseY - p.y) }));
+  }, []);
+
+  const crowdMapWheelRef = useCallback((node) => {
+    if (node) {
+      node.addEventListener("wheel", handleCrowdWheel, { passive: false });
+      crowdMapRef.current = node;
+    }
+  }, [handleCrowdWheel]);
+
+  // Crowd map mouse handlers
+  const getCrowdMousePercent = (e) => {
+    if (!crowdSvgRef.current) return { x: 0, y: 0 };
+    const ctm = crowdSvgRef.current.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const pt = crowdSvgRef.current.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const t = pt.matrixTransform(ctm.inverse());
+    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+  };
+
+  const handleCrowdMouseDown = (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    setCrowdPanning(true);
+    setCrowdPanStart({ x: e.clientX - crowdPan.x, y: e.clientY - crowdPan.y });
+  };
+  const handleCrowdMouseMove = (e) => {
+    if (crowdPanning) {
+      setCrowdPan({ x: e.clientX - crowdPanStart.x, y: e.clientY - crowdPanStart.y });
+    }
+    const container = crowdMapRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      setCrowdTooltipPos({ x: e.clientX - rect.left + 15, y: e.clientY - rect.top - 10 });
+    }
+    const pos = getCrowdMousePercent(e);
+    let found = null;
+    for (const zone of zones) {
+      if (isPointInPolygon(pos, zone.polygon_points)) { found = zone.id; break; }
+    }
+    if (found !== crowdHoveredZone) setCrowdHoveredZone(found);
+  };
+  const handleCrowdMouseUp = () => { setCrowdPanning(false); };
+  const handleCrowdMouseLeave = () => { setCrowdPanning(false); setCrowdHoveredZone(null); };
+
   // Escape key resets drawing / deselects zone
   useEffect(() => {
     const handleKeyDown = (e) => {
