@@ -114,6 +114,10 @@ export default function MapManagementPage() {
   const [showEditZoneDialog, setShowEditZoneDialog] = useState(false);
   const [editingZone, setEditingZone] = useState(null);
 
+  // Zone hover tooltip
+  const [hoveredZoneId, setHoveredZoneId] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
   // Drawing state
   const [mode, setMode] = useState("pan"); // pan, draw, edit
   const [drawingPoints, setDrawingPoints] = useState([]);
