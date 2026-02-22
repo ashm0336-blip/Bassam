@@ -695,34 +695,62 @@ export default function GateMapPage() {
 
       {/* Add Marker Dialog */}
       <Dialog open={showMarkerDialog} onOpenChange={(o) => { if (!o) { setShowMarkerDialog(false); setPendingPoint(null); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{language === "ar" ? "إضافة باب" : "Add Gate"}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" />{language === "ar" ? "إضافة باب على الخريطة" : "Place Gate on Map"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            {/* Link to existing gate */}
+            <div>
+              <Label className="text-xs font-medium">{language === "ar" ? "ربط بباب من القائمة" : "Link to existing gate"}</Label>
+              <Select value={markerForm.gate_id || "_manual"} onValueChange={v => {
+                if (v === "_manual") {
+                  setMarkerForm({ name_ar: "", name_en: "", gate_type: "main", direction: "both", classification: "general", max_flow: 5000, gate_id: null });
+                } else {
+                  const gate = existingGates.find(g => g.id === v);
+                  if (gate) setMarkerForm(mapGateToMarker(gate));
+                }
+              }}>
+                <SelectTrigger data-testid="gate-link-select"><SelectValue placeholder={language === "ar" ? "اختر باب أو أضف يدوي" : "Select gate or add manually"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_manual">{language === "ar" ? "إدخال يدوي (باب جديد)" : "Manual entry (new gate)"}</SelectItem>
+                  {existingGates.filter(g => !markers.some(m => m.gate_id === g.id)).map(g => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name} {g.number ? `(${g.number})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {markerForm.gate_id && (
+                <div className="mt-2 p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+                  {language === "ar" ? "مرتبط بقائمة الأبواب - البيانات ستتحدث تلقائياً" : "Linked to gates list - data syncs automatically"}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>{language === "ar" ? "اسم الباب" : "Name"}</Label><Input value={markerForm.name_ar} onChange={e => setMarkerForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="gate-marker-name" /></div>
-              <div><Label>{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={markerForm.name_en} onChange={e => setMarkerForm(p => ({ ...p, name_en: e.target.value }))} /></div>
+              <div><Label className="text-xs">{language === "ar" ? "اسم الباب" : "Name"}</Label><Input value={markerForm.name_ar} onChange={e => setMarkerForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="gate-marker-name" /></div>
+              <div><Label className="text-xs">{language === "ar" ? "الاسم بالإنجليزية" : "English"}</Label><Input value={markerForm.name_en} onChange={e => setMarkerForm(p => ({ ...p, name_en: e.target.value }))} /></div>
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <div><Label>{language === "ar" ? "النوع" : "Type"}</Label>
+              <div><Label className="text-xs">{language === "ar" ? "النوع" : "Type"}</Label>
                 <Select value={markerForm.gate_type} onValueChange={v => setMarkerForm(p => ({ ...p, gate_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{GATE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{language === "ar" ? t.label_ar : t.label_en}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>{language === "ar" ? "الاتجاه" : "Direction"}</Label>
+              <div><Label className="text-xs">{language === "ar" ? "الاتجاه" : "Direction"}</Label>
                 <Select value={markerForm.direction} onValueChange={v => setMarkerForm(p => ({ ...p, direction: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{DIRECTIONS.map(d => <SelectItem key={d.value} value={d.value}>{language === "ar" ? d.label_ar : d.label_en}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>{language === "ar" ? "التصنيف" : "Class"}</Label>
+              <div><Label className="text-xs">{language === "ar" ? "التصنيف" : "Class"}</Label>
                 <Select value={markerForm.classification} onValueChange={v => setMarkerForm(p => ({ ...p, classification: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{CLASSIFICATIONS.map(c => <SelectItem key={c.value} value={c.value}>{language === "ar" ? c.label_ar : c.label_en}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label>{language === "ar" ? "أقصى تدفق" : "Max Flow"}</Label><Input type="number" value={markerForm.max_flow} onChange={e => setMarkerForm(p => ({ ...p, max_flow: parseInt(e.target.value) || 5000 }))} /></div>
+            <div><Label className="text-xs">{language === "ar" ? "أقصى تدفق" : "Max Flow"}</Label><Input type="number" value={markerForm.max_flow} onChange={e => setMarkerForm(p => ({ ...p, max_flow: parseInt(e.target.value) || 5000 }))} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowMarkerDialog(false); setPendingPoint(null); }}>{language === "ar" ? "إلغاء" : "Cancel"}</Button>
