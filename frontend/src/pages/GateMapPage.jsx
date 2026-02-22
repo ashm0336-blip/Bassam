@@ -616,7 +616,14 @@ export default function GateMapPage() {
                       <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
                         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border p-3 min-w-[220px] max-w-[280px]" dir="rtl" style={{ borderTopColor: st.color, borderTopWidth: 3 }}>
                           <div className="flex items-center justify-between gap-3 mb-1.5">
-                            <span className="font-bold text-sm">{language === "ar" ? m.name_ar : m.name_en || m.name_ar}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: st.color }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d={m.status === "closed" ? "M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14 M2 20h20 M14 12v.01" : "M13 4h3a2 2 0 0 1 2 2v14 M2 20h3 M13 20h9 M10 12v.01 M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"} />
+                                </svg>
+                              </span>
+                              <span className="font-bold text-sm">{language === "ar" ? m.name_ar : m.name_en || m.name_ar}</span>
+                            </div>
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${st.color}20`, color: st.color }}>{language === "ar" ? st.label_ar : st.label_en}</span>
                           </div>
                           <div className="space-y-1 text-[11px]">
