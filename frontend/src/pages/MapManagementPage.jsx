@@ -1246,7 +1246,7 @@ export default function MapManagementPage() {
                 <div
                   ref={crowdMapWheelRef}
                   className="relative bg-gray-100 overflow-hidden"
-                  style={{ height: "400px", cursor: crowdPanning ? "grabbing" : "grab" }}
+                  style={{ height: "600px", cursor: crowdPanning ? "grabbing" : "grab" }}
                   onMouseDown={handleCrowdMouseDown}
                   onMouseMove={handleCrowdMouseMove}
                   onMouseUp={handleCrowdMouseUp}
