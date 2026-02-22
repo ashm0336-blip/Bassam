@@ -581,9 +581,6 @@ export default function GateMapPage() {
                               </ellipse>
                               {isSelected && <ellipse cx={m.x} cy={m.y} rx={rx + 0.6} ry={(rx + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.25" />}
                               <ellipse cx={m.x} cy={m.y} rx={rx} ry={ry} fill={st.color} />
-                              <g transform={`translate(${m.x - 12 * iconS}, ${m.y - 12 * iconS * ar}) scale(${iconS}, ${iconS * ar})`} pointerEvents="none">
-                                <path d={doorPath} fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                              </g>
                             </g>
                           );
                         })}
