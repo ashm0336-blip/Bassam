@@ -560,7 +560,7 @@ export default function GateMapPage() {
                           const isHovered = m.id === hoveredMarkerId;
                           const emps = getGateEmployees(m);
                           const isUnstaffed = m.status === "open" && emps.length === 0;
-                          const s = isSelected ? 2.2 : isHovered ? 1.9 : 1.6;
+                          const s = isSelected ? 2.4 : isHovered ? 2.1 : 1.8;
                           return (
                             <g key={m.id} data-testid={`gate-marker-${m.id}`}
                               style={{ cursor: "pointer" }}
@@ -569,36 +569,34 @@ export default function GateMapPage() {
                             >
                               {/* Pulse for open */}
                               {m.status === "open" && (
-                                <circle cx={m.x} cy={m.y} r="3" fill={st.color} fillOpacity="0.1" vectorEffect="non-scaling-stroke">
-                                  <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" />
-                                  <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
+                                <circle cx={m.x} cy={m.y} r={s + 1} fill={st.color} fillOpacity="0.08" vectorEffect="non-scaling-stroke">
+                                  <animate attributeName="r" values={`${s};${s + 2};${s}`} dur="2s" repeatCount="indefinite" />
+                                  <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
                                 </circle>
                               )}
                               {/* Unstaffed warning */}
                               {isUnstaffed && (
-                                <circle cx={m.x} cy={m.y} r={s + 1.2} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke">
+                                <circle cx={m.x} cy={m.y} r={s + 1.5} fill="none" stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke">
                                   <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
                                 </circle>
                               )}
                               {/* Selection ring */}
-                              {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.8} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" />}
-                              {/* Pin drop shape */}
-                              <path
-                                d={`M ${m.x} ${m.y + s * 0.9} 
-                                    C ${m.x - s * 0.3} ${m.y + s * 0.4}, ${m.x - s} ${m.y + s * 0.1}, ${m.x - s} ${m.y - s * 0.3}
-                                    C ${m.x - s} ${m.y - s * 1.1}, ${m.x - s * 0.55} ${m.y - s * 1.4}, ${m.x} ${m.y - s * 1.4}
-                                    C ${m.x + s * 0.55} ${m.y - s * 1.4}, ${m.x + s} ${m.y - s * 1.1}, ${m.x + s} ${m.y - s * 0.3}
-                                    C ${m.x + s} ${m.y + s * 0.1}, ${m.x + s * 0.3} ${m.y + s * 0.4}, ${m.x} ${m.y + s * 0.9} Z`}
-                                fill={st.color} stroke="white" strokeWidth="0.25" vectorEffect="non-scaling-stroke"
-                              />
-                              {/* Door icon inside pin */}
-                              <rect x={m.x - s * 0.35} y={m.y - s * 1.05} width={s * 0.7} height={s * 0.9} rx={s * 0.08}
-                                fill="white" fillOpacity="0.9" vectorEffect="non-scaling-stroke" pointerEvents="none" />
-                              <rect x={m.x - s * 0.25} y={m.y - s * 0.95} width={s * 0.5} height={s * 0.7} rx={s * 0.05}
-                                fill={st.color} fillOpacity="0.3" vectorEffect="non-scaling-stroke" pointerEvents="none" />
-                              {/* Door handle */}
-                              <circle cx={m.x + s * 0.12} cy={m.y - s * 0.55} r={s * 0.07}
-                                fill="white" vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                              {isSelected && <circle cx={m.x} cy={m.y} r={s + 0.6} fill="none" stroke="#3b82f6" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" />}
+                              {/* Colored circle background */}
+                              <circle cx={m.x} cy={m.y} r={s} fill={st.color} stroke="white" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+                              {/* Door icon - white outline */}
+                              <g transform={`translate(${m.x - s * 0.55}, ${m.y - s * 0.5}) scale(${s / 2.2})`} pointerEvents="none">
+                                {/* Door frame */}
+                                <rect x="0" y="0" width="2.2" height="2" rx="0.1" fill="none" stroke="white" strokeWidth="0.18" vectorEffect="non-scaling-stroke" />
+                                {/* Left door (closed) */}
+                                <rect x="0.15" y="0.12" width="0.8" height="1.76" rx="0.05" fill="white" fillOpacity="0.3" stroke="white" strokeWidth="0.12" vectorEffect="non-scaling-stroke" />
+                                {/* Right door (open - angled) */}
+                                <path d="M 1.25 0.12 L 1.85 0.35 L 1.85 1.65 L 1.25 1.88 Z" fill="white" fillOpacity="0.5" stroke="white" strokeWidth="0.12" vectorEffect="non-scaling-stroke" />
+                                {/* Door handle left */}
+                                <circle cx="0.78" cy="1.0" r="0.1" fill="white" vectorEffect="non-scaling-stroke" />
+                                {/* Door handle right */}
+                                <circle cx="1.35" cy="1.0" r="0.08" fill="white" vectorEffect="non-scaling-stroke" />
+                              </g>
                             </g>
                           );
                         })}
