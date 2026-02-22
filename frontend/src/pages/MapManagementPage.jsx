@@ -884,6 +884,7 @@ export default function MapManagementPage() {
                               fillOpacity={zone.opacity}
                               stroke={isSelected ? "#3b82f6" : zone.stroke_color}
                               strokeWidth={isSelected ? 0.6 : 0.3}
+                              strokeOpacity={isSelected ? 1 : (zone.stroke_opacity ?? 1)}
                               strokeDasharray={isSelected ? "1 0.5" : "none"}
                               vectorEffect="non-scaling-stroke"
                               style={{ cursor: "pointer" }}
