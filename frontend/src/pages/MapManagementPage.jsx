@@ -125,6 +125,7 @@ export default function MapManagementPage() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
