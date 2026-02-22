@@ -2254,6 +2254,7 @@ async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = De
     floor = GateMapFloor(**floor_data.model_dump())
     doc = floor.model_dump()
     await db.gate_map_floors.insert_one(doc)
+    doc.pop("_id", None)
     return doc
 
 @api_router.delete("/admin/gate-map/floors/{floor_id}")
