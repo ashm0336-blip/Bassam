@@ -58,13 +58,14 @@ const STATUS_CONFIG = {
 export default function GateMapPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
   const [markers, setMarkers] = useState([]);
-  const [activeTab, setActiveTab] = useState("map");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "map");
   const [imgRatio, setImgRatio] = useState(null);
 
   // Map state
