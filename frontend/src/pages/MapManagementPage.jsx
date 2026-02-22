@@ -923,7 +923,7 @@ export default function MapManagementPage() {
                           {/* Points */}
                           {drawingPoints.map((pt, i) => {
                             const isStart = i === 0;
-                            const radius = isStart ? (nearStart ? 0.5 : 0.3) : DRAW_POINT_RADIUS;
+                            const radius = isStart ? (nearStart ? 0.3 : 0.15) : DRAW_POINT_RADIUS;
                             return (
                               <circle
                                 key={i}
@@ -931,9 +931,9 @@ export default function MapManagementPage() {
                                 cy={pt.y}
                                 r={radius}
                                 fill={isStart ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"}
-                                fillOpacity={isStart ? 0.8 : 0.18}
+                                fillOpacity={isStart ? 0.8 : 0.25}
                                 stroke="white"
-                                strokeWidth="0.1"
+                                strokeWidth="0.08"
                                 vectorEffect="non-scaling-stroke"
                                 data-testid={`drawing-point-${i}`}
                               />
