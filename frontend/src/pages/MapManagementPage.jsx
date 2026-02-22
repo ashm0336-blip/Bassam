@@ -1335,6 +1335,106 @@ export default function MapManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Zone Dialog - Professional */}
+      <Dialog open={showEditZoneDialog} onOpenChange={(open) => { if (!open) { setShowEditZoneDialog(false); setEditingZone(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-5 h-5" />
+              {language === "ar" ? "تعديل بيانات المنطقة" : "Edit Zone"}
+            </DialogTitle>
+          </DialogHeader>
+          {editingZone && (
+            <div className="space-y-5">
+              {/* Preview bar */}
+              <div className="flex items-center gap-3 p-3 rounded-lg border" style={{ borderColor: editingZone.stroke_color, backgroundColor: `${editingZone.fill_color}15` }}>
+                <div className="w-8 h-8 rounded-lg border-2" style={{ backgroundColor: editingZone.fill_color, borderColor: editingZone.stroke_color }} />
+                <div>
+                  <p className="font-bold text-sm">{editingZone.zone_code}</p>
+                  <p className="text-xs text-muted-foreground">{language === "ar" ? editingZone.name_ar : editingZone.name_en}</p>
+                </div>
+              </div>
+
+              {/* Code & Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "الكود" : "Code"}</Label>
+                  <Input value={editingZone.zone_code} onChange={e => setEditingZone(p => ({ ...p, zone_code: e.target.value }))} data-testid="edit-zone-code" />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "النوع" : "Type"}</Label>
+                  <Select value={editingZone.zone_type} onValueChange={v => setEditingZone(p => ({ ...p, zone_type: v }))}>
+                    <SelectTrigger data-testid="edit-zone-type"><SelectValue /></SelectTrigger>
+                    <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{language === "ar" ? t.label_ar : t.label_en}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Names */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "الاسم بالعربية" : "Arabic Name"}</Label>
+                  <Input value={editingZone.name_ar} onChange={e => setEditingZone(p => ({ ...p, name_ar: e.target.value }))} data-testid="edit-zone-name-ar" />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "الاسم بالإنجليزية" : "English Name"}</Label>
+                  <Input value={editingZone.name_en} onChange={e => setEditingZone(p => ({ ...p, name_en: e.target.value }))} data-testid="edit-zone-name-en" />
+                </div>
+              </div>
+
+              {/* Colors */}
+              <div>
+                <Label className="text-xs font-medium mb-2 block">{language === "ar" ? "الألوان" : "Colors"}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] text-muted-foreground">{language === "ar" ? "لون التعبئة" : "Fill"}</span>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={editingZone.fill_color} onChange={e => setEditingZone(p => ({ ...p, fill_color: e.target.value }))} className="w-9 h-9 rounded border cursor-pointer" data-testid="edit-zone-fill-color" />
+                      <Input value={editingZone.fill_color} onChange={e => setEditingZone(p => ({ ...p, fill_color: e.target.value }))} className="font-mono text-xs" dir="ltr" data-testid="edit-zone-fill-hex" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] text-muted-foreground">{language === "ar" ? "لون الحدود" : "Stroke"}</span>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={editingZone.stroke_color} onChange={e => setEditingZone(p => ({ ...p, stroke_color: e.target.value }))} className="w-9 h-9 rounded border cursor-pointer" data-testid="edit-zone-stroke-color" />
+                      <Input value={editingZone.stroke_color} onChange={e => setEditingZone(p => ({ ...p, stroke_color: e.target.value }))} className="font-mono text-xs" dir="ltr" data-testid="edit-zone-stroke-hex" />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <span className="text-[11px] text-muted-foreground">{language === "ar" ? "الشفافية" : "Opacity"}: {Math.round((editingZone.opacity ?? 0.4) * 100)}%</span>
+                  <input type="range" min="0" max="100" value={Math.round((editingZone.opacity ?? 0.4) * 100)} onChange={e => setEditingZone(p => ({ ...p, opacity: parseInt(e.target.value) / 100 }))} className="w-full accent-emerald-600 mt-1" data-testid="edit-zone-opacity" />
+                </div>
+              </div>
+
+              {/* Capacity & Area */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "السعة القصوى" : "Max Capacity"}</Label>
+                  <Input type="number" value={editingZone.max_capacity ?? 0} onChange={e => setEditingZone(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))} data-testid="edit-zone-capacity" />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">{language === "ar" ? "المساحة (م²)" : "Area (m²)"}</Label>
+                  <Input type="number" value={editingZone.area_sqm ?? 0} onChange={e => setEditingZone(p => ({ ...p, area_sqm: parseFloat(e.target.value) || 0 }))} data-testid="edit-zone-area" />
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="text-xs text-muted-foreground flex items-center gap-4">
+                <span>{language === "ar" ? "النقاط" : "Points"}: {editingZone.polygon_points?.length || 0}</span>
+                {editingZone.current_crowd != null && <span>{language === "ar" ? "الحشود الحالية" : "Current"}: {editingZone.current_crowd}</span>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowEditZoneDialog(false); setEditingZone(null); }} data-testid="edit-zone-cancel">{language === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button onClick={handleSaveEditZone} disabled={!editingZone?.zone_code || !editingZone?.name_ar} data-testid="edit-zone-save">
+              <Save className="w-4 h-4 ml-2" />{language === "ar" ? "حفظ" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
