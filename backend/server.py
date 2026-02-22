@@ -590,6 +590,60 @@ class GateDailyLog(BaseModel):
     notes: str = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ============= Daily Map Session Models =============
+class SessionZone(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    original_zone_id: Optional[str] = None
+    floor_id: str
+    zone_code: str
+    name_ar: str
+    name_en: str
+    zone_type: str
+    polygon_points: List[dict]
+    fill_color: str = "#22c55e"
+    stroke_color: str = "#000000"
+    opacity: float = 0.4
+    stroke_opacity: float = 1.0
+    max_capacity: int = 1000
+    area_sqm: float = 0
+    per_person_sqm: float = 0.8
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
+    is_removed: bool = False
+    daily_note: Optional[str] = None
+    change_type: Optional[str] = None  # added, removed, modified, category_changed, moved, unchanged
+
+class MapSession(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str  # YYYY-MM-DD
+    floor_id: str
+    floor_name: str = ""
+    status: str = "draft"  # draft, completed
+    supervisor_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    zones: List[SessionZone] = []
+    changes_summary: dict = Field(default_factory=lambda: {"added": 0, "removed": 0, "modified": 0, "unchanged": 0})
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MapSessionCreate(BaseModel):
+    date: str
+    floor_id: str
+    clone_from: Optional[str] = None  # session_id to clone from, or "master" to clone from master zones
+
+class MapSessionUpdate(BaseModel):
+    status: Optional[str] = None
+    supervisor_notes: Optional[str] = None
+
+class SessionZoneUpdate(BaseModel):
+    zone_type: Optional[str] = None
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    is_removed: Optional[bool] = None
+    daily_note: Optional[str] = None
+    fill_color: Optional[str] = None
+    polygon_points: Optional[List[dict]] = None
+
 # ============= Transaction Models =============
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
