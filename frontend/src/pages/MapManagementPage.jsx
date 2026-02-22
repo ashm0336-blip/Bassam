@@ -1072,15 +1072,30 @@ export default function MapManagementPage() {
             </div>
             <div>
               <Label>{language === "ar" ? "الصورة" : "Image"}</Label>
-              <label className="block">
-                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" data-testid="floor-image-file-input" />
-                <Button type="button" variant="outline" className="w-full" onClick={e => e.currentTarget.parentElement.querySelector('input').click()} disabled={uploadingImage} data-testid="floor-image-upload-button">
-                  {uploadingImage ? `${uploadProgress}%` : <><Upload className="w-4 h-4 ml-2" />{language === "ar" ? "رفع" : "Upload"}</>}
-                </Button> 
+              <label
+                className={`mt-2 block rounded-lg border-2 border-dashed p-4 text-center transition ${isDragOver ? "border-emerald-500 bg-emerald-50" : "border-slate-200"}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                data-testid="floor-image-dropzone"
+              >
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" data-testid="floor-image-file-input" />
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="w-6 h-6 text-slate-500" />
+                  <p className="text-sm text-slate-600">
+                    {language === "ar" ? "اسحب الصورة هنا أو" : "Drag & drop here or"}
+                  </p>
+                  <Button type="button" variant="outline" className="w-full" disabled={uploadingImage} data-testid="floor-image-browse-button">
+                    {uploadingImage ? `${uploadProgress}%` : (language === "ar" ? "اختر صورة" : "Browse image")}
+                  </Button>
+                  <p className={`text-xs ${isDragOver ? "text-emerald-600" : "text-slate-400"}`} data-testid="floor-image-dropzone-hint">
+                    {isDragOver ? (language === "ar" ? "أفلت الصورة للرفع" : "Drop to upload") : (language === "ar" ? "يدعم جميع امتدادات الصور" : "All image extensions supported")}
+                  </p>
+                </div>
               </label>
-              {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
+              {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" data-testid="floor-upload-progress" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder="URL" className="mt-2" dir="ltr" data-testid="floor-image-url-input" />
-              {floorForm.image_url && <img src={normalizeImageUrl(floorForm.image_url)} alt="" className="w-full h-24 object-contain rounded border mt-2" data-testid="floor-image-preview" />}
+              {floorPreviewUrl && <img src={floorPreviewUrl} alt="" className="w-full h-24 object-contain rounded border mt-2" data-testid="floor-image-preview" />}
             </div>
           </div>
           <DialogFooter>
