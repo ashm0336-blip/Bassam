@@ -1,33 +1,49 @@
-# منصة خدمات الحشود (Al-Haram OS)
+# Crowd Services Platform - PRD
 
-## المشكلة الأصلية
-منصة إدارية متكاملة لخدمات الحشود في الحرم المكي الشريف.
+## Original Problem Statement
+Build an interactive map-based digital operational report for a crowd management platform (Al-Haram OS). The system manages daily operations including prayer areas, gates, and zones across multiple floors.
 
----
+## Core Features Implemented
+1. **Master Map Management** - Interactive zone drawing/editing on floor plans
+2. **Gate Management** - Gate markers with status tracking on floor plans
+3. **Daily Map Sessions** - Daily snapshots of zone configurations with full editing suite
+4. **Daily Gate Sessions** - Daily gate status logging with interactive map
+5. **Statistics Tab** (Feb 2026) - Category-based statistics with previous day comparison inside Daily Map Sessions
 
-## ما تم تنفيذه (22-23 فبراير 2026)
+## Architecture
+- **Frontend:** React + Shadcn/UI + Tailwind CSS
+- **Backend:** FastAPI + MongoDB
+- **Key Files:**
+  - `/app/backend/server.py` - All backend logic (NEEDS REFACTORING)
+  - `/app/frontend/src/pages/DailySessionsPage.jsx` - Daily map sessions + Statistics tab
+  - `/app/frontend/src/pages/DailyGateSessionsPage.jsx` - Daily gate sessions
+  - `/app/frontend/src/pages/MapManagementPage.jsx` - Master map management
+  - `/app/frontend/src/pages/GateMapPage.jsx` - Gate management
 
-### السجل اليومي للخرائط (المناطق/المصليات) ✅
-- أدوات رسم: تحريك، رسم حر، مستطيل، تعديل + دوران + سحب + نسخ
-- تنسيق شكل: لون/شفافية التعبئة والحدود، سُمك، نوع (متصل/مقطع/نقطي)
-- نافذة تعديل: اسم + ترميز + فئة + تنسيق + ملاحظة + حالة (نشط/غير نشط/حذف)
-- 16 فئة منطقة | تقويم شهري | إدخال بأثر رجعي + متعدد | مقارنة جولتين
+## Credentials
+- Admin: admin@crowd.sa / admin123
 
-### السجل اليومي للأبواب ✅ (جديد!)
-- صفحة `/daily-gates` متكاملة مع نفس فلسفة سجل المناطق
-- خريطة تفاعلية مع markers ملونة حسب الحالة (أخضر/أحمر/برتقالي/رمادي)
-- قائمة أبواب مع فلاتر (مفتوح/مغلق/مزدحم/صيانة) وبطاقات احترافية
-- نافذة تعديل: 4 حالات + اتجاه + تصنيف + موظفين + ملاحظة + تعطيل
-- نسخ 17 باب تلقائياً من بيانات الأبواب الأساسية
-- تحذير الأبواب المفتوحة بدون موظفين
-- تقويم + إدخال متعدد + ملاحظات مشرف + إنهاء/فتح
+## Prioritized Backlog
 
----
+### P0 (Critical)
+- User verification of Daily Map Sessions and Daily Gate Sessions features
+- Refactor `server.py` into modular FastAPI structure (routes/, models/, services/)
 
-## الأولويات المتبقية
-- P0: لوحة الإحصائيات والتحليلات
-- P1: إدارة الممرات، تصدير PDF
-- P2: إعادة هيكلة server.py، WebSockets
+### P1 (High)
+- Dashboard & Analytics page (comprehensive statistics across all sessions)
+- Refactor large frontend components (DailySessionsPage, DailyGateSessionsPage)
 
-## بيانات الاختبار
-- `admin@crowd.sa` / `admin123`
+### P2 (Medium)
+- Real-time crowd data integration
+- WebSocket integration for live updates
+- PDF export for daily reports
+- Day-over-day trend charts
+- Side-by-side day comparison view
+
+## Last Completed Task
+- **Statistics Tab** in Daily Map Sessions (`/daily-sessions`):
+  - 4 KPI cards (active zones, removed, changes, categories)
+  - Donut chart for category distribution
+  - Category breakdown table with counts, percentages, progress bars
+  - Previous day comparison with category-level deltas
+  - All tests passed (iteration_15.json - 100% success rate)
