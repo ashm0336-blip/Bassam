@@ -1567,16 +1567,10 @@ export default function DailySessionsPage() {
                                     />
                                   </div>
 
-                                  {/* Max Capacity Input */}
-                                  <div className="col-span-2 flex justify-center">
-                                    <Input
-                                      type="number"
-                                      min={1}
-                                      className={`w-24 h-8 text-center text-sm font-mono text-muted-foreground ${editCap !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
-                                      value={editCap ?? zone.maxDisplay}
-                                      onChange={(e) => handleDensityChange(zone.id, "max_capacity", parseInt(e.target.value) || 1)}
-                                      data-testid={`capacity-input-${zone.id}`}
-                                    />
+                                  {/* Max Capacity - Read Only (calculated from zone settings) */}
+                                  <div className="col-span-2 flex flex-col items-center justify-center">
+                                    <span className="text-sm font-bold font-mono text-slate-600" data-testid={`capacity-display-${zone.id}`}>{zone.maxDisplay.toLocaleString()}</span>
+                                    {zone.area_sqm > 0 && <span className="text-[9px] text-muted-foreground">{zone.area_sqm}{isAr ? " م²" : " m²"}</span>}
                                   </div>
 
                                   {/* Utilization Bar */}
