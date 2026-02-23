@@ -335,9 +335,19 @@ export default function DailySessionsPage() {
     } else if (mapMode === "edit" && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (!zone?.polygon_points) return;
+
+      // Check rotation handle first
+      const rotHandle = getRotationHandle(zone.polygon_points);
+      if (rotHandle && getDistance(pos, rotHandle) < (2.5 / Math.max(zoom, 0.5))) {
+        setIsRotating(true);
+        return;
+      }
+
+      // Check vertex handles
       const hitIndex = getHitPointIndex(zone.polygon_points, pos);
       if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
-      // Midpoint handle
+
+      // Check midpoint handles
       const pts = zone.polygon_points;
       const midRadius = 1.5 / Math.max(zoom, 0.5);
       for (let i = 0; i < pts.length; i++) {
@@ -345,11 +355,16 @@ export default function DailySessionsPage() {
         const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
         if (getDistance(pos, { x: mx, y: my }) < midRadius) {
           const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
-          // Update zone in session locally
-          const updatedSession = { ...activeSession, zones: activeSession.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) };
-          setActiveSession(updatedSession);
+          setActiveSession({ ...activeSession, zones: activeSession.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) });
           setDraggingPoint(j); setHoveredPoint(j); return;
         }
+      }
+
+      // Check if clicking inside the zone to drag the whole shape
+      if (isPointInPolygon(pos, zone.polygon_points)) {
+        setIsDraggingZone(true);
+        setDragZoneStart(pos);
+        return;
       }
     }
   };
@@ -359,13 +374,39 @@ export default function DailySessionsPage() {
     setMousePos(pos);
     if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
     if (mapMode === "rect" && rectStart) { setRectEnd(pos); return; }
+
+    // Rotating
+    if (isRotating && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (zone?.polygon_points) {
+        const center = getZoneCenter(zone.polygon_points);
+        const angle = Math.atan2(pos.y - center.y, pos.x - center.x) - Math.atan2(mousePos.y - center.y, mousePos.x - center.x);
+        const newPts = rotatePoints(zone.polygon_points, center, angle);
+        setActiveSession({ ...activeSession, zones: activeSession.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPts } : z) });
+      }
+      return;
+    }
+
+    // Dragging whole zone
+    if (isDraggingZone && selectedZoneId && dragZoneStart) {
+      const dx = pos.x - dragZoneStart.x;
+      const dy = pos.y - dragZoneStart.y;
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (zone?.polygon_points) {
+        const newPts = movePoints(zone.polygon_points, dx, dy);
+        setActiveSession({ ...activeSession, zones: activeSession.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPts } : z) });
+        setDragZoneStart(pos);
+      }
+      return;
+    }
+
+    // Dragging a single point
     if (draggingPoint !== null && selectedZoneId) {
-      const updatedSession = { ...activeSession, zones: activeSession.zones.map(z => {
+      setActiveSession({ ...activeSession, zones: activeSession.zones.map(z => {
         if (z.id !== selectedZoneId) return z;
         const newPts = [...z.polygon_points]; newPts[draggingPoint] = { x: pos.x, y: pos.y };
         return { ...z, polygon_points: newPts };
-      })};
-      setActiveSession(updatedSession);
+      })});
       return;
     }
     if (mapMode === "edit" && selectedZoneId) {
@@ -375,7 +416,7 @@ export default function DailySessionsPage() {
     }
     if (mapMode === "draw" && drawingPoints.length >= 3) setNearStart(getDistance(pos, drawingPoints[0]) < SNAP_DISTANCE);
     // Tooltip
-    if (mapMode !== "draw" && draggingPoint === null && !isPanning) {
+    if (mapMode !== "draw" && draggingPoint === null && !isPanning && !isRotating && !isDraggingZone) {
       if (mapContainerRef.current) {
         const rect = mapContainerRef.current.getBoundingClientRect();
         setTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
@@ -389,7 +430,7 @@ export default function DailySessionsPage() {
   };
 
   const handleMapMouseUp = async () => {
-    // Rectangle mode: finalize and open dialog
+    // Rectangle mode
     if (mapMode === "rect" && rectStart && rectEnd) {
       const x1 = Math.min(rectStart.x, rectEnd.x), y1 = Math.min(rectStart.y, rectEnd.y);
       const x2 = Math.max(rectStart.x, rectEnd.x), y2 = Math.max(rectStart.y, rectEnd.y);
@@ -400,7 +441,10 @@ export default function DailySessionsPage() {
       setRectStart(null); setRectEnd(null);
       return;
     }
-    if (draggingPoint !== null && selectedZoneId) {
+
+    // Save after rotate, drag zone, or drag point
+    const needsSave = (draggingPoint !== null || isRotating || isDraggingZone) && selectedZoneId;
+    if (needsSave) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (zone) {
         try {
@@ -410,6 +454,7 @@ export default function DailySessionsPage() {
       }
     }
     setIsPanning(false); setDraggingPoint(null); setHoveredPoint(null);
+    setIsRotating(false); setIsDraggingZone(false); setDragZoneStart(null);
   };
 
   const handleMapClick = (e) => {
