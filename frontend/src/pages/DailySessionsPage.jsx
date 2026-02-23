@@ -979,7 +979,7 @@ export default function DailySessionsPage() {
                   )}
                   {activeSession?.status === "draft" && mapMode === "edit" && (
                     <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-xs text-amber-700"><MousePointer className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على منطقة لتحديدها، اسحب النقاط لتعديلها، انقر مزدوج لتعديل التفاصيل" : "Click zone to select, drag points to edit, double-click for details"}</p>
+                      <p className="text-xs text-amber-700"><MousePointer className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. اسحب المقبض البنفسجي ↻ للدوران. اسحب المنطقة لنقلها." : "Click zone to select. Drag points to edit shape. Drag purple handle ↻ to rotate. Drag zone to move."}</p>
                     </div>
                   )}
 
