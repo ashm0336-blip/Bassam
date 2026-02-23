@@ -1427,11 +1427,32 @@ export default function DailySessionsPage() {
           <DialogHeader><DialogTitle className="font-cairo flex items-center gap-2"><Edit2 className="w-5 h-5" />{isAr ? "تعديل المنطقة" : "Edit Zone"}</DialogTitle></DialogHeader>
           {selectedZone && (
             <div className="space-y-4">
-              {/* Zone header */}
+              {/* Zone header with color icon */}
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: selectedZone.fill_color }}>{ZONE_TYPES.find(t => t.value === selectedZone.zone_type)?.icon || "?"}</div>
-                <div><p className="font-semibold">{selectedZone.zone_code}</p><p className="text-xs text-muted-foreground">{isAr ? selectedZone.name_ar : selectedZone.name_en}</p></div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{selectedZone.zone_code}</p>
+                  <p className="text-xs text-muted-foreground">{isAr ? selectedZone.name_ar : selectedZone.name_en}</p>
+                </div>
+                {selectedZone.change_type && selectedZone.change_type !== "unchanged" && (() => {
+                  const cl = CHANGE_LABELS[selectedZone.change_type];
+                  return cl ? <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span> : null;
+                })()}
               </div>
+
+              {/* Editable Name & Code */}
+              {activeSession?.status === "draft" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-medium">{isAr ? "اسم المنطقة" : "Zone Name"}</Label>
+                    <Input className="mt-1 text-sm" value={selectedZone.name_ar || ""} onChange={(e) => setSelectedZone(p => ({ ...p, name_ar: e.target.value }))} data-testid="zone-edit-name" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium">{isAr ? "الترميز" : "Zone Code"}</Label>
+                    <Input className="mt-1 text-sm font-mono" value={selectedZone.zone_code || ""} onChange={(e) => setSelectedZone(p => ({ ...p, zone_code: e.target.value }))} data-testid="zone-edit-code" />
+                  </div>
+                </div>
+              )}
 
               {/* Category */}
               <div>
@@ -1446,8 +1467,6 @@ export default function DailySessionsPage() {
               {activeSession?.status === "draft" && (
                 <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
                   <h4 className="font-cairo font-semibold text-sm flex items-center gap-2"><Palette className="w-4 h-4" />{isAr ? "تنسيق الشكل" : "Shape Style"}</h4>
-
-                  {/* Fill color + opacity */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">{isAr ? "لون التعبئة" : "Fill Color"}</Label>
@@ -1464,8 +1483,6 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Stroke color + opacity */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">{isAr ? "لون الحدود" : "Stroke Color"}</Label>
@@ -1482,8 +1499,6 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Stroke width + style */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">{isAr ? "سُمك الحدود" : "Stroke Width"}</Label>
@@ -1508,8 +1523,6 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Live preview */}
                   <div className="flex items-center justify-center p-3 bg-white rounded border">
                     <svg width="80" height="50" viewBox="0 0 80 50">
                       <rect x="5" y="5" width="70" height="40" rx="2" fill={selectedZone.fill_color} fillOpacity={selectedZone.opacity ?? 0.4} stroke={selectedZone.stroke_color || "#000"} strokeWidth={(selectedZone.stroke_width ?? 0.3) * 3} strokeOpacity={selectedZone.stroke_opacity ?? 1} strokeDasharray={(selectedZone.stroke_style || "solid") === "dashed" ? "8 4" : (selectedZone.stroke_style || "solid") === "dotted" ? "2 3" : "none"} />
@@ -1525,23 +1538,47 @@ export default function DailySessionsPage() {
                 <Textarea className="mt-1 text-sm" placeholder={isAr ? "أضف ملاحظة لهذا اليوم..." : "Add a note..."} value={selectedZone.daily_note || ""} onChange={(e) => setSelectedZone(p => ({ ...p, daily_note: e.target.value }))} rows={2} disabled={activeSession?.status === "completed"} data-testid="zone-daily-note" />
               </div>
 
-              {/* Zone status */}
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-2">
-                  {selectedZone.is_removed ? <CircleOff className="w-5 h-5 text-red-500" /> : <CircleDot className="w-5 h-5 text-emerald-500" />}
-                  <span className="text-sm font-medium">{selectedZone.is_removed ? (isAr ? "تم إزالة هذه المنطقة" : "Removed") : (isAr ? "المنطقة نشطة" : "Active")}</span>
+              {/* Zone status - enhanced with 3 states */}
+              {activeSession?.status === "draft" && (
+                <div className="p-3 border rounded-lg space-y-2">
+                  <Label className="text-sm font-medium">{isAr ? "حالة المنطقة" : "Zone Status"}</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button onClick={() => { if (selectedZone.is_removed) { handleToggleRemove(selectedZone.id, true); setSelectedZone(p => ({ ...p, is_removed: false })); } }} className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border text-xs transition-all ${!selectedZone.is_removed ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50"}`} data-testid="zone-status-active">
+                      <CircleDot className="w-5 h-5 text-emerald-500" />
+                      <span className="font-medium">{isAr ? "نشط" : "Active"}</span>
+                    </button>
+                    <button onClick={() => { if (!selectedZone.is_removed) { handleToggleRemove(selectedZone.id, false); setSelectedZone(p => ({ ...p, is_removed: true })); } }} className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border text-xs transition-all ${selectedZone.is_removed ? "border-amber-500 bg-amber-50 ring-1 ring-amber-200" : "hover:bg-slate-50"}`} data-testid="zone-status-inactive">
+                      <CircleOff className="w-5 h-5 text-amber-500" />
+                      <span className="font-medium">{isAr ? "غير نشط" : "Inactive"}</span>
+                    </button>
+                    <button onClick={async () => {
+                      try {
+                        await axios.delete(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZone.id}`, getAuthHeaders());
+                        const res = await axios.get(`${API}/map-sessions/${activeSession.id}`);
+                        setActiveSession(res.data);
+                        setShowZoneDialog(false);
+                        setSelectedZoneId(null);
+                        toast.success(isAr ? "تم حذف المنطقة نهائياً" : "Zone permanently deleted");
+                      } catch (e) { toast.error(isAr ? "تعذر الحذف" : "Delete failed"); }
+                    }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-red-200 text-xs transition-all hover:bg-red-50 hover:border-red-400" data-testid="zone-status-delete">
+                      <Trash2 className="w-5 h-5 text-red-500" />
+                      <span className="font-medium text-red-600">{isAr ? "حذف نهائي" : "Delete"}</span>
+                    </button>
+                  </div>
                 </div>
-                {activeSession?.status === "draft" && (
-                  <Button variant={selectedZone.is_removed ? "default" : "destructive"} size="sm" onClick={() => { handleToggleRemove(selectedZone.id, selectedZone.is_removed); setSelectedZone(p => ({ ...p, is_removed: !p.is_removed })); }} data-testid="zone-toggle-remove">
-                    {selectedZone.is_removed ? <><RotateCcw className="w-3 h-3 ml-1" />{isAr ? "استعادة" : "Restore"}</> : <><CircleOff className="w-3 h-3 ml-1" />{isAr ? "إزالة" : "Remove"}</>}
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           )}
           <DialogFooter>
-            {selectedZone?.daily_note !== undefined && activeSession?.status === "draft" && (
-              <Button onClick={() => { handleAddNote(selectedZone.id, selectedZone.daily_note); setShowZoneDialog(false); }} data-testid="save-zone-changes"><Save className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>
+            {activeSession?.status === "draft" && selectedZone && (
+              <Button onClick={() => {
+                handleUpdateZone(selectedZone.id, {
+                  name_ar: selectedZone.name_ar,
+                  name_en: selectedZone.name_en,
+                  daily_note: selectedZone.daily_note,
+                });
+                setShowZoneDialog(false);
+              }} data-testid="save-zone-changes"><Save className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>
             )}
             <Button variant="outline" onClick={() => setShowZoneDialog(false)}>{isAr ? "إغلاق" : "Close"}</Button>
           </DialogFooter>
