@@ -1370,6 +1370,281 @@ export default function DailySessionsPage() {
                   </Card>
                 </TabsContent>
 
+                {/* DENSITY TAB */}
+                <TabsContent value="density" className="space-y-5">
+                  {densityStats && (
+                    <>
+                      {/* Density KPI Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="density-kpi-row">
+                        {/* Overall Utilization */}
+                        <div className="relative overflow-hidden rounded-xl border p-4" style={{ background: `linear-gradient(135deg, ${densityStats.overallLevel.bg}, white)` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "نسبة الإشغال" : "Utilization"}</span>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: densityStats.overallLevel.color + "20" }}>
+                              <Gauge className="w-4 h-4" style={{ color: densityStats.overallLevel.color }} />
+                            </div>
+                          </div>
+                          <p className="text-3xl font-bold" style={{ color: densityStats.overallLevel.color }} data-testid="density-overall-pct">{densityStats.overallPct}%</p>
+                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(densityStats.overallPct, 100)}%`, backgroundColor: densityStats.overallLevel.color }} />
+                          </div>
+                        </div>
+
+                        {/* Total Current */}
+                        <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-blue-50 to-white p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "العدد الحالي" : "Current Count"}</span>
+                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                              <Users className="w-4 h-4 text-blue-600" />
+                            </div>
+                          </div>
+                          <p className="text-3xl font-bold text-blue-700" data-testid="density-total-current">{densityStats.totalCurrent.toLocaleString()}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">{isAr ? `من أصل ${densityStats.totalCapacity.toLocaleString()}` : `of ${densityStats.totalCapacity.toLocaleString()}`}</p>
+                        </div>
+
+                        {/* Critical Zones */}
+                        <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-red-50 to-white p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "مناطق حرجة" : "Critical Zones"}</span>
+                            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                              <ShieldAlert className="w-4 h-4 text-red-500" />
+                            </div>
+                          </div>
+                          <p className="text-3xl font-bold text-red-600" data-testid="density-critical-count">{densityStats.criticalCount}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">{isAr ? "تجاوز 90% من السعة" : "> 90% capacity"}</p>
+                        </div>
+
+                        {/* High Zones */}
+                        <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-orange-50 to-white p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "مناطق مرتفعة" : "High Zones"}</span>
+                            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                              <Flame className="w-4 h-4 text-orange-500" />
+                            </div>
+                          </div>
+                          <p className="text-3xl font-bold text-orange-600" data-testid="density-high-count">{densityStats.highCount}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">{isAr ? "بين 70% - 90%" : "70% - 90%"}</p>
+                        </div>
+                      </div>
+
+                      {/* Save button */}
+                      {Object.keys(densityEdits).length > 0 && (
+                        <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid="density-save-bar">
+                          <div className="flex items-center gap-2 text-sm text-amber-700">
+                            <AlertCircle className="w-4 h-4" />
+                            {isAr ? `${Object.keys(densityEdits).length} تعديل غير محفوظ` : `${Object.keys(densityEdits).length} unsaved changes`}
+                          </div>
+                          <Button onClick={handleSaveDensityBatch} disabled={savingDensity} className="bg-emerald-600 hover:bg-emerald-700" size="sm" data-testid="density-save-btn">
+                            {savingDensity ? <RefreshCw className="w-4 h-4 ml-1 animate-spin" /> : <SaveAll className="w-4 h-4 ml-1" />}
+                            {isAr ? "حفظ الكل" : "Save All"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Density Zone Cards */}
+                      <Card data-testid="density-zones-card">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm font-cairo flex items-center gap-2">
+                              <Activity className="w-4 h-4 text-blue-600" />
+                              {isAr ? "كثافة المناطق" : "Zone Density"}
+                              <Badge variant="secondary" className="text-[10px]">{densityStats.zonesDensity.length} {isAr ? "منطقة" : "zones"}</Badge>
+                            </CardTitle>
+                            {/* Density level legend */}
+                            <div className="flex items-center gap-3">
+                              {[
+                                { color: "#0ea5e9", label: isAr ? "منخفض" : "Low" },
+                                { color: "#16a34a", label: isAr ? "طبيعي" : "Normal" },
+                                { color: "#d97706", label: isAr ? "متوسط" : "Medium" },
+                                { color: "#ea580c", label: isAr ? "مرتفع" : "High" },
+                                { color: "#dc2626", label: isAr ? "حرج" : "Critical" },
+                              ].map(l => (
+                                <div key={l.color} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
+                                  {l.label}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2" data-testid="density-zone-list">
+                            {/* Header row */}
+                            <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] font-semibold text-muted-foreground border-b">
+                              <div className="col-span-3">{isAr ? "المنطقة" : "Zone"}</div>
+                              <div className="col-span-2 text-center">{isAr ? "العدد الحالي" : "Current"}</div>
+                              <div className="col-span-2 text-center">{isAr ? "السعة القصوى" : "Capacity"}</div>
+                              <div className="col-span-3 text-center">{isAr ? "مستوى الإشغال" : "Utilization"}</div>
+                              <div className="col-span-2 text-center">{isAr ? "الحالة" : "Status"}</div>
+                            </div>
+                            {densityStats.zonesDensity.map(zone => {
+                              const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                              const di = zone.densityInfo;
+                              const editCount = densityEdits[zone.id]?.current_count;
+                              const editCap = densityEdits[zone.id]?.max_capacity;
+                              return (
+                                <div
+                                  key={zone.id}
+                                  className={`grid grid-cols-12 gap-3 px-3 py-3 rounded-lg items-center transition-all hover:shadow-sm ${
+                                    di.level === "critical" ? "bg-red-50/60 border border-red-100" :
+                                    di.level === "high" ? "bg-orange-50/40 border border-orange-100" :
+                                    "hover:bg-slate-50/80 border border-transparent"
+                                  }`}
+                                  data-testid={`density-zone-${zone.id}`}
+                                >
+                                  {/* Zone Info */}
+                                  <div className="col-span-3 flex items-center gap-2 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>
+                                      {ti?.icon || "?"}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold truncate">{zone.zone_code}</p>
+                                      <p className="text-[10px] text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Current Count Input */}
+                                  <div className="col-span-2 flex justify-center">
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      className={`w-24 h-8 text-center text-sm font-mono ${editCount !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
+                                      value={editCount ?? zone.currentDisplay}
+                                      onChange={(e) => handleDensityChange(zone.id, "current_count", parseInt(e.target.value) || 0)}
+                                      data-testid={`density-input-${zone.id}`}
+                                    />
+                                  </div>
+
+                                  {/* Max Capacity Input */}
+                                  <div className="col-span-2 flex justify-center">
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      className={`w-24 h-8 text-center text-sm font-mono text-muted-foreground ${editCap !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
+                                      value={editCap ?? zone.maxDisplay}
+                                      onChange={(e) => handleDensityChange(zone.id, "max_capacity", parseInt(e.target.value) || 1)}
+                                      data-testid={`capacity-input-${zone.id}`}
+                                    />
+                                  </div>
+
+                                  {/* Utilization Bar */}
+                                  <div className="col-span-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full rounded-full transition-all duration-500"
+                                          style={{
+                                            width: `${Math.min(di.pct, 100)}%`,
+                                            backgroundColor: di.color,
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-xs font-bold font-mono w-10 text-left" style={{ color: di.color }}>{di.pct}%</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Status Badge */}
+                                  <div className="col-span-2 flex justify-center">
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                                      style={{ backgroundColor: di.bg, color: di.color }}
+                                      data-testid={`density-status-${zone.id}`}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: di.color }} />
+                                      {isAr ? di.label_ar : di.label_en}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Density Heat Map Visualization */}
+                      {selectedFloor?.image_url && (
+                        <Card data-testid="density-heatmap-card">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-cairo flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-orange-600" />
+                              {isAr ? "خريطة الكثافة الحرارية" : "Density Heat Map"}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-2">
+                            <div className="relative bg-slate-100 rounded-lg overflow-hidden" style={{ height: "400px" }}>
+                              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {(() => {
+                                  let ws = { position: "relative", width: "100%", height: "100%" };
+                                  if (imgRatio) {
+                                    const ch = 400;
+                                    const cw = mapContainerRef.current?.clientWidth || 800;
+                                    if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
+                                    else ws = { position: "relative", width: "100%", height: cw / imgRatio };
+                                  }
+                                  return (
+                                    <div style={ws}>
+                                      <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block" }} draggable={false} className="pointer-events-none select-none" />
+                                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="density-heatmap-svg">
+                                        {densityStats.zonesDensity.map(zone => {
+                                          const di = zone.densityInfo;
+                                          const center = zone.polygon_points?.length > 0
+                                            ? { x: zone.polygon_points.reduce((s,p) => s+p.x, 0) / zone.polygon_points.length, y: zone.polygon_points.reduce((s,p) => s+p.y, 0) / zone.polygon_points.length }
+                                            : { x: 50, y: 50 };
+                                          return (
+                                            <g key={zone.id}>
+                                              <path
+                                                d={getPath(zone.polygon_points)}
+                                                fill={di.color}
+                                                fillOpacity={0.15 + (di.pct / 100) * 0.45}
+                                                stroke={di.color}
+                                                strokeWidth={di.level === "critical" ? 0.6 : 0.3}
+                                                strokeOpacity={0.8}
+                                                vectorEffect="non-scaling-stroke"
+                                              />
+                                              {/* Percentage label on zone */}
+                                              <text
+                                                x={center.x} y={center.y - 0.8}
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="2.2"
+                                                fontWeight="bold"
+                                                fill={di.pct >= 50 ? "#fff" : di.color}
+                                                style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.4 }}
+                                              >
+                                                {di.pct}%
+                                              </text>
+                                              <text
+                                                x={center.x} y={center.y + 1.5}
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="1.4"
+                                                fill={di.pct >= 50 ? "#fff" : "#64748b"}
+                                                style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.3 }}
+                                              >
+                                                {zone.currentDisplay.toLocaleString()}
+                                              </text>
+                                            </g>
+                                          );
+                                        })}
+                                      </svg>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              {/* Gradient legend */}
+                              <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
+                                <span className="text-[10px] font-medium text-muted-foreground">{isAr ? "منخفض" : "Low"}</span>
+                                <div className="flex-1 h-2.5 rounded-full" style={{ background: "linear-gradient(to left, #0ea5e9, #16a34a, #d97706, #ea580c, #dc2626)" }} />
+                                <span className="text-[10px] font-medium text-muted-foreground">{isAr ? "حرج" : "Critical"}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </>
+                  )}
+                </TabsContent>
+
                 {/* STATISTICS TAB */}
                 <TabsContent value="stats" className="space-y-5">
                   {sessionStats && (
