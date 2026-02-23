@@ -1575,6 +1575,7 @@ export default function DailySessionsPage() {
                 handleUpdateZone(selectedZone.id, {
                   name_ar: selectedZone.name_ar,
                   name_en: selectedZone.name_en,
+                  zone_code: selectedZone.zone_code,
                   daily_note: selectedZone.daily_note,
                 });
                 setShowZoneDialog(false);
