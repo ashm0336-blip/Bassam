@@ -3448,6 +3448,184 @@ async def compare_sessions(session_id_1: str, session_id_2: str):
     }
 
 
+# ============= Daily Gate Sessions Routes =============
+def _build_gate_snapshot(marker):
+    return {
+        "id": str(uuid.uuid4()),
+        "original_marker_id": marker.get("id"),
+        "gate_id": marker.get("gate_id"),
+        "floor_id": marker.get("floor_id"),
+        "name_ar": marker.get("name_ar", ""),
+        "name_en": marker.get("name_en", ""),
+        "x": marker.get("x", 50),
+        "y": marker.get("y", 50),
+        "gate_type": marker.get("gate_type", "main"),
+        "direction": marker.get("direction", "both"),
+        "classification": marker.get("classification", "general"),
+        "status": marker.get("status", "open"),
+        "current_flow": marker.get("current_flow", 0),
+        "max_flow": marker.get("max_flow", 5000),
+        "assigned_staff": marker.get("assigned_staff", 0),
+        "is_removed": False,
+        "change_type": "unchanged",
+    }
+
+@api_router.get("/gate-sessions")
+async def get_gate_sessions(floor_id: Optional[str] = None, limit: int = 60):
+    query = {}
+    if floor_id:
+        query["floor_id"] = floor_id
+    sessions = await db.gate_sessions.find(query, {"_id": 0}).sort("date", -1).to_list(limit)
+    return sessions
+
+@api_router.get("/gate-sessions/{session_id}")
+async def get_gate_session(session_id: str):
+    session = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    return session
+
+@api_router.post("/admin/gate-sessions")
+async def create_gate_session(data: GateSessionCreate, admin: dict = Depends(require_admin)):
+    existing = await db.gate_sessions.find_one({"date": data.date, "floor_id": data.floor_id}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="توجد جلسة بالفعل لهذا التاريخ والطابق")
+
+    floor = await db.gate_map_floors.find_one({"id": data.floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+
+    gates_snapshot = []
+    if data.clone_from == "empty":
+        pass
+    elif data.clone_from and data.clone_from != "master":
+        prev = await db.gate_sessions.find_one({"id": data.clone_from}, {"_id": 0})
+        if prev and prev.get("gates"):
+            for g in prev["gates"]:
+                if g.get("is_removed"):
+                    continue
+                snap = _build_gate_snapshot(g)
+                gates_snapshot.append(snap)
+    else:
+        # Clone from master markers or auto (latest session)
+        if data.clone_from != "master":
+            prev = await db.gate_sessions.find_one(
+                {"floor_id": data.floor_id, "date": {"$lt": data.date}},
+                {"_id": 0}, sort=[("date", -1)]
+            )
+            if prev and prev.get("gates"):
+                for g in prev["gates"]:
+                    if g.get("is_removed"):
+                        continue
+                    gates_snapshot.append(_build_gate_snapshot(g))
+
+        if not gates_snapshot:
+            markers = await db.gate_markers.find({"floor_id": data.floor_id}, {"_id": 0}).to_list(500)
+            for m in markers:
+                gates_snapshot.append(_build_gate_snapshot(m))
+
+    session = GateSession(
+        date=data.date,
+        floor_id=data.floor_id,
+        floor_name=floor.get("name_ar", ""),
+        created_by=admin.get("name", ""),
+        gates=gates_snapshot,
+        changes_summary={"added": 0, "removed": 0, "modified": 0, "unchanged": len(gates_snapshot)}
+    )
+    doc = session.model_dump()
+    await db.gate_sessions.insert_one(doc)
+    result = doc.copy()
+    result.pop("_id", None)
+    return result
+
+@api_router.put("/admin/gate-sessions/{session_id}")
+async def update_gate_session(session_id: str, data: GateSessionUpdate, admin: dict = Depends(require_admin)):
+    existing = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.gate_sessions.update_one({"id": session_id}, {"$set": update_data})
+    return await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
+
+@api_router.delete("/admin/gate-sessions/{session_id}")
+async def delete_gate_session(session_id: str, admin: dict = Depends(require_admin)):
+    result = await db.gate_sessions.delete_one({"id": session_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    return {"message": "تم حذف الجلسة بنجاح"}
+
+@api_router.put("/admin/gate-sessions/{session_id}/gates/{gate_id}")
+async def update_session_gate(session_id: str, gate_id: str, data: SessionGateUpdate, admin: dict = Depends(require_admin)):
+    session = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    gates = session.get("gates", [])
+    idx = next((i for i, g in enumerate(gates) if g["id"] == gate_id), None)
+    if idx is None:
+        raise HTTPException(status_code=404, detail="الباب غير موجود")
+    update_fields = {k: v for k, v in data.model_dump().items() if v is not None}
+    gate = gates[idx]
+    if update_fields.get("is_removed"):
+        gate["change_type"] = "removed"
+    elif update_fields.get("status") and update_fields["status"] != gate.get("status"):
+        gate["change_type"] = "status_changed"
+    elif any(k in update_fields for k in ["direction", "classification", "assigned_staff", "name_ar"]):
+        gate["change_type"] = "modified"
+    for k, v in update_fields.items():
+        gate[k] = v
+    gates[idx] = gate
+    summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
+    for g in gates:
+        ct = g.get("change_type", "unchanged")
+        if ct == "added": summary["added"] += 1
+        elif ct == "removed": summary["removed"] += 1
+        elif ct in ("modified", "status_changed"): summary["modified"] += 1
+        else: summary["unchanged"] += 1
+    await db.gate_sessions.update_one({"id": session_id}, {"$set": {"gates": gates, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    return await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
+
+@api_router.post("/admin/gate-sessions/batch")
+async def batch_create_gate_sessions(request: Request, admin: dict = Depends(require_admin)):
+    body = await request.json()
+    start_date, end_date, floor_id = body.get("start_date"), body.get("end_date"), body.get("floor_id")
+    clone_from = body.get("clone_from", "master")
+    if not all([start_date, end_date, floor_id]):
+        raise HTTPException(status_code=400, detail="يجب تحديد تاريخ البداية والنهاية والطابق")
+    floor = await db.gate_map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    template = []
+    if clone_from != "empty":
+        if clone_from == "master":
+            markers = await db.gate_markers.find({"floor_id": floor_id}, {"_id": 0}).to_list(500)
+            template = [_build_gate_snapshot(m) for m in markers]
+        else:
+            prev = await db.gate_sessions.find_one({"id": clone_from}, {"_id": 0})
+            if prev:
+                template = [_build_gate_snapshot(g) for g in prev.get("gates", []) if not g.get("is_removed")]
+    from datetime import date as date_type
+    start = date_type.fromisoformat(start_date)
+    end = date_type.fromisoformat(end_date)
+    if (end - start).days > 60:
+        raise HTTPException(status_code=400, detail="الحد الأقصى 60 يوماً")
+    created, skipped = [], []
+    current = start
+    while current <= end:
+        ds = current.isoformat()
+        if await db.gate_sessions.find_one({"date": ds, "floor_id": floor_id}, {"_id": 0}):
+            skipped.append(ds)
+        else:
+            import copy
+            sg = [dict(**copy.deepcopy(t), id=str(uuid.uuid4())) for t in template]
+            session = GateSession(date=ds, floor_id=floor_id, floor_name=floor.get("name_ar",""), created_by=admin.get("name",""), gates=sg, changes_summary={"added":0,"removed":0,"modified":0,"unchanged":len(sg)})
+            doc = session.model_dump()
+            await db.gate_sessions.insert_one(doc)
+            created.append(ds)
+        current += timedelta(days=1)
+    return {"created": created, "skipped": skipped, "total_created": len(created), "total_skipped": len(skipped)}
+
+
 # ============= Frontend Serving with Injected Settings =============
 @app.get("/", response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
