@@ -4,19 +4,19 @@
 Build an interactive map-based digital operational report for a crowd management platform (Al-Haram OS).
 
 ## Daily Map Sessions - Tabs (4)
-1. **الخريطة** (Map + Zones) - Drawing tools, zone cards below map with bidirectional selection
+1. **الخريطة** (Map + Zones) - Drawing tools, zone cards below map, enhanced tooltip
 2. **التغييرات** (Changes) - Daily change tracking
-3. **الكثافات** (Density) - Current count input → auto utilization from calculated capacity
+3. **الكثافات** (Density) - Current count input → auto utilization
 4. **إحصائيات** (Stats) - Category stats with day comparison
 
-## Capacity Calculator Flow
-- Zone Edit Dialog → Enter area (m²) + per person (m²) → Auto-calculates max capacity
-- Formula: `المساحة ÷ نصيب الفرد = السعة القصوى`
-- Density tab → Only enter current_count → Utilization auto-calculated from capacity
-- Capacity is READ-ONLY in density tab (comes from zone settings)
+## Key Features
+- **Capacity Calculator:** area ÷ per_person = max_capacity (auto-calculated)
+- **Enhanced Tooltip:** code, name, category, area, capacity, utilization bar, status, notes
+- **Bidirectional Selection:** click zone on map ↔ highlights card below
+- **Density Heat Map:** zones colored by utilization level
 
 ## Sidebar: إدارة المصليات
-- نظرة عامة → /haram-map (future: GM dashboard - HIGHEST PRIORITY)
+- نظرة عامة → /haram-map (P0: future GM dashboard)
 - السجل اليومي للخرائط → /daily-sessions
 - إدارة الخرائط → /map-management (floors only)
 
@@ -24,12 +24,12 @@ Build an interactive map-based digital operational report for a crowd management
 - Admin: admin@crowd.sa / admin123
 
 ## Prioritized Backlog
-### P0 - Overview Page for GM (أهم شي)
-Transform /haram-map into professional GM dashboard
+### P0 - Overview Page for GM
+Transform /haram-map into professional GM dashboard with daily summaries, density trends, alerts
 
 ### P1
 - PDF daily report export
-- Refactor server.py
+- Refactor server.py into modular structure
 
 ### P2
 - Real-time crowd data, WebSocket, trend charts
@@ -40,4 +40,5 @@ Transform /haram-map into professional GM dashboard
 3. Map Management simplification (iter_17)
 4. Renamed to إدارة المصليات + sidebar fixes
 5. Zones merged into Map tab (iter_18)
-6. Capacity Calculator with auto-calculation (iter_19)
+6. Capacity Calculator (iter_19)
+7. Enhanced Zone Hover Tooltip (iter_20)
