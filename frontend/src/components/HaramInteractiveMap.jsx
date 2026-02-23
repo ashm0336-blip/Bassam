@@ -228,7 +228,7 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
           </div>
           <div>
             <h2 className="font-cairo font-bold text-lg">
-              {language === "ar" ? "خريطة الحرم التفاعلية" : "Interactive Haram Map"}
+              {language === "ar" ? "إدارة المصليات" : "Prayer Areas Management"}
             </h2>
             <p className="text-xs text-muted-foreground">
               {language === "ar" ? "آخر تحديث:" : "Last update:"}{" "}

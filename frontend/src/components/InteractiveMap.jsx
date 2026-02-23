@@ -326,7 +326,7 @@ export const InteractiveMap = () => {
               <MapPin className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-cairo text-lg">خريطة الحرم التفاعلية</CardTitle>
+              <CardTitle className="font-cairo text-lg">إدارة المصليات</CardTitle>
               <p className="text-xs text-muted-foreground">
                 آخر تحديث: {lastUpdate.toLocaleTimeString('ar-SA')}
               </p>
