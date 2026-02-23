@@ -3617,7 +3617,11 @@ async def batch_create_gate_sessions(request: Request, admin: dict = Depends(req
             skipped.append(ds)
         else:
             import copy
-            sg = [dict(**copy.deepcopy(t), id=str(uuid.uuid4())) for t in template]
+            sg = []
+            for t in template:
+                gate_copy = copy.deepcopy(t)
+                gate_copy["id"] = str(uuid.uuid4())  # Override with new unique id
+                sg.append(gate_copy)
             session = GateSession(date=ds, floor_id=floor_id, floor_name=floor.get("name_ar",""), created_by=admin.get("name",""), gates=sg, changes_summary={"added":0,"removed":0,"modified":0,"unchanged":len(sg)})
             doc = session.model_dump()
             await db.gate_sessions.insert_one(doc)
