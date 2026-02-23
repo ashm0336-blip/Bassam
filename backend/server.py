@@ -638,6 +638,7 @@ class MapSessionUpdate(BaseModel):
     supervisor_notes: Optional[str] = None
 
 class SessionZoneUpdate(BaseModel):
+    zone_code: Optional[str] = None
     zone_type: Optional[str] = None
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
