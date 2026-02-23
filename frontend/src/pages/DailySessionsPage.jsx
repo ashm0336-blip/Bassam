@@ -1059,9 +1059,9 @@ export default function DailySessionsPage() {
                                           style={{ cursor: mapMode === "edit" || activeSession?.status === "draft" ? "pointer" : "default" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
                                             stroke={isSelected ? "#3b82f6" : ch ? cl.color : (zone.stroke_color || "#000")}
-                                            strokeWidth={isSelected ? 0.6 : ch ? 0.8 : 0.3}
+                                            strokeWidth={isSelected ? 0.6 : (zone.stroke_width ?? (ch ? 0.8 : 0.3))}
                                             strokeOpacity={isSelected ? 1 : (zone.stroke_opacity ?? 1)}
-                                            strokeDasharray={isSelected ? "1 0.5" : zone.change_type === "added" ? "1.5 0.8" : "none"}
+                                            strokeDasharray={isSelected ? "1 0.5" : zone.change_type === "added" ? "1.5 0.8" : (zone.stroke_style === "dashed" ? "2 1" : zone.stroke_style === "dotted" ? "0.5 0.8" : "none")}
                                             vectorEffect="non-scaling-stroke" />
                                           {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
                                             const isActive = i === draggingPoint || i === hoveredPoint;
