@@ -1262,73 +1262,123 @@ export default function DailySessionsPage() {
                       </CardContent>
                     </Card>
                   ) : <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة" : "No map image"}</CardContent></Card>}
-                </TabsContent>
 
-                {/* ZONES TAB */}
-                <TabsContent value="zones" className="space-y-4">
-                  <div>
-                    <h3 className="font-cairo font-semibold text-sm mb-3 flex items-center gap-2">
-                      <CircleDot className="w-4 h-4 text-emerald-500" />{isAr ? "المناطق النشطة" : "Active Zones"}<Badge variant="secondary">{activeZones.length}</Badge>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {activeZones.map(zone => {
-                        const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                        const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
-                        const ch = zone.change_type && zone.change_type !== "unchanged";
-                        return (
-                          <Card key={zone.id} data-testid={`zone-card-${zone.id}`} className={`transition-all hover:shadow-md ${ch ? "ring-1" : ""}`} style={ch ? { borderColor: cl.color + "40" } : {}}>
-                            <CardContent className="p-3">
+                  {/* ZONES LIST BELOW MAP */}
+                  {activeZones.length > 0 && (
+                    <div data-testid="zones-below-map">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
+                          <CircleDot className="w-4 h-4 text-emerald-500" />
+                          {isAr ? "المناطق النشطة" : "Active Zones"}
+                          <Badge variant="secondary" className="text-[10px]">{activeZones.length}</Badge>
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                        {activeZones.map(zone => {
+                          const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                          const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
+                          const ch = zone.change_type && zone.change_type !== "unchanged";
+                          const isSelected = zone.id === selectedZoneId;
+                          return (
+                            <div
+                              key={zone.id}
+                              ref={el => { zoneCardsRef.current[zone.id] = el; }}
+                              data-testid={`zone-card-${zone.id}`}
+                              className={`rounded-xl border p-3 transition-all cursor-pointer ${
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50/60 ring-2 ring-blue-200 shadow-md"
+                                  : ch
+                                    ? "hover:shadow-md border-l-0 border-r-0 border-t-0"
+                                    : "hover:shadow-md hover:border-slate-300"
+                              }`}
+                              style={ch && !isSelected ? { borderBottomColor: cl.color, borderBottomWidth: 2 } : {}}
+                              onClick={() => {
+                                if (mapMode === "edit" || mapMode === "pan") {
+                                  setSelectedZoneId(isSelected ? null : zone.id);
+                                  if (!isSelected) setMapMode("edit");
+                                }
+                              }}
+                            >
                               <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm" style={{ backgroundColor: zone.fill_color }}>
+                                    {ti?.icon || "?"}
+                                  </div>
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-semibold text-sm">{zone.zone_code}</span>
-                                      {ch && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+                                      <span className="font-bold text-sm">{zone.zone_code}</span>
+                                      {ch && (
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>
+                                          {isAr ? cl.ar : cl.en}
+                                        </span>
+                                      )}
                                     </div>
                                     <p className="text-xs text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
-                                    <p className="text-[10px] mt-0.5" style={{ color: ti?.color }}>{isAr ? ti?.label_ar : ti?.label_en}</p>
+                                    <p className="text-[10px] mt-0.5 font-medium" style={{ color: ti?.color }}>{isAr ? ti?.label_ar : ti?.label_en}</p>
                                   </div>
                                 </div>
                                 {activeSession.status === "draft" && (
-                                  <div className="flex flex-col gap-1">
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setSelectedZone(zone); setShowZoneDialog(true); }} data-testid={`edit-zone-btn-${zone.id}`}><Edit2 className="w-3 h-3" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-600" onClick={() => handleToggleRemove(zone.id, false)} data-testid={`remove-zone-btn-${zone.id}`}><CircleOff className="w-3 h-3" /></Button>
+                                  <div className="flex items-center gap-0.5">
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }} data-testid={`edit-zone-btn-${zone.id}`}>
+                                      <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); handleToggleRemove(zone.id, false); }} data-testid={`remove-zone-btn-${zone.id}`}>
+                                      <CircleOff className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />
+                                    </Button>
                                   </div>
                                 )}
                               </div>
-                              {zone.daily_note && <div className="mt-2 p-2 bg-amber-50 rounded text-[11px] text-amber-700 flex items-start gap-1"><MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0" /><span>{zone.daily_note}</span></div>}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                              {zone.daily_note && (
+                                <div className="mt-2 p-2 bg-amber-50/80 rounded-lg text-[11px] text-amber-700 flex items-start gap-1.5">
+                                  <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                  <span className="line-clamp-2">{zone.daily_note}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* REMOVED ZONES - Collapsible */}
                   {removedZones.length > 0 && (
-                    <div>
-                      <h3 className="font-cairo font-semibold text-sm mb-3 flex items-center gap-2"><CircleOff className="w-4 h-4 text-red-500" />{isAr ? "المناطق المزالة" : "Removed"}<Badge variant="destructive">{removedZones.length}</Badge></h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                        {removedZones.map(zone => {
-                          const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                          return (
-                            <Card key={zone.id} className="border-red-200/50 bg-red-50/30 opacity-70" data-testid={`removed-zone-card-${zone.id}`}>
-                              <CardContent className="p-3">
+                    <div data-testid="removed-zones-section">
+                      <button
+                        onClick={() => setShowRemovedZones(prev => !prev)}
+                        className="flex items-center gap-2 w-full text-right py-2 px-1 text-sm font-cairo font-semibold text-red-400 hover:text-red-600 transition-colors"
+                        data-testid="toggle-removed-zones"
+                      >
+                        <ChevronRight className={`w-4 h-4 transition-transform ${showRemovedZones ? "rotate-90" : ""}`} />
+                        <CircleOff className="w-4 h-4" />
+                        {isAr ? "المناطق المزالة" : "Removed Zones"}
+                        <Badge variant="destructive" className="text-[10px] px-1.5">{removedZones.length}</Badge>
+                      </button>
+                      {showRemovedZones && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 mt-2">
+                          {removedZones.map(zone => {
+                            const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                            return (
+                              <div key={zone.id} className="rounded-xl border border-red-200/50 bg-red-50/30 p-3 opacity-80" data-testid={`removed-zone-card-${zone.id}`}>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-100 text-red-500 text-xs font-bold"><X className="w-4 h-4" /></div>
-                                    <div><span className="font-semibold text-sm line-through text-red-400">{zone.zone_code}</span><p className="text-xs text-red-400">{isAr ? zone.name_ar : zone.name_en}</p></div>
+                                    <div>
+                                      <span className="font-semibold text-sm line-through text-red-400">{zone.zone_code}</span>
+                                      <p className="text-xs text-red-400">{isAr ? zone.name_ar : zone.name_en}</p>
+                                    </div>
                                   </div>
                                   {activeSession.status === "draft" && (
-                                    <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleToggleRemove(zone.id, true)} data-testid={`restore-zone-btn-${zone.id}`}>
+                                    <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 h-7 text-xs" onClick={() => handleToggleRemove(zone.id, true)} data-testid={`restore-zone-btn-${zone.id}`}>
                                       <RotateCcw className="w-3 h-3 ml-1" />{isAr ? "استعادة" : "Restore"}
                                     </Button>
                                   )}
                                 </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                      </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </TabsContent>
