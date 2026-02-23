@@ -497,6 +497,39 @@ export default function DailySessionsPage() {
     } catch (e) { toast.error(isAr ? "تعذرت الإضافة" : "Error adding zone"); }
   };
 
+  // Copy zone (duplicate with offset)
+  const handleCopyZone = async () => {
+    if (!activeSession || !selectedZoneId) return;
+    const zone = sessionZones.find(z => z.id === selectedZoneId);
+    if (!zone) return;
+    const offset = 4;
+    const newPoints = zone.polygon_points.map(p => ({ x: p.x + offset, y: p.y + offset }));
+    try {
+      const res = await axios.post(`${API}/admin/map-sessions/${activeSession.id}/zones`, {
+        zone_code: zone.zone_code + "-copy",
+        name_ar: zone.name_ar + " (نسخة)",
+        name_en: (zone.name_en || "") + " (copy)",
+        zone_type: zone.zone_type,
+        polygon_points: newPoints,
+        fill_color: zone.fill_color,
+        stroke_color: zone.stroke_color || "#000000",
+        opacity: zone.opacity ?? 0.4,
+        stroke_opacity: zone.stroke_opacity ?? 1,
+      }, getAuthHeaders());
+      setActiveSession(res.data);
+      toast.success(isAr ? "تم نسخ المنطقة" : "Zone copied");
+    } catch (e) { toast.error(isAr ? "تعذر النسخ" : "Copy failed"); }
+  };
+
+  // Update zone style (colors, opacity, stroke)
+  const handleUpdateZoneStyle = async (zoneId, styleData) => {
+    if (!activeSession) return;
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`, styleData, getAuthHeaders());
+      setActiveSession(res.data);
+    } catch (e) { console.error(e); }
+  };
+
   // Escape key handler
   useEffect(() => {
     const handleKeyDown = (e) => {
