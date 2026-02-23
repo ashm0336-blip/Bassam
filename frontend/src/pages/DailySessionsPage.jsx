@@ -273,6 +273,7 @@ export default function DailySessionsPage() {
       if (((yi > point.y) !== (yj > point.y)) && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) inside = !inside;
     }
     return inside;
+  };
 
   // Get center of polygon
   const getZoneCenter = (points) => {
