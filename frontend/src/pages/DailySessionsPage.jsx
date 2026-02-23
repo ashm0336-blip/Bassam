@@ -1418,25 +1418,109 @@ export default function DailySessionsPage() {
 
       {/* Zone Edit Dialog */}
       <Dialog open={showZoneDialog} onOpenChange={setShowZoneDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
           <DialogHeader><DialogTitle className="font-cairo flex items-center gap-2"><Edit2 className="w-5 h-5" />{isAr ? "تعديل المنطقة" : "Edit Zone"}</DialogTitle></DialogHeader>
           {selectedZone && (
             <div className="space-y-4">
+              {/* Zone header */}
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: selectedZone.fill_color }}>{ZONE_TYPES.find(t => t.value === selectedZone.zone_type)?.icon || "?"}</div>
                 <div><p className="font-semibold">{selectedZone.zone_code}</p><p className="text-xs text-muted-foreground">{isAr ? selectedZone.name_ar : selectedZone.name_en}</p></div>
               </div>
+
+              {/* Category */}
               <div>
-                <Label className="text-sm font-medium">{isAr ? "تغيير الفئة" : "Change Category"}</Label>
+                <Label className="text-sm font-medium">{isAr ? "الفئة" : "Category"}</Label>
                 <Select value={selectedZone.zone_type} onValueChange={(v) => { handleCategoryChange(selectedZone.id, v); setSelectedZone(p => ({ ...p, zone_type: v })); }} disabled={activeSession?.status === "completed"}>
                   <SelectTrigger className="mt-1" data-testid="zone-category-select"><SelectValue /></SelectTrigger>
                   <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value}><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: t.color }} />{isAr ? t.label_ar : t.label_en}</div></SelectItem>)}</SelectContent>
                 </Select>
               </div>
+
+              {/* Style Controls */}
+              {activeSession?.status === "draft" && (
+                <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
+                  <h4 className="font-cairo font-semibold text-sm flex items-center gap-2"><Palette className="w-4 h-4" />{isAr ? "تنسيق الشكل" : "Shape Style"}</h4>
+
+                  {/* Fill color + opacity */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">{isAr ? "لون التعبئة" : "Fill Color"}</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input type="color" value={selectedZone.fill_color || "#22c55e"} onChange={(e) => { setSelectedZone(p => ({ ...p, fill_color: e.target.value })); handleUpdateZoneStyle(selectedZone.id, { fill_color: e.target.value }); }} className="w-8 h-8 rounded cursor-pointer border-0" data-testid="zone-fill-color" />
+                        <span className="text-xs text-muted-foreground font-mono">{selectedZone.fill_color}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? "شفافية التعبئة" : "Fill Opacity"}</Label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Slider value={[Math.round((selectedZone.opacity ?? 0.4) * 100)]} min={5} max={100} step={5} onValueChange={([v]) => { const op = v / 100; setSelectedZone(p => ({ ...p, opacity: op })); handleUpdateZoneStyle(selectedZone.id, { opacity: op }); }} className="flex-1" data-testid="zone-fill-opacity" />
+                        <span className="text-xs w-8 text-center font-mono">{Math.round((selectedZone.opacity ?? 0.4) * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stroke color + opacity */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">{isAr ? "لون الحدود" : "Stroke Color"}</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input type="color" value={selectedZone.stroke_color || "#000000"} onChange={(e) => { setSelectedZone(p => ({ ...p, stroke_color: e.target.value })); handleUpdateZoneStyle(selectedZone.id, { stroke_color: e.target.value }); }} className="w-8 h-8 rounded cursor-pointer border-0" data-testid="zone-stroke-color" />
+                        <span className="text-xs text-muted-foreground font-mono">{selectedZone.stroke_color || "#000000"}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? "شفافية الحدود" : "Stroke Opacity"}</Label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Slider value={[Math.round((selectedZone.stroke_opacity ?? 1) * 100)]} min={0} max={100} step={5} onValueChange={([v]) => { const op = v / 100; setSelectedZone(p => ({ ...p, stroke_opacity: op })); handleUpdateZoneStyle(selectedZone.id, { stroke_opacity: op }); }} className="flex-1" data-testid="zone-stroke-opacity" />
+                        <span className="text-xs w-8 text-center font-mono">{Math.round((selectedZone.stroke_opacity ?? 1) * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stroke width + style */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">{isAr ? "سُمك الحدود" : "Stroke Width"}</Label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Slider value={[selectedZone.stroke_width ?? 0.3]} min={0.1} max={2} step={0.1} onValueChange={([v]) => { setSelectedZone(p => ({ ...p, stroke_width: v })); handleUpdateZoneStyle(selectedZone.id, { stroke_width: v }); }} className="flex-1" data-testid="zone-stroke-width" />
+                        <span className="text-xs w-8 text-center font-mono">{(selectedZone.stroke_width ?? 0.3).toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? "نوع الحدود" : "Stroke Style"}</Label>
+                      <div className="flex items-center gap-1 mt-2">
+                        {[
+                          { value: "solid", label: isAr ? "متصل" : "Solid", preview: "none" },
+                          { value: "dashed", label: isAr ? "مقطع" : "Dashed", preview: "4 2" },
+                          { value: "dotted", label: isAr ? "نقطي" : "Dotted", preview: "1 1.5" },
+                        ].map(s => (
+                          <button key={s.value} onClick={() => { setSelectedZone(p => ({ ...p, stroke_style: s.value })); handleUpdateZoneStyle(selectedZone.id, { stroke_style: s.value }); }} className={`flex-1 flex flex-col items-center gap-1 p-1.5 rounded border text-[10px] transition-all ${(selectedZone.stroke_style || "solid") === s.value ? "border-emerald-500 bg-emerald-50" : "hover:bg-slate-50"}`} data-testid={`stroke-style-${s.value}`}>
+                            <svg width="32" height="6" viewBox="0 0 32 6"><line x1="2" y1="3" x2="30" y2="3" stroke={selectedZone.stroke_color || "#000"} strokeWidth="2" strokeDasharray={s.preview} /></svg>
+                            <span>{s.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live preview */}
+                  <div className="flex items-center justify-center p-3 bg-white rounded border">
+                    <svg width="80" height="50" viewBox="0 0 80 50">
+                      <rect x="5" y="5" width="70" height="40" rx="2" fill={selectedZone.fill_color} fillOpacity={selectedZone.opacity ?? 0.4} stroke={selectedZone.stroke_color || "#000"} strokeWidth={(selectedZone.stroke_width ?? 0.3) * 3} strokeOpacity={selectedZone.stroke_opacity ?? 1} strokeDasharray={(selectedZone.stroke_style || "solid") === "dashed" ? "8 4" : (selectedZone.stroke_style || "solid") === "dotted" ? "2 3" : "none"} />
+                    </svg>
+                    <span className="text-[10px] text-muted-foreground mr-2">{isAr ? "معاينة" : "Preview"}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Daily note */}
               <div>
                 <Label className="text-sm font-medium">{isAr ? "ملاحظة يومية" : "Daily Note"}</Label>
-                <Textarea className="mt-1 text-sm" placeholder={isAr ? "أضف ملاحظة لهذا اليوم..." : "Add a note..."} value={selectedZone.daily_note || ""} onChange={(e) => setSelectedZone(p => ({ ...p, daily_note: e.target.value }))} rows={3} disabled={activeSession?.status === "completed"} data-testid="zone-daily-note" />
+                <Textarea className="mt-1 text-sm" placeholder={isAr ? "أضف ملاحظة لهذا اليوم..." : "Add a note..."} value={selectedZone.daily_note || ""} onChange={(e) => setSelectedZone(p => ({ ...p, daily_note: e.target.value }))} rows={2} disabled={activeSession?.status === "completed"} data-testid="zone-daily-note" />
               </div>
+
+              {/* Zone status */}
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-2">
                   {selectedZone.is_removed ? <CircleOff className="w-5 h-5 text-red-500" /> : <CircleDot className="w-5 h-5 text-emerald-500" />}
