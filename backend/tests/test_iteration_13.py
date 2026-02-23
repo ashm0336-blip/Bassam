@@ -268,7 +268,7 @@ class TestIteration13EnhancedZoneDialog:
         sessions = resp.json()
         
         # Find Feb 17 session
-        feb17_session = next((s for s in sessions if s["date"] == "2025-02-17"), None)
+        feb17_session = next((s for s in sessions if s["date"] == "2026-02-17"), None)
         assert feb17_session is not None, "Feb 17 session not found"
         assert feb17_session["id"] == SESSION_ID
         print(f"✓ Found {len(sessions)} sessions for floor")
