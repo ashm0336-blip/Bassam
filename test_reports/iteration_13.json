@@ -1,0 +1,126 @@
+{
+  "summary": "Iteration 13 - Enhanced Zone Edit Dialog testing complete. Backend: 11/11 tests pass (100%). Frontend: All new features verified working. BUG FIXED: Save button was not saving zone_code field - now fixed and verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "bugs_found_and_fixed": [
+    {
+      "file": "/app/frontend/src/pages/DailySessionsPage.jsx",
+      "line": "1575-1579",
+      "issue": "Save button was not including zone_code in the update payload",
+      "fix": "Added zone_code: selectedZone.zone_code to handleUpdateZone call",
+      "status": "FIXED and VERIFIED"
+    }
+  ],
+  "passed_tests": {
+    "backend": [
+      "SessionZoneUpdate model accepts zone_code field",
+      "SessionZoneUpdate model accepts name_ar field",
+      "Can update both name_ar and zone_code together",
+      "Zone can be marked inactive (is_removed=true)",
+      "Zone can be marked active (is_removed=false)",
+      "Zone permanently deleted via DELETE endpoint",
+      "DELETE nonexistent zone handled correctly",
+      "Session by ID returns zones with all fields",
+      "Sessions by floor ID returns Feb 17 session",
+      "Style fields (stroke_width, stroke_style) persist correctly",
+      "Zone copy regression test passed"
+    ],
+    "frontend": [
+      "Login with admin@crowd.sa / admin123",
+      "Daily Sessions page loads at /daily-sessions",
+      "Feb 17 session selectable from calendar",
+      "Session loads showing date: جولة الثلاثاء، ١٧ فبراير ٢٠٢٦",
+      "Edit mode button activates correctly",
+      "Double-click zone opens enhanced edit dialog",
+      "Zone Name input (اسم المنطقة) visible and editable (data-testid='zone-edit-name')",
+      "Zone Code input (الترميز) visible and editable (data-testid='zone-edit-code')",
+      "Zone Status section shows 3 buttons in a row",
+      "Active button (نشط) highlighted green when zone is active",
+      "Inactive button (غير نشط) highlights amber when clicked",
+      "Permanent Delete button (حذف نهائي) visible with red styling",
+      "Save button saves both name_ar AND zone_code (BUG FIX VERIFIED)",
+      "zone_code change persists after reopening dialog",
+      "Style controls section present (fill/stroke color, opacity, width, style)",
+      "Copy zone button present in edit mode toolbar",
+      "All regression features from iteration 12 working"
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_13.py",
+    "/app/test_reports/pytest/iteration_13_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/pages/DailySessionsPage.jsx",
+    "/app/backend/tests/test_iteration_13.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": "admin@crowd.sa / admin123",
+  "seed_data_creation": "Test zones created/deleted during testing, original data preserved",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 13 tested: Enhanced Zone Edit Dialog with editable name_ar and zone_code fields, 3-state zone status buttons (active/inactive/permanent delete). KEY BUG FIXED: Save button was missing zone_code in payload - now fixed at line 1578. Data-testids: zone-edit-name, zone-edit-code, zone-status-active, zone-status-inactive, zone-status-delete, save-zone-changes. Feb 17 session (2026-02-17) has 3 zones. All style controls from iteration 12 still working. DELETE endpoint at /api/admin/map-sessions/{id}/zones/{zone_id} permanently removes zones.",
+  "feature_verification": {
+    "editable_name_ar_field": {
+      "status": "PASS",
+      "testid": "zone-edit-name",
+      "details": "Input field in Zone Edit Dialog shows current zone name, accepts text input"
+    },
+    "editable_zone_code_field": {
+      "status": "PASS",
+      "testid": "zone-edit-code",
+      "details": "Input field with mono font shows current zone code, accepts text input"
+    },
+    "zone_status_active_button": {
+      "status": "PASS",
+      "testid": "zone-status-active",
+      "details": "Shows نشط (Active), highlighted with emerald/green when zone is_removed=false"
+    },
+    "zone_status_inactive_button": {
+      "status": "PASS",
+      "testid": "zone-status-inactive",
+      "details": "Shows غير نشط (Inactive), highlighted amber when zone is_removed=true"
+    },
+    "zone_status_delete_button": {
+      "status": "PASS",
+      "testid": "zone-status-delete",
+      "details": "Shows حذف نهائي (Permanent Delete), red styling, calls DELETE endpoint"
+    },
+    "save_button_saves_zone_code": {
+      "status": "PASS (BUG FIXED)",
+      "testid": "save-zone-changes",
+      "details": "Save button now correctly saves name_ar, name_en, zone_code, and daily_note"
+    },
+    "backend_zone_code_api": {
+      "status": "PASS",
+      "details": "SessionZoneUpdate model accepts zone_code field, PUT endpoint saves correctly"
+    },
+    "backend_delete_zone_api": {
+      "status": "PASS",
+      "details": "DELETE /api/admin/map-sessions/{id}/zones/{zone_id} permanently removes zone from session"
+    },
+    "change_type_badge": {
+      "status": "PASS",
+      "details": "Dialog header shows change type badge when zone was modified (e.g., 'تم الإزالة' for removed zones)"
+    },
+    "copy_zone_regression": {
+      "status": "PASS",
+      "details": "Copy zone button still works in edit mode toolbar"
+    },
+    "style_controls_regression": {
+      "status": "PASS",
+      "details": "All style controls (fill/stroke color, opacity, width, style) still working"
+    }
+  }
+}
