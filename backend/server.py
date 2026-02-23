@@ -590,6 +590,61 @@ class GateDailyLog(BaseModel):
     notes: str = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ============= Daily Gate Session Models =============
+class SessionGate(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    original_marker_id: Optional[str] = None
+    gate_id: Optional[str] = None
+    floor_id: str
+    name_ar: str
+    name_en: str = ""
+    x: float
+    y: float
+    gate_type: str = "main"
+    direction: str = "both"
+    classification: str = "general"
+    status: str = "open"
+    current_flow: int = 0
+    max_flow: int = 5000
+    assigned_staff: int = 0
+    daily_note: Optional[str] = None
+    is_removed: bool = False
+    change_type: Optional[str] = None  # added, removed, modified, status_changed, unchanged
+
+class GateSession(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    date: str
+    floor_id: str
+    floor_name: str = ""
+    status: str = "draft"
+    supervisor_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    gates: List[SessionGate] = []
+    changes_summary: dict = Field(default_factory=lambda: {"added": 0, "removed": 0, "modified": 0, "unchanged": 0})
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class GateSessionCreate(BaseModel):
+    date: str
+    floor_id: str
+    clone_from: Optional[str] = None
+
+class GateSessionUpdate(BaseModel):
+    status: Optional[str] = None
+    supervisor_notes: Optional[str] = None
+
+class SessionGateUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    status: Optional[str] = None
+    direction: Optional[str] = None
+    classification: Optional[str] = None
+    current_flow: Optional[int] = None
+    assigned_staff: Optional[int] = None
+    daily_note: Optional[str] = None
+    is_removed: Optional[bool] = None
+    x: Optional[float] = None
+    y: Optional[float] = None
+
 # ============= Daily Map Session Models =============
 class SessionZone(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
