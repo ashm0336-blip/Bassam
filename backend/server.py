@@ -662,6 +662,7 @@ class SessionZone(BaseModel):
     stroke_width: float = 0.3
     stroke_style: str = "solid"  # solid, dashed, dotted
     max_capacity: int = 1000
+    current_count: int = 0
     area_sqm: float = 0
     per_person_sqm: float = 0.8
     description_ar: Optional[str] = None
@@ -706,6 +707,8 @@ class SessionZoneUpdate(BaseModel):
     stroke_width: Optional[float] = None
     stroke_style: Optional[str] = None  # solid, dashed, dotted
     polygon_points: Optional[List[dict]] = None
+    current_count: Optional[int] = None
+    max_capacity: Optional[int] = None
 
 # ============= Transaction Models =============
 class Transaction(BaseModel):
