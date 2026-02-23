@@ -78,6 +78,8 @@ export default function DailySessionsPage() {
   const [activeTab, setActiveTab] = useState("map");
   const [selectedZone, setSelectedZone] = useState(null);
   const [showZoneDialog, setShowZoneDialog] = useState(false);
+  const [showRemovedZones, setShowRemovedZones] = useState(false);
+  const zoneCardsRef = useRef({});
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showCompareDialog, setShowCompareDialog] = useState(false);
   const [compareData, setCompareData] = useState(null);
