@@ -52,16 +52,21 @@ const normalizeImageUrl = (url) => {
 
 // Zone type colors and labels
 const ZONE_TYPES = {
-  men_prayer: { color: "#22c55e", label_ar: "مصلى رجال", label_en: "Men Prayer Area" },
-  women_prayer: { color: "#3b82f6", label_ar: "مصلى نساء", label_en: "Women Prayer Area" },
-  mataf: { color: "#84cc16", label_ar: "صحن المطاف", label_en: "Mataf" },
-  masaa: { color: "#06b6d4", label_ar: "المسعى", label_en: "Masa'a" },
-  service: { color: "#6b7280", label_ar: "منطقة خدمات", label_en: "Service Area" },
-  entry: { color: "#10b981", label_ar: "مدخل", label_en: "Entry" },
-  exit: { color: "#ef4444", label_ar: "مخرج", label_en: "Exit" },
-  escalator: { color: "#8b5cf6", label_ar: "سلم كهربائي", label_en: "Escalator" },
-  kaaba: { color: "#1a1a1a", label_ar: "الكعبة المشرفة", label_en: "Kaaba" },
-  expansion: { color: "#64748b", label_ar: "توسعة", label_en: "Expansion" },
+  men_prayer: { color: "#22c55e", label_ar: "مصليات الرجال", label_en: "Men Prayer Areas" },
+  women_prayer: { color: "#93c5fd", label_ar: "مصليات النساء", label_en: "Women Prayer Areas" },
+  men_rakatayn: { color: "#16a34a", label_ar: "مصلى الركعتين للرجال", label_en: "Two-Rak'ah Men" },
+  women_rakatayn: { color: "#60a5fa", label_ar: "مصلى الركعتين للنساء", label_en: "Two-Rak'ah Women" },
+  men_tasks: { color: "#9ca3af", label_ar: "مصلى مهمات رجال", label_en: "Men Tasks Prayer" },
+  women_tasks: { color: "#fdba74", label_ar: "مصلى مهمات نساء", label_en: "Women Tasks Prayer" },
+  emergency: { color: "#78350f", label_ar: "مجمعات خدمات الطوارئ", label_en: "Emergency Services" },
+  vip: { color: "#1e3a5f", label_ar: "مصلى رؤساء الدول ومرافقيهم", label_en: "VIP / Heads of State" },
+  funeral: { color: "#a8a29e", label_ar: "مصلى الجنائز", label_en: "Funeral Prayer" },
+  disabled_men: { color: "#1d4ed8", label_ar: "مصلى ذوي الإعاقة والمسنين", label_en: "Disabled & Elderly Men" },
+  disabled_women: { color: "#be123c", label_ar: "مصلى المسنات وذوي الإعاقة من النساء", label_en: "Disabled & Elderly Women" },
+  reserve_fard: { color: "#ea580c", label_ar: "مصليات احتياطية (وقت الفروض)", label_en: "Reserve (Prayer Times)" },
+  reserve_general: { color: "#4ade80", label_ar: "مصليات احتياطية", label_en: "Reserve Prayer Areas" },
+  elevated: { color: "#b0b0b0", label_ar: "مصليات مرتفعة", label_en: "Elevated Prayer Areas" },
+  service: { color: "#374151", label_ar: "خدمات", label_en: "Services" },
 };
 
 // Crowd status colors
