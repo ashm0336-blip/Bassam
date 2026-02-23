@@ -98,6 +98,21 @@ export const Layout = () => {
     setExpandedMenuId(prev => prev === menuId ? null : menuId);
   };
 
+  // Auto-expand parent menu when current route matches parent or any child
+  useEffect(() => {
+    const currentPath = location.pathname + location.search;
+    for (const parent of parentItems) {
+      const children = childrenMap[parent.id] || [];
+      if (children.length === 0) continue;
+      const parentMatch = location.pathname === parent.href;
+      const childMatch = children.some(c => currentPath === c.href || location.pathname === c.href);
+      if (parentMatch || childMatch) {
+        setExpandedMenuId(parent.id);
+        return;
+      }
+    }
+  }, [location.pathname, location.search, parentItems]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
