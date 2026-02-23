@@ -116,6 +116,9 @@ export default function DailySessionsPage() {
   const [newZoneForm, setNewZoneForm] = useState({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e" });
   const [rectStart, setRectStart] = useState(null); // For rectangle drag mode
   const [rectEnd, setRectEnd] = useState(null);
+  const [isRotating, setIsRotating] = useState(false);
+  const [isDraggingZone, setIsDraggingZone] = useState(false);
+  const [dragZoneStart, setDragZoneStart] = useState(null);
   const DRAW_POINT_RADIUS = 0.08;
   const SNAP_DISTANCE = 1.2;
 
