@@ -2409,6 +2409,9 @@ export default function DailySessionsPage() {
                   name_en: selectedZone.name_en,
                   zone_code: selectedZone.zone_code,
                   daily_note: selectedZone.daily_note,
+                  area_sqm: selectedZone.area_sqm,
+                  per_person_sqm: selectedZone.per_person_sqm,
+                  max_capacity: selectedZone.max_capacity,
                 });
                 setShowZoneDialog(false);
               }} data-testid="save-zone-changes"><Save className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>
