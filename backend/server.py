@@ -3409,6 +3409,35 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     )
     return {"message": "تم حذف المنطقة من الجلسة"}
 
+
+@api_router.put("/admin/map-sessions/{session_id}/density-batch")
+async def batch_update_density(session_id: str, data: dict = Body(...), admin: dict = Depends(require_admin)):
+    """Batch update current_count for multiple zones in a session"""
+    session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+
+    updates = data.get("updates", [])  # [{zone_id, current_count, max_capacity?}]
+    zones = session.get("zones", [])
+
+    for upd in updates:
+        zid = upd.get("zone_id")
+        for z in zones:
+            if z["id"] == zid:
+                if "current_count" in upd and upd["current_count"] is not None:
+                    z["current_count"] = max(0, int(upd["current_count"]))
+                if "max_capacity" in upd and upd["max_capacity"] is not None:
+                    z["max_capacity"] = max(1, int(upd["max_capacity"]))
+                break
+
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"zones": zones, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
+
+
 @api_router.get("/map-sessions/compare/{session_id_1}/{session_id_2}")
 async def compare_sessions(session_id_1: str, session_id_2: str):
     """Compare zones between two sessions"""
