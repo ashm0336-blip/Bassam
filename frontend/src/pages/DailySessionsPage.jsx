@@ -646,6 +646,51 @@ export default function DailySessionsPage() {
   const removedZones = activeSession?.zones?.filter(z => z.is_removed) || [];
   const changedZones = activeSession?.zones?.filter(z => z.change_type && z.change_type !== "unchanged") || [];
 
+  // Statistics computation
+  const sessionStats = useMemo(() => {
+    if (!activeSession?.zones) return null;
+
+    const active = activeSession.zones.filter(z => !z.is_removed);
+    const removed = activeSession.zones.filter(z => z.is_removed);
+
+    // Category breakdown
+    const catCounts = {};
+    ZONE_TYPES.forEach(t => { catCounts[t.value] = 0; });
+    active.forEach(z => { catCounts[z.zone_type] = (catCounts[z.zone_type] || 0) + 1; });
+
+    // Find previous session (nearest older date)
+    const sortedSessions = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+    const curIdx = sortedSessions.findIndex(s => s.id === activeSession.id);
+    const prevSession = curIdx >= 0 && curIdx < sortedSessions.length - 1 ? sortedSessions[curIdx + 1] : null;
+
+    // Previous session category stats
+    const prevCatCounts = {};
+    let prevTotalActive = 0;
+    if (prevSession?.zones) {
+      const prevActive = prevSession.zones.filter(z => !z.is_removed);
+      prevTotalActive = prevActive.length;
+      ZONE_TYPES.forEach(t => { prevCatCounts[t.value] = 0; });
+      prevActive.forEach(z => { prevCatCounts[z.zone_type] = (prevCatCounts[z.zone_type] || 0) + 1; });
+    }
+
+    // Categories with data (for pie chart)
+    const activeCats = ZONE_TYPES.filter(t => catCounts[t.value] > 0);
+    const totalActive = active.length;
+
+    return {
+      totalActive,
+      totalRemoved: removed.length,
+      totalAll: activeSession.zones.length,
+      uniqueCategories: activeCats.length,
+      catCounts,
+      prevSession,
+      prevCatCounts,
+      prevTotalActive,
+      hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0,
+      activeCats,
+    };
+  }, [activeSession, sessions]);
+
   const formatDate = (dateStr) => {
     try { return new Date(dateStr + "T00:00:00").toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }); }
     catch { return dateStr; }
