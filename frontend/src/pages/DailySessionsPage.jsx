@@ -273,6 +273,39 @@ export default function DailySessionsPage() {
       if (((yi > point.y) !== (yj > point.y)) && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) inside = !inside;
     }
     return inside;
+
+  // Get center of polygon
+  const getZoneCenter = (points) => {
+    if (!points?.length) return { x: 50, y: 50 };
+    const cx = points.reduce((s, p) => s + p.x, 0) / points.length;
+    const cy = points.reduce((s, p) => s + p.y, 0) / points.length;
+    return { x: cx, y: cy };
+  };
+
+  // Rotate points around center by angle (radians)
+  const rotatePoints = (points, center, angle) => {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return points.map(p => ({
+      x: center.x + (p.x - center.x) * cos - (p.y - center.y) * sin,
+      y: center.y + (p.x - center.x) * sin + (p.y - center.y) * cos,
+    }));
+  };
+
+  // Move all points by delta
+  const movePoints = (points, dx, dy) => {
+    return points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+  };
+
+  // Get rotation handle position (above center of zone)
+  const getRotationHandle = (points) => {
+    if (!points?.length) return null;
+    const center = getZoneCenter(points);
+    // Find the topmost point to place handle above it
+    const minY = Math.min(...points.map(p => p.y));
+    const handleOffset = 3 / Math.max(zoom, 0.5);
+    return { x: center.x, y: minY - handleOffset, cx: center.x, cy: center.y };
+  };
   };
 
   // Session zones as mutable local state for editing
