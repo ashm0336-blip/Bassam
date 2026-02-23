@@ -604,6 +604,8 @@ class SessionZone(BaseModel):
     stroke_color: str = "#000000"
     opacity: float = 0.4
     stroke_opacity: float = 1.0
+    stroke_width: float = 0.3
+    stroke_style: str = "solid"  # solid, dashed, dotted
     max_capacity: int = 1000
     area_sqm: float = 0
     per_person_sqm: float = 0.8
