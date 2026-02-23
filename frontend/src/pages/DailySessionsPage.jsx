@@ -307,7 +307,6 @@ export default function DailySessionsPage() {
     const handleOffset = 3 / Math.max(zoom, 0.5);
     return { x: center.x, y: minY - handleOffset, cx: center.x, cy: center.y };
   };
-  };
 
   // Session zones as mutable local state for editing
   const sessionZones = activeSession?.zones || [];
