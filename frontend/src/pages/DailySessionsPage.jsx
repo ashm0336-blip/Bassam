@@ -1244,17 +1244,74 @@ export default function DailySessionsPage() {
                           {hoveredZone && (() => {
                             const ti = ZONE_TYPES.find(t => t.value === hoveredZone.zone_type);
                             const cl = CHANGE_LABELS[hoveredZone.change_type] || CHANGE_LABELS.unchanged;
+                            const hasChange = hoveredZone.change_type && hoveredZone.change_type !== "unchanged";
+                            const capacity = hoveredZone.max_capacity || 0;
+                            const area = hoveredZone.area_sqm || 0;
+                            const currentCount = hoveredZone.current_count || 0;
+                            const utilPct = capacity > 0 ? Math.round((currentCount / capacity) * 100) : 0;
+                            const densityInfo = getDensityLevel(currentCount, capacity);
                             return (
                               <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }} data-testid="zone-hover-tooltip">
-                                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border p-3 min-w-[200px]" style={{ borderTopColor: hoveredZone.fill_color, borderTopWidth: 3, direction: "rtl" }}>
-                                  <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="font-bold text-sm">{hoveredZone.zone_code}</span>
-                                    {hoveredZone.change_type !== "unchanged" && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+                                <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[240px]" style={{ direction: "rtl" }}>
+                                  {/* Color header bar */}
+                                  <div className="h-1.5" style={{ backgroundColor: hoveredZone.fill_color }} />
+                                  <div className="p-3 space-y-2">
+                                    {/* Zone code + change badge */}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold shadow-sm" style={{ backgroundColor: hoveredZone.fill_color }}>
+                                          {ti?.icon || "?"}
+                                        </div>
+                                        <span className="font-bold text-sm">{hoveredZone.zone_code}</span>
+                                      </div>
+                                      {hasChange && <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+                                    </div>
+                                    {/* Name + Category */}
+                                    <div>
+                                      <p className="text-xs font-medium text-slate-800">{isAr ? hoveredZone.name_ar : hoveredZone.name_en}</p>
+                                      {ti && <p className="text-[10px] font-medium mt-0.5" style={{ color: ti.color }}>{isAr ? ti.label_ar : ti.label_en}</p>}
+                                    </div>
+                                    {/* Separator + Details */}
+                                    {(area > 0 || capacity > 0) && (
+                                      <>
+                                        <div className="border-t border-dashed border-slate-200" />
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                          {area > 0 && (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] font-bold flex-shrink-0">م²</span>
+                                              <span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}</span>
+                                            </div>
+                                          )}
+                                          {capacity > 0 && (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] font-bold flex-shrink-0">S</span>
+                                              <span className="text-[11px] text-slate-600">{capacity.toLocaleString()} {isAr ? "مصلي" : "cap"}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                    {/* Utilization bar (if has current count) */}
+                                    {currentCount > 0 && capacity > 0 && (
+                                      <div className="flex items-center gap-2 pt-0.5">
+                                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(utilPct, 100)}%`, backgroundColor: densityInfo.color }} />
+                                        </div>
+                                        <span className="text-[10px] font-bold font-mono" style={{ color: densityInfo.color }}>{utilPct}%</span>
+                                      </div>
+                                    )}
+                                    {/* Status */}
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`w-2 h-2 rounded-full ${hoveredZone.is_removed ? "bg-red-500" : "bg-emerald-500"}`} />
+                                      <span className={`text-[10px] font-semibold ${hoveredZone.is_removed ? "text-red-500" : "text-emerald-600"}`}>
+                                        {hoveredZone.is_removed ? (isAr ? "مزالة" : "Removed") : (isAr ? "نشطة" : "Active")}
+                                      </span>
+                                    </div>
+                                    {/* Daily note */}
+                                    {hoveredZone.daily_note && (
+                                      <div className="p-1.5 bg-slate-50 rounded text-[10px] text-slate-500 line-clamp-2 border-r-2 border-slate-300">{hoveredZone.daily_note}</div>
+                                    )}
                                   </div>
-                                  <p className="text-xs text-slate-700">{isAr ? hoveredZone.name_ar : hoveredZone.name_en}</p>
-                                  {ti && <p className="text-[10px] mt-1" style={{ color: ti.color }}>{isAr ? ti.label_ar : ti.label_en}</p>}
-                                  {hoveredZone.is_removed && <p className="text-[10px] text-red-500 mt-1 font-medium">{isAr ? "تم الإزالة" : "Removed"}</p>}
-                                  {hoveredZone.daily_note && <p className="text-[10px] text-slate-500 mt-1 border-t pt-1">{hoveredZone.daily_note}</p>}
                                 </div>
                               </div>
                             );
