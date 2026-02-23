@@ -29,6 +29,7 @@ import HaramMapPage from "@/pages/HaramMapPage";
 import MapManagementPage from "@/pages/MapManagementPage";
 import GateMapPage from "@/pages/GateMapPage";
 import DailySessionsPage from "@/pages/DailySessionsPage";
+import DailyGateSessionsPage from "@/pages/DailyGateSessionsPage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
@@ -159,6 +160,11 @@ function AppRoutes() {
         <Route path="daily-sessions" element={
           <AdminProtectedRoute>
             <DailySessionsPage />
+          </AdminProtectedRoute>
+        } />
+        <Route path="daily-gates" element={
+          <AdminProtectedRoute>
+            <DailyGateSessionsPage />
           </AdminProtectedRoute>
         } />
         <Route path="admin" element={
