@@ -1034,6 +1034,22 @@ export default function DailySessionsPage() {
                                             const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
                                             return <rect key={`m-${i}`} x={mx - 0.07} y={my - 0.07} width="0.14" height="0.14" transform={`rotate(45 ${mx} ${my})`} fill="#ef4444" stroke="white" strokeWidth="0.03" vectorEffect="non-scaling-stroke" opacity="0.4" pointerEvents="none" />;
                                           })}
+                                          {/* Rotation handle */}
+                                          {isSelected && mapMode === "edit" && (() => {
+                                            const rh = getRotationHandle(zone.polygon_points);
+                                            if (!rh) return null;
+                                            return (
+                                              <g data-testid="rotation-handle" style={{ cursor: "grab" }}>
+                                                <line x1={rh.cx} y1={Math.min(...zone.polygon_points.map(p => p.y))} x2={rh.x} y2={rh.y}
+                                                  stroke="#8b5cf6" strokeWidth="0.3" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke" opacity="0.6" pointerEvents="none" />
+                                                <circle cx={rh.x} cy={rh.y} r="0.25" fill="#8b5cf6" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
+                                                <g transform={`translate(${rh.x}, ${rh.y})`} pointerEvents="none">
+                                                  <path d="M -0.1 -0.05 A 0.1 0.1 0 1 1 0.05 -0.1" fill="none" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
+                                                  <path d="M 0.05 -0.1 L 0.12 -0.06 L 0.04 -0.04" fill="white" stroke="none" />
+                                                </g>
+                                              </g>
+                                            );
+                                          })()}
                                         </g>
                                       );
                                     })}
