@@ -992,9 +992,14 @@ export default function DailySessionsPage() {
                           </>
                         )}
                         {mapMode === "edit" && selectedZoneId && (
-                          <Button variant="destructive" size="sm" onClick={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); setMapMode("pan"); }} data-testid="edit-delete-zone-btn">
-                            <Trash2 className="w-4 h-4 ml-1" />{isAr ? "إزالة" : "Remove"}
-                          </Button>
+                          <>
+                            <Button variant="outline" size="sm" onClick={handleCopyZone} data-testid="edit-copy-zone-btn" title={isAr ? "نسخ المنطقة" : "Copy Zone"}>
+                              <CopyPlus className="w-4 h-4 ml-1" />{isAr ? "نسخ" : "Copy"}
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); setMapMode("pan"); }} data-testid="edit-delete-zone-btn">
+                              <Trash2 className="w-4 h-4 ml-1" />{isAr ? "إزالة" : "Remove"}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
