@@ -2295,6 +2295,75 @@ export default function DailySessionsPage() {
                 </div>
               )}
 
+              {/* Capacity Calculator */}
+              {activeSession?.status === "draft" && (
+                <div className="space-y-3 p-3 border rounded-lg bg-blue-50/30" data-testid="capacity-calculator">
+                  <h4 className="font-cairo font-semibold text-sm flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    {isAr ? "حساب السعة" : "Capacity Calculator"}
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">{isAr ? "المساحة (م²)" : "Area (m²)"}</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        className="mt-1 text-sm font-mono"
+                        value={selectedZone.area_sqm ?? 0}
+                        onChange={(e) => {
+                          const area = parseFloat(e.target.value) || 0;
+                          const pp = selectedZone.per_person_sqm || 0.8;
+                          const cap = pp > 0 && area > 0 ? Math.round(area / pp) : selectedZone.max_capacity || 0;
+                          setSelectedZone(p => ({ ...p, area_sqm: area, max_capacity: cap }));
+                        }}
+                        data-testid="zone-area-input"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? "نصيب الفرد (م²)" : "Per Person (m²)"}</Label>
+                      <Input
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        className="mt-1 text-sm font-mono"
+                        value={selectedZone.per_person_sqm ?? 0.8}
+                        onChange={(e) => {
+                          const pp = parseFloat(e.target.value) || 0.8;
+                          const area = selectedZone.area_sqm || 0;
+                          const cap = pp > 0 && area > 0 ? Math.round(area / pp) : selectedZone.max_capacity || 0;
+                          setSelectedZone(p => ({ ...p, per_person_sqm: pp, max_capacity: cap }));
+                        }}
+                        data-testid="zone-perperson-input"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? "السعة القصوى" : "Max Capacity"}</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="mt-1 text-sm font-mono font-bold"
+                        value={selectedZone.max_capacity ?? 1000}
+                        onChange={(e) => setSelectedZone(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))}
+                        data-testid="zone-capacity-input"
+                      />
+                    </div>
+                  </div>
+                  {/* Visual Formula */}
+                  {(selectedZone.area_sqm > 0 && selectedZone.per_person_sqm > 0) && (
+                    <div className="p-3 bg-white rounded-lg border border-blue-100 text-center" data-testid="capacity-formula">
+                      <div className="flex items-center justify-center gap-2 text-sm">
+                        <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg font-bold font-mono">{selectedZone.area_sqm} {isAr ? "م²" : "m²"}</span>
+                        <span className="text-slate-400 font-bold text-lg">&divide;</span>
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-bold font-mono">{selectedZone.per_person_sqm} {isAr ? "م²/فرد" : "m²/p"}</span>
+                        <span className="text-slate-400 font-bold text-lg">=</span>
+                        <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg font-bold font-mono text-base">{Math.round(selectedZone.area_sqm / selectedZone.per_person_sqm).toLocaleString()} {isAr ? "مصلي" : "capacity"}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Daily note */}
               <div>
                 <Label className="text-sm font-medium">{isAr ? "ملاحظة يومية" : "Daily Note"}</Label>
