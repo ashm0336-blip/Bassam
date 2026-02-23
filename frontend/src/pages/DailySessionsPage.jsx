@@ -24,6 +24,7 @@ import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
