@@ -199,11 +199,6 @@ export default function HaramInteractiveMap({ isAdmin = false }) {
 
   // Get zone color based on crowd status or type
   const getZoneColor = (zone) => {
-    // For Kaaba, always use black
-    if (zone.zone_type === "kaaba") {
-      return "#1a1a1a";
-    }
-    
     // Calculate crowd percentage
     const maxCap = zone.max_capacity || 1;
     const current = zone.current_crowd || 0;
