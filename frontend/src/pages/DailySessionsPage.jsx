@@ -1168,7 +1168,7 @@ export default function DailySessionsPage() {
                                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
                                           onMouseLeave={() => setHoveredZone(null)}
-                                          onClick={(e) => { if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
+                                          onClick={(e) => { if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); const card = zoneCardsRef.current[zone.id]; if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" }); } }}
                                           onDoubleClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
                                           style={{ cursor: mapMode === "edit" || activeSession?.status === "draft" ? "pointer" : "default" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
