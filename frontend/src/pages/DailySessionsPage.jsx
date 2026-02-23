@@ -692,6 +692,70 @@ export default function DailySessionsPage() {
     };
   }, [activeSession, sessions]);
 
+  // Density editing state
+  const [densityEdits, setDensityEdits] = useState({});
+  const [savingDensity, setSavingDensity] = useState(false);
+
+  // Reset density edits when session changes
+  useEffect(() => {
+    setDensityEdits({});
+  }, [activeSession?.id]);
+
+  const getDensityLevel = (current, max) => {
+    if (!max || max <= 0) return { level: "unknown", pct: 0, color: "#94a3b8", bg: "#f8fafc", label_ar: "غير محدد", label_en: "N/A" };
+    const pct = Math.round((current / max) * 100);
+    if (pct >= 90) return { level: "critical", pct, color: "#dc2626", bg: "#fef2f2", label_ar: "حرج", label_en: "Critical" };
+    if (pct >= 70) return { level: "high", pct, color: "#ea580c", bg: "#fff7ed", label_ar: "مرتفع", label_en: "High" };
+    if (pct >= 50) return { level: "medium", pct, color: "#d97706", bg: "#fffbeb", label_ar: "متوسط", label_en: "Medium" };
+    if (pct >= 25) return { level: "normal", pct, color: "#16a34a", bg: "#f0fdf4", label_ar: "طبيعي", label_en: "Normal" };
+    return { level: "low", pct, color: "#0ea5e9", bg: "#f0f9ff", label_ar: "منخفض", label_en: "Low" };
+  };
+
+  const handleDensityChange = (zoneId, field, value) => {
+    setDensityEdits(prev => ({
+      ...prev,
+      [zoneId]: { ...prev[zoneId], [field]: value }
+    }));
+  };
+
+  const handleSaveDensityBatch = async () => {
+    if (!activeSession || Object.keys(densityEdits).length === 0) return;
+    setSavingDensity(true);
+    try {
+      const updates = Object.entries(densityEdits).map(([zone_id, edits]) => ({
+        zone_id,
+        ...edits,
+      }));
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/density-batch`, { updates }, getAuthHeaders());
+      setActiveSession(res.data);
+      setDensityEdits({});
+      await fetchSessions();
+      toast.success(isAr ? "تم حفظ بيانات الكثافة" : "Density data saved");
+    } catch (e) {
+      toast.error(isAr ? "تعذر حفظ البيانات" : "Save failed");
+    } finally { setSavingDensity(false); }
+  };
+
+  // Density computed stats
+  const densityStats = useMemo(() => {
+    if (!activeSession?.zones) return null;
+    const active = activeSession.zones.filter(z => !z.is_removed);
+    let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0;
+    const zonesDensity = active.map(z => {
+      const current = densityEdits[z.id]?.current_count ?? z.current_count ?? 0;
+      const max = densityEdits[z.id]?.max_capacity ?? z.max_capacity ?? 1000;
+      totalCurrent += current;
+      totalCapacity += max;
+      const info = getDensityLevel(current, max);
+      if (info.level === "critical") criticalCount++;
+      if (info.level === "high") highCount++;
+      return { ...z, currentDisplay: current, maxDisplay: max, densityInfo: info };
+    });
+    const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
+    const overallLevel = getDensityLevel(totalCurrent, totalCapacity);
+    return { zonesDensity, totalCurrent, totalCapacity, overallPct, overallLevel, criticalCount, highCount };
+  }, [activeSession, densityEdits]);
+
   const formatDate = (dateStr) => {
     try { return new Date(dateStr + "T00:00:00").toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }); }
     catch { return dateStr; }
