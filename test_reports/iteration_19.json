@@ -1,0 +1,145 @@
+{
+  "summary": "Capacity Calculator feature testing COMPLETE. All features verified working correctly. Zone Edit Dialog shows capacity calculator with 3 fields (area, per_person, max_capacity), auto-calculation works (1000÷0.9=1111), visual formula displayed. Density tab shows capacity as READ-ONLY text and current_count as editable input. Backend API accepts area_sqm and per_person_sqm fields.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": {
+    "capacity_calculator_section": [
+      "Zone Edit Dialog shows 'حساب السعة' (Capacity Calculator) section with data-testid='capacity-calculator'",
+      "Section appears ONLY when session status is 'draft'",
+      "Section header shows Users icon and correct Arabic/English label"
+    ],
+    "input_fields": [
+      "Area input (المساحة) - data-testid='zone-area-input' - FOUND and working",
+      "Per Person input (نصيب الفرد) - data-testid='zone-perperson-input' - FOUND with default 0.8",
+      "Max Capacity input (السعة القصوى) - data-testid='zone-capacity-input' - FOUND and editable"
+    ],
+    "auto_calculation": [
+      "Entering area=1000 and per_person=0.9 auto-calculates max_capacity=1111 CORRECT",
+      "Changing area updates max_capacity automatically",
+      "Changing per_person updates max_capacity automatically",
+      "Manual override of max_capacity still works (can enter any value directly)"
+    ],
+    "visual_formula": [
+      "Formula display appears when area > 0 AND per_person > 0",
+      "Formula shows: '1000 م² ÷ 0.9 م²/فرد = 1,111 مصلي'",
+      "Formula styled with colored badges (blue for area, green for per_person, amber for result)"
+    ],
+    "save_functionality": [
+      "Save button (data-testid='save-zone-changes') visible and clickable",
+      "Save sends area_sqm, per_person_sqm, max_capacity to backend API",
+      "Backend successfully persists all three fields"
+    ],
+    "density_tab_capacity_readonly": [
+      "Capacity column (السعة القصوى) shows as READ-ONLY text using <span> element",
+      "capacity-display-{id} shows formatted number (e.g., '1,111')",
+      "Area info appears below capacity when area_sqm > 0 (e.g., '1000 م²')"
+    ],
+    "density_tab_current_count_editable": [
+      "Current count column (العدد الحالي) uses <input> element",
+      "density-input-{id} is editable - successfully changed value from 0 to 500",
+      "Input highlights with ring when value changed"
+    ],
+    "utilization_calculation": [
+      "Utilization percentage calculated correctly: current_count / max_capacity * 100",
+      "45% shown for 500/1111",
+      "Status badge updates (طبيعي/Normal for <70%)"
+    ],
+    "backend_api_tests": [
+      "Zone has area_sqm field - PASS",
+      "Zone has per_person_sqm field - PASS",
+      "Zone has max_capacity field - PASS",
+      "Update zone area_sqm via API - PASS",
+      "Update zone per_person_sqm via API - PASS",
+      "Update zone max_capacity via API - PASS",
+      "Update all capacity fields together - PASS",
+      "Update zone current_count via API - PASS",
+      "Density batch update with current_count - PASS",
+      "SessionZoneUpdate model accepts area_sqm - PASS",
+      "SessionZoneUpdate model accepts per_person_sqm - PASS"
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_capacity_calculator.py",
+    "/app/test_reports/pytest/capacity_calculator_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Capacity Calculator implementation at lines 2292-2359 in DailySessionsPage.jsx is well structured",
+    "Auto-calculation logic correctly handles edge cases (pp > 0 && area > 0)",
+    "SessionZoneUpdate model at lines 696-713 in server.py correctly includes area_sqm and per_person_sqm as Optional fields",
+    "Density tab capacity display correctly uses <span> (read-only) vs <input> (editable current_count)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_capacity_calculator.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% - All capacity calculator features verified working"
+  },
+  "test_credentials": "admin@crowd.sa / admin123",
+  "seed_data_creation": "Used existing TEST-ZONE-1 on basement floor session for Feb 18, 2026",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 19 verified the Capacity Calculator feature. Key data-testids: capacity-calculator, zone-area-input, zone-perperson-input, zone-capacity-input, capacity-formula, save-zone-changes, capacity-display-{id}, density-input-{id}. TEST-ZONE-1 now has area_sqm=1000, per_person_sqm=0.9, max_capacity=1111. The Density tab correctly shows capacity as read-only and current_count as editable.",
+  "feature_verification": {
+    "capacity_calculator_section": {
+      "status": "PASS",
+      "details": "Shows حساب السعة section with 3 input fields in Zone Edit Dialog"
+    },
+    "area_input": {
+      "status": "PASS",
+      "details": "المساحة (م²) input field found and functional"
+    },
+    "per_person_input": {
+      "status": "PASS",
+      "details": "نصيب الفرد (م²) input field found with default 0.8"
+    },
+    "max_capacity_input": {
+      "status": "PASS",
+      "details": "السعة القصوى input field found and editable"
+    },
+    "auto_calculation": {
+      "status": "PASS",
+      "details": "1000 ÷ 0.9 = 1111 calculated correctly and automatically"
+    },
+    "visual_formula": {
+      "status": "PASS",
+      "details": "Formula displayed: 1000 م² ÷ 0.9 م²/فرد = 1,111 مصلي"
+    },
+    "manual_override": {
+      "status": "PASS",
+      "details": "Max capacity can be manually overridden by typing directly"
+    },
+    "save_persists_values": {
+      "status": "PASS",
+      "details": "Saving zone preserves area_sqm, per_person_sqm, and max_capacity"
+    },
+    "density_capacity_readonly": {
+      "status": "PASS",
+      "details": "Capacity shown as READ-ONLY text (<span>) in Density tab"
+    },
+    "density_area_info": {
+      "status": "PASS",
+      "details": "Area info (1000 م²) shown below capacity when area > 0"
+    },
+    "density_current_count_editable": {
+      "status": "PASS",
+      "details": "Current count is editable <input> field in Density tab"
+    },
+    "utilization_percentage": {
+      "status": "PASS",
+      "details": "Correctly calculates 500/1111 = 45%"
+    },
+    "backend_api": {
+      "status": "PASS",
+      "details": "API accepts area_sqm and per_person_sqm in zone update (11/11 tests passed)"
+    }
+  }
+}
