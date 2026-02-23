@@ -1,0 +1,104 @@
+{
+  "summary": "Density Tab (الكثافات) feature testing complete. All tests passed - both backend API and frontend UI fully functional. The new Density tab allows supervisors to enter current_count for zones and see real-time utilization levels with color coding.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": {
+    "backend": [
+      "PUT /api/admin/map-sessions/{id}/density-batch - Updates current_count",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Updates max_capacity",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Updates both current_count and max_capacity",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Handles zero current_count",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Handles critical level (>90%)",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Handles empty updates array",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Handles invalid zone_id gracefully",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Coerces negative values to 0",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Returns 404 for invalid session_id",
+      "PUT /api/admin/map-sessions/{id}/density-batch - Data persists (verified via GET)"
+    ],
+    "frontend": [
+      "All 5 tabs exist and clickable: الخريطة, المناطق, التغييرات, الكثافات, إحصائيات",
+      "Density tab shows 4 KPI cards: نسبة الإشغال, العدد الحالي, مناطق حرجة, مناطق مرتفعة",
+      "Density zone list shows zone with editable current count and max capacity inputs",
+      "Typing in current count input updates KPIs in real-time (0% → 50% when typing 500)",
+      "Status badge changes correctly: منخفض (<25%), طبيعي (25-50%), متوسط (50-70%), مرتفع (70-90%), حرج (>90%)",
+      "Warning bar '1 تعديل غير محفوظ' appears after editing density value",
+      "Clicking 'حفظ الكل' saves via API and shows success toast 'تم حفظ بيانات الكثافة'",
+      "Save bar disappears after successful save",
+      "Edited values persist after tab switch (Map → Density)",
+      "Density heat map visualization shows zone colored by utilization level",
+      "Critical badge appears on Density tab when zone reaches >90% utilization",
+      "Other tabs (Map, Zones, Changes, Stats) still work correctly after adding density tab"
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_density_feature.py",
+    "/app/test_reports/pytest/density_tests.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_density_feature.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": "admin@crowd.sa / admin123",
+  "seed_data_creation": "Using existing Feb 17, 2026 session with zone 2-0-1 (women_prayer)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 16 tested the NEW Density tab (الكثافات) on /daily-sessions page. Session ID: 0a5aa22d-eb43-4967-8ca2-d08ad7077454, Zone ID: c384d6ba-dc68-4cdb-935a-6dfcdbe4b3ca. Backend API: PUT /api/admin/map-sessions/{session_id}/density-batch with body {updates: [{zone_id, current_count, max_capacity?}]}. Data-testids: tab-density, density-kpi-row, density-overall-pct, density-total-current, density-critical-count, density-high-count, density-save-bar, density-save-btn, density-zones-card, density-zone-list, density-zone-{id}, density-input-{id}, capacity-input-{id}, density-status-{id}, density-heatmap-card. All 5 tabs working: Map, Zones, Changes, Density, Stats.",
+  "feature_verification": {
+    "five_tabs_exist": {
+      "status": "PASS",
+      "details": "All 5 tabs present: الخريطة, المناطق, التغييرات, الكثافات, إحصائيات"
+    },
+    "kpi_cards": {
+      "status": "PASS",
+      "details": "4 KPI cards display: Utilization %, Total Current, Critical Zones, High Zones"
+    },
+    "editable_inputs": {
+      "status": "PASS",
+      "details": "Current count and max capacity inputs are editable"
+    },
+    "real_time_update": {
+      "status": "PASS",
+      "details": "KPIs update in real-time when typing (0% → 50% for 500/1000)"
+    },
+    "status_badge_colors": {
+      "status": "PASS",
+      "details": "Status badge changes: منخفض → طبيعي → متوسط → مرتفع → حرج based on utilization"
+    },
+    "unsaved_changes_warning": {
+      "status": "PASS",
+      "details": "'1 تعديل غير محفوظ' warning bar appears after edit"
+    },
+    "save_functionality": {
+      "status": "PASS",
+      "details": "حفظ الكل button saves via PUT API, success toast shows, warning bar disappears"
+    },
+    "data_persistence": {
+      "status": "PASS",
+      "details": "Values persist after tab switch and API returns updated data"
+    },
+    "heat_map": {
+      "status": "PASS",
+      "details": "Density heat map card visible with zone colored by utilization"
+    },
+    "other_tabs_working": {
+      "status": "PASS",
+      "details": "Map, Zones, Changes, Stats tabs all functional after adding Density tab"
+    },
+    "backend_api": {
+      "status": "PASS",
+      "details": "PUT /api/admin/map-sessions/{id}/density-batch works correctly with all edge cases"
+    }
+  }
+}
