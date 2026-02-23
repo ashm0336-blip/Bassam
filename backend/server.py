@@ -642,6 +642,11 @@ class SessionZoneUpdate(BaseModel):
     is_removed: Optional[bool] = None
     daily_note: Optional[str] = None
     fill_color: Optional[str] = None
+    stroke_color: Optional[str] = None
+    opacity: Optional[float] = None
+    stroke_opacity: Optional[float] = None
+    stroke_width: Optional[float] = None
+    stroke_style: Optional[str] = None  # solid, dashed, dotted
     polygon_points: Optional[List[dict]] = None
 
 # ============= Transaction Models =============
