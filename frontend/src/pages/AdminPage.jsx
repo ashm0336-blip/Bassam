@@ -98,6 +98,10 @@ export default function AdminPage() {
           <ActivityLog />
         </TabsContent>
 
+        <TabsContent value="categories" className="mt-6">
+          <ZoneCategoryManager />
+        </TabsContent>
+
         <TabsContent value="season" className="mt-6">
           <SeasonManager />
         </TabsContent>
