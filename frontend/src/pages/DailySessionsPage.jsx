@@ -61,6 +61,7 @@ export default function DailySessionsPage() {
   const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [ZONE_TYPES, setZoneTypes] = useState(ZONE_TYPES_FALLBACK);
 
   // UI state
   const [activeTab, setActiveTab] = useState("map");
