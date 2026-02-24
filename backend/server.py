@@ -741,6 +741,8 @@ class SessionZoneUpdate(BaseModel):
     polygon_points: Optional[List[dict]] = None
     current_count: Optional[int] = None
     prayer_counts: Optional[dict] = None
+    max_capacity: Optional[int] = None
+    area_sqm: Optional[float] = None
     per_person_sqm: Optional[float] = None
 
 # ============= Transaction Models =============
