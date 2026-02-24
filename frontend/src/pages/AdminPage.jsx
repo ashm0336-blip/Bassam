@@ -47,7 +47,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-9 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -59,6 +59,10 @@ export default function AdminPage() {
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'النشاط' : 'Activity'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Tag className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الفئات' : 'Categories'}</span>
           </TabsTrigger>
           <TabsTrigger value="season" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Calendar className="w-5 h-5" />
