@@ -1170,16 +1170,25 @@ export default function DailySessionsPage() {
                       {/* Mode buttons */}
                       <div className="flex items-center gap-2">
                         <div className="flex border rounded-lg overflow-hidden">
-                          <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-pan-btn">
+                          <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-pan-btn" title={isAr ? "تحريك" : "Pan"}>
                             <Hand className="w-4 h-4" />
                           </Button>
-                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-draw-btn">
+                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-draw-btn" title={isAr ? "رسم نقطة بنقطة" : "Point Draw"}>
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant={mapMode === "rect" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("rect"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); }} data-testid="mode-rect-btn" title={isAr ? "رسم مستطيل بالسحب" : "Draw Rectangle"}>
+                          <Button variant={mapMode === "rect" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("rect"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-rect-btn" title={isAr ? "مستطيل بالسحب" : "Rectangle"}>
                             <Square className="w-4 h-4" />
                           </Button>
-                          <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("edit"); setDrawingPoints([]); setRectStart(null); }} data-testid="mode-edit-btn">
+                          <Button variant={mapMode === "circle" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("circle"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-circle-btn" title={isAr ? "دائرة بالسحب" : "Circle"}>
+                            <Circle className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "ellipse" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("ellipse"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-ellipse-btn" title={isAr ? "بيضاوي بالسحب" : "Ellipse"}>
+                            <Spline className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "freehand" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("freehand"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-freehand-btn" title={isAr ? "رسم حر" : "Freehand"}>
+                            <PenTool className="w-4 h-4" />
+                          </Button>
+                          <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("edit"); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-edit-btn" title={isAr ? "تعديل" : "Edit"}>
                             <MousePointer className="w-4 h-4" />
                           </Button>
                         </div>
