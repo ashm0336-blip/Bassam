@@ -567,11 +567,18 @@ export default function DailySessionsPage() {
     if (isPanning || draggingPoint !== null) return;
     e.preventDefault();
     const pos = getMousePercent(e);
-    if (mapMode === "draw") {
+    if (mapMode === "draw" && activeSession?.status === "draft") {
       if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
       setDrawingPoints(prev => [...prev, { x: pos.x, y: pos.y }]);
-    } else if (mapMode === "edit") {
+    } else if (mapMode === "edit" && activeSession?.status === "draft") {
       if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
+      let found = null;
+      for (const zone of sessionZones) {
+        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
+      }
+      setSelectedZoneId(found?.id || null);
+    } else if (activeSession?.status === "completed") {
+      // In completed sessions, allow clicking to highlight/select only
       let found = null;
       for (const zone of sessionZones) {
         if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
