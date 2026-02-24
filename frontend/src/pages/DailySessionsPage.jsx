@@ -522,6 +522,31 @@ export default function DailySessionsPage() {
       return;
     }
 
+    // Circle mode
+    if (mapMode === "circle" && rectStart && rectEnd) {
+      const pts = generateCircleFromDrag(rectStart, rectEnd);
+      if (pts) { setDrawingPoints(pts); setShowNewZoneDialog(true); }
+      setRectStart(null); setRectEnd(null);
+      return;
+    }
+
+    // Ellipse mode
+    if (mapMode === "ellipse" && rectStart && rectEnd) {
+      const pts = generateEllipseFromDrag(rectStart, rectEnd);
+      if (pts) { setDrawingPoints(pts); setShowNewZoneDialog(true); }
+      setRectStart(null); setRectEnd(null);
+      return;
+    }
+
+    // Freehand mode
+    if (mapMode === "freehand" && isDrawingFreehand && freehandPoints.length > 5) {
+      const simplified = simplifyPoints(freehandPoints, 0.4);
+      if (simplified.length >= 3) { setDrawingPoints(simplified); setShowNewZoneDialog(true); }
+      setIsDrawingFreehand(false); setFreehandPoints([]);
+      return;
+    }
+    setIsDrawingFreehand(false); setFreehandPoints([]);
+
     // Save after rotate, drag zone, or drag point
     const needsSave = (draggingPoint !== null || isRotating || isDraggingZone) && selectedZoneId;
     if (needsSave) {
