@@ -471,7 +471,6 @@ export default function DailySessionsPage() {
         if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
       }
       setSelectedZoneId(found?.id || null);
-      if (found) { const card = zoneCardsRef.current[found.id]; if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
     }
   };
 
