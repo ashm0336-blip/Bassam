@@ -1537,16 +1537,17 @@ export default function DailySessionsPage() {
                               key={zone.id}
                               ref={el => { zoneCardsRef.current[zone.id] = el; }}
                               data-testid={`zone-card-${zone.id}`}
-                              className={`rounded-lg border p-2 transition-all cursor-pointer ${
+                              className={`rounded-lg border p-2 transition-all ${activeSession?.status === "draft" ? "cursor-pointer" : ""} ${
                                 isSelected
                                   ? "border-blue-500 bg-blue-50/60 ring-2 ring-blue-200 shadow-md"
                                   : ch ? "hover:shadow-md" : "hover:shadow-sm hover:border-slate-300"
                               }`}
                               style={ch && !isSelected ? { borderBottomColor: cl.color, borderBottomWidth: 2 } : {}}
                               onClick={() => {
+                                if (activeSession?.status !== "draft") return;
                                 if (mapMode === "edit" || mapMode === "pan") {
                                   setSelectedZoneId(isSelected ? null : zone.id);
-                                  if (!isSelected && activeSession?.status === "draft") setMapMode("edit");
+                                  if (!isSelected) setMapMode("edit");
                                 }
                               }}
                             >
