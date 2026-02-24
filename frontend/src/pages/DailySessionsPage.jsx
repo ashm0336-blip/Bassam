@@ -1302,9 +1302,9 @@ export default function DailySessionsPage() {
                                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
                                           onMouseLeave={() => setHoveredZone(null)}
-                                          onClick={(e) => { if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
+                                          onClick={(e) => { e.stopPropagation(); setSelectedZoneId(zone.id); }}
                                           onDoubleClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
-                                          style={{ cursor: mapMode === "edit" || activeSession?.status === "draft" ? "pointer" : "default" }}>
+                                          style={{ cursor: "pointer" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
                                             stroke={isSelected ? "#3b82f6" : (zone.stroke_color || "#000000")}
                                             strokeWidth={isSelected ? 0.6 : (zone.stroke_width ?? 0.3)}
@@ -1521,7 +1521,7 @@ export default function DailySessionsPage() {
                               onClick={() => {
                                 if (mapMode === "edit" || mapMode === "pan") {
                                   setSelectedZoneId(isSelected ? null : zone.id);
-                                  if (!isSelected) setMapMode("edit");
+                                  if (!isSelected && activeSession?.status === "draft") setMapMode("edit");
                                 }
                               }}
                             >
