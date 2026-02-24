@@ -1589,40 +1589,86 @@ export default function DailySessionsPage() {
 
                 {/* CHANGES TAB */}
                 <TabsContent value="changes" className="space-y-4">
-                  <Card>
-                    <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><FileText className="w-5 h-5 text-emerald-600" />{isAr ? "ملخص التغييرات" : "Changes Summary"}</CardTitle></CardHeader>
-                    <CardContent>
-                      {changedZones.length === 0 ? (
-                        <div className="text-center py-8"><CheckCircle2 className="w-12 h-12 mx-auto text-emerald-400 mb-3" /><p className="text-muted-foreground">{isAr ? "لا توجد تغييرات" : "No changes"}</p></div>
-                      ) : (
-                        <div className="space-y-3">
-                          {changedZones.map(zone => {
-                            const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                            const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
-                            return (
-                              <div key={zone.id} className="flex items-center gap-3 p-3 rounded-lg border" style={{ borderRightColor: cl.color, borderRightWidth: 3 }} data-testid={`change-item-${zone.id}`}>
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cl.color }} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2"><span className="font-semibold text-sm">{zone.zone_code}</span><span className="text-xs text-muted-foreground">-</span><span className="text-xs">{isAr ? zone.name_ar : zone.name_en}</span></div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>
-                                    {ti && <span className="text-[10px] text-muted-foreground">{isAr ? ti.label_ar : ti.label_en}</span>}
-                                  </div>
-                                </div>
-                                {zone.daily_note && <p className="text-[10px] text-slate-500 max-w-xs truncate">{zone.daily_note}</p>}
+                  {/* Change Summary KPIs */}
+                  {activeSession?.changes_summary && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { key: "added", icon: Plus, label: isAr ? "مضاف" : "Added", color: "#22c55e", bg: "from-emerald-50" },
+                        { key: "removed", icon: Trash2, label: isAr ? "محذوف" : "Removed", color: "#ef4444", bg: "from-red-50" },
+                        { key: "modified", icon: Edit2, label: isAr ? "معدّل" : "Modified", color: "#f59e0b", bg: "from-amber-50" },
+                        { key: "unchanged", icon: Check, label: isAr ? "بدون تغيير" : "Unchanged", color: "#94a3b8", bg: "from-slate-50" },
+                      ].map(item => {
+                        const count = activeSession.changes_summary[item.key] || 0;
+                        const Icon = item.icon;
+                        return (
+                          <div key={item.key} className={`rounded-xl border bg-gradient-to-bl ${item.bg} to-white p-3`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] text-muted-foreground font-medium">{item.label}</span>
+                              <Icon className="w-4 h-4" style={{ color: item.color }} />
+                            </div>
+                            <p className="text-2xl font-bold" style={{ color: item.color }}>{count}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* All zones grouped by change type */}
+                  {(() => {
+                    const allZones = activeSession?.zones || [];
+                    const groups = [
+                      { type: "added", label: isAr ? "مناطق مضافة" : "Added Zones", zones: allZones.filter(z => z.change_type === "added"), color: "#22c55e", bg: "#dcfce7", icon: Plus },
+                      { type: "removed", label: isAr ? "مناطق محذوفة" : "Removed Zones", zones: allZones.filter(z => z.is_removed || z.change_type === "removed"), color: "#ef4444", bg: "#fef2f2", icon: Trash2 },
+                      { type: "modified", label: isAr ? "مناطق معدّلة" : "Modified Zones", zones: allZones.filter(z => z.change_type && ["modified","category_changed","moved"].includes(z.change_type)), color: "#f59e0b", bg: "#fefce8", icon: Edit2 },
+                      { type: "unchanged", label: isAr ? "بدون تغيير" : "Unchanged", zones: allZones.filter(z => !z.is_removed && (!z.change_type || z.change_type === "unchanged")), color: "#94a3b8", bg: "#f8fafc", icon: Check },
+                    ].filter(g => g.zones.length > 0);
+
+                    return groups.length === 0 ? (
+                      <Card><CardContent className="py-12 text-center"><CheckCircle2 className="w-12 h-12 mx-auto text-emerald-300 mb-3" /><p className="text-muted-foreground">{isAr ? "لا توجد تغييرات" : "No changes"}</p></CardContent></Card>
+                    ) : (
+                      <div className="space-y-4">
+                        {groups.map(group => {
+                          const GroupIcon = group.icon;
+                          return (
+                            <div key={group.type} data-testid={`changes-group-${group.type}`}>
+                              <h3 className="font-cairo font-semibold text-sm flex items-center gap-2 mb-2">
+                                <GroupIcon className="w-4 h-4" style={{ color: group.color }} />
+                                {group.label}
+                                <Badge className="text-[9px] px-1.5" style={{ backgroundColor: group.bg, color: group.color }}>{group.zones.length}</Badge>
+                              </h3>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+                                {group.zones.map(zone => {
+                                  const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                                  return (
+                                    <div key={zone.id} className="rounded-lg border p-2 transition-all hover:shadow-sm" style={{ borderBottomColor: group.color, borderBottomWidth: 2 }} data-testid={`change-item-${zone.id}`}>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color || group.color }}>
+                                          {ti?.icon || "?"}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className={`text-xs font-bold truncate ${group.type === "removed" ? "line-through text-red-400" : ""}`}>{zone.zone_code}</p>
+                                          <p className="text-[10px] text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+                                        </div>
+                                      </div>
+                                      {zone.daily_note && <p className="text-[9px] text-slate-400 mt-1 truncate">{zone.daily_note}</p>}
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {activeSession.supervisor_notes && (
-                        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                          <h4 className="font-cairo font-semibold text-sm text-blue-700 flex items-center gap-2 mb-2"><MessageSquare className="w-4 h-4" />{isAr ? "ملاحظات المشرف" : "Supervisor Notes"}</h4>
-                          <p className="text-sm text-blue-600 whitespace-pre-wrap">{activeSession.supervisor_notes}</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Supervisor Notes */}
+                  {activeSession?.supervisor_notes && (
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <h4 className="font-cairo font-semibold text-sm text-blue-700 flex items-center gap-2 mb-2"><MessageSquare className="w-4 h-4" />{isAr ? "ملاحظات المشرف" : "Supervisor Notes"}</h4>
+                      <p className="text-sm text-blue-600 whitespace-pre-wrap">{activeSession.supervisor_notes}</p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* DENSITY TAB */}
