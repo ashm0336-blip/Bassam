@@ -2470,26 +2470,39 @@ export default function DailySessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* New Zone Dialog (for drawn zones) */}
+      {/* New Zone Dialog (for drawn zones) - matches Edit Zone dialog */}
       <Dialog open={showNewZoneDialog} onOpenChange={(open) => { setShowNewZoneDialog(open); if (!open) { setDrawingPoints([]); setMapMode("pan"); } }}>
-        <DialogContent className="max-w-md" dir="rtl">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="font-cairo flex items-center gap-2">
               <Plus className="w-5 h-5 text-emerald-600" />{isAr ? "إضافة منطقة جديدة" : "Add New Zone"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
-              <p className="text-xs text-emerald-700"><CheckCircle2 className="w-4 h-4 inline ml-1" />{isAr ? `تم رسم الشكل بـ ${drawingPoints.length} نقطة. أكمل البيانات التالية:` : `Shape drawn with ${drawingPoints.length} points. Fill in the details:`}</p>
+            {/* Shape confirmation */}
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: ZONE_TYPES.find(t => t.value === newZoneForm.zone_type)?.color || "#22c55e" }}>
+                {ZONE_TYPES.find(t => t.value === newZoneForm.zone_type)?.icon || "?"}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-700">{newZoneForm.name_ar || (isAr ? "منطقة جديدة" : "New Zone")}</p>
+                <p className="text-xs text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5 inline ml-1" />{isAr ? `تم رسم الشكل بـ ${drawingPoints.length} نقطة` : `Shape drawn with ${drawingPoints.length} points`}</p>
+              </div>
             </div>
-            <div>
-              <Label className="text-sm font-medium">{isAr ? "كود المنطقة" : "Zone Code"}</Label>
-              <Input className="mt-1" placeholder={isAr ? "مثال: Z-001" : "e.g., Z-001"} value={newZoneForm.zone_code} onChange={(e) => setNewZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="new-zone-code" />
+
+            {/* Name & Code */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-medium">{isAr ? "اسم المنطقة" : "Zone Name"}</Label>
+                <Input className="mt-1 text-sm" placeholder={isAr ? "مثال: مصلى رجال 5" : "e.g., Men Prayer 5"} value={newZoneForm.name_ar} onChange={(e) => setNewZoneForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="new-zone-name" />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">{isAr ? "الترميز" : "Zone Code"}</Label>
+                <Input className="mt-1 text-sm font-mono" placeholder={isAr ? "مثال: Z-001" : "e.g., Z-001"} value={newZoneForm.zone_code} onChange={(e) => setNewZoneForm(p => ({ ...p, zone_code: e.target.value }))} data-testid="new-zone-code" />
+              </div>
             </div>
-            <div>
-              <Label className="text-sm font-medium">{isAr ? "اسم المنطقة" : "Zone Name"}</Label>
-              <Input className="mt-1" placeholder={isAr ? "مثال: مصلى رجال 5" : "e.g., Men Prayer 5"} value={newZoneForm.name_ar} onChange={(e) => setNewZoneForm(p => ({ ...p, name_ar: e.target.value }))} data-testid="new-zone-name" />
-            </div>
+
+            {/* Category */}
             <div>
               <Label className="text-sm font-medium">{isAr ? "الفئة" : "Category"}</Label>
               <Select value={newZoneForm.zone_type} onValueChange={(v) => setNewZoneForm(p => ({ ...p, zone_type: v, fill_color: ZONE_TYPES.find(t => t.value === v)?.color || "#22c55e" }))}>
@@ -2502,6 +2515,49 @@ export default function DailySessionsPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Capacity Calculator */}
+            <div className="space-y-3 p-3 border rounded-lg bg-blue-50/30" data-testid="new-zone-capacity-calculator">
+              <h4 className="font-cairo font-semibold text-sm flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-600" />
+                {isAr ? "حساب السعة" : "Capacity Calculator"}
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">{isAr ? "المساحة (م²)" : "Area (m²)"}</Label>
+                  <Input type="number" min={0} className="mt-1 text-sm font-mono" value={newZoneForm.area_sqm} onChange={(e) => {
+                    const area = parseFloat(e.target.value) || 0;
+                    const pp = newZoneForm.per_person_sqm || 0.8;
+                    const cap = pp > 0 && area > 0 ? Math.round(area / pp) : newZoneForm.max_capacity || 0;
+                    setNewZoneForm(p => ({ ...p, area_sqm: area, max_capacity: cap }));
+                  }} data-testid="new-zone-area" />
+                </div>
+                <div>
+                  <Label className="text-xs">{isAr ? "نصيب الفرد (م²)" : "Per Person (m²)"}</Label>
+                  <Input type="number" min={0.1} step={0.1} className="mt-1 text-sm font-mono" value={newZoneForm.per_person_sqm} onChange={(e) => {
+                    const pp = parseFloat(e.target.value) || 0.8;
+                    const area = newZoneForm.area_sqm || 0;
+                    const cap = pp > 0 && area > 0 ? Math.round(area / pp) : newZoneForm.max_capacity || 0;
+                    setNewZoneForm(p => ({ ...p, per_person_sqm: pp, max_capacity: cap }));
+                  }} data-testid="new-zone-perperson" />
+                </div>
+                <div>
+                  <Label className="text-xs">{isAr ? "السعة القصوى" : "Max Capacity"}</Label>
+                  <Input type="number" min={0} className="mt-1 text-sm font-mono font-bold" value={newZoneForm.max_capacity} onChange={(e) => setNewZoneForm(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))} data-testid="new-zone-capacity" />
+                </div>
+              </div>
+              {(newZoneForm.area_sqm > 0 && newZoneForm.per_person_sqm > 0) && (
+                <div className="p-3 bg-white rounded-lg border border-blue-100 text-center">
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg font-bold font-mono">{newZoneForm.area_sqm} {isAr ? "م²" : "m²"}</span>
+                    <span className="text-slate-400 font-bold text-lg">&divide;</span>
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-bold font-mono">{newZoneForm.per_person_sqm} {isAr ? "م²/فرد" : "m²/p"}</span>
+                    <span className="text-slate-400 font-bold text-lg">=</span>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg font-bold font-mono text-base">{Math.round(newZoneForm.area_sqm / newZoneForm.per_person_sqm).toLocaleString()} {isAr ? "مصلي" : "cap"}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
