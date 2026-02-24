@@ -3,42 +3,36 @@
 ## Original Problem Statement
 Build an interactive map-based digital operational report for a crowd management platform (Al-Haram OS).
 
-## Daily Map Sessions - Tabs (4)
-1. **الخريطة** (Map + Zones) - Drawing tools, zone cards below map, enhanced tooltip
-2. **التغييرات** (Changes) - Daily change tracking
-3. **الكثافات** (Density) - Current count input → auto utilization
-4. **إحصائيات** (Stats) - Category stats with day comparison
-
 ## Key Features
-- **Capacity Calculator:** area ÷ per_person = max_capacity (auto-calculated)
-- **Enhanced Tooltip:** code, name, category, area, capacity, utilization bar, status, notes
-- **Bidirectional Selection:** click zone on map ↔ highlights card below
-- **Density Heat Map:** zones colored by utilization level
+- **Dynamic Zone Categories** - DB-driven, managed from Admin Panel
+- **Daily Map Sessions** - 4 tabs: Map+Zones, Changes, Density, Stats
+- **Capacity Calculator** - area ÷ per_person = max_capacity
+- **Enhanced Tooltip** - code, name, category, area, capacity, utilization, status
+- **Daily Gate Sessions** - Gate status logging
+- **Map Management** - Floor plans only
 
 ## Sidebar: إدارة المصليات
 - نظرة عامة → /haram-map (P0: future GM dashboard)
 - السجل اليومي للخرائط → /daily-sessions
-- إدارة الخرائط → /map-management (floors only)
+- إدارة الخرائط → /map-management
+
+## Admin Panel Tabs (9)
+لوحة التحكم, المستخدمون, النشاط, **الفئات**, المواسم, الممنوعات, الخرائط, الإعدادات, القائمة
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
 ## Prioritized Backlog
-### P0 - Overview Page for GM
-Transform /haram-map into professional GM dashboard with daily summaries, density trends, alerts
-
-### P1
-- PDF daily report export
-- Refactor server.py into modular structure
-
-### P2
-- Real-time crowd data, WebSocket, trend charts
+### P0 - GM Dashboard (نظرة عامة)
+### P1 - PDF export, Refactor server.py, Routes tab (المسارات)
+### P2 - Real-time data, WebSocket, trends
 
 ## Completed This Session
 1. Statistics Tab (iter_15)
 2. Density Tab (iter_16)
 3. Map Management simplification (iter_17)
-4. Renamed to إدارة المصليات + sidebar fixes
+4. Renamed to إدارة المصليات
 5. Zones merged into Map tab (iter_18)
 6. Capacity Calculator (iter_19)
-7. Enhanced Zone Hover Tooltip (iter_20)
+7. Enhanced Tooltip (iter_20)
+8. Dynamic Zone Categories with Admin Manager (iter_21)
