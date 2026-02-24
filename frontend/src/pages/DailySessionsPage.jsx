@@ -1333,11 +1333,12 @@ export default function DailySessionsPage() {
                                             vectorEffect="non-scaling-stroke" />
                                           {/* Pulse animation for selected zone */}
                                           {isSelected && (
-                                            <path d={getPath(zone.polygon_points)} fill="none"
-                                              stroke="#3b82f6" strokeWidth="1.2" strokeOpacity="0"
+                                            <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity="0"
+                                              stroke="#ef4444" strokeWidth="2" strokeOpacity="0"
                                               vectorEffect="non-scaling-stroke" pointerEvents="none">
-                                              <animate attributeName="stroke-opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite" />
-                                              <animate attributeName="stroke-width" values="0.6;2.5" dur="1.5s" repeatCount="indefinite" />
+                                              <animate attributeName="stroke-opacity" values="1;0" dur="1.2s" repeatCount="indefinite" />
+                                              <animate attributeName="stroke-width" values="1;4" dur="1.2s" repeatCount="indefinite" />
+                                              <animate attributeName="fill-opacity" values="0.15;0" dur="1.2s" repeatCount="indefinite" />
                                             </path>
                                           )}
                                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
