@@ -1311,6 +1311,15 @@ export default function DailySessionsPage() {
                                             strokeOpacity={isSelected ? 1 : (zone.stroke_opacity ?? 1)}
                                             strokeDasharray={isSelected ? "1 0.5" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
                                             vectorEffect="non-scaling-stroke" />
+                                          {/* Pulse animation for selected zone */}
+                                          {isSelected && (
+                                            <path d={getPath(zone.polygon_points)} fill="none"
+                                              stroke="#3b82f6" strokeWidth="1.2" strokeOpacity="0"
+                                              vectorEffect="non-scaling-stroke" pointerEvents="none">
+                                              <animate attributeName="stroke-opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite" />
+                                              <animate attributeName="stroke-width" values="0.6;2.5" dur="1.5s" repeatCount="indefinite" />
+                                            </path>
+                                          )}
                                           {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
                                             const isActive = i === draggingPoint || i === hoveredPoint;
                                             return <circle key={`v-${i}`} pointerEvents="none" cx={pt.x} cy={pt.y} r={isActive ? "0.18" : "0.1"} fill="#ef4444" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />;
