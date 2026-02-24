@@ -311,6 +311,37 @@ class SidebarMenuItemUpdate(BaseModel):
     department: Optional[str] = None
     admin_only: Optional[bool] = None
 
+
+# ============= Zone Category Models =============
+class ZoneCategory(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    value: str  # unique key e.g. "men_prayer"
+    label_ar: str
+    label_en: str
+    color: str = "#22c55e"
+    icon: str = "M"
+    order: int = 0
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ZoneCategoryCreate(BaseModel):
+    value: str
+    label_ar: str
+    label_en: str
+    color: str = "#22c55e"
+    icon: str = "M"
+    order: Optional[int] = 0
+
+class ZoneCategoryUpdate(BaseModel):
+    value: Optional[str] = None
+    label_ar: Optional[str] = None
+    label_en: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
 # ============= Settings Models =============
 class LoginPageSettings(BaseModel):
     id: str = "login_settings"  # Single document
