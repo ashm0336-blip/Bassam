@@ -1964,28 +1964,16 @@ export default function DailySessionsPage() {
                                                 vectorEffect="non-scaling-stroke"
                                               />
                                               {showLabels && (
-                                                <>
-                                                  <text
-                                                    x={center.x} y={center.y - 0.5}
-                                                    textAnchor="middle" dominantBaseline="middle"
-                                                    fontSize={1.2 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
-                                                    fill={di.pct >= 40 ? "#fff" : di.color}
-                                                    opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.4)}
-                                                    style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.25 }}
-                                                  >
-                                                    {di.pct}%
-                                                  </text>
-                                                  <text
-                                                    x={center.x} y={center.y + 0.8}
-                                                    textAnchor="middle" dominantBaseline="middle"
-                                                    fontSize={0.8 / Math.sqrt(heatZoom / 2)}
-                                                    fill={di.pct >= 40 ? "#fff" : "#64748b"}
-                                                    opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.3)}
-                                                    style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
-                                                  >
-                                                    {zone.zone_code}
-                                                  </text>
-                                                </>
+                                                <text
+                                                  x={center.x} y={center.y}
+                                                  textAnchor="middle" dominantBaseline="middle"
+                                                  fontSize={1 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
+                                                  fill={di.pct >= 40 ? "#fff" : di.color}
+                                                  opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.4)}
+                                                  style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
+                                                >
+                                                  {di.pct}%
+                                                </text>
                                               )}
                                             </g>
                                           );
