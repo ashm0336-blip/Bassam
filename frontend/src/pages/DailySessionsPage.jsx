@@ -1303,7 +1303,7 @@ export default function DailySessionsPage() {
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden">
                       <CardContent className="p-0">
-                        <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: mapMode === "draw" || mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse" || mapMode === "freehand" ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab") }} onMouseDown={handleMapMouseDown} onMouseMove={handleMapMouseMove} onMouseUp={handleMapMouseUp} onMouseLeave={handleMapMouseUp} onClick={handleMapClick}>
+                        <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: activeSession?.status === "completed" ? (isPanning ? "grabbing" : "grab") : (mapMode === "draw" || mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse" || mapMode === "freehand" ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab")) }} onMouseDown={handleMapMouseDown} onMouseMove={handleMapMouseMove} onMouseUp={handleMapMouseUp} onMouseLeave={handleMapMouseUp} onClick={handleMapClick}>
                           <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {(() => {
                               const ce = mapContainerRef.current;
