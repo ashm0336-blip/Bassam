@@ -31,21 +31,10 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const ZONE_TYPES = [
+// ZONE_TYPES loaded from API - fallback used until loaded
+const ZONE_TYPES_FALLBACK = [
   { value: "men_prayer", label_ar: "مصليات الرجال", label_en: "Men Prayer Areas", color: "#22c55e", icon: "M" },
   { value: "women_prayer", label_ar: "مصليات النساء", label_en: "Women Prayer Areas", color: "#93c5fd", icon: "W" },
-  { value: "men_rakatayn", label_ar: "مصلى الركعتين للرجال", label_en: "Two-Rak'ah Men", color: "#16a34a", icon: "R" },
-  { value: "women_rakatayn", label_ar: "مصلى الركعتين للنساء", label_en: "Two-Rak'ah Women", color: "#60a5fa", icon: "Q" },
-  { value: "men_tasks", label_ar: "مصلى مهمات رجال", label_en: "Men Tasks Prayer", color: "#9ca3af", icon: "H" },
-  { value: "women_tasks", label_ar: "مصلى مهمات نساء", label_en: "Women Tasks Prayer", color: "#fdba74", icon: "N" },
-  { value: "emergency", label_ar: "مجمعات خدمات الطوارئ", label_en: "Emergency Services", color: "#78350f", icon: "!" },
-  { value: "vip", label_ar: "مصلى رؤساء الدول ومرافقيهم", label_en: "VIP / Heads of State", color: "#1e3a5f", icon: "V" },
-  { value: "funeral", label_ar: "مصلى الجنائز", label_en: "Funeral Prayer", color: "#a8a29e", icon: "J" },
-  { value: "disabled_men", label_ar: "مصلى ذوي الإعاقة والمسنين", label_en: "Disabled & Elderly Men", color: "#1d4ed8", icon: "D" },
-  { value: "disabled_women", label_ar: "مصلى المسنات وذوي الإعاقة من النساء", label_en: "Disabled & Elderly Women", color: "#be123c", icon: "F" },
-  { value: "reserve_fard", label_ar: "مصليات احتياطية (وقت الفروض)", label_en: "Reserve (Prayer Times)", color: "#ea580c", icon: "A" },
-  { value: "reserve_general", label_ar: "مصليات احتياطية", label_en: "Reserve Prayer Areas", color: "#4ade80", icon: "P" },
-  { value: "elevated", label_ar: "مصليات مرتقبة", label_en: "Anticipated Prayer Areas", color: "#b0b0b0", icon: "E" },
   { value: "service", label_ar: "خدمات", label_en: "Services", color: "#374151", icon: "X" },
 ];
 
