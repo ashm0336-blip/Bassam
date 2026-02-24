@@ -412,7 +412,7 @@ export default function DailySessionsPage() {
     } else if (mapMode === "freehand") {
       setIsDrawingFreehand(true);
       setFreehandPoints([pos]);
-    } else if (mapMode === "edit" && selectedZoneId) {
+    } else if (mapMode === "edit" && selectedZoneId && activeSession?.status === "draft") {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (!zone?.polygon_points) return;
 
