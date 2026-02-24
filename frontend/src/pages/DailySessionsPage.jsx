@@ -1559,7 +1559,7 @@ export default function DailySessionsPage() {
                         <Badge variant="destructive" className="text-[10px] px-1.5">{removedZones.length}</Badge>
                       </button>
                       {showRemovedZones && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 mt-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 mt-2">
                           {removedZones.map(zone => {
                             const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
                             return (
