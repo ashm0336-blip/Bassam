@@ -487,6 +487,8 @@ export default function DailySessionsPage() {
         zone_type: newZoneForm.zone_type,
         polygon_points: drawingPoints,
         fill_color: typeInfo?.color || newZoneForm.fill_color,
+        stroke_color: "#000000",
+        stroke_style: "dashed",
         area_sqm: newZoneForm.area_sqm || 0,
         per_person_sqm: newZoneForm.per_person_sqm || 0.8,
         max_capacity: newZoneForm.max_capacity || 0,
