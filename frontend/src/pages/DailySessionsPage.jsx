@@ -1891,28 +1891,63 @@ export default function DailySessionsPage() {
                       {selectedFloor?.image_url && (
                         <Card data-testid="density-heatmap-card">
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-cairo flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-orange-600" />
-                              {isAr ? "خريطة الكثافة الحرارية" : "Density Heat Map"}
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-sm font-cairo flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-orange-600" />
+                                {isAr ? "خريطة الكثافة الحرارية" : "Density Heat Map"}
+                              </CardTitle>
+                              <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-out" onClick={() => { const c = heatContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = heatZoomRef.current; const nz = Math.max(0.3, p * 0.8); const s = nz/p; heatZoomRef.current = nz; setHeatZoom(nz); setHeatPan(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }}><ZoomOut className="w-4 h-4" /></Button>
+                                <span className="text-xs w-12 text-center font-mono">{Math.round(heatZoom * 100)}%</span>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-in" onClick={() => { const c = heatContainerRef.current; if (!c) return; const r = c.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = heatZoomRef.current; const nz = Math.min(20, p * 1.25); const s = nz/p; heatZoomRef.current = nz; setHeatZoom(nz); setHeatPan(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) })); }}><ZoomIn className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-reset" onClick={() => { heatZoomRef.current=1; setHeatZoom(1); setHeatPan({x:0,y:0}); }}><Maximize2 className="w-4 h-4" /></Button>
+                              </div>
+                            </div>
                           </CardHeader>
                           <CardContent className="p-2">
-                            <div className="relative bg-slate-100 rounded-lg overflow-hidden" style={{ height: "400px" }}>
-                              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div
+                              ref={heatWheelRef}
+                              className="relative bg-slate-50 rounded-lg overflow-hidden"
+                              style={{ height: "550px", cursor: heatPanning ? "grabbing" : "grab" }}
+                              data-testid="density-heatmap-container"
+                              onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setHeatPanning(true); setHeatPanStart({ x: e.clientX - heatPan.x, y: e.clientY - heatPan.y }); }}
+                              onMouseMove={(e) => {
+                                if (heatPanning) { setHeatPan({ x: e.clientX - heatPanStart.x, y: e.clientY - heatPanStart.y }); return; }
+                                // Tooltip detection
+                                const c = heatContainerRef.current; if (!c) return;
+                                const rect = c.getBoundingClientRect();
+                                setHeatTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
+                                // Find zone under cursor using transformed coordinates
+                                const innerDiv = c.querySelector('[data-heat-inner]');
+                                if (!innerDiv) return;
+                                const innerRect = innerDiv.getBoundingClientRect();
+                                const px = ((e.clientX - innerRect.left) / innerRect.width) * 100;
+                                const py = ((e.clientY - innerRect.top) / innerRect.height) * 100;
+                                let found = null;
+                                for (const zone of (densityStats?.zonesDensity || [])) {
+                                  if (zone.polygon_points && isPointInPolygon({ x: px, y: py }, zone.polygon_points)) { found = zone; break; }
+                                }
+                                setHeatHovered(found);
+                              }}
+                              onMouseUp={() => setHeatPanning(false)}
+                              onMouseLeave={() => { setHeatPanning(false); setHeatHovered(null); }}
+                            >
+                              <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {(() => {
                                   let ws = { position: "relative", width: "100%", height: "100%" };
                                   if (imgRatio) {
-                                    const ch = 400;
-                                    const cw = mapContainerRef.current?.clientWidth || 800;
+                                    const ch = 550;
+                                    const cw = heatContainerRef.current?.clientWidth || 800;
                                     if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
                                     else ws = { position: "relative", width: "100%", height: cw / imgRatio };
                                   }
                                   return (
-                                    <div style={ws}>
-                                      <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block" }} draggable={false} className="pointer-events-none select-none" />
-                                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="density-heatmap-svg">
-                                        {densityStats.zonesDensity.map(zone => {
+                                    <div style={ws} data-heat-inner="true">
+                                      <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" />
+                                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="density-heatmap-svg">
+                                        {(densityStats?.zonesDensity || []).map(zone => {
                                           const di = zone.densityInfo;
+                                          const isHovered = heatHovered?.id === zone.id;
                                           const center = zone.polygon_points?.length > 0
                                             ? { x: zone.polygon_points.reduce((s,p) => s+p.x, 0) / zone.polygon_points.length, y: zone.polygon_points.reduce((s,p) => s+p.y, 0) / zone.polygon_points.length }
                                             : { x: 50, y: 50 };
@@ -1921,19 +1956,16 @@ export default function DailySessionsPage() {
                                               <path
                                                 d={getPath(zone.polygon_points)}
                                                 fill={di.color}
-                                                fillOpacity={0.15 + (di.pct / 100) * 0.45}
-                                                stroke={di.color}
-                                                strokeWidth={di.level === "critical" ? 0.6 : 0.3}
-                                                strokeOpacity={0.8}
+                                                fillOpacity={isHovered ? 0.7 : (0.15 + (di.pct / 100) * 0.45)}
+                                                stroke={isHovered ? "#1e293b" : di.color}
+                                                strokeWidth={isHovered ? 1 : (di.level === "critical" ? 0.6 : 0.3)}
+                                                strokeOpacity={isHovered ? 1 : 0.8}
                                                 vectorEffect="non-scaling-stroke"
                                               />
-                                              {/* Percentage label on zone */}
                                               <text
                                                 x={center.x} y={center.y - 0.8}
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="2.2"
-                                                fontWeight="bold"
+                                                textAnchor="middle" dominantBaseline="middle"
+                                                fontSize="2.2" fontWeight="bold"
                                                 fill={di.pct >= 50 ? "#fff" : di.color}
                                                 style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.4 }}
                                               >
@@ -1941,8 +1973,7 @@ export default function DailySessionsPage() {
                                               </text>
                                               <text
                                                 x={center.x} y={center.y + 1.5}
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
+                                                textAnchor="middle" dominantBaseline="middle"
                                                 fontSize="1.4"
                                                 fill={di.pct >= 50 ? "#fff" : "#64748b"}
                                                 style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.3 }}
@@ -1957,6 +1988,32 @@ export default function DailySessionsPage() {
                                   );
                                 })()}
                               </div>
+
+                              {/* Tooltip */}
+                              {heatHovered && !heatPanning && (() => {
+                                const di = heatHovered.densityInfo;
+                                const ti = ZONE_TYPES.find(t => t.value === heatHovered.zone_type);
+                                return (
+                                  <div className="absolute z-50 pointer-events-none bg-white/95 backdrop-blur-md border shadow-xl rounded-xl px-3 py-2.5 min-w-[180px]" style={{ left: heatTooltipPos.x, top: heatTooltipPos.y }}>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                      <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold" style={{ backgroundColor: heatHovered.fill_color }}>{ti?.icon || "?"}</div>
+                                      <span className="font-bold text-xs">{heatHovered.zone_code}</span>
+                                      <span className="text-[10px] text-muted-foreground">{isAr ? heatHovered.name_ar : heatHovered.name_en}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${Math.min(di.pct, 100)}%`, backgroundColor: di.color }} />
+                                      </div>
+                                      <span className="text-xs font-bold font-mono" style={{ color: di.color }}>{di.pct}%</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                      <span>{heatHovered.currentDisplay.toLocaleString()} / {heatHovered.maxDisplay.toLocaleString()}</span>
+                                      <span className="px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* Gradient legend */}
                               <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
                                 <span className="text-[10px] font-medium text-muted-foreground">{isAr ? "منخفض" : "Low"}</span>
