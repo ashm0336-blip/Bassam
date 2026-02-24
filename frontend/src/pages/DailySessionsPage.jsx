@@ -403,7 +403,8 @@ export default function DailySessionsPage() {
     if (e.button !== 0) return;
     e.preventDefault();
     const pos = getMousePercent(e);
-    if (mapMode === "pan") {
+    // Completed sessions: always pan only
+    if (activeSession?.status === "completed" || mapMode === "pan") {
       setIsPanning(true);
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
     } else if (mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse") {
