@@ -1763,12 +1763,34 @@ export default function DailySessionsPage() {
                 <TabsContent value="density" className="space-y-5">
                   {densityStats && (
                     <>
+                      {/* Prayer Times Selector */}
+                      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl" data-testid="prayer-time-selector">
+                        {PRAYER_TIMES.map(pt => {
+                          const isActive = activePrayer === pt.key;
+                          return (
+                            <button
+                              key={pt.key}
+                              onClick={() => setActivePrayer(pt.key)}
+                              data-testid={`prayer-btn-${pt.key}`}
+                              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-cairo font-semibold transition-all ${
+                                isActive
+                                  ? "bg-white shadow-md text-emerald-700 ring-1 ring-emerald-200"
+                                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                              }`}
+                            >
+                              <span className="text-base">{pt.icon}</span>
+                              <span className="hidden sm:inline">{isAr ? pt.label_ar : pt.label_en}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       {/* Density KPI Cards */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="density-kpi-row">
                         {/* Overall Utilization */}
                         <div className="relative overflow-hidden rounded-xl border p-4" style={{ background: `linear-gradient(135deg, ${densityStats.overallLevel.bg}, white)` }}>
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "نسبة الإشغال" : "Utilization"}</span>
+                            <span className="text-xs text-muted-foreground font-medium">{isAr ? "نسبة الإشغال" : "Utilization"} - {isAr ? PRAYER_TIMES.find(p => p.key === activePrayer)?.label_ar : activePrayer}</span>
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: densityStats.overallLevel.color + "20" }}>
                               <Gauge className="w-4 h-4" style={{ color: densityStats.overallLevel.color }} />
                             </div>
