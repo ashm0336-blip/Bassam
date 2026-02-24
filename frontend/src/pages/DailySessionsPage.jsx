@@ -1235,11 +1235,10 @@ export default function DailySessionsPage() {
 
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="map" data-testid="tab-map"><MapPin className="w-4 h-4 ml-1" />{isAr ? "الخريطة" : "Map"}<Badge variant="secondary" className="mr-1 text-[10px] px-1.5">{activeZones.length}</Badge></TabsTrigger>
                   <TabsTrigger value="stats" data-testid="tab-stats"><BarChart3 className="w-4 h-4 ml-1" />{isAr ? "إحصائيات" : "Stats"}</TabsTrigger>
                   <TabsTrigger value="density" data-testid="tab-density"><Activity className="w-4 h-4 ml-1" />{isAr ? "الكثافات" : "Density"}{densityStats?.criticalCount > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{densityStats.criticalCount}</Badge>}</TabsTrigger>
-                  <TabsTrigger value="changes" data-testid="tab-changes"><FileText className="w-4 h-4 ml-1" />{isAr ? "التغييرات" : "Changes"}{changedZones.length > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{changedZones.length}</Badge>}</TabsTrigger>
                 </TabsList>
 
                 {/* MAP TAB */}
