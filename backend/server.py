@@ -740,8 +740,7 @@ class SessionZoneUpdate(BaseModel):
     stroke_style: Optional[str] = None  # solid, dashed, dotted
     polygon_points: Optional[List[dict]] = None
     current_count: Optional[int] = None
-    max_capacity: Optional[int] = None
-    area_sqm: Optional[float] = None
+    prayer_counts: Optional[dict] = None
     per_person_sqm: Optional[float] = None
 
 # ============= Transaction Models =============
