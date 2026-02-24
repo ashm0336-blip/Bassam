@@ -251,6 +251,27 @@ export default function DailySessionsPage() {
     return () => node.removeEventListener("wheel", handler);
   }, []);
 
+  // Heatmap wheel zoom
+  const heatWheelRef = useCallback((node) => {
+    if (!node) return;
+    heatContainerRef.current = node;
+    const handler = (e) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const prev = heatZoomRef.current;
+      const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const nz = Math.max(0.3, Math.min(20, prev * delta));
+      const s = nz / prev;
+      heatZoomRef.current = nz;
+      setHeatZoom(nz);
+      setHeatPan(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
+    };
+    node.addEventListener("wheel", handler, { passive: false });
+    return () => node.removeEventListener("wheel", handler);
+  }, []);
+
   // Pan (old handlers removed - now using handleMapMouseDown/Move/Up)
   const getPath = (points, close = true) => {
     if (!points || points.length === 0) return "";
