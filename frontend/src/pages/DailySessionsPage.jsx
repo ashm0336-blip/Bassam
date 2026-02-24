@@ -156,6 +156,12 @@ export default function DailySessionsPage() {
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => {
+    // Fetch zone categories from API
+    axios.get(`${API}/zone-categories`).then(res => {
+      if (res.data?.length > 0) setZoneTypes(res.data);
+    }).catch(() => {});
+  }, []);
+  useEffect(() => {
     if (selectedFloor) {
       fetchSessions();
       setActiveSession(null);
