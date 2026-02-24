@@ -1241,7 +1241,7 @@ export default function DailySessionsPage() {
                               );
                             })()}
                           </div>
-                          {hoveredZone && (() => {
+                          {hoveredZone && mapMode !== "edit" && (() => {
                             const ti = ZONE_TYPES.find(t => t.value === hoveredZone.zone_type);
                             const cl = CHANGE_LABELS[hoveredZone.change_type] || CHANGE_LABELS.unchanged;
                             const hasChange = hoveredZone.change_type && hoveredZone.change_type !== "unchanged";
