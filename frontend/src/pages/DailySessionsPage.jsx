@@ -1539,11 +1539,8 @@ export default function DailySessionsPage() {
                               }`}
                               style={ch && !isSelected ? { borderBottomColor: cl.color, borderBottomWidth: 2 } : {}}
                               onClick={() => {
-                                if (activeSession?.status !== "draft") return;
-                                if (mapMode === "edit" || mapMode === "pan") {
-                                  setSelectedZoneId(isSelected ? null : zone.id);
-                                  if (!isSelected) setMapMode("edit");
-                                }
+                                // Select zone for pulse highlight only - don't enter edit mode
+                                setSelectedZoneId(isSelected ? null : zone.id);
                               }}
                             >
                               <div className="flex items-center gap-2">
