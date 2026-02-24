@@ -5,38 +5,33 @@ Build an interactive map-based digital operational report for a crowd management
 
 ## Key Features
 - **Dynamic Zone Categories** - DB-driven, managed from Admin Panel
-- **Daily Map Sessions** - 4 tabs: Map+Zones, Changes, Density, Stats
+- **Daily Map Sessions** - 4 tabs: Map+Zones, Stats, Density, Changes
 - **Capacity Calculator** - area / per_person = max_capacity
-- **Enhanced Tooltip** - code, name, category, area, capacity, utilization, status
-- **Daily Gate Sessions** - Gate status logging
-- **Map Management** - Floor plans only
-- **Session Lock** - Completed sessions are read-only (no editing zones)
-- **Zone Card Highlight** - Clicking zone card shows pulse on map without entering edit mode
-
-## Sidebar
-- نظرة عامة -> /haram-map (P0: future GM dashboard)
-- السجل اليومي للخرائط -> /daily-sessions
-- إدارة الخرائط -> /map-management
+- **Prayer Times Density** - Track crowd density per prayer time (Fajr, Dhuhr, Asr, Maghrib, Isha, Taraweeh)
+- **Session Lock** - Completed sessions are read-only
+- **Zone Card Highlight** - Pulse animation without entering edit mode
+- **Heatmap** - Zoom/pan with labels appearing at 200%+
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
 ## Prioritized Backlog
 ### P0 - GM Dashboard (نظرة عامة)
-### P1 - PDF export, Refactor server.py, Routes tab (المسارات)
-### P2 - Real-time data, WebSocket, trends
+### P1 - Refactor server.py + DailySessionsPage.jsx, Paths tab
+### P2 - PDF export, Real-time data, WebSocket
 
 ## Completed
 1. Statistics Tab
 2. Density Tab
 3. Map Management simplification
-4. Renamed to إدارة المصليات
-5. Zones merged into Map tab
-6. Capacity Calculator
-7. Enhanced Tooltip
-8. Dynamic Zone Categories with Admin Manager
-9. Advanced Drawing Tools (Circle, Ellipse, Freehand, Smooth Corners)
-10. Pulse Animation on selected zone
-11. Session Lock - Completed sessions fully read-only (Feb 2026)
-12. Zone Card Click Fix - Cards highlight with pulse only, no edit mode activation (Feb 2026)
-13. Grab cursor for map panning (Feb 2026)
+4. Dynamic Zone Categories with Admin Manager
+5. Advanced Drawing Tools
+6. Pulse Animation on selected zone
+7. Session Lock - Completed sessions fully read-only
+8. Zone Card Click Fix - Pulse only, no edit mode
+9. Grab cursor for map panning
+10. Tabs reorder: Map > Stats > Density > Changes
+11. Density cards grid layout (5 per row)
+12. Professional heatmap with zoom/pan/tooltip
+13. Heatmap labels hidden, appear on zoom > 200%
+14. Prayer Times Density - 6 prayer time slots per zone (Feb 2026)
