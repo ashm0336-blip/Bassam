@@ -98,6 +98,15 @@ export default function DailySessionsPage() {
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
+  // Heatmap zoom/pan state
+  const [heatZoom, setHeatZoom] = useState(1);
+  const [heatPan, setHeatPan] = useState({ x: 0, y: 0 });
+  const [heatPanning, setHeatPanning] = useState(false);
+  const [heatPanStart, setHeatPanStart] = useState({ x: 0, y: 0 });
+  const heatZoomRef = useRef(1);
+  const heatContainerRef = useRef(null);
+  const [heatHovered, setHeatHovered] = useState(null);
+  const [heatTooltipPos, setHeatTooltipPos] = useState({ x: 0, y: 0 });
 
   // Drawing state
   const [mapMode, setMapMode] = useState("pan"); // pan, draw, edit, rect, circle, ellipse, freehand
