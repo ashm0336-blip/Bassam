@@ -1770,7 +1770,7 @@ export default function DailySessionsPage() {
                         </div>
                       )}
 
-                      {/* Density Zone Cards */}
+                      {/* Density Zone Grid */}
                       <Card data-testid="density-zones-card">
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
@@ -1779,7 +1779,6 @@ export default function DailySessionsPage() {
                               {isAr ? "كثافة المناطق" : "Zone Density"}
                               <Badge variant="secondary" className="text-[10px]">{densityStats.zonesDensity.length} {isAr ? "منطقة" : "zones"}</Badge>
                             </CardTitle>
-                            {/* Density level legend */}
                             <div className="flex items-center gap-3">
                               {[
                                 { color: "#0ea5e9", label: isAr ? "منخفض" : "Low" },
@@ -1797,85 +1796,59 @@ export default function DailySessionsPage() {
                           </div>
                         </CardHeader>
                         <CardContent>
-                          <div className="space-y-2" data-testid="density-zone-list">
-                            {/* Header row */}
-                            <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[11px] font-semibold text-muted-foreground border-b">
-                              <div className="col-span-3">{isAr ? "المنطقة" : "Zone"}</div>
-                              <div className="col-span-2 text-center">{isAr ? "العدد الحالي" : "Current"}</div>
-                              <div className="col-span-2 text-center">{isAr ? "السعة القصوى" : "Capacity"}</div>
-                              <div className="col-span-3 text-center">{isAr ? "مستوى الإشغال" : "Utilization"}</div>
-                              <div className="col-span-2 text-center">{isAr ? "الحالة" : "Status"}</div>
-                            </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" data-testid="density-zone-list">
                             {densityStats.zonesDensity.map(zone => {
                               const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
                               const di = zone.densityInfo;
                               const editCount = densityEdits[zone.id]?.current_count;
-                              const editCap = densityEdits[zone.id]?.max_capacity;
                               return (
                                 <div
                                   key={zone.id}
-                                  className={`grid grid-cols-12 gap-3 px-3 py-3 rounded-lg items-center transition-all hover:shadow-sm ${
-                                    di.level === "critical" ? "bg-red-50/60 border border-red-100" :
-                                    di.level === "high" ? "bg-orange-50/40 border border-orange-100" :
-                                    "hover:bg-slate-50/80 border border-transparent"
+                                  className={`rounded-xl border p-3 transition-all hover:shadow-md ${
+                                    di.level === "critical" ? "border-red-200 bg-red-50/50" :
+                                    di.level === "high" ? "border-orange-200 bg-orange-50/30" :
+                                    "border-slate-200 hover:border-slate-300"
                                   }`}
                                   data-testid={`density-zone-${zone.id}`}
                                 >
-                                  {/* Zone Info */}
-                                  <div className="col-span-3 flex items-center gap-2 min-w-0">
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>
-                                      {ti?.icon || "?"}
+                                  {/* Header: icon + code + status */}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <div className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>
+                                        {ti?.icon || "?"}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-bold truncate leading-tight">{zone.zone_code}</p>
+                                        <p className="text-[9px] text-muted-foreground truncate leading-tight">{isAr ? zone.name_ar : zone.name_en}</p>
+                                      </div>
                                     </div>
-                                    <div className="min-w-0">
-                                      <p className="text-xs font-semibold truncate">{zone.zone_code}</p>
-                                      <p className="text-[10px] text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
-                                    </div>
+                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: di.color }} title={isAr ? di.label_ar : di.label_en} />
                                   </div>
 
-                                  {/* Current Count Input */}
-                                  <div className="col-span-2 flex justify-center">
+                                  {/* Progress bar */}
+                                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(di.pct, 100)}%`, backgroundColor: di.color }} />
+                                  </div>
+
+                                  {/* Percentage + Status */}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-lg font-bold font-mono" style={{ color: di.color }} data-testid={`density-status-${zone.id}`}>{di.pct}%</span>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: di.bg, color: di.color }}>
+                                      {isAr ? di.label_ar : di.label_en}
+                                    </span>
+                                  </div>
+
+                                  {/* Input + Capacity */}
+                                  <div className="flex items-center gap-1.5">
                                     <Input
                                       type="number"
                                       min={0}
-                                      className={`w-24 h-8 text-center text-sm font-mono ${editCount !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
+                                      className={`flex-1 h-7 text-center text-xs font-mono ${editCount !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
                                       value={editCount ?? zone.currentDisplay}
                                       onChange={(e) => handleDensityChange(zone.id, "current_count", parseInt(e.target.value) || 0)}
                                       data-testid={`density-input-${zone.id}`}
                                     />
-                                  </div>
-
-                                  {/* Max Capacity - Read Only (calculated from zone settings) */}
-                                  <div className="col-span-2 flex flex-col items-center justify-center">
-                                    <span className="text-sm font-bold font-mono text-slate-600" data-testid={`capacity-display-${zone.id}`}>{zone.maxDisplay.toLocaleString()}</span>
-                                    {zone.area_sqm > 0 && <span className="text-[9px] text-muted-foreground">{zone.area_sqm}{isAr ? " م²" : " m²"}</span>}
-                                  </div>
-
-                                  {/* Utilization Bar */}
-                                  <div className="col-span-3">
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                          className="h-full rounded-full transition-all duration-500"
-                                          style={{
-                                            width: `${Math.min(di.pct, 100)}%`,
-                                            backgroundColor: di.color,
-                                          }}
-                                        />
-                                      </div>
-                                      <span className="text-xs font-bold font-mono w-10 text-left" style={{ color: di.color }}>{di.pct}%</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Status Badge */}
-                                  <div className="col-span-2 flex justify-center">
-                                    <span
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                                      style={{ backgroundColor: di.bg, color: di.color }}
-                                      data-testid={`density-status-${zone.id}`}
-                                    >
-                                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: di.color }} />
-                                      {isAr ? di.label_ar : di.label_en}
-                                    </span>
+                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">/ {zone.maxDisplay.toLocaleString()}</span>
                                   </div>
                                 </div>
                               );
