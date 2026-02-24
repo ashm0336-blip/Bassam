@@ -11,14 +11,12 @@ Build an interactive map-based digital operational report for a crowd management
 - **Daily Gate Sessions** - Gate status logging
 - **Map Management** - Floor plans only
 - **Session Lock** - Completed sessions are read-only (no editing zones)
+- **Zone Card Highlight** - Clicking zone card shows pulse on map without entering edit mode
 
-## Sidebar: إدارة المصليات
+## Sidebar
 - نظرة عامة -> /haram-map (P0: future GM dashboard)
 - السجل اليومي للخرائط -> /daily-sessions
 - إدارة الخرائط -> /map-management
-
-## Admin Panel Tabs (9)
-لوحة التحكم, المستخدمون, النشاط, الفئات, المواسم, الممنوعات, الخرائط, الإعدادات, القائمة
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
@@ -39,4 +37,6 @@ Build an interactive map-based digital operational report for a crowd management
 8. Dynamic Zone Categories with Admin Manager
 9. Advanced Drawing Tools (Circle, Ellipse, Freehand, Smooth Corners)
 10. Pulse Animation on selected zone
-11. Session Lock Bug Fix - Completed sessions now fully read-only (Feb 2026)
+11. Session Lock - Completed sessions fully read-only (Feb 2026)
+12. Zone Card Click Fix - Cards highlight with pulse only, no edit mode activation (Feb 2026)
+13. Grab cursor for map panning (Feb 2026)
