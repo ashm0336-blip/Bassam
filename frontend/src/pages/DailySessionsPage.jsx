@@ -1223,6 +1223,9 @@ export default function DailySessionsPage() {
                         )}
                         {mapMode === "edit" && selectedZoneId && (
                           <>
+                            <Button variant="outline" size="sm" onClick={handleSmoothZone} data-testid="edit-smooth-zone-btn" title={isAr ? "تنعيم الزوايا" : "Smooth Corners"}>
+                              <Sparkles className="w-4 h-4 ml-1" />{isAr ? "تنعيم" : "Smooth"}
+                            </Button>
                             <Button variant="outline" size="sm" onClick={handleCopyZone} data-testid="edit-copy-zone-btn" title={isAr ? "نسخ المنطقة" : "Copy Zone"}>
                               <CopyPlus className="w-4 h-4 ml-1" />{isAr ? "نسخ" : "Copy"}
                             </Button>
