@@ -929,19 +929,21 @@ export default function DailySessionsPage() {
     const active = activeSession.zones.filter(z => !z.is_removed);
     let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0;
     const zonesDensity = active.map(z => {
-      const current = densityEdits[z.id]?.current_count ?? z.current_count ?? 0;
+      const prayerCounts = z.prayer_counts || { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, taraweeh: 0 };
+      const editedPrayers = densityEdits[z.id]?.prayer_counts || {};
+      const currentPrayerCount = editedPrayers[activePrayer] ?? prayerCounts[activePrayer] ?? 0;
       const max = densityEdits[z.id]?.max_capacity ?? z.max_capacity ?? 1000;
-      totalCurrent += current;
+      totalCurrent += currentPrayerCount;
       totalCapacity += max;
-      const info = getDensityLevel(current, max);
+      const info = getDensityLevel(currentPrayerCount, max);
       if (info.level === "critical") criticalCount++;
       if (info.level === "high") highCount++;
-      return { ...z, currentDisplay: current, maxDisplay: max, densityInfo: info };
+      return { ...z, currentDisplay: currentPrayerCount, maxDisplay: max, densityInfo: info, prayerCounts: { ...prayerCounts, ...editedPrayers } };
     });
     const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
     const overallLevel = getDensityLevel(totalCurrent, totalCapacity);
     return { zonesDensity, totalCurrent, totalCapacity, overallPct, overallLevel, criticalCount, highCount };
-  }, [activeSession, densityEdits]);
+  }, [activeSession, densityEdits, activePrayer]);
 
   const formatDate = (dateStr) => {
     try { return new Date(dateStr + "T00:00:00").toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }); }
