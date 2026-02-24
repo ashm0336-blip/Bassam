@@ -1249,6 +1249,21 @@ export default function DailySessionsPage() {
                       <p className="text-xs text-indigo-700"><Square className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر واسحب لرسم مستطيل. حرر الماوس لإنهاء الشكل." : "Click and drag to draw a rectangle. Release to finish."}</p>
                     </div>
                   )}
+                  {activeSession?.status === "draft" && mapMode === "circle" && (
+                    <div className="p-2.5 bg-cyan-50 border border-cyan-200 rounded-lg">
+                      <p className="text-xs text-cyan-700"><Circle className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على مركز الدائرة واسحب لتحديد نصف القطر. حرر الماوس لإنهاء الشكل." : "Click center, drag to set radius. Release to finish."}</p>
+                    </div>
+                  )}
+                  {activeSession?.status === "draft" && mapMode === "ellipse" && (
+                    <div className="p-2.5 bg-violet-50 border border-violet-200 rounded-lg">
+                      <p className="text-xs text-violet-700"><Spline className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر واسحب لرسم شكل بيضاوي. حرر الماوس لإنهاء الشكل." : "Click and drag to draw an ellipse. Release to finish."}</p>
+                    </div>
+                  )}
+                  {activeSession?.status === "draft" && mapMode === "freehand" && (
+                    <div className="p-2.5 bg-pink-50 border border-pink-200 rounded-lg">
+                      <p className="text-xs text-pink-700"><PenTool className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر واسحب للرسم الحر. حرر الماوس لإنهاء الشكل. سيتم تبسيط الخط تلقائياً." : "Click and drag to draw freehand. Release to finish. Line will be auto-simplified."}</p>
+                    </div>
+                  )}
                   {activeSession?.status === "draft" && mapMode === "edit" && (
                     <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-xs text-amber-700"><MousePointer className="w-3.5 h-3.5 inline ml-1" />{isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. اسحب المقبض البنفسجي ↻ للدوران. اسحب المنطقة لنقلها." : "Click zone to select. Drag points to edit shape. Drag purple handle ↻ to rotate. Drag zone to move."}</p>
