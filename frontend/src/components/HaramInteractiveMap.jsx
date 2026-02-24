@@ -65,7 +65,7 @@ const ZONE_TYPES = {
   disabled_women: { color: "#be123c", label_ar: "مصلى المسنات وذوي الإعاقة من النساء", label_en: "Disabled & Elderly Women" },
   reserve_fard: { color: "#ea580c", label_ar: "مصليات احتياطية (وقت الفروض)", label_en: "Reserve (Prayer Times)" },
   reserve_general: { color: "#4ade80", label_ar: "مصليات احتياطية", label_en: "Reserve Prayer Areas" },
-  elevated: { color: "#b0b0b0", label_ar: "مصليات مرتفعة", label_en: "Elevated Prayer Areas" },
+  elevated: { color: "#b0b0b0", label_ar: "مصليات مرتقبة", label_en: "Anticipated Prayer Areas" },
   service: { color: "#374151", label_ar: "خدمات", label_en: "Services" },
 };
 
