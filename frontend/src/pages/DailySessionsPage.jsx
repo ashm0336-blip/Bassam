@@ -1326,10 +1326,10 @@ export default function DailySessionsPage() {
                                           onDoubleClick={(e) => { if (activeSession?.status !== "draft") return; e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }}
                                           style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? "pointer" : "inherit" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
-                                            stroke={isSelected ? "#3b82f6" : (zone.stroke_color || "#000000")}
-                                            strokeWidth={isSelected ? 0.6 : (zone.stroke_width ?? 0.3)}
-                                            strokeOpacity={isSelected ? 1 : (zone.stroke_opacity ?? 1)}
-                                            strokeDasharray={isSelected ? "1 0.5" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
+                                            stroke={isSelected && mapMode === "edit" ? "#3b82f6" : (zone.stroke_color || "#000000")}
+                                            strokeWidth={isSelected && mapMode === "edit" ? 0.6 : (zone.stroke_width ?? 0.3)}
+                                            strokeOpacity={isSelected && mapMode === "edit" ? 1 : (zone.stroke_opacity ?? 1)}
+                                            strokeDasharray={isSelected && mapMode === "edit" ? "1 0.5" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
                                             vectorEffect="non-scaling-stroke" />
                                           {/* Pulse animation for selected zone */}
                                           {isSelected && (
