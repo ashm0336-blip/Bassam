@@ -1327,18 +1327,18 @@ export default function DailySessionsPage() {
                                               <animate attributeName="stroke-width" values="0.6;2.5" dur="1.5s" repeatCount="indefinite" />
                                             </path>
                                           )}
-                                          {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
+                                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                                             const isActive = i === draggingPoint || i === hoveredPoint;
                                             return <circle key={`v-${i}`} pointerEvents="none" cx={pt.x} cy={pt.y} r={isActive ? "0.18" : "0.1"} fill="#ef4444" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />;
                                           })}
-                                          {isSelected && mapMode === "edit" && zone.polygon_points?.map((pt, i) => {
+                                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                                             const j = (i + 1) % zone.polygon_points.length;
                                             const nx = zone.polygon_points[j];
                                             const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
                                             return <rect key={`m-${i}`} x={mx - 0.07} y={my - 0.07} width="0.14" height="0.14" transform={`rotate(45 ${mx} ${my})`} fill="#ef4444" stroke="white" strokeWidth="0.03" vectorEffect="non-scaling-stroke" opacity="0.4" pointerEvents="none" />;
                                           })}
                                           {/* Rotation handle */}
-                                          {isSelected && mapMode === "edit" && (() => {
+                                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && (() => {
                                             const rh = getRotationHandle(zone.polygon_points);
                                             if (!rh) return null;
                                             return (
