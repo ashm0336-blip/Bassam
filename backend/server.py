@@ -3399,6 +3399,8 @@ async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUp
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    if session.get("status") == "completed":
+        raise HTTPException(status_code=400, detail="لا يمكن تعديل جلسة مكتملة - أعد فتحها أولاً")
 
     zones = session.get("zones", [])
     zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
@@ -3450,6 +3452,8 @@ async def add_session_zone(session_id: str, request: Request, admin: dict = Depe
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    if session.get("status") == "completed":
+        raise HTTPException(status_code=400, detail="لا يمكن إضافة مناطق لجلسة مكتملة - أعد فتحها أولاً")
 
     body = await request.json()
     new_zone = SessionZone(
@@ -3498,6 +3502,8 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    if session.get("status") == "completed":
+        raise HTTPException(status_code=400, detail="لا يمكن حذف مناطق من جلسة مكتملة - أعد فتحها أولاً")
 
     zones = [z for z in session.get("zones", []) if z["id"] != zone_id]
 
