@@ -1369,6 +1369,34 @@ export default function DailySessionsPage() {
                                         vectorEffect="non-scaling-stroke" data-testid="rect-preview"
                                       />
                                     )}
+                                    {/* Circle drag preview */}
+                                    {mapMode === "circle" && rectStart && rectEnd && (() => {
+                                      const r = getDistance(rectStart, rectEnd);
+                                      return r > 0.5 ? (
+                                        <circle cx={rectStart.x} cy={rectStart.y} r={r}
+                                          fill={newZoneForm.fill_color} fillOpacity={0.3}
+                                          stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="1 0.5"
+                                          vectorEffect="non-scaling-stroke" data-testid="circle-preview" />
+                                      ) : null;
+                                    })()}
+                                    {/* Ellipse drag preview */}
+                                    {mapMode === "ellipse" && rectStart && rectEnd && (() => {
+                                      const cx = (rectStart.x + rectEnd.x) / 2, cy = (rectStart.y + rectEnd.y) / 2;
+                                      const rx = Math.abs(rectEnd.x - rectStart.x) / 2, ry = Math.abs(rectEnd.y - rectStart.y) / 2;
+                                      return (rx > 0.5 && ry > 0.5) ? (
+                                        <ellipse cx={cx} cy={cy} rx={rx} ry={ry}
+                                          fill={newZoneForm.fill_color} fillOpacity={0.3}
+                                          stroke="#8b5cf6" strokeWidth="0.5" strokeDasharray="1 0.5"
+                                          vectorEffect="non-scaling-stroke" data-testid="ellipse-preview" />
+                                      ) : null;
+                                    })()}
+                                    {/* Freehand drawing preview */}
+                                    {mapMode === "freehand" && isDrawingFreehand && freehandPoints.length > 1 && (
+                                      <path
+                                        d={getPath(freehandPoints, false)}
+                                        fill="none" stroke="#ec4899" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round"
+                                        vectorEffect="non-scaling-stroke" data-testid="freehand-preview" />
+                                    )}
                                   </svg>
                                 </div>
                               );
