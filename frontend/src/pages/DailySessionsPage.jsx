@@ -1948,6 +1948,7 @@ export default function DailySessionsPage() {
                                         {(densityStats?.zonesDensity || []).map(zone => {
                                           const di = zone.densityInfo;
                                           const isHovered = heatHovered?.id === zone.id;
+                                          const showLabels = heatZoom >= 2;
                                           const center = zone.polygon_points?.length > 0
                                             ? { x: zone.polygon_points.reduce((s,p) => s+p.x, 0) / zone.polygon_points.length, y: zone.polygon_points.reduce((s,p) => s+p.y, 0) / zone.polygon_points.length }
                                             : { x: 50, y: 50 };
@@ -1962,24 +1963,30 @@ export default function DailySessionsPage() {
                                                 strokeOpacity={isHovered ? 1 : 0.8}
                                                 vectorEffect="non-scaling-stroke"
                                               />
-                                              <text
-                                                x={center.x} y={center.y - 0.8}
-                                                textAnchor="middle" dominantBaseline="middle"
-                                                fontSize="2.2" fontWeight="bold"
-                                                fill={di.pct >= 50 ? "#fff" : di.color}
-                                                style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.4 }}
-                                              >
-                                                {di.pct}%
-                                              </text>
-                                              <text
-                                                x={center.x} y={center.y + 1.5}
-                                                textAnchor="middle" dominantBaseline="middle"
-                                                fontSize="1.4"
-                                                fill={di.pct >= 50 ? "#fff" : "#64748b"}
-                                                style={{ paintOrder: "stroke", stroke: di.pct >= 50 ? di.color : "white", strokeWidth: 0.3 }}
-                                              >
-                                                {zone.currentDisplay.toLocaleString()}
-                                              </text>
+                                              {showLabels && (
+                                                <>
+                                                  <text
+                                                    x={center.x} y={center.y - 0.5}
+                                                    textAnchor="middle" dominantBaseline="middle"
+                                                    fontSize={1.2 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
+                                                    fill={di.pct >= 40 ? "#fff" : di.color}
+                                                    opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.4)}
+                                                    style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.25 }}
+                                                  >
+                                                    {di.pct}%
+                                                  </text>
+                                                  <text
+                                                    x={center.x} y={center.y + 0.8}
+                                                    textAnchor="middle" dominantBaseline="middle"
+                                                    fontSize={0.8 / Math.sqrt(heatZoom / 2)}
+                                                    fill={di.pct >= 40 ? "#fff" : "#64748b"}
+                                                    opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.3)}
+                                                    style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
+                                                  >
+                                                    {zone.zone_code}
+                                                  </text>
+                                                </>
+                                              )}
                                             </g>
                                           );
                                         })}
