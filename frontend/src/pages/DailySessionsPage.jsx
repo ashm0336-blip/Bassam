@@ -737,6 +737,12 @@ export default function DailySessionsPage() {
     try {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}`, updateData, getAuthHeaders());
       setActiveSession(res.data);
+      // Reset map mode when session status changes
+      if (updateData.status) {
+        setMapMode("pan");
+        setSelectedZoneId(null);
+        setDrawingPoints([]);
+      }
       fetchSessions();
       toast.success(isAr ? "تم الحفظ" : "Saved");
     } catch (e) { toast.error(isAr ? "تعذر الحفظ" : "Save failed"); }
