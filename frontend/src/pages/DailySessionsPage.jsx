@@ -452,7 +452,8 @@ export default function DailySessionsPage() {
     const pos = getMousePercent(e);
     setMousePos(pos);
     if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
-    if (mapMode === "rect" && rectStart) { setRectEnd(pos); return; }
+    if ((mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse") && rectStart) { setRectEnd(pos); return; }
+    if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
 
     // Rotating
     if (isRotating && selectedZoneId) {
