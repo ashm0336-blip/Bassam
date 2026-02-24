@@ -2339,7 +2339,7 @@ export default function DailySessionsPage() {
                   </div>
                   <div className="flex items-center justify-center p-3 bg-white rounded border">
                     <svg width="80" height="50" viewBox="0 0 80 50">
-                      <rect x="5" y="5" width="70" height="40" rx="2" fill={selectedZone.fill_color} fillOpacity={selectedZone.opacity ?? 0.4} stroke={selectedZone.stroke_color || "#000"} strokeWidth={(selectedZone.stroke_width ?? 0.3) * 3} strokeOpacity={selectedZone.stroke_opacity ?? 1} strokeDasharray={(selectedZone.stroke_style || "solid") === "dashed" ? "8 4" : (selectedZone.stroke_style || "solid") === "dotted" ? "2 3" : "none"} />
+                      <rect x="5" y="5" width="70" height="40" rx="2" fill={selectedZone.fill_color} fillOpacity={selectedZone.opacity ?? 0.4} stroke={selectedZone.stroke_color || "#000"} strokeWidth={(selectedZone.stroke_width ?? 0.3) * 3} strokeOpacity={selectedZone.stroke_opacity ?? 1} strokeDasharray={(selectedZone.stroke_style || "dashed") === "solid" ? "none" : (selectedZone.stroke_style || "dashed") === "dotted" ? "2 3" : "8 4"} />
                     </svg>
                     <span className="text-[10px] text-muted-foreground mr-2">{isAr ? "معاينة" : "Preview"}</span>
                   </div>
