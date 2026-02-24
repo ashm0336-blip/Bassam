@@ -2329,7 +2329,7 @@ export default function DailySessionsPage() {
                           { value: "dashed", label: isAr ? "مقطع" : "Dashed", preview: "4 2" },
                           { value: "dotted", label: isAr ? "نقطي" : "Dotted", preview: "1 1.5" },
                         ].map(s => (
-                          <button key={s.value} onClick={() => { setSelectedZone(p => ({ ...p, stroke_style: s.value })); handleUpdateZoneStyle(selectedZone.id, { stroke_style: s.value }); }} className={`flex-1 flex flex-col items-center gap-1 p-1.5 rounded border text-[10px] transition-all ${(selectedZone.stroke_style || "solid") === s.value ? "border-emerald-500 bg-emerald-50" : "hover:bg-slate-50"}`} data-testid={`stroke-style-${s.value}`}>
+                          <button key={s.value} onClick={() => { setSelectedZone(p => ({ ...p, stroke_style: s.value })); handleUpdateZoneStyle(selectedZone.id, { stroke_style: s.value }); }} className={`flex-1 flex flex-col items-center gap-1 p-1.5 rounded border text-[10px] transition-all ${(selectedZone.stroke_style || "dashed") === s.value ? "border-emerald-500 bg-emerald-50" : "hover:bg-slate-50"}`} data-testid={`stroke-style-${s.value}`}>
                             <svg width="32" height="6" viewBox="0 0 32 6"><line x1="2" y1="3" x2="30" y2="3" stroke={selectedZone.stroke_color || "#000"} strokeWidth="2" strokeDasharray={s.preview} /></svg>
                             <span>{s.label}</span>
                           </button>
