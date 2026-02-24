@@ -1327,9 +1327,9 @@ export default function DailySessionsPage() {
                                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
                                           onMouseLeave={() => setHoveredZone(null)}
-                                          onClick={(e) => { e.stopPropagation(); setSelectedZoneId(zone.id); }}
+                                          onClick={(e) => { if (activeSession?.status !== "draft") return; if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
                                           onDoubleClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
-                                          style={{ cursor: "pointer" }}>
+                                          style={{ cursor: activeSession?.status === "draft" && mapMode === "edit" ? "pointer" : "inherit", pointerEvents: activeSession?.status === "completed" ? "none" : "auto" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
                                             stroke={isSelected ? "#3b82f6" : (zone.stroke_color || "#000000")}
                                             strokeWidth={isSelected ? 0.6 : (zone.stroke_width ?? 0.3)}
