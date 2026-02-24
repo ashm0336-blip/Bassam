@@ -518,6 +518,7 @@ export default function DailySessionsPage() {
         polygon_points: newPoints,
         fill_color: zone.fill_color,
         stroke_color: zone.stroke_color || "#000000",
+        stroke_style: zone.stroke_style || "dashed",
         opacity: zone.opacity ?? 0.4,
         stroke_opacity: zone.stroke_opacity ?? 1,
       }, getAuthHeaders());
