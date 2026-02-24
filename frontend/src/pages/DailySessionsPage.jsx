@@ -854,6 +854,16 @@ export default function DailySessionsPage() {
   // Density editing state
   const [densityEdits, setDensityEdits] = useState({});
   const [savingDensity, setSavingDensity] = useState(false);
+  const [activePrayer, setActivePrayer] = useState("fajr");
+
+  const PRAYER_TIMES = [
+    { key: "fajr", label_ar: "الفجر", label_en: "Fajr", icon: "🌙" },
+    { key: "dhuhr", label_ar: "الظهر", label_en: "Dhuhr", icon: "☀️" },
+    { key: "asr", label_ar: "العصر", label_en: "Asr", icon: "🌤" },
+    { key: "maghrib", label_ar: "المغرب", label_en: "Maghrib", icon: "🌅" },
+    { key: "isha", label_ar: "العشاء", label_en: "Isha", icon: "🌃" },
+    { key: "taraweeh", label_ar: "التراويح", label_en: "Taraweeh", icon: "✨" },
+  ];
 
   // Reset density edits when session changes
   useEffect(() => {
