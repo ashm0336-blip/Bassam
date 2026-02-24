@@ -3546,6 +3546,12 @@ async def batch_update_density(session_id: str, data: dict = Body(...), admin: d
                     z["current_count"] = max(0, int(upd["current_count"]))
                 if "max_capacity" in upd and upd["max_capacity"] is not None:
                     z["max_capacity"] = max(1, int(upd["max_capacity"]))
+                if "prayer_counts" in upd and upd["prayer_counts"] is not None:
+                    existing = z.get("prayer_counts", {"fajr": 0, "dhuhr": 0, "asr": 0, "maghrib": 0, "isha": 0, "taraweeh": 0})
+                    for prayer, count in upd["prayer_counts"].items():
+                        if prayer in existing:
+                            existing[prayer] = max(0, int(count))
+                    z["prayer_counts"] = existing
                 break
 
     await db.map_sessions.update_one(
