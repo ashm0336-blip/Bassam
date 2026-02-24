@@ -317,10 +317,84 @@ export default function DailySessionsPage() {
   const generateShape = (type) => {
     const cx = 50, cy = 50;
     let points;
-    if (type === "circle") points = Array.from({ length: 24 }, (_, i) => ({ x: cx + 15 * Math.cos(2 * Math.PI * i / 24), y: cy + 15 * Math.sin(2 * Math.PI * i / 24) }));
+    if (type === "circle") points = Array.from({ length: 36 }, (_, i) => ({ x: cx + 15 * Math.cos(2 * Math.PI * i / 36), y: cy + 15 * Math.sin(2 * Math.PI * i / 36) }));
     else if (type === "rectangle") points = [{ x: cx - 20, y: cy - 15 }, { x: cx + 20, y: cy - 15 }, { x: cx + 20, y: cy + 15 }, { x: cx - 20, y: cy + 15 }];
     else if (type === "triangle") points = Array.from({ length: 3 }, (_, i) => ({ x: cx + 18 * Math.cos(2 * Math.PI * i / 3 - Math.PI / 2), y: cy + 18 * Math.sin(2 * Math.PI * i / 3 - Math.PI / 2) }));
     if (points) { setDrawingPoints(points); setShowNewZoneDialog(true); }
+  };
+
+  // Generate circle from center + radius
+  const generateCircleFromDrag = (center, edge) => {
+    const r = getDistance(center, edge);
+    if (r < 0.5) return null;
+    return Array.from({ length: 36 }, (_, i) => ({
+      x: center.x + r * Math.cos(2 * Math.PI * i / 36),
+      y: center.y + r * Math.sin(2 * Math.PI * i / 36),
+    }));
+  };
+
+  // Generate ellipse from bounding box
+  const generateEllipseFromDrag = (start, end) => {
+    const cx = (start.x + end.x) / 2, cy = (start.y + end.y) / 2;
+    const rx = Math.abs(end.x - start.x) / 2, ry = Math.abs(end.y - start.y) / 2;
+    if (rx < 0.5 || ry < 0.5) return null;
+    return Array.from({ length: 36 }, (_, i) => ({
+      x: cx + rx * Math.cos(2 * Math.PI * i / 36),
+      y: cy + ry * Math.sin(2 * Math.PI * i / 36),
+    }));
+  };
+
+  // Smooth corners - Chaikin's algorithm
+  const smoothPoints = (pts, iterations = 2) => {
+    let result = [...pts];
+    for (let iter = 0; iter < iterations; iter++) {
+      const smoothed = [];
+      for (let i = 0; i < result.length; i++) {
+        const p0 = result[i];
+        const p1 = result[(i + 1) % result.length];
+        smoothed.push({ x: p0.x * 0.75 + p1.x * 0.25, y: p0.y * 0.75 + p1.y * 0.25 });
+        smoothed.push({ x: p0.x * 0.25 + p1.x * 0.75, y: p0.y * 0.25 + p1.y * 0.75 });
+      }
+      result = smoothed;
+    }
+    return result;
+  };
+
+  // Simplify freehand points (Ramer-Douglas-Peucker)
+  const simplifyPoints = (pts, tolerance = 0.3) => {
+    if (pts.length <= 2) return pts;
+    const first = pts[0], last = pts[pts.length - 1];
+    let maxDist = 0, maxIdx = 0;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = pointToLineDistance(pts[i], first, last);
+      if (d > maxDist) { maxDist = d; maxIdx = i; }
+    }
+    if (maxDist > tolerance) {
+      const left = simplifyPoints(pts.slice(0, maxIdx + 1), tolerance);
+      const right = simplifyPoints(pts.slice(maxIdx), tolerance);
+      return [...left.slice(0, -1), ...right];
+    }
+    return [first, last];
+  };
+
+  const pointToLineDistance = (p, a, b) => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) return getDistance(p, a);
+    return Math.abs(dx * (a.y - p.y) - dy * (a.x - p.x)) / len;
+  };
+
+  // Smooth existing zone points
+  const handleSmoothZone = async () => {
+    if (!activeSession || !selectedZoneId) return;
+    const zone = sessionZones.find(z => z.id === selectedZoneId);
+    if (!zone?.polygon_points || zone.polygon_points.length < 3) return;
+    const smoothed = smoothPoints(zone.polygon_points, 2);
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, { polygon_points: smoothed }, getAuthHeaders());
+      setActiveSession(res.data);
+      toast.success(isAr ? "تم تنعيم الزوايا" : "Corners smoothed");
+    } catch (e) { toast.error(isAr ? "تعذر التنعيم" : "Smooth failed"); }
   };
 
   // Map mouse handlers for drawing/editing
