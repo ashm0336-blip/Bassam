@@ -1320,11 +1320,11 @@ export default function DailySessionsPage() {
                                       const isSelected = zone.id === selectedZoneId;
                                       return (
                                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
-                                          onMouseEnter={() => { if (activeSession?.status === "draft" && mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
-                                          onMouseLeave={() => { if (activeSession?.status === "draft") setHoveredZone(null); }}
-                                          onClick={(e) => { if (activeSession?.status !== "draft") return; if (mapMode === "edit") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
+                                          onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
+                                          onMouseLeave={() => setHoveredZone(null)}
+                                          onClick={(e) => { if (mapMode === "edit" && activeSession?.status === "draft") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
                                           onDoubleClick={(e) => { if (activeSession?.status !== "draft") return; e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }}
-                                          style={{ cursor: activeSession?.status === "completed" ? "inherit" : (mapMode === "edit" ? "pointer" : "inherit"), pointerEvents: activeSession?.status === "completed" ? "none" : "auto" }}>
+                                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? "pointer" : "inherit" }}>
                                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
                                             stroke={isSelected ? "#3b82f6" : (zone.stroke_color || "#000000")}
                                             strokeWidth={isSelected ? 0.6 : (zone.stroke_width ?? 0.3)}
