@@ -405,9 +405,12 @@ export default function DailySessionsPage() {
     if (mapMode === "pan") {
       setIsPanning(true);
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (mapMode === "rect") {
+    } else if (mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse") {
       setRectStart(pos);
       setRectEnd(pos);
+    } else if (mapMode === "freehand") {
+      setIsDrawingFreehand(true);
+      setFreehandPoints([pos]);
     } else if (mapMode === "edit" && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (!zone?.polygon_points) return;
