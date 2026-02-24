@@ -8,7 +8,8 @@ import {
   Menu,
   Map as MapIcon,
   Calendar,
-  ShieldAlert
+  ShieldAlert,
+  Tag
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -19,6 +20,7 @@ import SidebarManager from "./admin/SidebarManager";
 import MapManager from "./admin/MapManager";
 import SeasonManager from "./admin/SeasonManager";
 import ProhibitedItemsManager from "./admin/ProhibitedItemsManager";
+import ZoneCategoryManager from "./admin/ZoneCategoryManager";
 
 export default function AdminPage() {
   const { language } = useLanguage();
