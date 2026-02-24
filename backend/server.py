@@ -2139,6 +2139,83 @@ async def seed_sidebar_menu(admin: dict = Depends(require_admin)):
     
     return {"message": "تم تهيئة القائمة بنجاح", "count": len(items_to_insert)}
 
+
+# ============= Zone Categories Routes =============
+@api_router.get("/zone-categories")
+async def get_zone_categories():
+    """Get all zone categories (public)"""
+    categories = await db.zone_categories.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    return categories
+
+@api_router.get("/admin/zone-categories")
+async def get_all_zone_categories(admin: dict = Depends(require_admin)):
+    """Get all zone categories including inactive (admin)"""
+    categories = await db.zone_categories.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    return categories
+
+@api_router.post("/admin/zone-categories")
+async def create_zone_category(data: ZoneCategoryCreate, admin: dict = Depends(require_admin)):
+    """Create a new zone category"""
+    existing = await db.zone_categories.find_one({"value": data.value}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="فئة بهذا المعرف موجودة مسبقاً")
+    cat = ZoneCategory(**data.model_dump())
+    await db.zone_categories.insert_one(cat.model_dump())
+    await log_activity("إضافة فئة منطقة", admin, cat.id, f"{data.label_ar}")
+    result = cat.model_dump()
+    result.pop("_id", None)
+    return result
+
+@api_router.put("/admin/zone-categories/{cat_id}")
+async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dict = Depends(require_admin)):
+    """Update a zone category"""
+    existing = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الفئة غير موجودة")
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if update_data:
+        await db.zone_categories.update_one({"id": cat_id}, {"$set": update_data})
+    updated = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/admin/zone-categories/{cat_id}")
+async def delete_zone_category(cat_id: str, admin: dict = Depends(require_admin)):
+    """Delete a zone category"""
+    existing = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الفئة غير موجودة")
+    await db.zone_categories.delete_one({"id": cat_id})
+    await log_activity("حذف فئة منطقة", admin, cat_id, f"تم حذف: {existing.get('label_ar')}")
+    return {"message": "تم حذف الفئة"}
+
+@api_router.post("/admin/zone-categories/seed")
+async def seed_zone_categories(admin: dict = Depends(require_admin)):
+    """Seed zone categories from default list"""
+    count = await db.zone_categories.count_documents({})
+    if count > 0:
+        return {"message": "الفئات موجودة مسبقاً", "count": count}
+    defaults = [
+        {"value": "men_prayer", "label_ar": "مصليات الرجال", "label_en": "Men Prayer Areas", "color": "#22c55e", "icon": "M", "order": 1},
+        {"value": "women_prayer", "label_ar": "مصليات النساء", "label_en": "Women Prayer Areas", "color": "#93c5fd", "icon": "W", "order": 2},
+        {"value": "men_rakatayn", "label_ar": "مصلى الركعتين للرجال", "label_en": "Two-Rak'ah Men", "color": "#16a34a", "icon": "R", "order": 3},
+        {"value": "women_rakatayn", "label_ar": "مصلى الركعتين للنساء", "label_en": "Two-Rak'ah Women", "color": "#60a5fa", "icon": "Q", "order": 4},
+        {"value": "men_tasks", "label_ar": "مصلى مهمات رجال", "label_en": "Men Tasks Prayer", "color": "#9ca3af", "icon": "H", "order": 5},
+        {"value": "women_tasks", "label_ar": "مصلى مهمات نساء", "label_en": "Women Tasks Prayer", "color": "#fdba74", "icon": "N", "order": 6},
+        {"value": "emergency", "label_ar": "مجمعات خدمات الطوارئ", "label_en": "Emergency Services", "color": "#78350f", "icon": "!", "order": 7},
+        {"value": "vip", "label_ar": "مصلى رؤساء الدول ومرافقيهم", "label_en": "VIP / Heads of State", "color": "#1e3a5f", "icon": "V", "order": 8},
+        {"value": "funeral", "label_ar": "مصلى الجنائز", "label_en": "Funeral Prayer", "color": "#a8a29e", "icon": "J", "order": 9},
+        {"value": "disabled_men", "label_ar": "مصلى ذوي الإعاقة والمسنين", "label_en": "Disabled & Elderly Men", "color": "#1d4ed8", "icon": "D", "order": 10},
+        {"value": "disabled_women", "label_ar": "مصلى المسنات وذوي الإعاقة من النساء", "label_en": "Disabled & Elderly Women", "color": "#be123c", "icon": "F", "order": 11},
+        {"value": "reserve_fard", "label_ar": "مصليات احتياطية (وقت الفروض)", "label_en": "Reserve (Prayer Times)", "color": "#ea580c", "icon": "A", "order": 12},
+        {"value": "reserve_general", "label_ar": "مصليات احتياطية", "label_en": "Reserve Prayer Areas", "color": "#4ade80", "icon": "P", "order": 13},
+        {"value": "elevated", "label_ar": "مصليات مرتقبة", "label_en": "Anticipated Prayer Areas", "color": "#b0b0b0", "icon": "E", "order": 14},
+        {"value": "service", "label_ar": "خدمات", "label_en": "Services", "color": "#374151", "icon": "X", "order": 15},
+    ]
+    items = [ZoneCategory(**d).model_dump() for d in defaults]
+    await db.zone_categories.insert_many(items)
+    return {"message": "تم تهيئة الفئات بنجاح", "count": len(items)}
+
+
 # ============= Interactive Maps Routes =============
 @api_router.get("/maps")
 async def get_maps(department: Optional[str] = None):
