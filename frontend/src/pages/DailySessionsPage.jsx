@@ -1492,7 +1492,7 @@ export default function DailySessionsPage() {
                           <Badge variant="secondary" className="text-[10px]">{activeZones.length}</Badge>
                         </h3>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
                         {activeZones.map(zone => {
                           const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
                           const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
@@ -1503,12 +1503,10 @@ export default function DailySessionsPage() {
                               key={zone.id}
                               ref={el => { zoneCardsRef.current[zone.id] = el; }}
                               data-testid={`zone-card-${zone.id}`}
-                              className={`rounded-xl border p-3 transition-all cursor-pointer ${
+                              className={`rounded-lg border p-2 transition-all cursor-pointer ${
                                 isSelected
                                   ? "border-blue-500 bg-blue-50/60 ring-2 ring-blue-200 shadow-md"
-                                  : ch
-                                    ? "hover:shadow-md border-l-0 border-r-0 border-t-0"
-                                    : "hover:shadow-md hover:border-slate-300"
+                                  : ch ? "hover:shadow-md" : "hover:shadow-sm hover:border-slate-300"
                               }`}
                               style={ch && !isSelected ? { borderBottomColor: cl.color, borderBottomWidth: 2 } : {}}
                               onClick={() => {
@@ -1518,41 +1516,28 @@ export default function DailySessionsPage() {
                                 }
                               }}
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm" style={{ backgroundColor: zone.fill_color }}>
-                                    {ti?.icon || "?"}
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>
+                                  {ti?.icon || "?"}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-bold text-xs truncate">{zone.zone_code}</span>
+                                    {ch && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: cl.color }} />}
                                   </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="font-bold text-sm">{zone.zone_code}</span>
-                                      {ch && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: cl.bg, color: cl.color }}>
-                                          {isAr ? cl.ar : cl.en}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
-                                    <p className="text-[10px] mt-0.5 font-medium" style={{ color: ti?.color }}>{isAr ? ti?.label_ar : ti?.label_en}</p>
-                                  </div>
+                                  <p className="text-[10px] text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
                                 </div>
                                 {activeSession.status === "draft" && (
-                                  <div className="flex items-center gap-0.5">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }} data-testid={`edit-zone-btn-${zone.id}`}>
-                                      <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); handleToggleRemove(zone.id, false); }} data-testid={`remove-zone-btn-${zone.id}`}>
-                                      <CircleOff className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />
-                                    </Button>
+                                  <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100" style={{ opacity: isSelected ? 1 : undefined }}>
+                                    <button className="p-0.5 rounded hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }} data-testid={`edit-zone-btn-${zone.id}`}>
+                                      <Edit2 className="w-3 h-3 text-slate-400 hover:text-blue-600" />
+                                    </button>
+                                    <button className="p-0.5 rounded hover:bg-red-50" onClick={(e) => { e.stopPropagation(); handleToggleRemove(zone.id, false); }} data-testid={`remove-zone-btn-${zone.id}`}>
+                                      <CircleOff className="w-3 h-3 text-slate-400 hover:text-red-500" />
+                                    </button>
                                   </div>
                                 )}
                               </div>
-                              {zone.daily_note && (
-                                <div className="mt-2 p-2 bg-amber-50/80 rounded-lg text-[11px] text-amber-700 flex items-start gap-1.5">
-                                  <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                  <span className="line-clamp-2">{zone.daily_note}</span>
-                                </div>
-                              )}
                             </div>
                           );
                         })}
