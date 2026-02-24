@@ -648,6 +648,18 @@ export default function DailySessionsPage() {
     } catch (e) { console.error(e); }
   };
 
+
+  // Reset map mode when session changes or is completed
+  useEffect(() => {
+    if (!activeSession || activeSession.status === "completed") {
+      setMapMode("pan");
+      setSelectedZoneId(null);
+      setDrawingPoints([]);
+      setRectStart(null);
+      setFreehandPoints([]);
+    }
+  }, [activeSession?.id, activeSession?.status]);
+
   // Escape key handler
   useEffect(() => {
     const handleKeyDown = (e) => {
