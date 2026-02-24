@@ -531,7 +531,7 @@ metadata:
     dept_manager_plazas: "manager.plazas@crowd.sa / manager123"
     field_staff: "staff.mataf@crowd.sa / staff123"
     monitoring: "monitoring@crowd.sa / monitor123"
-    base_url: "https://session-mapper-1.preview.emergentagent.com"
+    base_url: "https://crowd-supervisor.preview.emergentagent.com"
   last_backend_test:
     timestamp: "2026-02-01"
     tests_run: 256
