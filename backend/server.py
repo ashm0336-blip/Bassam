@@ -694,6 +694,7 @@ class SessionZone(BaseModel):
     stroke_style: str = "dashed"  # solid, dashed, dotted
     max_capacity: int = 1000
     current_count: int = 0
+    prayer_counts: dict = Field(default_factory=lambda: {"fajr": 0, "dhuhr": 0, "asr": 0, "maghrib": 0, "isha": 0, "taraweeh": 0})
     area_sqm: float = 0
     per_person_sqm: float = 0.8
     description_ar: Optional[str] = None
