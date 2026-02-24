@@ -881,20 +881,38 @@ export default function DailySessionsPage() {
   };
 
   const handleDensityChange = (zoneId, field, value) => {
-    setDensityEdits(prev => ({
-      ...prev,
-      [zoneId]: { ...prev[zoneId], [field]: value }
-    }));
+    if (field === "prayer_count") {
+      setDensityEdits(prev => ({
+        ...prev,
+        [zoneId]: {
+          ...prev[zoneId],
+          prayer_counts: { ...(prev[zoneId]?.prayer_counts || {}), [activePrayer]: value }
+        }
+      }));
+    } else {
+      setDensityEdits(prev => ({
+        ...prev,
+        [zoneId]: { ...prev[zoneId], [field]: value }
+      }));
+    }
   };
 
   const handleSaveDensityBatch = async () => {
     if (!activeSession || Object.keys(densityEdits).length === 0) return;
     setSavingDensity(true);
     try {
-      const updates = Object.entries(densityEdits).map(([zone_id, edits]) => ({
-        zone_id,
-        ...edits,
-      }));
+      const updates = Object.entries(densityEdits).map(([zone_id, edits]) => {
+        const upd = { zone_id };
+        if (edits.prayer_counts) {
+          // Merge edited prayer counts with existing
+          const zone = activeSession.zones?.find(z => z.id === zone_id);
+          const existing = zone?.prayer_counts || { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, taraweeh: 0 };
+          upd.prayer_counts = { ...existing, ...edits.prayer_counts };
+        }
+        if (edits.current_count !== undefined) upd.current_count = edits.current_count;
+        if (edits.max_capacity !== undefined) upd.max_capacity = edits.max_capacity;
+        return upd;
+      });
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/density-batch`, { updates }, getAuthHeaders());
       setActiveSession(res.data);
       setDensityEdits({});
