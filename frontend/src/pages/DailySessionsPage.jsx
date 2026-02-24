@@ -565,6 +565,7 @@ export default function DailySessionsPage() {
 
   const handleMapClick = (e) => {
     if (isPanning || draggingPoint !== null) return;
+    if (activeSession?.status === "completed") return; // No interaction in completed sessions
     e.preventDefault();
     const pos = getMousePercent(e);
     if (mapMode === "draw" && activeSession?.status === "draft") {
@@ -572,13 +573,6 @@ export default function DailySessionsPage() {
       setDrawingPoints(prev => [...prev, { x: pos.x, y: pos.y }]);
     } else if (mapMode === "edit" && activeSession?.status === "draft") {
       if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
-      let found = null;
-      for (const zone of sessionZones) {
-        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
-      }
-      setSelectedZoneId(found?.id || null);
-    } else if (activeSession?.status === "completed") {
-      // In completed sessions, allow clicking to highlight/select only
       let found = null;
       for (const zone of sessionZones) {
         if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
