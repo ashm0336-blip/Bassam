@@ -691,7 +691,7 @@ class SessionZone(BaseModel):
     opacity: float = 0.4
     stroke_opacity: float = 1.0
     stroke_width: float = 0.3
-    stroke_style: str = "solid"  # solid, dashed, dotted
+    stroke_style: str = "dashed"  # solid, dashed, dotted
     max_capacity: int = 1000
     current_count: int = 0
     area_sqm: float = 0
