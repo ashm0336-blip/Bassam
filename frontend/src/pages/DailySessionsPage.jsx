@@ -69,6 +69,7 @@ export default function DailySessionsPage() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [showZoneDialog, setShowZoneDialog] = useState(false);
   const [showRemovedZones, setShowRemovedZones] = useState(false);
+  const [mapSubTab, setMapSubTab] = useState("zones"); // zones, changes
   const zoneCardsRef = useRef({});
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showCompareDialog, setShowCompareDialog] = useState(false);
