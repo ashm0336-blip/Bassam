@@ -229,7 +229,7 @@ export default function DailySessionsPage() {
       const my = e.clientY - rect.top;
       const prev = zoomRef.current;
       const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      const nz = Math.max(0.5, Math.min(6, prev * delta));
+      const nz = Math.max(0.3, Math.min(20, prev * delta));
       const s = nz / prev;
       zoomRef.current = nz;
       setZoom(nz);
