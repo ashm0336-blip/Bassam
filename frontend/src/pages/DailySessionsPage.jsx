@@ -99,7 +99,7 @@ export default function DailySessionsPage() {
   const svgRef = useRef(null);
 
   // Drawing state
-  const [mapMode, setMapMode] = useState("pan"); // pan, draw, edit, rect
+  const [mapMode, setMapMode] = useState("pan"); // pan, draw, edit, rect, circle, ellipse, freehand
   const [drawingPoints, setDrawingPoints] = useState([]);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [draggingPoint, setDraggingPoint] = useState(null);
@@ -113,6 +113,8 @@ export default function DailySessionsPage() {
   const [isRotating, setIsRotating] = useState(false);
   const [isDraggingZone, setIsDraggingZone] = useState(false);
   const [dragZoneStart, setDragZoneStart] = useState(null);
+  const [isDrawingFreehand, setIsDrawingFreehand] = useState(false);
+  const [freehandPoints, setFreehandPoints] = useState([]);
   const DRAW_POINT_RADIUS = 0.08;
   const SNAP_DISTANCE = 1.2;
 
