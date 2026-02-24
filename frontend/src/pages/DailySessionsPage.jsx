@@ -1882,7 +1882,8 @@ export default function DailySessionsPage() {
                             {densityStats.zonesDensity.map(zone => {
                               const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
                               const di = zone.densityInfo;
-                              const editCount = densityEdits[zone.id]?.current_count;
+                              const editedPrayerVal = densityEdits[zone.id]?.prayer_counts?.[activePrayer];
+                              const isEdited = editedPrayerVal !== undefined;
                               return (
                                 <div
                                   key={zone.id}
@@ -1925,9 +1926,9 @@ export default function DailySessionsPage() {
                                     <Input
                                       type="number"
                                       min={0}
-                                      className={`flex-1 h-7 text-center text-xs font-mono ${editCount !== undefined ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
-                                      value={editCount ?? zone.currentDisplay}
-                                      onChange={(e) => handleDensityChange(zone.id, "current_count", parseInt(e.target.value) || 0)}
+                                      className={`flex-1 h-7 text-center text-xs font-mono ${isEdited ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
+                                      value={zone.currentDisplay}
+                                      onChange={(e) => handleDensityChange(zone.id, "prayer_count", parseInt(e.target.value) || 0)}
                                       data-testid={`density-input-${zone.id}`}
                                     />
                                     <span className="text-[10px] text-muted-foreground flex-shrink-0">/ {zone.maxDisplay.toLocaleString()}</span>
