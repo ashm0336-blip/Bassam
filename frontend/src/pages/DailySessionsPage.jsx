@@ -9,7 +9,7 @@ import {
   Undo2, Circle, Square, Triangle, Palette, CopyPlus,
   BarChart3, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight,
   Users, Activity, Gauge, ShieldAlert, Flame, SaveAll,
-  Spline, PenTool, Sparkles
+  Spline, PenTool, Sparkles, ChevronDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
