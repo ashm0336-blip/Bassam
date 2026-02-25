@@ -1251,27 +1251,116 @@ export default function DailySessionsPage() {
                       {/* Mode buttons */}
                       <div className="flex items-center gap-2">
                         <div className="flex border rounded-lg overflow-hidden">
+                          {/* Pan */}
                           <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-pan-btn" title={isAr ? "تحريك" : "Pan"}>
-                            <Hand className="w-4 h-4" />
+                            <Hand className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تحريك" : "Pan"}</span>
                           </Button>
-                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-draw-btn" title={isAr ? "رسم نقطة بنقطة" : "Point Draw"}>
-                            <Pencil className="w-4 h-4" />
+                          {/* Point Draw */}
+                          <Button variant={mapMode === "draw" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("draw"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-draw-btn" title={isAr ? "رسم نقطة" : "Point Draw"}>
+                            <Pencil className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "رسم نقطة" : "Draw"}</span>
                           </Button>
-                          <Button variant={mapMode === "rect" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("rect"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-rect-btn" title={isAr ? "مستطيل بالسحب" : "Rectangle"}>
-                            <Square className="w-4 h-4" />
-                          </Button>
-                          <Button variant={mapMode === "circle" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("circle"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-circle-btn" title={isAr ? "دائرة بالسحب" : "Circle"}>
-                            <Circle className="w-4 h-4" />
-                          </Button>
-                          <Button variant={mapMode === "ellipse" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("ellipse"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-ellipse-btn" title={isAr ? "بيضاوي بالسحب" : "Ellipse"}>
-                            <Spline className="w-4 h-4" />
-                          </Button>
-                          <Button variant={mapMode === "freehand" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("freehand"); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-freehand-btn" title={isAr ? "رسم حر" : "Freehand"}>
-                            <PenTool className="w-4 h-4" />
-                          </Button>
+                          {/* Edit */}
                           <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none border-l" onClick={() => { setMapMode("edit"); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-edit-btn" title={isAr ? "تعديل" : "Edit"}>
-                            <MousePointer className="w-4 h-4" />
+                            <MousePointer className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تعديل" : "Edit"}</span>
                           </Button>
+                          {/* Shapes Dropdown */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant={["rect","circle","ellipse","freehand"].includes(mapMode) ? "default" : "ghost"} size="sm" className="rounded-none border-x" data-testid="shapes-dropdown-btn">
+                                <Square className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "أشكال" : "Shapes"}</span><ChevronDown className="w-3 h-3 mr-1" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-40 p-1" align="start">
+                              <div className="space-y-0.5">
+                                {[
+                                  { mode: "rect", icon: Square, label: isAr ? "مستطيل" : "Rectangle" },
+                                  { mode: "circle", icon: Circle, label: isAr ? "دائرة" : "Circle" },
+                                  { mode: "ellipse", icon: Spline, label: isAr ? "بيضاوي" : "Ellipse" },
+                                  { mode: "freehand", icon: PenTool, label: isAr ? "رسم حر" : "Freehand" },
+                                ].map(s => {
+                                  const Icon = s.icon;
+                                  return (
+                                    <button key={s.mode} onClick={() => { setMapMode(s.mode); setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); }} data-testid={`shape-opt-${s.mode}`}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${mapMode === s.mode ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-slate-100"}`}>
+                                      <Icon className="w-4 h-4" />{s.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          {/* Style Dropdown */}
+                          {selectedZoneId && (() => {
+                            const styleZone = sessionZones.find(z => z.id === selectedZoneId);
+                            if (!styleZone) return null;
+                            return (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="rounded-none border-l" data-testid="style-dropdown-btn">
+                                    <Palette className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تنسيق" : "Style"}</span><ChevronDown className="w-3 h-3 mr-1" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-72 p-3" align="start">
+                                  <h4 className="font-cairo font-semibold text-sm flex items-center gap-2 mb-3"><Palette className="w-4 h-4" />{isAr ? "تنسيق الشكل" : "Shape Style"}</h4>
+                                  <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label className="text-[11px]">{isAr ? "لون التعبئة" : "Fill"}</Label>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                          <input type="color" value={styleZone.fill_color || "#22c55e"} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { fill_color: e.target.value })} className="w-7 h-7 rounded cursor-pointer border-0" data-testid="toolbar-fill-color" />
+                                          <span className="text-[10px] text-muted-foreground font-mono">{styleZone.fill_color}</span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[11px]">{isAr ? "شفافية" : "Opacity"}</Label>
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                          <Slider value={[Math.round((styleZone.opacity ?? 0.4) * 100)]} min={5} max={100} step={5} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { opacity: v / 100 })} className="flex-1" />
+                                          <span className="text-[10px] w-7 text-center font-mono">{Math.round((styleZone.opacity ?? 0.4) * 100)}%</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label className="text-[11px]">{isAr ? "لون الحدود" : "Stroke"}</Label>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                          <input type="color" value={styleZone.stroke_color || "#000000"} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { stroke_color: e.target.value })} className="w-7 h-7 rounded cursor-pointer border-0" data-testid="toolbar-stroke-color" />
+                                          <span className="text-[10px] text-muted-foreground font-mono">{styleZone.stroke_color || "#000"}</span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-[11px]">{isAr ? "سُمك" : "Width"}</Label>
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                          <Slider value={[styleZone.stroke_width ?? 0.3]} min={0.1} max={2} step={0.1} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { stroke_width: v })} className="flex-1" />
+                                          <span className="text-[10px] w-7 text-center font-mono">{(styleZone.stroke_width ?? 0.3).toFixed(1)}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="text-[11px]">{isAr ? "نوع الحدود" : "Stroke Style"}</Label>
+                                      <div className="flex items-center gap-1 mt-1.5">
+                                        {[
+                                          { value: "solid", label: isAr ? "متصل" : "Solid", preview: "none" },
+                                          { value: "dashed", label: isAr ? "مقطع" : "Dashed", preview: "4 2" },
+                                          { value: "dotted", label: isAr ? "نقطي" : "Dotted", preview: "1 1.5" },
+                                        ].map(s => (
+                                          <button key={s.value} onClick={() => handleUpdateZoneStyle(styleZone.id, { stroke_style: s.value })} className={`flex-1 flex flex-col items-center gap-0.5 p-1.5 rounded border text-[10px] transition-all ${(styleZone.stroke_style || "dashed") === s.value ? "border-emerald-500 bg-emerald-50" : "hover:bg-slate-50"}`}>
+                                            <svg width="28" height="4" viewBox="0 0 28 4"><line x1="1" y1="2" x2="27" y2="2" stroke={styleZone.stroke_color || "#000"} strokeWidth="2" strokeDasharray={s.preview} /></svg>
+                                            <span>{s.label}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {/* Preview */}
+                                    <div className="flex items-center justify-center p-2 bg-white rounded border">
+                                      <svg width="60" height="36" viewBox="0 0 60 36">
+                                        <rect x="3" y="3" width="54" height="30" rx="2" fill={styleZone.fill_color} fillOpacity={styleZone.opacity ?? 0.4} stroke={styleZone.stroke_color || "#000"} strokeWidth={(styleZone.stroke_width ?? 0.3) * 3} strokeOpacity={styleZone.stroke_opacity ?? 1} strokeDasharray={(styleZone.stroke_style || "dashed") === "solid" ? "none" : (styleZone.stroke_style || "dashed") === "dotted" ? "2 3" : "8 4"} />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          })()}
                         </div>
                         {/* Zoom controls */}
                         <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
@@ -1286,13 +1375,6 @@ export default function DailySessionsPage() {
                       <div className="flex gap-2">
                         {mapMode === "draw" && (
                           <>
-                            {drawingPoints.length === 0 && (
-                              <div className="flex border rounded-lg overflow-hidden">
-                                <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("circle")} title={isAr ? "دائرة" : "Circle"} data-testid="shape-circle-btn"><Circle className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" className="rounded-none border-x" onClick={() => generateShape("rectangle")} title={isAr ? "مربع" : "Rectangle"} data-testid="shape-rect-btn"><Square className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" className="rounded-none" onClick={() => generateShape("triangle")} title={isAr ? "مثلث" : "Triangle"} data-testid="shape-triangle-btn"><Triangle className="w-4 h-4" /></Button>
-                              </div>
-                            )}
                             {drawingPoints.length > 0 && (
                               <>
                                 <Button variant="outline" size="sm" onClick={() => setDrawingPoints(p => p.slice(0, -1))} data-testid="drawing-undo-btn"><Undo2 className="w-4 h-4 ml-1" />{isAr ? "تراجع" : "Undo"}</Button>
