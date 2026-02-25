@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
