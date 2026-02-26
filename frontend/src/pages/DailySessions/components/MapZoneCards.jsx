@@ -1,94 +1,172 @@
+import { useState, useMemo } from "react";
 import { Plus, Trash2, Edit2, Check, CheckCircle2, MessageSquare, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS } from "../constants";
 
 export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const [activeTab, setActiveTab] = useState("added");
 
   const allZones = activeSession?.zones || [];
-  const groups = [
-    { type: "added", label: isAr ? "مناطق مضافة" : "Added Zones", zones: allZones.filter(z => z.change_type === "added"), color: "#22c55e", bg: "#dcfce7", icon: Plus },
-    { type: "removed", label: isAr ? "مناطق محذوفة" : "Removed Zones", zones: allZones.filter(z => z.is_removed || z.change_type === "removed"), color: "#ef4444", bg: "#fef2f2", icon: Trash2 },
-    { type: "modified", label: isAr ? "مناطق معدّلة" : "Modified Zones", zones: allZones.filter(z => z.change_type && ["modified","category_changed","moved"].includes(z.change_type)), color: "#f59e0b", bg: "#fefce8", icon: Edit2 },
-    { type: "unchanged", label: isAr ? "بدون تغيير" : "Unchanged", zones: allZones.filter(z => !z.is_removed && (!z.change_type || z.change_type === "unchanged")), color: "#94a3b8", bg: "#f8fafc", icon: Check },
-  ].filter(g => g.zones.length > 0);
+  const totalZones = allZones.length;
 
+  const tabs = useMemo(() => [
+    { key: "added", label: isAr ? "مضافة" : "Added", zones: allZones.filter(z => z.change_type === "added"), color: "#22c55e", bgLight: "#dcfce7", borderColor: "#bbf7d0", icon: Plus },
+    { key: "modified", label: isAr ? "معدّلة" : "Modified", zones: allZones.filter(z => z.change_type && ["modified","category_changed","moved"].includes(z.change_type)), color: "#f59e0b", bgLight: "#fefce8", borderColor: "#fde68a", icon: Edit2 },
+    { key: "removed", label: isAr ? "محذوفة" : "Removed", zones: allZones.filter(z => z.is_removed || z.change_type === "removed"), color: "#ef4444", bgLight: "#fef2f2", borderColor: "#fecaca", icon: Trash2 },
+  ], [allZones, isAr]);
+
+  const unchangedCount = allZones.filter(z => !z.is_removed && (!z.change_type || z.change_type === "unchanged")).length;
+  const summary = activeSession?.changes_summary || {};
   const hasChanges = changedZones.length > 0 || allZones.some(z => z.is_removed);
+  const activeTabData = tabs.find(t => t.key === activeTab);
 
   if (!hasChanges) {
     return (
-      <div className="py-6 text-center rounded-lg border border-dashed" data-testid="no-changes">
-        <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-300 mb-2" />
-        <p className="text-sm text-muted-foreground">{isAr ? "لا توجد تغييرات في هذه الجولة" : "No changes in this tour"}</p>
+      <div className="py-6 text-center rounded-xl border border-dashed bg-slate-50/50" data-testid="no-changes">
+        <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-300 mb-2" />
+        <p className="text-sm font-medium text-muted-foreground">{isAr ? "لا توجد تغييرات في هذه الجولة" : "No changes in this tour"}</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="changes-log" className="space-y-3">
+    <div data-testid="changes-log" className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <FileText className="w-4 h-4 text-amber-600" />
-        <h3 className="font-cairo font-semibold text-sm">{isAr ? "سجل التغييرات" : "Changes Log"}</h3>
-        {changedZones.length > 0 && <Badge variant="destructive" className="text-[10px] px-1.5">{changedZones.length}</Badge>}
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+          <FileText className="w-4 h-4 text-amber-600" />
+        </div>
+        <div>
+          <h3 className="font-cairo font-bold text-sm">{isAr ? "سجل التغييرات" : "Changes Log"}</h3>
+          <p className="text-[10px] text-muted-foreground">{isAr ? `${changedZones.length} تغيير من أصل ${totalZones} منطقة` : `${changedZones.length} changes out of ${totalZones} zones`}</p>
+        </div>
       </div>
 
-      {/* Change Summary KPIs */}
-      {activeSession?.changes_summary && (
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { key: "added", icon: Plus, label: isAr ? "مضاف" : "Added", color: "#22c55e", bg: "from-emerald-50" },
-            { key: "removed", icon: Trash2, label: isAr ? "محذوف" : "Removed", color: "#ef4444", bg: "from-red-50" },
-            { key: "modified", icon: Edit2, label: isAr ? "معدّل" : "Modified", color: "#f59e0b", bg: "from-amber-50" },
-            { key: "unchanged", icon: Check, label: isAr ? "بدون تغيير" : "Unchanged", color: "#94a3b8", bg: "from-slate-50" },
-          ].map(item => {
-            const count = activeSession.changes_summary[item.key] || 0;
-            const Icon = item.icon;
-            return (
-              <div key={item.key} className={`rounded-xl border bg-gradient-to-bl ${item.bg} to-white p-2.5`}>
-                <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-muted-foreground font-medium">{item.label}</span><Icon className="w-3.5 h-3.5" style={{ color: item.color }} /></div>
-                <p className="text-xl font-bold" style={{ color: item.color }}>{count}</p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Zones grouped by change type */}
-      <div className="space-y-3">
-        {groups.map(group => {
-          const GroupIcon = group.icon;
+      {/* KPI Cards */}
+      <div className="grid grid-cols-4 gap-2.5">
+        {[
+          { key: "added", icon: Plus, label: isAr ? "مضاف" : "Added", color: "#22c55e", gradient: "from-emerald-50 to-emerald-25" },
+          { key: "removed", icon: Trash2, label: isAr ? "محذوف" : "Removed", color: "#ef4444", gradient: "from-red-50 to-red-25" },
+          { key: "modified", icon: Edit2, label: isAr ? "معدّل" : "Modified", color: "#f59e0b", gradient: "from-amber-50 to-amber-25" },
+          { key: "unchanged", icon: Check, label: isAr ? "بدون تغيير" : "Unchanged", color: "#94a3b8", gradient: "from-slate-50 to-slate-25" },
+        ].map(item => {
+          const count = summary[item.key] || (item.key === "unchanged" ? unchangedCount : 0);
+          const Icon = item.icon;
+          const isUnchanged = item.key === "unchanged";
           return (
-            <div key={group.type} data-testid={`changes-group-${group.type}`}>
-              <h3 className="font-cairo font-semibold text-xs flex items-center gap-2 mb-2"><GroupIcon className="w-3.5 h-3.5" style={{ color: group.color }} />{group.label}<Badge className="text-[9px] px-1.5" style={{ backgroundColor: group.bg, color: group.color }}>{group.zones.length}</Badge></h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-                {group.zones.map(zone => {
-                  const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                  return (
-                    <div key={zone.id} className="rounded-lg border p-2 transition-all hover:shadow-sm" style={{ borderBottomColor: group.color, borderBottomWidth: 2 }} data-testid={`change-item-${zone.id}`}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color || group.color }}>{ti?.icon || "?"}</div>
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold truncate ${group.type === "removed" ? "line-through text-red-400" : ""}`}>{zone.zone_code}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{isAr ? zone.name_ar : zone.name_en}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-gradient-to-bl ${item.gradient} to-white p-3`} data-testid={`kpi-${item.key}`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] text-muted-foreground font-medium">{item.label}</span>
+                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: item.color + "15" }}>
+                  <Icon className="w-3 h-3" style={{ color: item.color }} />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <p className="text-2xl font-bold font-mono" style={{ color: item.color }}>{count}</p>
+                {isUnchanged && <span className="text-[10px] text-muted-foreground font-medium">/ {totalZones}</span>}
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Tabs */}
+      <div className="rounded-xl border bg-white overflow-hidden" data-testid="changes-tabs-container">
+        <div className="flex border-b" data-testid="changes-tab-bar">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            const isEmpty = tab.zones.length === 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                data-testid={`changes-tab-${tab.key}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-4 text-xs font-cairo font-semibold transition-all relative ${
+                  isActive
+                    ? "text-slate-900 bg-white"
+                    : isEmpty
+                      ? "text-slate-300 bg-slate-50/50 cursor-default"
+                      : "text-slate-500 bg-slate-50/80 hover:bg-white/80 hover:text-slate-700"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" style={{ color: isActive ? tab.color : undefined }} />
+                <span>{tab.label}</span>
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                  style={isActive
+                    ? { backgroundColor: tab.bgLight, color: tab.color }
+                    : { backgroundColor: "#f1f5f9", color: "#94a3b8" }
+                  }
+                >
+                  {tab.zones.length}
+                </span>
+                {/* Active indicator bar */}
+                {isActive && (
+                  <div className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full" style={{ backgroundColor: tab.color }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-3" data-testid={`changes-content-${activeTab}`}>
+          {activeTabData && activeTabData.zones.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+              {activeTabData.zones.map(zone => {
+                const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                const isRemoved = activeTab === "removed";
+                return (
+                  <div
+                    key={zone.id}
+                    className="group rounded-lg border p-2.5 transition-all hover:shadow-md hover:-translate-y-0.5"
+                    style={{ borderColor: activeTabData.borderColor }}
+                    data-testid={`change-item-${zone.id}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-sm transition-transform group-hover:scale-110 ${isRemoved ? "opacity-50" : ""}`}
+                        style={{ backgroundColor: zone.fill_color || activeTabData.color }}
+                      >
+                        {ti?.icon || "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-xs font-bold truncate ${isRemoved ? "line-through text-red-400" : ""}`}>
+                          {zone.zone_code}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate leading-tight">
+                          {isAr ? zone.name_ar : zone.name_en}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ backgroundColor: activeTabData?.bgLight }}>
+                {activeTabData && <activeTabData.icon className="w-5 h-5" style={{ color: activeTabData.color, opacity: 0.4 }} />}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isAr ? `لا توجد مناطق ${activeTabData?.label}` : `No ${activeTabData?.label?.toLowerCase()} zones`}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Supervisor Notes */}
       {activeSession?.supervisor_notes && (
-        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-          <h4 className="font-cairo font-semibold text-xs text-blue-700 flex items-center gap-2 mb-1"><MessageSquare className="w-3.5 h-3.5" />{isAr ? "ملاحظات المشرف" : "Supervisor Notes"}</h4>
-          <p className="text-xs text-blue-600 whitespace-pre-wrap">{activeSession.supervisor_notes}</p>
+        <div className="p-3.5 bg-blue-50/80 rounded-xl border border-blue-100">
+          <h4 className="font-cairo font-semibold text-xs text-blue-700 flex items-center gap-2 mb-1.5">
+            <MessageSquare className="w-3.5 h-3.5" />
+            {isAr ? "ملاحظات المشرف" : "Supervisor Notes"}
+          </h4>
+          <p className="text-xs text-blue-600 whitespace-pre-wrap leading-relaxed">{activeSession.supervisor_notes}</p>
         </div>
       )}
     </div>
