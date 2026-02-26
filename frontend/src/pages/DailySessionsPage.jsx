@@ -2253,7 +2253,6 @@ export default function DailySessionsPage() {
                                         <>
                                           <div className="border-t border-dashed border-slate-200 my-1" />
                                           <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? "الصفوف الممتلئة" : "Filled rows"}</span><span className="font-mono font-bold">{heatHovered.filledRows} / {heatHovered.totalRows}</span></div>
-                                          <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? "سجاجيد/صف" : "Carpets/row"}</span><span className="font-mono font-bold">{heatHovered.carpetsPerRow}</span></div>
                                         </>
                                       )}
                                     </div>
