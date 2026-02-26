@@ -22,7 +22,7 @@ import { SessionSidebar } from "./DailySessions/components/SessionSidebar";
 import { SessionHeader } from "./DailySessions/components/SessionHeader";
 import { MapToolbar } from "./DailySessions/components/MapToolbar";
 import { MapCanvas } from "./DailySessions/components/MapCanvas";
-import { MapZoneCards } from "./DailySessions/components/MapZoneCards";
+import { ChangesLog } from "./DailySessions/components/MapZoneCards";
 import { DensityTab } from "./DailySessions/components/DensityTab";
 import { StatsTab } from "./DailySessions/components/StatsTab";
 import {
@@ -47,8 +47,6 @@ export default function DailySessionsPage() {
   const [activeTab, setActiveTab] = useState("map");
   const [selectedZone, setSelectedZone] = useState(null);
   const [showZoneDialog, setShowZoneDialog] = useState(false);
-  const [showRemovedZones, setShowRemovedZones] = useState(false);
-  const [mapSubTab, setMapSubTab] = useState("zones");
   const zoneCardsRef = useRef({});
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showCompareDialog, setShowCompareDialog] = useState(false);
