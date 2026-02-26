@@ -747,7 +747,11 @@ class SessionZoneUpdate(BaseModel):
     prayer_counts: Optional[dict] = None
     max_capacity: Optional[int] = None
     area_sqm: Optional[float] = None
+    length_m: Optional[float] = None
+    width_m: Optional[float] = None
     per_person_sqm: Optional[float] = None
+    carpet_length: Optional[float] = None
+    carpet_width: Optional[float] = None
 
 # ============= Transaction Models =============
 class Transaction(BaseModel):
