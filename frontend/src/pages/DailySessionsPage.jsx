@@ -253,6 +253,18 @@ export default function DailySessionsPage() {
     } catch (e) { toast.error(isAr ? "تعذر النسخ" : "Copy failed"); }
   };
 
+  // Delete a single vertex point from a zone (double-click)
+  const handleDeletePoint = async (zoneId, pointIndex) => {
+    const zone = sessionZones.find(z => z.id === zoneId);
+    if (!zone?.polygon_points || zone.polygon_points.length <= 3) return;
+    const newPoints = zone.polygon_points.filter((_, i) => i !== pointIndex);
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`, { polygon_points: newPoints }, getAuthHeaders());
+      setActiveSession(res.data);
+      toast.success(isAr ? "تم حذف النقطة" : "Point deleted");
+    } catch (e) { toast.error(isAr ? "تعذر الحذف" : "Delete failed"); }
+  };
+
   const handleSaveNewZone = async () => {
     if (!activeSession || drawingPoints.length < 3) return;
     const typeInfo = ZONE_TYPES.find(t => t.value === newZoneForm.zone_type);
