@@ -97,6 +97,11 @@ export default function DailySessionsPage() {
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
 
+  // Global map undo/redo (zone edits: move, rotate, smooth, style, etc.)
+  const [mapUndoStack, setMapUndoStack] = useState([]);
+  const [mapRedoStack, setMapRedoStack] = useState([]);
+  const preEditRef = useRef(null); // captures zone state before drag/rotate/move
+
   // Density state
   const [densityEdits, setDensityEdits] = useState({});
   const [savingDensity, setSavingDensity] = useState(false);
