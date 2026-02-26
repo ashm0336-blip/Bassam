@@ -5,9 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 
-function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onColorChange, onRemove }) {
-  const [showColor, setShowColor] = useState(false);
-
+function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
   if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
 
   const pts = zone.polygon_points;
@@ -47,23 +45,6 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
         <button onClick={onSmooth} className={`${btnClass} text-emerald-600 hover:bg-emerald-50`} data-testid="float-smooth-btn" title={isAr ? "تنعيم الزوايا" : "Smooth"}>
           <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
         </button>
-        <div className="w-px h-5 bg-slate-200" />
-        <div className="relative">
-          <button onClick={() => setShowColor(prev => !prev)} className={`${btnClass} text-amber-600 hover:bg-amber-50`} data-testid="float-color-btn" title={isAr ? "تغيير اللون" : "Color"}>
-            <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: zone.fill_color || "#22c55e" }} />
-            <span className="hidden sm:inline">{isAr ? "لون" : "Color"}</span>
-          </button>
-          {showColor && (
-            <div className="absolute top-full mt-1 right-0 bg-white rounded-lg shadow-xl border p-2 grid grid-cols-6 gap-1 z-50" data-testid="float-color-picker"
-              onMouseDown={(e) => e.stopPropagation()}>
-              {["#22c55e","#3b82f6","#ef4444","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#f97316","#14b8a6","#6366f1","#84cc16","#374151"].map(c => (
-                <button key={c} onClick={() => { onColorChange(c); setShowColor(false); }}
-                  className={`w-6 h-6 rounded-md border-2 transition-transform hover:scale-110 ${zone.fill_color === c ? "border-slate-800 ring-1 ring-slate-400" : "border-transparent"}`}
-                  style={{ backgroundColor: c }} data-testid={`color-${c}`} />
-              ))}
-            </div>
-          )}
-        </div>
         <div className="w-px h-5 bg-slate-200" />
         <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
           <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
