@@ -183,21 +183,29 @@ export function MapCanvas({
                             strokeDasharray={isSelected && mapMode === "edit" ? "1 0.5" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
                             vectorEffect="non-scaling-stroke" />
                           {isSelected && (
-                            <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity="0" stroke="#ef4444" strokeWidth="2" strokeOpacity="0" vectorEffect="non-scaling-stroke" pointerEvents="none">
-                              <animate attributeName="stroke-opacity" values="1;0" dur="1.2s" repeatCount="indefinite" />
-                              <animate attributeName="stroke-width" values="1;4" dur="1.2s" repeatCount="indefinite" />
-                              <animate attributeName="fill-opacity" values="0.15;0" dur="1.2s" repeatCount="indefinite" />
-                            </path>
+                            <path d={getPath(zone.polygon_points)} fill="none" fillOpacity="0"
+                              stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.6"
+                              strokeDasharray="4 3"
+                              vectorEffect="non-scaling-stroke" pointerEvents="none" />
                           )}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                             const isActive = i === draggingPoint || i === hoveredPoint;
-                            return <circle key={`v-${i}`} pointerEvents="none" cx={pt.x} cy={pt.y} r={isActive ? "0.18" : "0.1"} fill="#ef4444" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />;
+                            return (
+                              <g key={`v-${i}`} pointerEvents="none">
+                                {isActive && <circle cx={pt.x} cy={pt.y} r="0.4" fill="#3b82f6" fillOpacity="0.15" />}
+                                <rect x={pt.x - (isActive ? 0.22 : 0.15)} y={pt.y - (isActive ? 0.22 : 0.15)}
+                                  width={isActive ? 0.44 : 0.3} height={isActive ? 0.44 : 0.3}
+                                  fill="white" stroke="#3b82f6" strokeWidth={isActive ? "0.07" : "0.05"}
+                                  vectorEffect="non-scaling-stroke"
+                                  style={{ filter: isActive ? "drop-shadow(0 0 1px rgba(59,130,246,0.5))" : "none" }} />
+                              </g>
+                            );
                           })}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                             const j = (i + 1) % zone.polygon_points.length;
                             const nx = zone.polygon_points[j];
                             const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
-                            return <rect key={`m-${i}`} x={mx - 0.07} y={my - 0.07} width="0.14" height="0.14" transform={`rotate(45 ${mx} ${my})`} fill="#ef4444" stroke="white" strokeWidth="0.03" vectorEffect="non-scaling-stroke" opacity="0.4" pointerEvents="none" />;
+                            return <circle key={`m-${i}`} cx={mx} cy={my} r="0.1" fill="white" stroke="#3b82f6" strokeWidth="0.04" vectorEffect="non-scaling-stroke" opacity="0.6" pointerEvents="none" />;
                           })}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && (() => {
                             const rh = getRotationHandle(zone.polygon_points, zoom);
