@@ -134,6 +134,55 @@ export default function DailySessionsPage() {
     setDrawingPoints([]);
   }, [drawingPoints]);
 
+  // ─── Global Map Undo/Redo ─────────────────────────────────
+  // Called when drag/rotate/move starts to capture "before" state
+  const onEditStart = useCallback((zoneId) => {
+    const zone = (activeSession?.zones || []).find(z => z.id === zoneId);
+    if (zone) preEditRef.current = { zoneId, prevPoints: [...zone.polygon_points] };
+  }, [activeSession]);
+
+  // Called after mouseUp saves zone - pushes to undo stack
+  const commitZoneEdit = useCallback((label) => {
+    if (!preEditRef.current) return;
+    const { zoneId, prevPoints } = preEditRef.current;
+    const zone = (activeSession?.zones || []).find(z => z.id === zoneId);
+    if (zone) {
+      setMapUndoStack(prev => [...prev.slice(-29), { zoneId, prevData: { polygon_points: prevPoints }, nextData: { polygon_points: [...zone.polygon_points] }, label }]);
+      setMapRedoStack([]);
+    }
+    preEditRef.current = null;
+  }, [activeSession]);
+
+  // Push any zone change to undo (for smooth, style, remove, etc.)
+  const pushZoneUndo = useCallback((zoneId, prevData, nextData, label) => {
+    setMapUndoStack(prev => [...prev.slice(-29), { zoneId, prevData, nextData, label }]);
+    setMapRedoStack([]);
+  }, []);
+
+  const undoMapAction = useCallback(async () => {
+    if (mapUndoStack.length === 0 || !activeSession) return;
+    const action = mapUndoStack[mapUndoStack.length - 1];
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${action.zoneId}`, action.prevData, getAuthHeaders());
+      setActiveSession(res.data);
+      setMapRedoStack(prev => [...prev, action]);
+      setMapUndoStack(prev => prev.slice(0, -1));
+      toast.success(isAr ? "تم التراجع" : "Undone");
+    } catch { toast.error(isAr ? "تعذر التراجع" : "Undo failed"); }
+  }, [mapUndoStack, activeSession, isAr]);
+
+  const redoMapAction = useCallback(async () => {
+    if (mapRedoStack.length === 0 || !activeSession) return;
+    const action = mapRedoStack[mapRedoStack.length - 1];
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${action.zoneId}`, action.nextData, getAuthHeaders());
+      setActiveSession(res.data);
+      setMapUndoStack(prev => [...prev, action]);
+      setMapRedoStack(prev => prev.slice(0, -1));
+      toast.success(isAr ? "تم الإعادة" : "Redone");
+    } catch { toast.error(isAr ? "تعذرت الإعادة" : "Redo failed"); }
+  }, [mapRedoStack, activeSession, isAr]);
+
   // ─── Data Fetching ────────────────────────────────────────
   const fetchFloors = useCallback(async () => {
     try {
