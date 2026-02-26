@@ -450,13 +450,19 @@ export function MapToolbar({
 function MapInstructions({ mapMode, drawingPointsCount }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  if (mapMode === "pan") return null;
+  const shapeNames = { rect: isAr ? "مستطيل" : "Rectangle", circle: isAr ? "دائرة" : "Circle", ellipse: isAr ? "بيضاوي" : "Ellipse", triangle: isAr ? "مثلث" : "Triangle", pentagon: isAr ? "خماسي" : "Pentagon", hexagon: isAr ? "سداسي" : "Hexagon", star: isAr ? "نجمة" : "Star", diamond: isAr ? "معين" : "Diamond", lshape: isAr ? "شكل L" : "L-Shape", ushape: isAr ? "شكل U" : "U-Shape" };
+  if (DRAG_SHAPE_MODES.includes(mapMode)) {
+    return (
+      <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-lg">
+        <p className="text-xs text-indigo-700"><Shapes className="w-3.5 h-3.5 inline ml-1" />{isAr ? `انقر واسحب لرسم ${shapeNames[mapMode] || "شكل"}. حرر الماوس لإنهاء الشكل.` : `Click and drag to draw ${shapeNames[mapMode] || "shape"}. Release to finish.`}</p>
+      </div>
+    );
+  }
   const instructions = {
     draw: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", icon: Pencil, msg: isAr ? `انقر على الخريطة لإضافة نقاط. انقر على النقطة الأولى لإغلاق الشكل. (${drawingPointsCount} نقطة)` : `Click to add points. Click first point to close. (${drawingPointsCount})` },
-    rect: { bg: "bg-indigo-50 border-indigo-200", text: "text-indigo-700", icon: Square, msg: isAr ? "انقر واسحب لرسم مستطيل. حرر الماوس لإنهاء الشكل." : "Click and drag to draw a rectangle. Release to finish." },
-    circle: { bg: "bg-cyan-50 border-cyan-200", text: "text-cyan-700", icon: Circle, msg: isAr ? "انقر على مركز الدائرة واسحب لتحديد نصف القطر. حرر الماوس لإنهاء الشكل." : "Click center, drag to set radius. Release to finish." },
-    ellipse: { bg: "bg-violet-50 border-violet-200", text: "text-violet-700", icon: Spline, msg: isAr ? "انقر واسحب لرسم شكل بيضاوي. حرر الماوس لإنهاء الشكل." : "Click and drag to draw an ellipse. Release to finish." },
-    freehand: { bg: "bg-pink-50 border-pink-200", text: "text-pink-700", icon: PenTool, msg: isAr ? "انقر واسحب للرسم الحر. حرر الماوس لإنهاء الشكل. سيتم تبسيط الخط تلقائياً." : "Click and drag to draw freehand. Release to finish. Line will be auto-simplified." },
-    edit: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", icon: MousePointer, msg: isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. اسحب المقبض البنفسجي ↻ للدوران. اسحب المنطقة لنقلها." : "Click zone to select. Drag points to edit shape. Drag purple handle ↻ to rotate. Drag zone to move." },
+    freehand: { bg: "bg-pink-50 border-pink-200", text: "text-pink-700", icon: PenTool, msg: isAr ? "انقر واسحب للرسم الحر. حرر الماوس لإنهاء الشكل." : "Click and drag to draw freehand. Release to finish." },
+    edit: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", icon: MousePointer, msg: isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. اسحب المقبض الأخضر للدوران." : "Click zone to select. Drag points to edit. Drag green handle to rotate." },
   };
   const info = instructions[mapMode];
   if (!info) return null;
