@@ -102,6 +102,7 @@ export function MapCanvas({
     } else if (mapMode === "edit" && selectedZoneId && activeSession?.status === "draft") {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (!zone?.polygon_points) return;
+      onEditStart(selectedZoneId); // capture before-state for undo
       const rotHandle = getRotationHandle(zone.polygon_points, zoom);
       if (rotHandle && getDistance(pos, rotHandle) < (2.5 / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
       const hitRadius = 2 / Math.max(zoom, 0.5);
