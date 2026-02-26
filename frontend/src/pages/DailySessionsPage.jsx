@@ -2819,7 +2819,7 @@ export default function DailySessionsPage() {
                     <div className="grid grid-cols-3 gap-3 items-end">
                       <div>
                         <Label className="text-xs">{isAr ? "الطول (م)" : "Length (m)"}</Label>
-                        <Input type="number" min={0} step={0.5} className="mt-1 text-sm font-mono" value={selectedZone.length_m ?? 0} data-testid="zone-length-input"
+                        <Input type="number" min={0} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.length_m ?? 0} data-testid="zone-length-input"
                           onChange={(e) => {
                             const l = parseFloat(e.target.value) || 0;
                             const w = selectedZone.width_m || 0;
