@@ -334,7 +334,6 @@ export function MapCanvas({
               onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
               onCopy={handleCopyZone}
               onSmooth={handleSmoothZone}
-              onColorChange={(color) => handleUpdateZoneStyle(selectedZoneId, { fill_color: color })}
               onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
             />
           )}
