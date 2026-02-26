@@ -2176,30 +2176,65 @@ export default function DailySessionsPage() {
                                           const di = zone.densityInfo;
                                           const isHovered = heatHovered?.id === zone.id;
                                           const showLabels = heatZoom >= 2;
-                                          const center = zone.polygon_points?.length > 0
-                                            ? { x: zone.polygon_points.reduce((s,p) => s+p.x, 0) / zone.polygon_points.length, y: zone.polygon_points.reduce((s,p) => s+p.y, 0) / zone.polygon_points.length }
+                                          const pts = zone.polygon_points || [];
+                                          const center = pts.length > 0
+                                            ? { x: pts.reduce((s,p) => s+p.x, 0) / pts.length, y: pts.reduce((s,p) => s+p.y, 0) / pts.length }
                                             : { x: 50, y: 50 };
+                                          // Compute row lines inside polygon
+                                          const minY = pts.length > 0 ? Math.min(...pts.map(p => p.y)) : 0;
+                                          const maxY = pts.length > 0 ? Math.max(...pts.map(p => p.y)) : 0;
+                                          const minX = pts.length > 0 ? Math.min(...pts.map(p => p.x)) : 0;
+                                          const maxX = pts.length > 0 ? Math.max(...pts.map(p => p.x)) : 0;
+                                          const totalRows = zone.totalRows || 0;
+                                          const filledRows = zone.filledRows || 0;
+                                          const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
                                           return (
                                             <g key={zone.id}>
+                                              {/* Base zone outline */}
                                               <path
-                                                d={getPath(zone.polygon_points)}
-                                                fill={di.color}
-                                                fillOpacity={isHovered ? 0.7 : (0.15 + (di.pct / 100) * 0.45)}
+                                                d={getPath(pts)}
+                                                fill={zone.fillPct > 0 ? di.color : "#e2e8f0"}
+                                                fillOpacity={isHovered ? 0.15 : 0.08}
                                                 stroke={isHovered ? "#1e293b" : di.color}
-                                                strokeWidth={isHovered ? 1 : (di.level === "critical" ? 0.6 : 0.3)}
-                                                strokeOpacity={isHovered ? 1 : 0.8}
+                                                strokeWidth={isHovered ? 1 : 0.3}
+                                                strokeOpacity={isHovered ? 1 : 0.6}
                                                 vectorEffect="non-scaling-stroke"
                                               />
+                                              {/* Filled rows as horizontal lines */}
+                                              {totalRows > 0 && filledRows > 0 && (() => {
+                                                const lines = [];
+                                                for (let r = 0; r < filledRows && r < totalRows; r++) {
+                                                  const y = minY + r * rowHeight + rowHeight * 0.5;
+                                                  lines.push(
+                                                    <line key={r} x1={minX + 0.15} y1={y} x2={maxX - 0.15} y2={y}
+                                                      stroke={di.color} strokeWidth={rowHeight * 0.6}
+                                                      strokeOpacity={0.5} vectorEffect="non-scaling-stroke"
+                                                      clipPath={`url(#clip-${zone.id})`}
+                                                    />
+                                                  );
+                                                }
+                                                return (
+                                                  <>
+                                                    <defs>
+                                                      <clipPath id={`clip-${zone.id}`}>
+                                                        <path d={getPath(pts)} />
+                                                      </clipPath>
+                                                    </defs>
+                                                    {lines}
+                                                  </>
+                                                );
+                                              })()}
+                                              {/* Label on zoom */}
                                               {showLabels && (
                                                 <text
                                                   x={center.x} y={center.y}
                                                   textAnchor="middle" dominantBaseline="middle"
-                                                  fontSize={1 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
-                                                  fill={di.pct >= 40 ? "#fff" : di.color}
+                                                  fontSize={0.9 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
+                                                  fill={zone.fillPct >= 40 ? "#fff" : di.color}
                                                   opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.4)}
-                                                  style={{ paintOrder: "stroke", stroke: di.pct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
+                                                  style={{ paintOrder: "stroke", stroke: zone.fillPct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
                                                 >
-                                                  {di.pct}%
+                                                  {filledRows}/{totalRows} {isAr ? "صف" : "rows"}
                                                 </text>
                                               )}
                                             </g>
