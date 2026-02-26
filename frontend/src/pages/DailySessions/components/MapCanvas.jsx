@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS, DRAW_POINT_RADIUS } from "../constants";
-import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel } from "../utils";
+import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
+import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 
 export function MapCanvas({
   selectedFloor, activeSession, sessionZones, activeZones, removedZones,
