@@ -2831,7 +2831,7 @@ export default function DailySessionsPage() {
                       </div>
                       <div>
                         <Label className="text-xs">{isAr ? "العرض (م)" : "Width (m)"}</Label>
-                        <Input type="number" min={0} step={0.5} className="mt-1 text-sm font-mono" value={selectedZone.width_m ?? 0} data-testid="zone-width-input"
+                        <Input type="number" min={0} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.width_m ?? 0} data-testid="zone-width-input"
                           onChange={(e) => {
                             const w = parseFloat(e.target.value) || 0;
                             const l = selectedZone.length_m || 0;
