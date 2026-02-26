@@ -2175,12 +2175,7 @@ export default function DailySessionsPage() {
                                         {(densityStats?.zonesDensity || []).map(zone => {
                                           const di = zone.densityInfo;
                                           const isHovered = heatHovered?.id === zone.id;
-                                          const showLabels = heatZoom >= 2;
                                           const pts = zone.polygon_points || [];
-                                          const center = pts.length > 0
-                                            ? { x: pts.reduce((s,p) => s+p.x, 0) / pts.length, y: pts.reduce((s,p) => s+p.y, 0) / pts.length }
-                                            : { x: 50, y: 50 };
-                                          // Compute row lines inside polygon
                                           const minY = pts.length > 0 ? Math.min(...pts.map(p => p.y)) : 0;
                                           const maxY = pts.length > 0 ? Math.max(...pts.map(p => p.y)) : 0;
                                           const minX = pts.length > 0 ? Math.min(...pts.map(p => p.x)) : 0;
@@ -2188,55 +2183,44 @@ export default function DailySessionsPage() {
                                           const totalRows = zone.totalRows || 0;
                                           const filledRows = zone.filledRows || 0;
                                           const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
+                                          const gap = rowHeight * 0.15;
                                           return (
                                             <g key={zone.id}>
+                                              {/* Clip path for this zone */}
+                                              <defs>
+                                                <clipPath id={`clip-${zone.id}`}>
+                                                  <path d={getPath(pts)} />
+                                                </clipPath>
+                                              </defs>
                                               {/* Base zone outline */}
                                               <path
                                                 d={getPath(pts)}
-                                                fill={zone.fillPct > 0 ? di.color : "#e2e8f0"}
-                                                fillOpacity={isHovered ? 0.15 : 0.08}
-                                                stroke={isHovered ? "#1e293b" : di.color}
+                                                fill={isHovered ? "#f1f5f9" : "#f8fafc"}
+                                                fillOpacity={isHovered ? 0.5 : 0.3}
+                                                stroke={isHovered ? "#1e293b" : "#94a3b8"}
                                                 strokeWidth={isHovered ? 1 : 0.3}
-                                                strokeOpacity={isHovered ? 1 : 0.6}
+                                                strokeOpacity={isHovered ? 1 : 0.4}
                                                 vectorEffect="non-scaling-stroke"
                                               />
-                                              {/* Filled rows as horizontal lines */}
-                                              {totalRows > 0 && filledRows > 0 && (() => {
+                                              {/* All rows - filled + empty */}
+                                              {totalRows > 0 && (() => {
                                                 const lines = [];
-                                                for (let r = 0; r < filledRows && r < totalRows; r++) {
+                                                for (let r = 0; r < totalRows; r++) {
                                                   const y = minY + r * rowHeight + rowHeight * 0.5;
+                                                  const isFilled = r < filledRows;
                                                   lines.push(
-                                                    <line key={r} x1={minX + 0.15} y1={y} x2={maxX - 0.15} y2={y}
-                                                      stroke={di.color} strokeWidth={rowHeight * 0.6}
-                                                      strokeOpacity={0.5} vectorEffect="non-scaling-stroke"
+                                                    <line key={r}
+                                                      x1={minX} y1={y} x2={maxX} y2={y}
+                                                      stroke={isFilled ? di.color : "#cbd5e1"}
+                                                      strokeWidth={isFilled ? Math.max(rowHeight - gap, 0.08) : Math.max((rowHeight - gap) * 0.3, 0.04)}
+                                                      strokeOpacity={isFilled ? 0.7 : 0.3}
+                                                      strokeDasharray={isFilled ? "none" : `${rowHeight * 0.5} ${rowHeight * 0.4}`}
                                                       clipPath={`url(#clip-${zone.id})`}
                                                     />
                                                   );
                                                 }
-                                                return (
-                                                  <>
-                                                    <defs>
-                                                      <clipPath id={`clip-${zone.id}`}>
-                                                        <path d={getPath(pts)} />
-                                                      </clipPath>
-                                                    </defs>
-                                                    {lines}
-                                                  </>
-                                                );
+                                                return lines;
                                               })()}
-                                              {/* Label on zoom */}
-                                              {showLabels && (
-                                                <text
-                                                  x={center.x} y={center.y}
-                                                  textAnchor="middle" dominantBaseline="middle"
-                                                  fontSize={0.9 / Math.sqrt(heatZoom / 2)} fontWeight="bold"
-                                                  fill={zone.fillPct >= 40 ? "#fff" : di.color}
-                                                  opacity={Math.min(1, (heatZoom - 2) / 1.5 + 0.4)}
-                                                  style={{ paintOrder: "stroke", stroke: zone.fillPct >= 40 ? di.color : "white", strokeWidth: 0.2 }}
-                                                >
-                                                  {filledRows}/{totalRows} {isAr ? "صف" : "rows"}
-                                                </text>
-                                              )}
                                             </g>
                                           );
                                         })}
