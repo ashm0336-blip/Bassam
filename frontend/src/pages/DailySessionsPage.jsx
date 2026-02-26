@@ -501,6 +501,9 @@ export default function DailySessionsPage() {
                     handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
                     handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     setShowNewZoneDialog={setShowNewZoneDialog}
+                    activeZones={activeZones} removedZones={removedZones}
+                    setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog}
+                    ZONE_TYPES={ZONE_TYPES}
                   />
                   <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
@@ -529,14 +532,8 @@ export default function DailySessionsPage() {
                     ZONE_TYPES={ZONE_TYPES} wheelRef={wheelRef}
                     onMapMouseUp={handleMapMouseUp}
                   />
-                  <MapZoneCards
-                    activeSession={activeSession} activeZones={activeZones} removedZones={removedZones}
-                    changedZones={changedZones} selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId}
-                    mapSubTab={mapSubTab} setMapSubTab={setMapSubTab}
-                    showRemovedZones={showRemovedZones} setShowRemovedZones={setShowRemovedZones}
-                    zoneCardsRef={zoneCardsRef} ZONE_TYPES={ZONE_TYPES}
-                    setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog}
-                    handleToggleRemove={handleToggleRemove}
+                  <ChangesLog
+                    activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
                   />
                 </TabsContent>
 
