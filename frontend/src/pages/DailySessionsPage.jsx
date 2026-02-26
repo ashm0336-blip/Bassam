@@ -411,12 +411,26 @@ export default function DailySessionsPage() {
   useEffect(() => {
     if (!activeSession || activeSession.status === "completed") {
       setMapMode("pan"); setSelectedZoneId(null); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]);
+      setMapUndoStack([]); setMapRedoStack([]);
       setUndoStack([]); setRedoStack([]);
     }
   }, [activeSession?.id, activeSession?.status]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ctrl+Z = Undo, Ctrl+Y or Ctrl+Shift+Z = Redo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        if (mapMode === "draw" && undoStack.length > 0) undoDrawing();
+        else if (mapUndoStack.length > 0) undoMapAction();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        if (mapMode === "draw" && redoStack.length > 0) redoDrawing();
+        else if (mapRedoStack.length > 0) redoMapAction();
+        return;
+      }
       if (e.key === "Escape") {
         if (rectStart) { setRectStart(null); setRectEnd(null); }
         else if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
@@ -426,7 +440,7 @@ export default function DailySessionsPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawingPoints.length, selectedZoneId, mapMode, rectStart]);
+  }, [drawingPoints.length, selectedZoneId, mapMode, rectStart, undoStack.length, redoStack.length, mapUndoStack.length, mapRedoStack.length, undoDrawing, redoDrawing, undoMapAction, redoMapAction]);
 
   useEffect(() => { setDensityEdits({}); }, [activeSession?.id]);
 
