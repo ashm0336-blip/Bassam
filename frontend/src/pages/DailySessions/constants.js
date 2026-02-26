@@ -29,3 +29,20 @@ export const PRAYER_TIMES = [
 
 export const DRAW_POINT_RADIUS = 0.08;
 export const SNAP_DISTANCE = 1.2;
+
+// All drag-based shape modes (user drags to define bounding box)
+export const DRAG_SHAPE_MODES = ["rect", "circle", "ellipse", "triangle", "pentagon", "hexagon", "star", "diamond", "lshape", "ushape"];
+
+// Shape definitions with SVG preview paths (viewBox 0 0 24 24)
+export const SHAPE_LIBRARY = [
+  { mode: "rect", label_ar: "مستطيل", label_en: "Rectangle", path: "M3 5h18v14H3z" },
+  { mode: "circle", label_ar: "دائرة", label_en: "Circle", path: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z" },
+  { mode: "ellipse", label_ar: "بيضاوي", label_en: "Ellipse", path: "M12 6c5 0 9 2.7 9 6s-4 6-9 6-9-2.7-9-6 4-6 9-6z" },
+  { mode: "triangle", label_ar: "مثلث", label_en: "Triangle", path: "M12 3L22 21H2z" },
+  { mode: "diamond", label_ar: "معين", label_en: "Diamond", path: "M12 2L22 12L12 22L2 12z" },
+  { mode: "pentagon", label_ar: "خماسي", label_en: "Pentagon", path: "M12 2L22 9.5L18.5 21H5.5L2 9.5z" },
+  { mode: "hexagon", label_ar: "سداسي", label_en: "Hexagon", path: "M12 2L21 7V17L12 22L3 17V7z" },
+  { mode: "star", label_ar: "نجمة", label_en: "Star", path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" },
+  { mode: "lshape", label_ar: "شكل L", label_en: "L Shape", path: "M4 3h7v7h9v11H4z" },
+  { mode: "ushape", label_ar: "شكل U", label_en: "U Shape", path: "M3 3h5v13h8V3h5v18H3z" },
+];

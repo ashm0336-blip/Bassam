@@ -88,6 +88,73 @@ export const generateEllipseFromDrag = (start, end) => {
   }));
 };
 
+// Generic polygon generator (triangle, pentagon, hexagon)
+export const generatePolygonFromDrag = (start, end, sides) => {
+  const cx = (start.x + end.x) / 2, cy = (start.y + end.y) / 2;
+  const rx = Math.abs(end.x - start.x) / 2, ry = Math.abs(end.y - start.y) / 2;
+  if (rx < 0.5 || ry < 0.5) return null;
+  return Array.from({ length: sides }, (_, i) => ({
+    x: cx + rx * Math.cos(2 * Math.PI * i / sides - Math.PI / 2),
+    y: cy + ry * Math.sin(2 * Math.PI * i / sides - Math.PI / 2),
+  }));
+};
+
+export const generateDiamondFromDrag = (start, end) => {
+  const cx = (start.x + end.x) / 2, cy = (start.y + end.y) / 2;
+  const rx = Math.abs(end.x - start.x) / 2, ry = Math.abs(end.y - start.y) / 2;
+  if (rx < 0.3 || ry < 0.3) return null;
+  return [{ x: cx, y: cy - ry }, { x: cx + rx, y: cy }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy }];
+};
+
+export const generateStarFromDrag = (start, end) => {
+  const cx = (start.x + end.x) / 2, cy = (start.y + end.y) / 2;
+  const rx = Math.abs(end.x - start.x) / 2, ry = Math.abs(end.y - start.y) / 2;
+  if (rx < 0.5 || ry < 0.5) return null;
+  return Array.from({ length: 10 }, (_, i) => {
+    const angle = (Math.PI * 2 * i) / 10 - Math.PI / 2;
+    const r = i % 2 === 0 ? 1 : 0.4;
+    return { x: cx + rx * r * Math.cos(angle), y: cy + ry * r * Math.sin(angle) };
+  });
+};
+
+export const generateLShapeFromDrag = (start, end) => {
+  const x1 = Math.min(start.x, end.x), y1 = Math.min(start.y, end.y);
+  const x2 = Math.max(start.x, end.x), y2 = Math.max(start.y, end.y);
+  if (x2 - x1 < 1 || y2 - y1 < 1) return null;
+  const t = Math.min(x2 - x1, y2 - y1) * 0.38;
+  return [{ x: x1, y: y1 }, { x: x1 + t, y: y1 }, { x: x1 + t, y: y2 - t }, { x: x2, y: y2 - t }, { x: x2, y: y2 }, { x: x1, y: y2 }];
+};
+
+export const generateUShapeFromDrag = (start, end) => {
+  const x1 = Math.min(start.x, end.x), y1 = Math.min(start.y, end.y);
+  const x2 = Math.max(start.x, end.x), y2 = Math.max(start.y, end.y);
+  if (x2 - x1 < 1 || y2 - y1 < 1) return null;
+  const t = Math.min(x2 - x1, y2 - y1) * 0.28;
+  return [{ x: x1, y: y1 }, { x: x1 + t, y: y1 }, { x: x1 + t, y: y2 - t }, { x: x2 - t, y: y2 - t }, { x: x2 - t, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }];
+};
+
+// Unified shape generator - generates points from drag start/end based on mode
+export const generateShapeFromDrag = (mode, start, end) => {
+  if (!start || !end) return null;
+  switch (mode) {
+    case "rect": {
+      const x1 = Math.min(start.x, end.x), y1 = Math.min(start.y, end.y);
+      const x2 = Math.max(start.x, end.x), y2 = Math.max(start.y, end.y);
+      return (x2 - x1 > 1 && y2 - y1 > 1) ? [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }] : null;
+    }
+    case "circle": return generateCircleFromDrag(start, end);
+    case "ellipse": return generateEllipseFromDrag(start, end);
+    case "triangle": return generatePolygonFromDrag(start, end, 3);
+    case "pentagon": return generatePolygonFromDrag(start, end, 5);
+    case "hexagon": return generatePolygonFromDrag(start, end, 6);
+    case "diamond": return generateDiamondFromDrag(start, end);
+    case "star": return generateStarFromDrag(start, end);
+    case "lshape": return generateLShapeFromDrag(start, end);
+    case "ushape": return generateUShapeFromDrag(start, end);
+    default: return null;
+  }
+};
+
 const pointToLineDistance = (p, a, b) => {
   const dx = b.x - a.x, dy = b.y - a.y;
   const len = Math.sqrt(dx * dx + dy * dy);
