@@ -166,6 +166,7 @@ export function MapToolbar({
   activeZones, removedZones, setSelectedZone, setShowZoneDialog,
   handleToggleRemove, ZONE_TYPES,
   undoDrawing, redoDrawing, clearDrawing, undoStack, redoStack,
+  undoMapAction, redoMapAction, mapUndoStack, mapRedoStack,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
