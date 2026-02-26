@@ -306,6 +306,15 @@ export function MapToolbar({
             <ZonesDropdown activeZones={activeZones} removedZones={removedZones} selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId} setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog} handleToggleRemove={handleToggleRemove} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} />
           </div>
           <ZoomControls zoom={zoom} zoomRef={zoomRef} setZoom={setZoom} setPanOffset={setPanOffset} containerRef={mapContainerRef} />
+          {/* Global Undo/Redo */}
+          <div className="flex items-center gap-0.5 border rounded-lg p-1 bg-white">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={undoMapAction} disabled={mapUndoStack.length === 0} data-testid="map-undo-btn" title={`${isAr ? "تراجع" : "Undo"} (Ctrl+Z)`}>
+              <Undo2 className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={redoMapAction} disabled={mapRedoStack.length === 0} data-testid="map-redo-btn" title={`${isAr ? "إعادة" : "Redo"} (Ctrl+Y)`}>
+              <Redo2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         {/* Draw mode: Undo/Redo/Clear/Save */}
         {mapMode === "draw" && drawingPoints.length > 0 && (
