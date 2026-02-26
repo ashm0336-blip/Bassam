@@ -2891,7 +2891,7 @@ export default function DailySessionsPage() {
                         </div>
                         <div>
                           <Label className="text-xs">{isAr ? "عرض السجادة (م)" : "Carpet Width (m)"}</Label>
-                          <Input type="number" min={0.1} step={0.1} className="mt-1 text-sm font-mono" value={selectedZone.carpet_width ?? 0.7} data-testid="carpet-width-input"
+                          <Input type="number" min={0.1} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.carpet_width ?? 0.7} data-testid="carpet-width-input"
                             onChange={(e) => setSelectedZone(p => ({ ...p, carpet_width: parseFloat(e.target.value) || 0.7 }))}
                           />
                         </div>
