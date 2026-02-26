@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 
-import { API, ZONE_TYPES_FALLBACK } from "./DailySessions/constants";
+import { API, ZONE_TYPES_FALLBACK, DRAG_SHAPE_MODES } from "./DailySessions/constants";
 import {
   getAuthHeaders, normalizeImageUrl, smoothPoints, simplifyPoints,
   generateShapeFromDrag, getDensityLevel, formatDate,
@@ -274,19 +274,9 @@ export default function DailySessionsPage() {
 
   // Map mouse up handler (shared between MapCanvas callback and save logic)
   const handleMapMouseUp = async () => {
-    if (mapMode === "rect" && rectStart && rectEnd) {
-      const x1 = Math.min(rectStart.x, rectEnd.x), y1 = Math.min(rectStart.y, rectEnd.y);
-      const x2 = Math.max(rectStart.x, rectEnd.x), y2 = Math.max(rectStart.y, rectEnd.y);
-      if (Math.abs(x2 - x1) > 1 && Math.abs(y2 - y1) > 1) { setDrawingPoints([{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }]); setShowNewZoneDialog(true); }
-      setRectStart(null); setRectEnd(null); return;
-    }
-    if (mapMode === "circle" && rectStart && rectEnd) {
-      const pts = generateCircleFromDrag(rectStart, rectEnd);
-      if (pts) { setDrawingPoints(pts); setShowNewZoneDialog(true); }
-      setRectStart(null); setRectEnd(null); return;
-    }
-    if (mapMode === "ellipse" && rectStart && rectEnd) {
-      const pts = generateEllipseFromDrag(rectStart, rectEnd);
+    // Unified drag shape handler (rect, circle, ellipse, triangle, pentagon, etc.)
+    if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart && rectEnd) {
+      const pts = generateShapeFromDrag(mapMode, rectStart, rectEnd);
       if (pts) { setDrawingPoints(pts); setShowNewZoneDialog(true); }
       setRectStart(null); setRectEnd(null); return;
     }
