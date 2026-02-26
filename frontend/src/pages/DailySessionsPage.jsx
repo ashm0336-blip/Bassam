@@ -2819,25 +2819,27 @@ export default function DailySessionsPage() {
                     <div className="grid grid-cols-3 gap-3 items-end">
                       <div>
                         <Label className="text-xs">{isAr ? "الطول (م)" : "Length (m)"}</Label>
-                        <Input type="number" min={0} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.length_m ?? 0} data-testid="zone-length-input"
+                        <Input type="text" inputMode="decimal" className="mt-1 text-sm font-mono" value={selectedZone.length_m ?? ""} data-testid="zone-length-input"
                           onChange={(e) => {
-                            const l = parseFloat(e.target.value) || 0;
+                            const val = e.target.value.replace(/[^\d.]/g, "");
+                            const l = parseFloat(val) || 0;
                             const w = selectedZone.width_m || 0;
-                            const area = l * w;
+                            const area = +(l * w).toFixed(3);
                             const cap055 = area > 0 ? Math.round(area / 0.55) : 0;
-                            setSelectedZone(p => ({ ...p, length_m: l, area_sqm: area, max_capacity: cap055 }));
+                            setSelectedZone(p => ({ ...p, length_m: val, area_sqm: area, max_capacity: cap055 }));
                           }}
                         />
                       </div>
                       <div>
                         <Label className="text-xs">{isAr ? "العرض (م)" : "Width (m)"}</Label>
-                        <Input type="number" min={0} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.width_m ?? 0} data-testid="zone-width-input"
+                        <Input type="text" inputMode="decimal" className="mt-1 text-sm font-mono" value={selectedZone.width_m ?? ""} data-testid="zone-width-input"
                           onChange={(e) => {
-                            const w = parseFloat(e.target.value) || 0;
-                            const l = selectedZone.length_m || 0;
-                            const area = l * w;
+                            const val = e.target.value.replace(/[^\d.]/g, "");
+                            const w = parseFloat(val) || 0;
+                            const l = parseFloat(selectedZone.length_m) || 0;
+                            const area = +(l * w).toFixed(3);
                             const cap055 = area > 0 ? Math.round(area / 0.55) : 0;
-                            setSelectedZone(p => ({ ...p, width_m: w, area_sqm: area, max_capacity: cap055 }));
+                            setSelectedZone(p => ({ ...p, width_m: val, area_sqm: area, max_capacity: cap055 }));
                           }}
                         />
                       </div>
