@@ -943,16 +943,42 @@ export default function DailySessionsPage() {
     const active = activeSession.zones.filter(z => !z.is_removed);
     let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0;
     const zonesDensity = active.map(z => {
+      const area = z.area_sqm || 0;
+      const capMax = area > 0 ? Math.round(area / 0.55) : (z.max_capacity || 1000);
+      const capSafe = area > 0 ? Math.round(area / 0.75) : Math.round(capMax * 0.73);
+      const capMedium = area > 0 ? Math.round(area / 0.60) : Math.round(capMax * 0.92);
+
       const prayerCounts = z.prayer_counts || { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, taraweeh: 0 };
       const editedPrayers = densityEdits[z.id]?.prayer_counts || {};
       const currentPrayerCount = editedPrayers[activePrayer] ?? prayerCounts[activePrayer] ?? 0;
-      const max = densityEdits[z.id]?.max_capacity ?? z.max_capacity ?? 1000;
-      totalCurrent += currentPrayerCount;
-      totalCapacity += max;
-      const info = getDensityLevel(currentPrayerCount, max);
-      if (info.level === "critical") criticalCount++;
-      if (info.level === "high") highCount++;
-      return { ...z, currentDisplay: currentPrayerCount, maxDisplay: max, densityInfo: info, prayerCounts: { ...prayerCounts, ...editedPrayers } };
+      // currentPrayerCount is stored as percentage (0-100)
+      const fillPct = Math.min(currentPrayerCount, 120);
+      const actualCount = capMax > 0 ? Math.round((fillPct / 100) * capMax) : 0;
+
+      totalCurrent += actualCount;
+      totalCapacity += capMax;
+
+      const info = getDensityLevel(actualCount, capMax, area);
+
+      // Carpet/row info
+      const cl = z.carpet_length || 1.2;
+      const cw = z.carpet_width || 0.7;
+      const zl = z.length_m || 0;
+      const zw = z.width_m || 0;
+      const totalRows = zl > 0 ? Math.floor(zl / cl) : 0;
+      const carpetsPerRow = zw > 0 ? Math.floor(zw / cw) : 0;
+      const totalCarpets = totalRows * carpetsPerRow;
+      const filledRows = totalRows > 0 ? Math.round((fillPct / 100) * totalRows) : 0;
+
+      if (info.level === "max" || info.level === "over") criticalCount++;
+      if (info.level === "medium") highCount++;
+
+      return {
+        ...z, fillPct, actualCount, capMax, capSafe, capMedium,
+        currentDisplay: actualCount, maxDisplay: capMax, densityInfo: info,
+        prayerCounts: { ...prayerCounts, ...editedPrayers },
+        totalRows, carpetsPerRow, totalCarpets, filledRows,
+      };
     });
     const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
     const overallLevel = getDensityLevel(totalCurrent, totalCapacity);
