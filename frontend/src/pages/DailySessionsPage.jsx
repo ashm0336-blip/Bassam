@@ -348,6 +348,7 @@ export default function DailySessionsPage() {
   useEffect(() => {
     if (!activeSession || activeSession.status === "completed") {
       setMapMode("pan"); setSelectedZoneId(null); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]);
+      setUndoStack([]); setRedoStack([]);
     }
   }, [activeSession?.id, activeSession?.status]);
 
