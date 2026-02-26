@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import {
-  Hand, Pencil, MousePointer, Square, Circle, Spline, PenTool,
+  Hand, Pencil, MousePointer, Square,
   ZoomIn, ZoomOut, Maximize2, Undo2, X, Check, ChevronDown,
   Sparkles, CopyPlus, Trash2, Palette, MapPin, Search,
-  Edit2, CircleOff, RotateCcw, ChevronRight,
+  Edit2, CircleOff, RotateCcw, ChevronRight, PenTool, Shapes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS } from "../constants";
+import { CHANGE_LABELS, SHAPE_LIBRARY, DRAG_SHAPE_MODES } from "../constants";
 
 export function ZoomControls({ zoom, zoomRef, setZoom, setPanOffset, containerRef }) {
   const zoomBy = (factor) => {
