@@ -70,6 +70,7 @@ export function MapCanvas({
   setActiveSession, setSelectedZone, setShowZoneDialog, setShowNewZoneDialog,
   ZONE_TYPES, wheelRef, onMapMouseUp,
   handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
+  addDrawingPoint,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
