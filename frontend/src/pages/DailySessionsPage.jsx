@@ -872,14 +872,26 @@ export default function DailySessionsPage() {
     setDensityEdits({});
   }, [activeSession?.id]);
 
-  const getDensityLevel = (current, max) => {
-    if (!max || max <= 0) return { level: "unknown", pct: 0, color: "#94a3b8", bg: "#f8fafc", label_ar: "غير محدد", label_en: "N/A" };
-    const pct = Math.round((current / max) * 100);
-    if (pct >= 90) return { level: "critical", pct, color: "#dc2626", bg: "#fef2f2", label_ar: "حرج", label_en: "Critical" };
-    if (pct >= 70) return { level: "high", pct, color: "#ea580c", bg: "#fff7ed", label_ar: "مرتفع", label_en: "High" };
-    if (pct >= 50) return { level: "medium", pct, color: "#d97706", bg: "#fffbeb", label_ar: "متوسط", label_en: "Medium" };
-    if (pct >= 25) return { level: "normal", pct, color: "#16a34a", bg: "#f0fdf4", label_ar: "طبيعي", label_en: "Normal" };
-    return { level: "low", pct, color: "#0ea5e9", bg: "#f0f9ff", label_ar: "منخفض", label_en: "Low" };
+  const getDensityLevel = (current, max, area = 0) => {
+    if (!area || area <= 0) {
+      // Fallback if no area
+      if (!max || max <= 0) return { level: "unknown", pct: 0, color: "#94a3b8", bg: "#f8fafc", label_ar: "غير محدد", label_en: "N/A" };
+      const pct = Math.round((current / max) * 100);
+      if (pct >= 90) return { level: "critical", pct, color: "#dc2626", bg: "#fef2f2", label_ar: "حرج", label_en: "Critical" };
+      if (pct >= 70) return { level: "high", pct, color: "#ea580c", bg: "#fff7ed", label_ar: "مرتفع", label_en: "High" };
+      if (pct >= 25) return { level: "normal", pct, color: "#16a34a", bg: "#f0fdf4", label_ar: "طبيعي", label_en: "Normal" };
+      return { level: "low", pct, color: "#0ea5e9", bg: "#f0f9ff", label_ar: "منخفض", label_en: "Low" };
+    }
+    // 3-level system based on area
+    const capSafe = Math.round(area / 0.75);
+    const capMedium = Math.round(area / 0.60);
+    const capMax = Math.round(area / 0.55);
+    const pct = capMax > 0 ? Math.round((current / capMax) * 100) : 0;
+    if (current > capMax) return { level: "over", pct: Math.min(pct, 120), color: "#7c2d12", bg: "#fef2f2", label_ar: "تجاوز", label_en: "Over" };
+    if (current > capMedium) return { level: "max", pct, color: "#dc2626", bg: "#fef2f2", label_ar: "أقصى", label_en: "Maximum" };
+    if (current > capSafe) return { level: "medium", pct, color: "#d97706", bg: "#fffbeb", label_ar: "متوسط", label_en: "Medium" };
+    if (current > 0) return { level: "safe", pct, color: "#16a34a", bg: "#f0fdf4", label_ar: "آمن", label_en: "Safe" };
+    return { level: "empty", pct: 0, color: "#0ea5e9", bg: "#f0f9ff", label_ar: "فارغ", label_en: "Empty" };
   };
 
   const handleDensityChange = (zoneId, field, value) => {
