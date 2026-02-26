@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
 import {
   Hand, MousePointer,
-  ZoomIn, ZoomOut, Maximize2, Undo2, X, Check, ChevronDown,
+  ZoomIn, ZoomOut, Maximize2, Undo2, Redo2, X, Check, ChevronDown,
   Palette, MapPin, Search, Shapes,
   Edit2, CircleOff, RotateCcw, ChevronRight, PenTool, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, SHAPE_LIBRARY, DRAG_SHAPE_MODES } from "../constants";
