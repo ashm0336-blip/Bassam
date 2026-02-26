@@ -498,14 +498,12 @@ export default function DailySessionsPage() {
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
                     selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId}
                     setRectStart={setRectStart} setFreehandPoints={setFreehandPoints}
-                    sessionZones={sessionZones} zoom={zoom} zoomRef={zoomRef} setZoom={setZoom}
+                    zoom={zoom} zoomRef={zoomRef} setZoom={setZoom}
                     setPanOffset={setPanOffset} mapContainerRef={mapContainerRef}
-                    handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
-                    handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     setShowNewZoneDialog={setShowNewZoneDialog}
                     activeZones={activeZones} removedZones={removedZones}
                     setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog}
-                    ZONE_TYPES={ZONE_TYPES}
+                    handleToggleRemove={handleToggleRemove} ZONE_TYPES={ZONE_TYPES}
                   />
                   <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
