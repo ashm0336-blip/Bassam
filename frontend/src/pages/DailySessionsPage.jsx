@@ -2887,14 +2887,14 @@ export default function DailySessionsPage() {
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
                           <Label className="text-xs">{isAr ? "طول السجادة (م)" : "Carpet Length (m)"}</Label>
-                          <Input type="number" min={0.1} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.carpet_length ?? 1.2} data-testid="carpet-length-input"
-                            onChange={(e) => setSelectedZone(p => ({ ...p, carpet_length: parseFloat(e.target.value) || 1.2 }))}
+                          <Input type="text" inputMode="decimal" className="mt-1 text-sm font-mono" value={selectedZone.carpet_length ?? "1.2"} data-testid="carpet-length-input"
+                            onChange={(e) => { const val = e.target.value.replace(/[^\d.]/g, ""); setSelectedZone(p => ({ ...p, carpet_length: val })); }}
                           />
                         </div>
                         <div>
                           <Label className="text-xs">{isAr ? "عرض السجادة (م)" : "Carpet Width (m)"}</Label>
-                          <Input type="number" min={0.1} step={0.001} className="mt-1 text-sm font-mono" value={selectedZone.carpet_width ?? 0.7} data-testid="carpet-width-input"
-                            onChange={(e) => setSelectedZone(p => ({ ...p, carpet_width: parseFloat(e.target.value) || 0.7 }))}
+                          <Input type="text" inputMode="decimal" className="mt-1 text-sm font-mono" value={selectedZone.carpet_width ?? "0.7"} data-testid="carpet-width-input"
+                            onChange={(e) => { const val = e.target.value.replace(/[^\d.]/g, ""); setSelectedZone(p => ({ ...p, carpet_width: val })); }}
                           />
                         </div>
                       </div>
