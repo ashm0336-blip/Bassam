@@ -84,7 +84,7 @@ export default function DailySessionsPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [nearStart, setNearStart] = useState(false);
   const [showNewZoneDialog, setShowNewZoneDialog] = useState(false);
-  const [newZoneForm, setNewZoneForm] = useState({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0 });
+  const [newZoneForm, setNewZoneForm] = useState({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0, length_m: "", width_m: "", carpet_length: "1.2", carpet_width: "0.7", daily_note: "" });
   const [rectStart, setRectStart] = useState(null);
   const [rectEnd, setRectEnd] = useState(null);
   const [isRotating, setIsRotating] = useState(false);
