@@ -22,19 +22,13 @@ Build an interactive map for a "Crowd Services Platform" - a live, interactive d
 ```
 /app/backend/
 ├── server.py          # Main app entry (109 lines)
-├── database.py        # MongoDB connection (6 lines)
-├── auth.py            # Auth functions & deps (86 lines)
-├── models.py          # All Pydantic models (746 lines)
+├── database.py        # MongoDB connection
+├── auth.py            # Auth functions & deps
+├── models.py          # All Pydantic models
 ├── routes/
-│   ├── auth.py        # Auth + User CRUD (122 lines)
-│   ├── admin.py       # Admin CRUD routes (194 lines)
-│   ├── dashboard.py   # Dashboard + public data (276 lines)
-│   ├── employees.py   # Employee management (89 lines)
-│   ├── settings.py    # All settings routes (450 lines)
-│   ├── maps.py        # Maps/floors/zones/gate maps (366 lines)
-│   ├── sessions.py    # Map + gate sessions (464 lines)
-│   ├── transactions.py # Transactions + PDF (163 lines)
-│   └── uploads.py     # File uploads (43 lines)
+│   ├── auth.py, admin.py, dashboard.py, employees.py
+│   ├── settings.py, maps.py, sessions.py
+│   ├── transactions.py, uploads.py
 ├── tests/
 └── uploads/maps/
 ```
@@ -43,16 +37,16 @@ Build an interactive map for a "Crowd Services Platform" - a live, interactive d
 ```
 /app/frontend/src/
 ├── pages/
-│   ├── DailySessionsPage.jsx       # Main orchestrator (573 lines) - REFACTORED
+│   ├── DailySessionsPage.jsx       # Main orchestrator (568 lines)
 │   └── DailySessions/
 │       ├── constants.js             # Shared constants (31 lines)
 │       ├── utils.js                 # Utility functions (157 lines)
 │       └── components/
 │           ├── SessionSidebar.jsx   # Calendar + session list (161 lines)
 │           ├── SessionHeader.jsx    # Session header bar (65 lines)
-│           ├── MapToolbar.jsx       # Drawing tools + zoom (214 lines)
+│           ├── MapToolbar.jsx       # Drawing tools + zoom + ZonesDropdown (320 lines)
 │           ├── MapCanvas.jsx        # SVG map rendering (328 lines)
-│           ├── MapZoneCards.jsx     # Zone cards + changes (177 lines)
+│           ├── MapZoneCards.jsx     # ChangesLog only (93 lines)
 │           ├── DensityTab.jsx       # Density tracking (279 lines)
 │           ├── StatsTab.jsx         # Statistics tab (193 lines)
 │           └── Dialogs.jsx          # All modal dialogs (337 lines)
@@ -63,24 +57,33 @@ Build an interactive map for a "Crowd Services Platform" - a live, interactive d
 ```
 
 ## What's Been Implemented (as of Feb 26, 2026)
-- Full backend refactoring from monolithic server.py (3952 lines) to modular structure
-- **Frontend refactoring: DailySessionsPage.jsx (3160 lines) → 11 modular files (largest: 573 lines)**
-- Removed 73 unused Python packages (~55% reduction in build size)
-- All features listed above are fully functional
-- Backend tested: 24/24 API tests passing
-- Frontend tested: 45+ UI tests passing post-refactoring (100% success rate)
+- Full backend refactoring from monolithic server.py to modular structure
+- Frontend refactoring: DailySessionsPage.jsx (3160 lines) -> 11 modular files
+- **Zones Dropdown in Toolbar**: Active zones moved from below map into dropdown with search, category filter, and zone list
+- **Changes Log**: Below-map area now shows only the changes log (removed zones/changes sub-tabs)
+- Removed 73 unused Python packages
+- All features fully functional
+- Frontend tested: 100% success rate
 
 ## Prioritized Backlog
 ### P0 (Critical)
-- ~~Refactor DailySessionsPage.jsx (3160 lines) into smaller components~~ DONE
+- ~~Refactor DailySessionsPage.jsx~~ DONE
+- ~~Zones Dropdown in Toolbar~~ DONE
 - **Build General Manager Dashboard** ("نظرة عامة" overview page)
+- **Auto-calculate zone area from drawing** (pending user map with scale)
 
 ### P1 (High)
-- **Implement "Paths" Feature** (المسارات) - New tab for path management
+- **Implement "Paths" Feature** (المسارات)
+- **Advanced Drawing Tools** (snap to grid, snap to edge, undo/redo stack, split/merge zones, keyboard shortcuts)
 
 ### P2 (Medium)
+- Smart shape recognition
+- Layers system (show/hide by category)
+- Mini map for navigation
+- Ruler/measurement tool
+- Zone templates library
 - Historical trend analytics
-- Export capabilities for sessions
+- Export capabilities
 
 ## Credentials
 - System Admin: admin@crowd.sa / admin123
