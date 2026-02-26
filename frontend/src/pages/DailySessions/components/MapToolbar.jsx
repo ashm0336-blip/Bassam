@@ -161,10 +161,11 @@ function ZonesDropdown({
 export function MapToolbar({
   activeSession, mapMode, setMapMode, drawingPoints, setDrawingPoints,
   selectedZoneId, setSelectedZoneId, setRectStart, setFreehandPoints,
-  zoom, zoomRef, setZoom, setPanOffset, mapContainerRef,
-  setShowNewZoneDialog,
+  sessionZones, zoom, zoomRef, setZoom, setPanOffset, mapContainerRef,
+  handleUpdateZoneStyle, setShowNewZoneDialog,
   activeZones, removedZones, setSelectedZone, setShowZoneDialog,
   handleToggleRemove, ZONE_TYPES,
+  undoDrawing, redoDrawing, clearDrawing, undoStack, redoStack,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
