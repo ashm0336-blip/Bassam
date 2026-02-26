@@ -1,8 +1,79 @@
-import { useState, useCallback, useRef } from "react";
+import { useState } from "react";
+import { Edit2, Copy, Sparkles, Palette, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
+
+function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onColorChange, onRemove }) {
+  const [showColor, setShowColor] = useState(false);
+
+  if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
+
+  const pts = zone.polygon_points;
+  const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+  const minY = Math.min(...pts.map(p => p.y));
+
+  const ctm = svgRef.current.getScreenCTM();
+  if (!ctm) return null;
+  const containerRect = mapContainerRef.current.getBoundingClientRect();
+  const screenX = cx * ctm.a + ctm.e;
+  const screenY = minY * ctm.d + ctm.f;
+  let posX = screenX - containerRect.left;
+  let posY = screenY - containerRect.top - 52;
+
+  // Keep within container bounds
+  posX = Math.max(100, Math.min(posX, containerRect.width - 100));
+  if (posY < 10) posY = (screenY - containerRect.top) + 20; // flip below if too high
+
+  const btnClass = "flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all hover:scale-105 active:scale-95";
+
+  return (
+    <div
+      className="absolute z-50 pointer-events-auto"
+      style={{ left: posX, top: posY, transform: "translateX(-50%)" }}
+      data-testid="floating-toolbar"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div className="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
+        <button onClick={onEdit} className={`${btnClass} text-blue-600 hover:bg-blue-50`} data-testid="float-edit-btn" title={isAr ? "تعديل البيانات" : "Edit Data"}>
+          <Edit2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تعديل" : "Edit"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onCopy} className={`${btnClass} text-violet-600 hover:bg-violet-50`} data-testid="float-copy-btn" title={isAr ? "نسخ المنطقة" : "Copy Zone"}>
+          <Copy className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "نسخ" : "Copy"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onSmooth} className={`${btnClass} text-emerald-600 hover:bg-emerald-50`} data-testid="float-smooth-btn" title={isAr ? "تنعيم الزوايا" : "Smooth"}>
+          <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <div className="relative">
+          <button onClick={() => setShowColor(prev => !prev)} className={`${btnClass} text-amber-600 hover:bg-amber-50`} data-testid="float-color-btn" title={isAr ? "تغيير اللون" : "Color"}>
+            <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: zone.fill_color || "#22c55e" }} />
+            <span className="hidden sm:inline">{isAr ? "لون" : "Color"}</span>
+          </button>
+          {showColor && (
+            <div className="absolute top-full mt-1 right-0 bg-white rounded-lg shadow-xl border p-2 grid grid-cols-6 gap-1 z-50" data-testid="float-color-picker"
+              onMouseDown={(e) => e.stopPropagation()}>
+              {["#22c55e","#3b82f6","#ef4444","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#f97316","#14b8a6","#6366f1","#84cc16","#374151"].map(c => (
+                <button key={c} onClick={() => { onColorChange(c); setShowColor(false); }}
+                  className={`w-6 h-6 rounded-md border-2 transition-transform hover:scale-110 ${zone.fill_color === c ? "border-slate-800 ring-1 ring-slate-400" : "border-transparent"}`}
+                  style={{ backgroundColor: c }} data-testid={`color-${c}`} />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
+          <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
+        </button>
+      </div>
+      {/* Arrow pointer */}
+      <div className="flex justify-center"><div className="w-2.5 h-2.5 bg-white border-b border-r border-slate-200/80 rotate-45 -mt-[5px]" /></div>
+    </div>
+  );
+}
 
 export function MapCanvas({
   selectedFloor, activeSession, sessionZones, activeZones, removedZones,
@@ -16,8 +87,8 @@ export function MapCanvas({
   freehandPoints, setFreehandPoints, isPanning, setIsPanning, panStart, setPanStart,
   imgRatio, setImgRatio, newZoneForm,
   setActiveSession, setSelectedZone, setShowZoneDialog, setShowNewZoneDialog,
-  ZONE_TYPES, wheelRef,
-  onMapMouseUp,
+  ZONE_TYPES, wheelRef, onMapMouseUp,
+  handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -144,6 +215,15 @@ export function MapCanvas({
     }
   };
 
+  // Double-click on vertex to delete it
+  const handleDoubleClickVertex = (e, zoneId, pointIndex) => {
+    e.stopPropagation();
+    if (activeSession?.status !== "draft") return;
+    const zone = sessionZones.find(z => z.id === zoneId);
+    if (!zone?.polygon_points || zone.polygon_points.length <= 3) return; // Keep minimum 3 points
+    handleDeletePoint(zoneId, pointIndex);
+  };
+
   if (!selectedFloor?.image_url) {
     return <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة" : "No map image"}</CardContent></Card>;
   }
@@ -151,6 +231,9 @@ export function MapCanvas({
   const cursorStyle = activeSession?.status === "completed"
     ? (isPanning ? "grabbing" : "grab")
     : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab"));
+
+  const selectedZoneData = selectedZoneId ? sessionZones.find(z => z.id === selectedZoneId) : null;
+  const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
 
   return (
     <Card className="overflow-hidden">
@@ -171,49 +254,53 @@ export function MapCanvas({
                       const isSelected = zone.id === selectedZoneId;
                       return (
                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
-                          onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null) setHoveredZone(zone); }}
+                          onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
                           onMouseLeave={() => setHoveredZone(null)}
                           onClick={(e) => { if (mapMode === "edit" && activeSession?.status === "draft") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
-                          onDoubleClick={(e) => { if (activeSession?.status !== "draft") return; e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }}
-                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? "pointer" : "inherit" }}>
-                          <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={zone.opacity || 0.4}
+                          onDoubleClick={(e) => { if (activeSession?.status !== "draft") return; if (mapMode !== "edit") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
+                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? (isSelected ? "move" : "pointer") : "inherit" }}>
+                          <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
                             stroke={isSelected && mapMode === "edit" ? "#3b82f6" : (zone.stroke_color || "#000000")}
                             strokeWidth={isSelected && mapMode === "edit" ? 0.6 : (zone.stroke_width ?? 0.3)}
                             strokeOpacity={isSelected && mapMode === "edit" ? 1 : (zone.stroke_opacity ?? 1)}
-                            strokeDasharray={isSelected && mapMode === "edit" ? "1 0.5" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
+                            strokeDasharray={isSelected && mapMode === "edit" ? "none" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
                             vectorEffect="non-scaling-stroke" />
                           {isSelected && (
-                            <path d={getPath(zone.polygon_points)} fill="none" fillOpacity="0"
-                              stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.6"
-                              strokeDasharray="4 3"
+                            <path d={getPath(zone.polygon_points)} fill="none"
+                              stroke="#3b82f6" strokeWidth="1.8" strokeOpacity="0.5"
+                              strokeDasharray="5 3"
                               vectorEffect="non-scaling-stroke" pointerEvents="none" />
                           )}
+                          {/* Vertex handles - PPT style white squares */}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                             const isActive = i === draggingPoint || i === hoveredPoint;
                             return (
-                              <g key={`v-${i}`} pointerEvents="none">
-                                {isActive && <circle cx={pt.x} cy={pt.y} r="0.4" fill="#3b82f6" fillOpacity="0.15" />}
-                                <rect x={pt.x - (isActive ? 0.22 : 0.15)} y={pt.y - (isActive ? 0.22 : 0.15)}
-                                  width={isActive ? 0.44 : 0.3} height={isActive ? 0.44 : 0.3}
-                                  fill="white" stroke="#3b82f6" strokeWidth={isActive ? "0.07" : "0.05"}
-                                  vectorEffect="non-scaling-stroke"
-                                  style={{ filter: isActive ? "drop-shadow(0 0 1px rgba(59,130,246,0.5))" : "none" }} />
+                              <g key={`v-${i}`} style={{ cursor: "crosshair" }}
+                                onDoubleClick={(e) => handleDoubleClickVertex(e, zone.id, i)}>
+                                {isActive && <circle cx={pt.x} cy={pt.y} r="0.5" fill="#3b82f6" fillOpacity="0.12" pointerEvents="none" />}
+                                <rect x={pt.x - (isActive ? 0.24 : 0.16)} y={pt.y - (isActive ? 0.24 : 0.16)}
+                                  width={isActive ? 0.48 : 0.32} height={isActive ? 0.48 : 0.32}
+                                  fill="white" stroke="#3b82f6" strokeWidth={isActive ? "0.08" : "0.05"}
+                                  vectorEffect="non-scaling-stroke" pointerEvents="all"
+                                  style={{ filter: isActive ? "drop-shadow(0 0 2px rgba(59,130,246,0.6))" : "none" }} />
                               </g>
                             );
                           })}
+                          {/* Midpoint handles */}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                             const j = (i + 1) % zone.polygon_points.length;
                             const nx = zone.polygon_points[j];
                             const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
-                            return <circle key={`m-${i}`} cx={mx} cy={my} r="0.1" fill="white" stroke="#3b82f6" strokeWidth="0.04" vectorEffect="non-scaling-stroke" opacity="0.6" pointerEvents="none" />;
+                            return <circle key={`m-${i}`} cx={mx} cy={my} r="0.12" fill="white" stroke="#3b82f6" strokeWidth="0.04" vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none" style={{ cursor: "crosshair" }} />;
                           })}
+                          {/* Green rotation handle */}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && (() => {
                             const rh = getRotationHandle(zone.polygon_points, zoom);
                             if (!rh) return null;
                             return (
                               <g data-testid="rotation-handle" style={{ cursor: "grab" }}>
                                 <line x1={rh.cx} y1={Math.min(...zone.polygon_points.map(p => p.y))} x2={rh.x} y2={rh.y} stroke="#22c55e" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none" />
-                                <circle cx={rh.x} cy={rh.y} r="0.28" fill="#22c55e" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
+                                <circle cx={rh.x} cy={rh.y} r="0.3" fill="#22c55e" stroke="white" strokeWidth="0.07" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
                                 <g transform={`translate(${rh.x}, ${rh.y})`} pointerEvents="none">
                                   <path d="M -0.12 -0.06 A 0.12 0.12 0 1 1 0.06 -0.12" fill="none" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
                                   <path d="M 0.06 -0.12 L 0.14 -0.07 L 0.05 -0.04" fill="white" stroke="none" />
@@ -227,7 +314,7 @@ export function MapCanvas({
                     {removedZones.map(zone => (
                       <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }} style={{ cursor: activeSession?.status === "draft" ? "pointer" : "default" }}>
                         <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity={0.08} stroke="#ef4444" strokeWidth={0.5} strokeOpacity={0.4} strokeDasharray="2 1.5" vectorEffect="non-scaling-stroke" />
-                        {zone.polygon_points?.length > 0 && (() => { const cx = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx-0.8} y1={cy-0.8} x2={cx+0.8} y2={cy+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx+0.8} y1={cy-0.8} x2={cx-0.8} y2={cy+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
+                        {zone.polygon_points?.length > 0 && (() => { const cx2 = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy2 = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx2-0.8} y1={cy2-0.8} x2={cx2+0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx2+0.8} y1={cy2-0.8} x2={cx2-0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
                       </g>
                     ))}
                     {mapMode === "draw" && drawingPoints.length > 0 && (
@@ -246,11 +333,7 @@ export function MapCanvas({
                       const previewPts = generateShapeFromDrag(mapMode, rectStart, rectEnd);
                       if (!previewPts) return null;
                       const colors = { rect: "#3b82f6", circle: "#06b6d4", ellipse: "#8b5cf6", triangle: "#f59e0b", pentagon: "#10b981", hexagon: "#6366f1", star: "#ec4899", diamond: "#14b8a6", lshape: "#f97316", ushape: "#8b5cf6" };
-                      return (
-                        <path d={getPath(previewPts)} fill={newZoneForm.fill_color} fillOpacity={0.2}
-                          stroke={colors[mapMode] || "#3b82f6"} strokeWidth="0.6" strokeDasharray="1.5 0.8"
-                          vectorEffect="non-scaling-stroke" data-testid="shape-preview" />
-                      );
+                      return <path d={getPath(previewPts)} fill={newZoneForm.fill_color} fillOpacity={0.2} stroke={colors[mapMode] || "#3b82f6"} strokeWidth="0.6" strokeDasharray="1.5 0.8" vectorEffect="non-scaling-stroke" data-testid="shape-preview" />;
                     })()}
                     {mapMode === "freehand" && isDrawingFreehand && freehandPoints.length > 1 && (
                       <path d={getPath(freehandPoints, false)} fill="none" stroke="#ec4899" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" data-testid="freehand-preview" />
@@ -260,6 +343,21 @@ export function MapCanvas({
               );
             })()}
           </div>
+          {/* Floating Toolbar above selected zone */}
+          {showFloatingToolbar && (
+            <FloatingToolbar
+              zone={selectedZoneData}
+              svgRef={svgRef}
+              mapContainerRef={mapContainerRef}
+              isAr={isAr}
+              onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
+              onCopy={handleCopyZone}
+              onSmooth={handleSmoothZone}
+              onColorChange={(color) => handleUpdateZoneStyle(selectedZoneId, { fill_color: color })}
+              onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
+            />
+          )}
+          {/* Tooltip for non-selected zones */}
           {hoveredZone && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />}
         </div>
       </CardContent>
@@ -297,23 +395,9 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr }) {
             <>
               <div className="border-t border-dashed border-slate-200" />
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                {area > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] font-bold flex-shrink-0">م²</span><span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}{zone.length_m > 0 && zone.width_m > 0 ? ` (${zone.length_m}×${zone.width_m})` : ""}</span></div>}
+                {area > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] font-bold flex-shrink-0">م²</span><span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}</span></div>}
                 {capacity > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] font-bold flex-shrink-0">S</span><span className="text-[11px] text-slate-600">{capacity.toLocaleString()} {isAr ? "مصلي" : "cap"}</span></div>}
               </div>
-              {area > 0 && (
-                <div className="flex items-center gap-2 text-[10px]">
-                  <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-mono font-semibold">{Math.round(area / 0.75).toLocaleString()}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-mono font-semibold">{Math.round(area / 0.60).toLocaleString()}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono font-semibold">{Math.round(area / 0.55).toLocaleString()}</span>
-                </div>
-              )}
-              {zone.length_m > 0 && zone.width_m > 0 && (() => {
-                const cl2 = zone.carpet_length || 1.2;
-                const cw = zone.carpet_width || 0.7;
-                const totalC = Math.floor(zone.width_m / cw) * Math.floor(zone.length_m / cl2);
-                const rows = Math.floor(zone.length_m / cl2);
-                return totalC > 0 ? <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] flex-shrink-0">🕌</span><span className="text-[11px] text-slate-600">{totalC.toLocaleString()} {isAr ? "سجادة" : "carpets"} · {rows} {isAr ? "صف" : "rows"}</span></div> : null;
-              })()}
             </>
           )}
           {currentCount > 0 && capacity > 0 && (
