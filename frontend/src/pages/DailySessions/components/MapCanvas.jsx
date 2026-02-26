@@ -186,7 +186,7 @@ export function MapCanvas({
     const pos = getMousePercent(e);
     if (mapMode === "draw" && activeSession?.status === "draft") {
       if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
-      setDrawingPoints(prev => [...prev, { x: pos.x, y: pos.y }]);
+      addDrawingPoint({ x: pos.x, y: pos.y });
     } else if (mapMode === "edit" && activeSession?.status === "draft") {
       if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
       let found = null;
