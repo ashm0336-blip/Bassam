@@ -93,6 +93,10 @@ export default function DailySessionsPage() {
   const [isDrawingFreehand, setIsDrawingFreehand] = useState(false);
   const [freehandPoints, setFreehandPoints] = useState([]);
 
+  // Undo/Redo stacks for drawing
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
   // Density state
   const [densityEdits, setDensityEdits] = useState({});
   const [savingDensity, setSavingDensity] = useState(false);
