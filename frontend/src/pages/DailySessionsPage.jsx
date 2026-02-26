@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { API, ZONE_TYPES_FALLBACK } from "./DailySessions/constants";
 import {
   getAuthHeaders, normalizeImageUrl, smoothPoints, simplifyPoints,
-  generateCircleFromDrag, generateEllipseFromDrag, getDensityLevel, formatDate,
+  generateShapeFromDrag, getDensityLevel, formatDate,
 } from "./DailySessions/utils";
 
 import { SessionSidebar } from "./DailySessions/components/SessionSidebar";
