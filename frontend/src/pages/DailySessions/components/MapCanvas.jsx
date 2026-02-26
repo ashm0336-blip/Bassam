@@ -150,7 +150,7 @@ export function MapCanvas({
 
   const cursorStyle = activeSession?.status === "completed"
     ? (isPanning ? "grabbing" : "grab")
-    : (["draw","rect","circle","ellipse","freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab"));
+    : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab"));
 
   return (
     <Card className="overflow-hidden">
