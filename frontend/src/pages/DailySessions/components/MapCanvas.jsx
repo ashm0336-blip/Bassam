@@ -42,7 +42,7 @@ export function MapCanvas({
     if (activeSession?.status === "completed" || mapMode === "pan") {
       setIsPanning(true);
       setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse") {
+    } else if (DRAG_SHAPE_MODES.includes(mapMode)) {
       setRectStart(pos); setRectEnd(pos);
     } else if (mapMode === "freehand") {
       setIsDrawingFreehand(true); setFreehandPoints([pos]);
