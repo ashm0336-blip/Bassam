@@ -240,7 +240,21 @@ export function MapCanvas({
                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
                           onMouseLeave={() => setHoveredZone(null)}
                           onClick={(e) => { if (mapMode === "edit" && activeSession?.status === "draft") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
-                          onDoubleClick={(e) => { if (activeSession?.status !== "draft") return; if (mapMode !== "edit") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }}
+                          onDoubleClick={(e) => {
+                            if (activeSession?.status !== "draft") return;
+                            e.stopPropagation();
+                            if (mapMode === "pan") {
+                              // Double-click in pan mode → enter edit mode + select zone
+                              setMapMode("edit");
+                              setSelectedZoneId(zone.id);
+                            } else if (mapMode === "edit" && isSelected) {
+                              // Double-click on selected zone in edit mode → open edit dialog
+                              setSelectedZone(zone);
+                              setShowZoneDialog(true);
+                            } else if (mapMode === "edit" && !isSelected) {
+                              setSelectedZoneId(zone.id);
+                            }
+                          }}
                           style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? (isSelected ? "move" : "pointer") : "inherit" }}>
                           <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
                             stroke={isSelected && mapMode === "edit" ? "#3b82f6" : (zone.stroke_color || "#000000")}
