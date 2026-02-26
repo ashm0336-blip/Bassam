@@ -212,11 +212,11 @@ export function MapCanvas({
                             if (!rh) return null;
                             return (
                               <g data-testid="rotation-handle" style={{ cursor: "grab" }}>
-                                <line x1={rh.cx} y1={Math.min(...zone.polygon_points.map(p => p.y))} x2={rh.x} y2={rh.y} stroke="#8b5cf6" strokeWidth="0.3" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke" opacity="0.6" pointerEvents="none" />
-                                <circle cx={rh.x} cy={rh.y} r="0.25" fill="#8b5cf6" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
+                                <line x1={rh.cx} y1={Math.min(...zone.polygon_points.map(p => p.y))} x2={rh.x} y2={rh.y} stroke="#22c55e" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none" />
+                                <circle cx={rh.x} cy={rh.y} r="0.28" fill="#22c55e" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
                                 <g transform={`translate(${rh.x}, ${rh.y})`} pointerEvents="none">
-                                  <path d="M -0.1 -0.05 A 0.1 0.1 0 1 1 0.05 -0.1" fill="none" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
-                                  <path d="M 0.05 -0.1 L 0.12 -0.06 L 0.04 -0.04" fill="white" stroke="none" />
+                                  <path d="M -0.12 -0.06 A 0.12 0.12 0 1 1 0.06 -0.12" fill="none" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
+                                  <path d="M 0.06 -0.12 L 0.14 -0.07 L 0.05 -0.04" fill="white" stroke="none" />
                                 </g>
                               </g>
                             );
