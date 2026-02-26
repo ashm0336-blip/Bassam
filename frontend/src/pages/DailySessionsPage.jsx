@@ -568,6 +568,7 @@ export default function DailySessionsPage() {
                     handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
                     handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     handleDeletePoint={handleDeletePoint}
+                    addDrawingPoint={addDrawingPoint}
                   />
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
