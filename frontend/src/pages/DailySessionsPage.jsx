@@ -531,6 +531,9 @@ export default function DailySessionsPage() {
                     setShowNewZoneDialog={setShowNewZoneDialog}
                     ZONE_TYPES={ZONE_TYPES} wheelRef={wheelRef}
                     onMapMouseUp={handleMapMouseUp}
+                    handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
+                    handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
+                    handleDeletePoint={handleDeletePoint}
                   />
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
