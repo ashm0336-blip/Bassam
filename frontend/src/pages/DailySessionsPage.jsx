@@ -369,6 +369,9 @@ export default function DailySessionsPage() {
         zone_type: newZoneForm.zone_type, polygon_points: drawingPoints,
         fill_color: typeInfo?.color || newZoneForm.fill_color, stroke_color: "#000000", stroke_style: "dashed",
         area_sqm: newZoneForm.area_sqm || 0, per_person_sqm: newZoneForm.per_person_sqm || 0.8, max_capacity: newZoneForm.max_capacity || 0,
+        length_m: newZoneForm.length_m || 0, width_m: newZoneForm.width_m || 0,
+        carpet_length: newZoneForm.carpet_length || 1.2, carpet_width: newZoneForm.carpet_width || 0.7,
+        daily_note: newZoneForm.daily_note || "",
       }, getAuthHeaders());
       setActiveSession(res.data); setShowNewZoneDialog(false); setDrawingPoints([]);
       setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0, length_m: "", width_m: "", carpet_length: "1.2", carpet_width: "0.7", daily_note: "" });
