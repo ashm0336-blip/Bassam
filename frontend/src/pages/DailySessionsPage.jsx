@@ -350,6 +350,7 @@ export default function DailySessionsPage() {
     const zone = sessionZones.find(z => z.id === zoneId);
     if (!zone?.polygon_points || zone.polygon_points.length <= 3) return;
     const newPoints = zone.polygon_points.filter((_, i) => i !== pointIndex);
+    pushZoneUndo(zoneId, { polygon_points: zone.polygon_points }, { polygon_points: newPoints }, isAr ? "حذف نقطة" : "Delete Point");
     try {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`, { polygon_points: newPoints }, getAuthHeaders());
       setActiveSession(res.data);
