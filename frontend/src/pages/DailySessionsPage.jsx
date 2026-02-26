@@ -616,6 +616,8 @@ export default function DailySessionsPage() {
                     handleToggleRemove={handleToggleRemove} ZONE_TYPES={ZONE_TYPES}
                     undoDrawing={undoDrawing} redoDrawing={redoDrawing} clearDrawing={clearDrawing}
                     undoStack={undoStack} redoStack={redoStack}
+                    undoMapAction={undoMapAction} redoMapAction={redoMapAction}
+                    mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
                   <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
