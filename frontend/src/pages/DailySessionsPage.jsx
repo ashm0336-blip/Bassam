@@ -102,6 +102,33 @@ export default function DailySessionsPage() {
   const [savingDensity, setSavingDensity] = useState(false);
   const [activePrayer, setActivePrayer] = useState("fajr");
 
+  // ─── Drawing Undo/Redo ────────────────────────────────────
+  const addDrawingPoint = useCallback((point) => {
+    setUndoStack(prev => [...prev, drawingPoints]);
+    setRedoStack([]);
+    setDrawingPoints(prev => [...prev, point]);
+  }, [drawingPoints]);
+
+  const undoDrawing = useCallback(() => {
+    if (undoStack.length === 0) return;
+    setRedoStack(prev => [...prev, drawingPoints]);
+    setDrawingPoints(undoStack[undoStack.length - 1]);
+    setUndoStack(prev => prev.slice(0, -1));
+  }, [undoStack, drawingPoints]);
+
+  const redoDrawing = useCallback(() => {
+    if (redoStack.length === 0) return;
+    setUndoStack(prev => [...prev, drawingPoints]);
+    setDrawingPoints(redoStack[redoStack.length - 1]);
+    setRedoStack(prev => prev.slice(0, -1));
+  }, [redoStack, drawingPoints]);
+
+  const clearDrawing = useCallback(() => {
+    if (drawingPoints.length > 0) setUndoStack(prev => [...prev, drawingPoints]);
+    setRedoStack([]);
+    setDrawingPoints([]);
+  }, [drawingPoints]);
+
   // ─── Data Fetching ────────────────────────────────────────
   const fetchFloors = useCallback(async () => {
     try {
