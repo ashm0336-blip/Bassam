@@ -399,6 +399,7 @@ export default function DailySessionsPage() {
         try {
           const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, { polygon_points: zone.polygon_points }, getAuthHeaders());
           setActiveSession(res.data);
+          commitZoneEdit(draggingPoint !== null ? (isAr ? "تعديل نقطة" : "Edit Point") : isRotating ? (isAr ? "تدوير" : "Rotate") : (isAr ? "تحريك" : "Move"));
         } catch (e) { console.error(e); }
       }
     }
