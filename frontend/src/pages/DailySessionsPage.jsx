@@ -2709,68 +2709,119 @@ export default function DailySessionsPage() {
 
               {/* Capacity Calculator */}
               {activeSession?.status === "draft" && (
-                <div className="space-y-3 p-3 border rounded-lg bg-blue-50/30" data-testid="capacity-calculator">
-                  <h4 className="font-cairo font-semibold text-sm flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600" />
-                    {isAr ? "حساب السعة" : "Capacity Calculator"}
-                  </h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs">{isAr ? "المساحة (م²)" : "Area (m²)"}</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={1}
-                        className="mt-1 text-sm font-mono"
-                        value={selectedZone.area_sqm ?? 0}
-                        onChange={(e) => {
-                          const area = parseFloat(e.target.value) || 0;
-                          const pp = selectedZone.per_person_sqm || 0.8;
-                          const cap = pp > 0 && area > 0 ? Math.round(area / pp) : selectedZone.max_capacity || 0;
-                          setSelectedZone(p => ({ ...p, area_sqm: area, max_capacity: cap }));
-                        }}
-                        data-testid="zone-area-input"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{isAr ? "نصيب الفرد (م²)" : "Per Person (m²)"}</Label>
-                      <Input
-                        type="number"
-                        min={0.1}
-                        step={0.1}
-                        className="mt-1 text-sm font-mono"
-                        value={selectedZone.per_person_sqm ?? 0.8}
-                        onChange={(e) => {
-                          const pp = parseFloat(e.target.value) || 0.8;
-                          const area = selectedZone.area_sqm || 0;
-                          const cap = pp > 0 && area > 0 ? Math.round(area / pp) : selectedZone.max_capacity || 0;
-                          setSelectedZone(p => ({ ...p, per_person_sqm: pp, max_capacity: cap }));
-                        }}
-                        data-testid="zone-perperson-input"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{isAr ? "السعة القصوى" : "Max Capacity"}</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        className="mt-1 text-sm font-mono font-bold"
-                        value={selectedZone.max_capacity ?? 1000}
-                        onChange={(e) => setSelectedZone(p => ({ ...p, max_capacity: parseInt(e.target.value) || 0 }))}
-                        data-testid="zone-capacity-input"
-                      />
+                <div className="space-y-4" data-testid="capacity-calculator">
+                  {/* Area Calculator */}
+                  <div className="p-3 border rounded-lg bg-blue-50/30">
+                    <h4 className="font-cairo font-semibold text-sm flex items-center gap-2 mb-3">
+                      <Maximize2 className="w-4 h-4 text-blue-600" />
+                      {isAr ? "حساب المساحة" : "Area Calculator"}
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3 items-end">
+                      <div>
+                        <Label className="text-xs">{isAr ? "الطول (م)" : "Length (m)"}</Label>
+                        <Input type="number" min={0} step={0.5} className="mt-1 text-sm font-mono" value={selectedZone.length_m ?? 0} data-testid="zone-length-input"
+                          onChange={(e) => {
+                            const l = parseFloat(e.target.value) || 0;
+                            const w = selectedZone.width_m || 0;
+                            const area = l * w;
+                            const cap055 = area > 0 ? Math.round(area / 0.55) : 0;
+                            setSelectedZone(p => ({ ...p, length_m: l, area_sqm: area, max_capacity: cap055 }));
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">{isAr ? "العرض (م)" : "Width (m)"}</Label>
+                        <Input type="number" min={0} step={0.5} className="mt-1 text-sm font-mono" value={selectedZone.width_m ?? 0} data-testid="zone-width-input"
+                          onChange={(e) => {
+                            const w = parseFloat(e.target.value) || 0;
+                            const l = selectedZone.length_m || 0;
+                            const area = l * w;
+                            const cap055 = area > 0 ? Math.round(area / 0.55) : 0;
+                            setSelectedZone(p => ({ ...p, width_m: w, area_sqm: area, max_capacity: cap055 }));
+                          }}
+                        />
+                      </div>
+                      <div className="text-center p-2 bg-white rounded-lg border">
+                        <span className="text-[10px] text-muted-foreground block">{isAr ? "المساحة" : "Area"}</span>
+                        <span className="text-lg font-bold font-mono text-blue-700" data-testid="zone-area-result">{(selectedZone.area_sqm || 0).toLocaleString()}</span>
+                        <span className="text-[10px] text-muted-foreground"> {isAr ? "م²" : "m²"}</span>
+                      </div>
                     </div>
                   </div>
-                  {/* Visual Formula */}
-                  {(selectedZone.area_sqm > 0 && selectedZone.per_person_sqm > 0) && (
-                    <div className="p-3 bg-white rounded-lg border border-blue-100 text-center" data-testid="capacity-formula">
-                      <div className="flex items-center justify-center gap-2 text-sm">
-                        <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg font-bold font-mono">{selectedZone.area_sqm} {isAr ? "م²" : "m²"}</span>
-                        <span className="text-slate-400 font-bold text-lg">&divide;</span>
-                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-bold font-mono">{selectedZone.per_person_sqm} {isAr ? "م²/فرد" : "m²/p"}</span>
-                        <span className="text-slate-400 font-bold text-lg">=</span>
-                        <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg font-bold font-mono text-base">{Math.round(selectedZone.area_sqm / selectedZone.per_person_sqm).toLocaleString()} {isAr ? "مصلي" : "capacity"}</span>
+
+                  {/* Capacity Levels */}
+                  {(selectedZone.area_sqm > 0) && (
+                    <div className="p-3 border rounded-lg bg-emerald-50/30">
+                      <h4 className="font-cairo font-semibold text-sm flex items-center gap-2 mb-3">
+                        <Users className="w-4 h-4 text-emerald-600" />
+                        {isAr ? "مستويات السعة" : "Capacity Levels"}
+                      </h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { pp: 0.75, label_ar: "آمن", label_en: "Safe", color: "#16a34a", bg: "#dcfce7" },
+                          { pp: 0.60, label_ar: "متوسط", label_en: "Medium", color: "#d97706", bg: "#fefce8" },
+                          { pp: 0.55, label_ar: "أقصى", label_en: "Maximum", color: "#dc2626", bg: "#fef2f2" },
+                        ].map(level => {
+                          const cap = Math.round(selectedZone.area_sqm / level.pp);
+                          return (
+                            <div key={level.pp} className="rounded-lg border p-2.5 text-center" style={{ backgroundColor: level.bg, borderColor: level.color + "30" }}>
+                              <span className="text-[10px] font-medium block" style={{ color: level.color }}>{isAr ? level.label_ar : level.label_en}</span>
+                              <span className="text-xl font-bold font-mono block" style={{ color: level.color }}>{cap.toLocaleString()}</span>
+                              <span className="text-[9px] text-muted-foreground">{level.pp} {isAr ? "م²/فرد" : "m²/p"}</span>
+                            </div>
+                          );
+                        })}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Prayer Carpet Calculator */}
+                  {(selectedZone.area_sqm > 0) && (
+                    <div className="p-3 border rounded-lg bg-amber-50/30">
+                      <h4 className="font-cairo font-semibold text-sm flex items-center gap-2 mb-3">
+                        <Layers className="w-4 h-4 text-amber-600" />
+                        {isAr ? "حساب سجاجيد الصلاة" : "Prayer Carpet Calculator"}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <Label className="text-xs">{isAr ? "طول السجادة (م)" : "Carpet Length (m)"}</Label>
+                          <Input type="number" min={0.1} step={0.1} className="mt-1 text-sm font-mono" value={selectedZone.carpet_length ?? 1.2} data-testid="carpet-length-input"
+                            onChange={(e) => setSelectedZone(p => ({ ...p, carpet_length: parseFloat(e.target.value) || 1.2 }))}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">{isAr ? "عرض السجادة (م)" : "Carpet Width (m)"}</Label>
+                          <Input type="number" min={0.1} step={0.1} className="mt-1 text-sm font-mono" value={selectedZone.carpet_width ?? 0.7} data-testid="carpet-width-input"
+                            onChange={(e) => setSelectedZone(p => ({ ...p, carpet_width: parseFloat(e.target.value) || 0.7 }))}
+                          />
+                        </div>
+                      </div>
+                      {(() => {
+                        const cl = selectedZone.carpet_length || 1.2;
+                        const cw = selectedZone.carpet_width || 0.7;
+                        const zl = selectedZone.length_m || 0;
+                        const zw = selectedZone.width_m || 0;
+                        if (zl <= 0 || zw <= 0) return null;
+                        const carpetsPerRow = Math.floor(zw / cw);
+                        const numRows = Math.floor(zl / cl);
+                        const totalCarpets = carpetsPerRow * numRows;
+                        return (
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                              <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد السجاجيد" : "Total Carpets"}</span>
+                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-total">{totalCarpets.toLocaleString()}</span>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                              <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد الصفوف" : "Rows"}</span>
+                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-rows">{numRows}</span>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                              <span className="text-[10px] text-muted-foreground block">{isAr ? "سجاجيد/صف" : "Per Row"}</span>
+                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-per-row">{carpetsPerRow}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
