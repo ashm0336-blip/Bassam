@@ -2908,18 +2908,47 @@ export default function DailySessionsPage() {
                         const numRows = Math.floor(zl / cl);
                         const totalCarpets = carpetsPerRow * numRows;
                         return (
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
-                              <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد السجاجيد" : "Total Carpets"}</span>
-                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-total">{totalCarpets.toLocaleString()}</span>
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                                <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد السجاجيد" : "Total Carpets"}</span>
+                                <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-total">{totalCarpets.toLocaleString()}</span>
+                              </div>
+                              <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                                <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد الصفوف" : "Rows"}</span>
+                                <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-rows">{numRows}</span>
+                              </div>
+                              <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
+                                <span className="text-[10px] text-muted-foreground block">{isAr ? "سجاجيد/صف" : "Per Row"}</span>
+                                <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-per-row">{carpetsPerRow}</span>
+                              </div>
                             </div>
-                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
-                              <span className="text-[10px] text-muted-foreground block">{isAr ? "عدد الصفوف" : "Rows"}</span>
-                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-rows">{numRows}</span>
-                            </div>
-                            <div className="rounded-lg border border-amber-200 bg-white p-2.5 text-center">
-                              <span className="text-[10px] text-muted-foreground block">{isAr ? "سجاجيد/صف" : "Per Row"}</span>
-                              <span className="text-xl font-bold font-mono text-amber-700" data-testid="carpets-per-row">{carpetsPerRow}</span>
+                            {/* Formula */}
+                            <div className="p-2.5 bg-white rounded-lg border border-amber-100 text-center space-y-1.5">
+                              <div className="flex items-center justify-center gap-1.5 text-[11px] flex-wrap">
+                                <span className="text-muted-foreground">{isAr ? "عدد الصفوف" : "Rows"}:</span>
+                                <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-mono font-bold">{parseFloat(zl).toFixed(2)}</span>
+                                <span className="text-slate-400">&divide;</span>
+                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-mono font-bold">{parseFloat(cl).toFixed(2)}</span>
+                                <span className="text-slate-400">=</span>
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded font-mono font-bold">{numRows}</span>
+                              </div>
+                              <div className="flex items-center justify-center gap-1.5 text-[11px] flex-wrap">
+                                <span className="text-muted-foreground">{isAr ? "سجاجيد/صف" : "Per row"}:</span>
+                                <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-mono font-bold">{parseFloat(zw).toFixed(2)}</span>
+                                <span className="text-slate-400">&divide;</span>
+                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-mono font-bold">{parseFloat(cw).toFixed(2)}</span>
+                                <span className="text-slate-400">=</span>
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded font-mono font-bold">{carpetsPerRow}</span>
+                              </div>
+                              <div className="flex items-center justify-center gap-1.5 text-[11px]">
+                                <span className="text-muted-foreground">{isAr ? "الإجمالي" : "Total"}:</span>
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded font-mono font-bold">{numRows}</span>
+                                <span className="text-slate-400">&times;</span>
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded font-mono font-bold">{carpetsPerRow}</span>
+                                <span className="text-slate-400">=</span>
+                                <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-mono font-bold text-sm">{totalCarpets.toLocaleString()} {isAr ? "سجادة" : "carpets"}</span>
+                              </div>
                             </div>
                           </div>
                         );
