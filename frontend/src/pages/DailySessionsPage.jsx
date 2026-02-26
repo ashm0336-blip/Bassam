@@ -2045,17 +2045,20 @@ export default function DailySessionsPage() {
                               const di = zone.densityInfo;
                               const editedPrayerVal = densityEdits[zone.id]?.prayer_counts?.[activePrayer];
                               const isEdited = editedPrayerVal !== undefined;
+                              // 3-level markers positions on progress bar
+                              const safePos = zone.capMax > 0 ? Math.round((zone.capSafe / zone.capMax) * 100) : 73;
+                              const medPos = zone.capMax > 0 ? Math.round((zone.capMedium / zone.capMax) * 100) : 92;
                               return (
                                 <div
                                   key={zone.id}
                                   className={`rounded-xl border p-3 transition-all hover:shadow-md ${
-                                    di.level === "critical" ? "border-red-200 bg-red-50/50" :
-                                    di.level === "high" ? "border-orange-200 bg-orange-50/30" :
+                                    di.level === "max" || di.level === "over" ? "border-red-200 bg-red-50/50" :
+                                    di.level === "medium" ? "border-amber-200 bg-amber-50/30" :
                                     "border-slate-200 hover:border-slate-300"
                                   }`}
                                   data-testid={`density-zone-${zone.id}`}
                                 >
-                                  {/* Header: icon + code + status */}
+                                  {/* Header */}
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-1.5 min-w-0">
                                       <div className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>
@@ -2066,34 +2069,44 @@ export default function DailySessionsPage() {
                                         <p className="text-[9px] text-muted-foreground truncate leading-tight">{isAr ? zone.name_ar : zone.name_en}</p>
                                       </div>
                                     </div>
-                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: di.color }} title={isAr ? di.label_ar : di.label_en} />
-                                  </div>
-
-                                  {/* Progress bar */}
-                                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
-                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(di.pct, 100)}%`, backgroundColor: di.color }} />
-                                  </div>
-
-                                  {/* Percentage + Status */}
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-lg font-bold font-mono" style={{ color: di.color }} data-testid={`density-status-${zone.id}`}>{di.pct}%</span>
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: di.bg, color: di.color }}>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: di.bg, color: di.color }}>
                                       {isAr ? di.label_ar : di.label_en}
                                     </span>
                                   </div>
 
-                                  {/* Input + Capacity */}
-                                  <div className="flex items-center gap-1.5">
-                                    <Input
-                                      type="number"
-                                      min={0}
-                                      className={`flex-1 h-7 text-center text-xs font-mono ${isEdited ? "ring-2 ring-amber-300 border-amber-400" : ""}`}
-                                      value={zone.currentDisplay}
-                                      onChange={(e) => handleDensityChange(zone.id, "prayer_count", parseInt(e.target.value) || 0)}
-                                      data-testid={`density-input-${zone.id}`}
-                                    />
-                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">/ {zone.maxDisplay.toLocaleString()}</span>
+                                  {/* 3-level progress bar */}
+                                  <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-1">
+                                    <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
+                                    {/* Level markers */}
+                                    <div className="absolute top-0 bottom-0 w-px bg-green-600/60" style={{ left: `${safePos}%` }} title={`${isAr ? "آمن" : "Safe"}: ${zone.capSafe}`} />
+                                    <div className="absolute top-0 bottom-0 w-px bg-amber-600/60" style={{ left: `${medPos}%` }} title={`${isAr ? "متوسط" : "Medium"}: ${zone.capMedium}`} />
                                   </div>
+                                  <div className="flex items-center justify-between text-[8px] text-muted-foreground mb-2">
+                                    <span>{zone.capSafe} <span style={{color:"#16a34a"}}>|</span> {zone.capMedium} <span style={{color:"#d97706"}}>|</span> {zone.capMax}</span>
+                                  </div>
+
+                                  {/* Percentage input + computed count */}
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center border rounded-md overflow-hidden flex-1">
+                                      <Input
+                                        type="number" min={0} max={120}
+                                        className={`h-7 text-center text-xs font-mono border-0 ${isEdited ? "ring-2 ring-amber-300" : ""}`}
+                                        value={zone.fillPct}
+                                        onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}
+                                        data-testid={`density-input-${zone.id}`}
+                                      />
+                                      <span className="text-[10px] font-bold text-muted-foreground px-1.5 bg-slate-50 h-7 flex items-center">%</span>
+                                    </div>
+                                    <span className="text-[10px] font-mono font-bold" style={{ color: di.color }}>{zone.actualCount.toLocaleString()}</span>
+                                  </div>
+
+                                  {/* Row info */}
+                                  {zone.totalRows > 0 && (
+                                    <div className="flex items-center gap-1 mt-1.5 text-[9px] text-muted-foreground">
+                                      <Layers className="w-3 h-3" />
+                                      <span>{zone.filledRows} / {zone.totalRows} {isAr ? "صف" : "rows"}</span>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
