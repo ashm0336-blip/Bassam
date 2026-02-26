@@ -7,7 +7,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://crowd-supervisor.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://daily-ops-map.preview.emergentagent.com')
 
 class TestZoneRotationDragFeatures:
     """Tests for zone rotation and movement functionality"""
