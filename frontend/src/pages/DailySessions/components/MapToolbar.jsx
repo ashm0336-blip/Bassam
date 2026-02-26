@@ -300,26 +300,47 @@ export function MapToolbar({
             </Button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant={["rect","circle","ellipse","freehand"].includes(mapMode) ? "default" : "ghost"} size="sm" className="rounded-none border-x" data-testid="shapes-dropdown-btn">
-                  <Square className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "أشكال" : "Shapes"}</span><ChevronDown className="w-3 h-3 mr-1" />
+                <Button variant={DRAG_SHAPE_MODES.includes(mapMode) || mapMode === "freehand" ? "default" : "ghost"} size="sm" className="rounded-none border-x" data-testid="shapes-dropdown-btn">
+                  <Shapes className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "أشكال" : "Shapes"}</span><ChevronDown className="w-3 h-3 mr-1" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-40 p-1" align="start">
-                <div className="space-y-0.5">
-                  {[
-                    { mode: "rect", icon: Square, label: isAr ? "مستطيل" : "Rectangle" },
-                    { mode: "circle", icon: Circle, label: isAr ? "دائرة" : "Circle" },
-                    { mode: "ellipse", icon: Spline, label: isAr ? "بيضاوي" : "Ellipse" },
-                    { mode: "freehand", icon: PenTool, label: isAr ? "رسم حر" : "Freehand" },
-                  ].map(s => {
-                    const Icon = s.icon;
-                    return (
-                      <button key={s.mode} onClick={() => { setMapMode(s.mode); resetDrawingState(); }} data-testid={`shape-opt-${s.mode}`}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${mapMode === s.mode ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-slate-100"}`}>
-                        <Icon className="w-4 h-4" />{s.label}
-                      </button>
-                    );
-                  })}
+              <PopoverContent className="w-[280px] p-0" align="start" data-testid="shapes-panel">
+                <div className="p-2 border-b">
+                  <p className="text-[11px] font-cairo font-semibold text-muted-foreground px-1">{isAr ? "أشكال أساسية" : "Basic Shapes"}</p>
+                </div>
+                <div className="grid grid-cols-5 gap-1 p-2">
+                  {SHAPE_LIBRARY.map(shape => (
+                    <button
+                      key={shape.mode}
+                      onClick={() => { setMapMode(shape.mode); resetDrawingState(); }}
+                      data-testid={`shape-opt-${shape.mode}`}
+                      className={`flex flex-col items-center gap-0.5 p-2 rounded-lg transition-all ${
+                        mapMode === shape.mode
+                          ? "bg-emerald-100 ring-2 ring-emerald-400 shadow-sm"
+                          : "hover:bg-slate-100"
+                      }`}
+                      title={isAr ? shape.label_ar : shape.label_en}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none">
+                        <path d={shape.path} fill={mapMode === shape.mode ? "#059669" : "#94a3b8"} fillOpacity={0.15}
+                          stroke={mapMode === shape.mode ? "#059669" : "#64748b"} strokeWidth="1.5" strokeLinejoin="round" />
+                      </svg>
+                      <span className="text-[8px] font-medium text-muted-foreground leading-none truncate w-full text-center">{isAr ? shape.label_ar : shape.label_en}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="p-2 border-t">
+                  <p className="text-[11px] font-cairo font-semibold text-muted-foreground px-1 mb-1.5">{isAr ? "رسم حر" : "Freehand"}</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button onClick={() => { setMapMode("draw"); resetDrawingState(); }} data-testid="shape-opt-draw"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${mapMode === "draw" ? "bg-blue-100 ring-2 ring-blue-400 text-blue-700 font-semibold" : "hover:bg-slate-100 text-slate-600"}`}>
+                      <Pencil className="w-4 h-4" />{isAr ? "نقطة بنقطة" : "Point"}
+                    </button>
+                    <button onClick={() => { setMapMode("freehand"); resetDrawingState(); }} data-testid="shape-opt-freehand"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${mapMode === "freehand" ? "bg-pink-100 ring-2 ring-pink-400 text-pink-700 font-semibold" : "hover:bg-slate-100 text-slate-600"}`}>
+                      <PenTool className="w-4 h-4" />{isAr ? "رسم حر" : "Freehand"}
+                    </button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
