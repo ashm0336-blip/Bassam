@@ -371,7 +371,7 @@ export default function DailySessionsPage() {
         area_sqm: newZoneForm.area_sqm || 0, per_person_sqm: newZoneForm.per_person_sqm || 0.8, max_capacity: newZoneForm.max_capacity || 0,
       }, getAuthHeaders());
       setActiveSession(res.data); setShowNewZoneDialog(false); setDrawingPoints([]);
-      setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0 });
+      setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0, length_m: "", width_m: "", carpet_length: "1.2", carpet_width: "0.7", daily_note: "" });
       setMapMode("pan");
       toast.success(isAr ? "تم إضافة المنطقة" : "Zone added");
     } catch (e) { toast.error(isAr ? "تعذرت الإضافة" : "Error adding zone"); }
