@@ -1613,7 +1613,7 @@ export default function DailySessionsPage() {
                                           {area > 0 && (
                                             <div className="flex items-center gap-1.5">
                                               <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] font-bold flex-shrink-0">م²</span>
-                                              <span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}</span>
+                                              <span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}{hoveredZone.length_m > 0 && hoveredZone.width_m > 0 ? ` (${hoveredZone.length_m}×${hoveredZone.width_m})` : ""}</span>
                                             </div>
                                           )}
                                           {capacity > 0 && (
@@ -1623,6 +1623,27 @@ export default function DailySessionsPage() {
                                             </div>
                                           )}
                                         </div>
+                                        {/* Capacity levels */}
+                                        {area > 0 && (
+                                          <div className="flex items-center gap-2 text-[10px]">
+                                            <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-mono font-semibold">{Math.round(area / 0.75).toLocaleString()}</span>
+                                            <span className="px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-mono font-semibold">{Math.round(area / 0.60).toLocaleString()}</span>
+                                            <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono font-semibold">{Math.round(area / 0.55).toLocaleString()}</span>
+                                          </div>
+                                        )}
+                                        {/* Carpet info */}
+                                        {hoveredZone.length_m > 0 && hoveredZone.width_m > 0 && (() => {
+                                          const cl = hoveredZone.carpet_length || 1.2;
+                                          const cw = hoveredZone.carpet_width || 0.7;
+                                          const totalC = Math.floor(hoveredZone.width_m / cw) * Math.floor(hoveredZone.length_m / cl);
+                                          const rows = Math.floor(hoveredZone.length_m / cl);
+                                          return totalC > 0 ? (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] flex-shrink-0">🕌</span>
+                                              <span className="text-[11px] text-slate-600">{totalC.toLocaleString()} {isAr ? "سجادة" : "carpets"} · {rows} {isAr ? "صف" : "rows"}</span>
+                                            </div>
+                                          ) : null;
+                                        })()}
                                       </>
                                     )}
                                     {/* Utilization bar (if has current count) */}
