@@ -649,6 +649,7 @@ export default function DailySessionsPage() {
                     handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     handleDeletePoint={handleDeletePoint}
                     addDrawingPoint={addDrawingPoint}
+                    onEditStart={onEditStart} setMapMode={setMapMode}
                   />
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
