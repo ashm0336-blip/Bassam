@@ -696,7 +696,11 @@ class SessionZone(BaseModel):
     current_count: int = 0
     prayer_counts: dict = Field(default_factory=lambda: {"fajr": 0, "dhuhr": 0, "asr": 0, "maghrib": 0, "isha": 0, "taraweeh": 0})
     area_sqm: float = 0
-    per_person_sqm: float = 0.8
+    length_m: float = 0
+    width_m: float = 0
+    per_person_sqm: float = 0.55
+    carpet_length: float = 1.2
+    carpet_width: float = 0.7
     description_ar: Optional[str] = None
     description_en: Optional[str] = None
     is_removed: bool = False
