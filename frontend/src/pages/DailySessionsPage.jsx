@@ -2894,8 +2894,12 @@ export default function DailySessionsPage() {
                   zone_code: selectedZone.zone_code,
                   daily_note: selectedZone.daily_note,
                   area_sqm: selectedZone.area_sqm,
-                  per_person_sqm: selectedZone.per_person_sqm,
+                  length_m: selectedZone.length_m,
+                  width_m: selectedZone.width_m,
+                  per_person_sqm: selectedZone.per_person_sqm || 0.55,
                   max_capacity: selectedZone.max_capacity,
+                  carpet_length: selectedZone.carpet_length,
+                  carpet_width: selectedZone.carpet_width,
                 });
                 setShowZoneDialog(false);
               }} data-testid="save-zone-changes"><Save className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>
