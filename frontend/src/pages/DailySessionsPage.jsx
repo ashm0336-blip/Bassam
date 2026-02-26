@@ -303,6 +303,12 @@ export default function DailySessionsPage() {
 
   const handleUpdateZoneStyle = async (zoneId, styleData) => {
     if (!activeSession) return;
+    const zone = sessionZones.find(z => z.id === zoneId);
+    if (zone) {
+      const prevData = {}; const nextData = {};
+      Object.keys(styleData).forEach(k => { prevData[k] = zone[k]; nextData[k] = styleData[k]; });
+      pushZoneUndo(zoneId, prevData, nextData, isAr ? "تنسيق" : "Style");
+    }
     try {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`, styleData, getAuthHeaders());
       setActiveSession(res.data);
@@ -314,6 +320,7 @@ export default function DailySessionsPage() {
     const zone = sessionZones.find(z => z.id === selectedZoneId);
     if (!zone?.polygon_points || zone.polygon_points.length < 3) return;
     const smoothed = smoothPoints(zone.polygon_points, 2);
+    pushZoneUndo(selectedZoneId, { polygon_points: zone.polygon_points }, { polygon_points: smoothed }, isAr ? "تنعيم" : "Smooth");
     try {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, { polygon_points: smoothed }, getAuthHeaders());
       setActiveSession(res.data);
