@@ -73,7 +73,7 @@ export function MapCanvas({
     const pos = getMousePercent(e);
     setMousePos(pos);
     if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
-    if ((mapMode === "rect" || mapMode === "circle" || mapMode === "ellipse") && rectStart) { setRectEnd(pos); return; }
+    if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
     if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
     if (isRotating && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
