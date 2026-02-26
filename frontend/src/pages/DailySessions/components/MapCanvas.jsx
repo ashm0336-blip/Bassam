@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit2, Copy, Sparkles, Palette, Trash2 } from "lucide-react";
+import { Edit2, Copy, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
