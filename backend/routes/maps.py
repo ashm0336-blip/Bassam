@@ -241,6 +241,18 @@ async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = De
     return doc
 
 
+@router.put("/admin/gate-map/floors/{floor_id}")
+async def update_gate_map_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_admin)):
+    existing = await db.gate_map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    update_data = {k: v for k, v in floor_data.items() if v is not None}
+    if update_data:
+        await db.gate_map_floors.update_one({"id": floor_id}, {"$set": update_data})
+    updated = await db.gate_map_floors.find_one({"id": floor_id}, {"_id": 0})
+    return updated
+
+
 @router.delete("/admin/gate-map/floors/{floor_id}")
 async def delete_gate_map_floor(floor_id: str, admin: dict = Depends(require_admin)):
     await db.gate_map_floors.delete_one({"id": floor_id})
