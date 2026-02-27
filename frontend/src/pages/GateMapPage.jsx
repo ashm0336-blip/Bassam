@@ -143,13 +143,6 @@ export default function GateMapPage() {
     } catch (e) { console.error(e); }
   }, [selectedFloor]);
 
-  const fetchLogs = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API}/gate-map/daily-logs?limit=30`);
-      setDailyLogs(res.data);
-    } catch (e) { console.error(e); }
-  }, []);
-
   const fetchExistingGates = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/gates`, getAuthHeaders());
@@ -373,15 +366,6 @@ export default function GateMapPage() {
       if (selectedFloor?.id === id) setSelectedFloor(null);
       fetchFloors();
       toast({ title: language === "ar" ? "تم الحذف" : "Deleted" });
-    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
-  };
-
-  // Auto log
-  const autoLog = async () => {
-    try {
-      await axios.post(`${API}/admin/gate-map/auto-log`, {}, getAuthHeaders());
-      toast({ title: language === "ar" ? "تم التسجيل" : "Logged" });
-      fetchLogs();
     } catch (e) { toast({ title: "Error", variant: "destructive" }); }
   };
 
