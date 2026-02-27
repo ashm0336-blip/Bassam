@@ -97,8 +97,7 @@ export default function GateMapPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Daily logs
-  const [dailyLogs, setDailyLogs] = useState([]);
+  // Daily logs removed - moved to DailyGateSessionsPage
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -167,7 +166,6 @@ export default function GateMapPage() {
 
   useEffect(() => { fetchFloors(); fetchExistingGates(); fetchEmployees(); }, [fetchFloors, fetchExistingGates, fetchEmployees]);
   useEffect(() => { if (selectedFloor) { fetchMarkers(); setImgRatio(null); } }, [selectedFloor, fetchMarkers]);
-  useEffect(() => { if (activeTab === "logs") fetchLogs(); }, [activeTab, fetchLogs]);
 
   // Map Arabic gate values to marker values
   const mapGateToMarker = (gate) => {
