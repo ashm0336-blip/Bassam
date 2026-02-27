@@ -418,15 +418,14 @@ export default function GateMapPage() {
   return (
     <div className="space-y-6" data-testid="gate-map-page">
       <div className="flex items-center justify-between">
-        <h1 className="font-cairo font-bold text-2xl">{language === "ar" ? "خريطة الأبواب التفاعلية" : "Interactive Gate Map"}</h1>
+        <h1 className="font-cairo font-bold text-2xl">{language === "ar" ? "إدارة خرائط الأبواب" : "Gate Map Management"}</h1>
         <Button variant="outline" onClick={() => { fetchFloors(); fetchMarkers(); }} data-testid="refresh-btn"><RefreshCw className="w-4 h-4 ml-2" />{language === "ar" ? "تحديث" : "Refresh"}</Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="map" data-testid="gate-map-tab"><MapPin className="w-4 h-4 ml-2" />{language === "ar" ? "الخريطة" : "Map"}</TabsTrigger>
-          <TabsTrigger value="floors" data-testid="gate-floors-tab"><Layers className="w-4 h-4 ml-2" />{language === "ar" ? "الطوابق" : "Floors"}</TabsTrigger>
-          <TabsTrigger value="logs" data-testid="gate-logs-tab"><Eye className="w-4 h-4 ml-2" />{language === "ar" ? "السجل اليومي" : "Daily Log"}</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="map" data-testid="gate-map-tab"><MapPin className="w-4 h-4 ml-2" />{language === "ar" ? "الخريطة والأبواب" : "Map & Gates"}</TabsTrigger>
+          <TabsTrigger value="floors" data-testid="gate-floors-tab"><Layers className="w-4 h-4 ml-2" />{language === "ar" ? "إدارة الطوابق" : "Floors"}</TabsTrigger>
         </TabsList>
 
         {/* Map Tab */}
