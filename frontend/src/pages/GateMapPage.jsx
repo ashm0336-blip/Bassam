@@ -709,31 +709,6 @@ export default function GateMapPage() {
             ))}
           </div>
         </TabsContent>
-
-        {/* Daily Log Tab */}
-        <TabsContent value="logs" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-cairo font-semibold">{language === "ar" ? "السجل اليومي لتشغيل الأبواب" : "Daily Gate Operation Log"}</h2>
-            <Button onClick={autoLog} data-testid="auto-log-btn"><Save className="w-4 h-4 ml-2" />{language === "ar" ? "تسجيل اليوم" : "Log Today"}</Button>
-          </div>
-          {dailyLogs.length > 0 ? (
-            <div className="space-y-2">
-              {dailyLogs.map(log => (
-                <div key={log.id} className="flex items-center gap-4 p-3 border rounded-lg bg-white">
-                  <div className="font-mono text-sm font-bold min-w-[100px]">{log.date}</div>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-green-600">{language === "ar" ? "مفتوح" : "Open"}: {log.open_gates}</span>
-                    <span className="text-red-600">{language === "ar" ? "مغلق" : "Closed"}: {log.closed_gates}</span>
-                    <span className="text-blue-600">{language === "ar" ? "التدفق" : "Flow"}: {log.total_flow?.toLocaleString()}</span>
-                  </div>
-                  {log.notes && <span className="text-xs text-muted-foreground">{log.notes}</span>}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">{language === "ar" ? "لا يوجد سجلات بعد" : "No logs yet"}</CardContent></Card>
-          )}
-        </TabsContent>
       </Tabs>
 
       {/* Add Floor Dialog */}
