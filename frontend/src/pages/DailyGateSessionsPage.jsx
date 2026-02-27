@@ -375,8 +375,35 @@ export default function DailyGateSessionsPage() {
                   <TabsTrigger value="changes" data-testid="tab-changes"><FileText className="w-4 h-4 ml-1" />{isAr ? "التغييرات" : "Changes"}</TabsTrigger>
                 </TabsList>
 
-                {/* MAP TAB */}
+                {/* MAP TAB - Rich map with markers, tooltips, stats */}
                 <TabsContent value="map" className="space-y-3">
+                  {/* Stats Bar */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="rounded-xl border bg-gradient-to-bl from-blue-50 to-white p-3">
+                      <p className="text-[10px] text-muted-foreground">{isAr ? "إجمالي" : "Total"}</p>
+                      <p className="text-xl font-bold text-blue-700">{stats.total}</p>
+                    </div>
+                    <div className="rounded-xl border bg-gradient-to-bl from-emerald-50 to-white p-3">
+                      <p className="text-[10px] text-muted-foreground">{isAr ? "مفتوح" : "Open"}</p>
+                      <p className="text-xl font-bold text-emerald-600">{stats.open}</p>
+                    </div>
+                    <div className="rounded-xl border bg-gradient-to-bl from-red-50 to-white p-3">
+                      <p className="text-[10px] text-muted-foreground">{isAr ? "مغلق" : "Closed"}</p>
+                      <p className="text-xl font-bold text-red-600">{stats.closed}</p>
+                    </div>
+                    <div className="rounded-xl border bg-gradient-to-bl from-orange-50 to-white p-3">
+                      <p className="text-[10px] text-muted-foreground">{isAr ? "مزدحم" : "Crowded"}</p>
+                      <p className="text-xl font-bold text-orange-600">{stats.crowded}</p>
+                    </div>
+                    {stats.noStaff > 0 && (
+                      <div className="rounded-xl border bg-amber-50 border-amber-200 p-3">
+                        <p className="text-[10px] text-amber-600">{isAr ? "بدون موظفين" : "No Staff"}</p>
+                        <p className="text-xl font-bold text-amber-600">{stats.noStaff}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Zoom controls */}
                   <div className="flex items-center justify-end">
                     <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-4 h-4" /></Button>
@@ -385,9 +412,10 @@ export default function DailyGateSessionsPage() {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
+
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden"><CardContent className="p-0">
-                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "500px", cursor: isPanning ? "grabbing" : "grab" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} data-testid="gate-map-container">
+                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: isPanning ? "grabbing" : "grab" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} data-testid="gate-map-container">
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
@@ -399,19 +427,27 @@ export default function DailyGateSessionsPage() {
                                 <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                                   {activeGates.map(gate => {
                                     const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
-                                    const isChanged = gate.change_type && gate.change_type !== "unchanged";
+                                    const isHov = hoveredGate?.id === gate.id;
+                                    const ar = imgRatio || 1;
+                                    const s = isHov ? 1.2 : 0.7;
+                                    const rx = s, ry = s * ar;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`}
                                         onMouseEnter={() => setHoveredGate(gate)} onMouseLeave={() => setHoveredGate(null)}
-                                        onClick={() => { setSelectedGate(gate); setShowGateDialog(true); }}
-                                        style={{ cursor: "pointer" }}>
-                                        <circle cx={gate.x} cy={gate.y} r={isChanged ? "1" : "0.7"} fill={sc.color} fillOpacity={0.9} stroke="white" strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
-                                        {isChanged && <circle cx={gate.x} cy={gate.y} r="1.3" fill="none" stroke={sc.color} strokeWidth="0.1" strokeDasharray="0.5 0.3" vectorEffect="non-scaling-stroke" opacity="0.5" />}
+                                        onClick={() => { if (activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
+                                        style={{ cursor: activeSession?.status === "draft" ? "pointer" : "default" }}>
+                                        <ellipse cx={gate.x} cy={gate.y} rx={rx + 1} ry={(rx + 1) * ar} fill={sc.color} fillOpacity="0.08">
+                                          <animate attributeName="rx" values={`${rx};${rx + 2.5};${rx}`} dur="1.5s" repeatCount="indefinite" />
+                                          <animate attributeName="ry" values={`${ry};${(rx + 2.5) * ar};${ry}`} dur="1.5s" repeatCount="indefinite" />
+                                          <animate attributeName="fill-opacity" values="0.2;0;0.2" dur="1.5s" repeatCount="indefinite" />
+                                        </ellipse>
+                                        {isHov && <ellipse cx={gate.x} cy={gate.y} rx={rx + 0.5} ry={(rx + 0.5) * ar} fill="none" stroke={sc.color} strokeWidth="0.2" vectorEffect="non-scaling-stroke" />}
+                                        <ellipse cx={gate.x} cy={gate.y} rx={rx} ry={ry} fill={sc.color} stroke="white" strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
                                       </g>
                                     );
                                   })}
                                   {removedGates.map(gate => (
-                                    <g key={gate.id}><circle cx={gate.x} cy={gate.y} r="0.5" fill="#ef4444" fillOpacity={0.2} stroke="#ef4444" strokeWidth="0.1" strokeDasharray="0.4 0.3" vectorEffect="non-scaling-stroke" />
+                                    <g key={gate.id}><circle cx={gate.x} cy={gate.y} r="0.5" fill="#ef4444" fillOpacity={0.15} stroke="#ef4444" strokeWidth="0.1" strokeDasharray="0.4 0.3" vectorEffect="non-scaling-stroke" />
                                     <line x1={gate.x-0.4} y1={gate.y-0.4} x2={gate.x+0.4} y2={gate.y+0.4} stroke="#ef4444" strokeWidth="0.15" vectorEffect="non-scaling-stroke" opacity="0.5" />
                                     <line x1={gate.x+0.4} y1={gate.y-0.4} x2={gate.x-0.4} y2={gate.y+0.4} stroke="#ef4444" strokeWidth="0.15" vectorEffect="non-scaling-stroke" opacity="0.5" /></g>
                                   ))}
@@ -420,20 +456,53 @@ export default function DailyGateSessionsPage() {
                             );
                           })()}
                         </div>
-                        {/* Tooltip */}
+                        {/* Legend */}
+                        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
+                          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                            <span key={key} className="flex items-center gap-1 text-[10px]">
+                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+                              {isAr ? cfg.label_ar : cfg.label_en}
+                            </span>
+                          ))}
+                        </div>
+                        {/* Rich Tooltip */}
                         {hoveredGate && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
                           const cl = CHANGE_LABELS[hoveredGate.change_type] || CHANGE_LABELS.unchanged;
+                          const dir = DIRECTIONS.find(d => d.value === hoveredGate.direction);
+                          const hasChange = hoveredGate.change_type && hoveredGate.change_type !== "unchanged";
+                          const pct = hoveredGate.max_flow ? Math.round(((hoveredGate.current_flow || 0) / hoveredGate.max_flow) * 100) : 0;
                           return (
                             <div className="absolute pointer-events-none z-50" style={{ left:tooltipPos.x, top:tooltipPos.y }}>
-                              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border p-3 min-w-[180px]" style={{ borderTopColor:sc.color, borderTopWidth:3, direction:"rtl" }}>
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="font-bold text-sm">{hoveredGate.name_ar}</span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:`${sc.color}20`,color:sc.color}}>{isAr ? sc.label_ar : sc.label_en}</span>
+                              <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[230px]" style={{ direction:"rtl" }}>
+                                <div className="h-1.5" style={{ backgroundColor: sc.color }} />
+                                <div className="p-3 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}>
+                                        <DoorOpen className="w-4 h-4 text-white" />
+                                      </span>
+                                      <span className="font-bold text-sm">{hoveredGate.name_ar}</span>
+                                    </div>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:`${sc.color}15`,color:sc.color}}>{isAr ? sc.label_ar : sc.label_en}</span>
+                                  </div>
+                                  {hasChange && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
+                                  <div className="border-t border-dashed border-slate-200" />
+                                  <div className="space-y-1 text-[11px]">
+                                    {hoveredGate.gate_type && <div className="flex justify-between"><span className="text-slate-500">{isAr?"النوع":"Type"}</span><span className="font-medium">{hoveredGate.gate_type}</span></div>}
+                                    {dir && <div className="flex justify-between"><span className="text-slate-500">{isAr?"الاتجاه":"Dir"}</span><span>{isAr?dir.label_ar:dir.label_en}</span></div>}
+                                    {hoveredGate.classification && <div className="flex justify-between"><span className="text-slate-500">{isAr?"التصنيف":"Class"}</span><span>{hoveredGate.classification}</span></div>}
+                                    <div className="flex justify-between"><span className="text-slate-500">{isAr?"التدفق":"Flow"}</span><span className="font-semibold">{hoveredGate.current_flow || 0} / {hoveredGate.max_flow || 0}</span></div>
+                                    {hoveredGate.max_flow > 0 && (
+                                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: sc.color }} />
+                                      </div>
+                                    )}
+                                  </div>
+                                  {hoveredGate.assigned_staff > 0 && <div className="flex items-center gap-1 text-[10px] text-slate-500 pt-1 border-t"><Users className="w-3 h-3" />{hoveredGate.assigned_staff} {isAr?"موظف":"staff"}</div>}
+                                  {hoveredGate.assigned_staff === 0 && hoveredGate.status === "open" && <p className="text-[10px] text-amber-600 font-medium pt-1 border-t"><AlertCircle className="w-3 h-3 inline ml-0.5" />{isAr?"بدون موظفين!":"No staff!"}</p>}
+                                  {hoveredGate.daily_note && <p className="text-[10px] text-slate-500 pt-1 border-t">{hoveredGate.daily_note}</p>}
                                 </div>
-                                {hoveredGate.change_type !== "unchanged" && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
-                                {hoveredGate.assigned_staff > 0 && <p className="text-[10px] text-slate-500 mt-1"><Users className="w-3 h-3 inline ml-0.5" />{hoveredGate.assigned_staff} {isAr?"موظف":"staff"}</p>}
-                                {hoveredGate.daily_note && <p className="text-[10px] text-slate-500 mt-1 border-t pt-1">{hoveredGate.daily_note}</p>}
                               </div>
                             </div>
                           );
