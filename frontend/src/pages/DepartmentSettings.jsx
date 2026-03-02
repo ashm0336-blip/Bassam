@@ -41,13 +41,14 @@ import { toast } from "sonner";
 import GatesDataManagement from "@/components/GatesDataManagement";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GateMapPage from "@/pages/GateMapPage";
+import MapManagementPage from "@/pages/MapManagementPage";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
-  const [activeTab, setActiveTab] = useState(department === 'gates' ? 'gates_data' : 'shifts');
+  const [activeTab, setActiveTab] = useState(department === 'gates' ? 'gates_data' : department === 'plazas' ? 'employees' : 'shifts');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -418,21 +419,33 @@ export default function DepartmentSettings({ department }) {
           {language === 'ar' ? 'إعدادات القسم' : 'Department Settings'}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 text-right">
-          {department === 'gates'
-            ? (language === 'ar' ? 'إدارة البيانات الأساسية - الأبواب والموظفين والخرائط والورديات' : 'Manage base data - gates, staff, maps, shifts')
+          {(department === 'gates' || department === 'plazas')
+            ? (language === 'ar' ? 'إدارة البيانات الأساسية - الموظفين والخرائط والورديات' : 'Manage base data - staff, maps, shifts')
             : (language === 'ar' ? 'إدارة الورديات وأنماط الراحة ومواقع التغطية' : 'Manage shifts, rest patterns, and coverage locations')}
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className={`grid w-full ${department === 'gates' ? 'grid-cols-6' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${(department === 'gates' || department === 'plazas') ? 'grid-cols-5' : 'grid-cols-3'}`}>
           {department === 'gates' && (
             <>
               <TabsTrigger value="gates_data" className="flex items-center gap-1.5 text-xs">
                 <DoorOpen className="w-3.5 h-3.5" />
                 {language === 'ar' ? 'الأبواب' : 'Gates'}
               </TabsTrigger>
+              <TabsTrigger value="employees" className="flex items-center gap-1.5 text-xs">
+                <Users className="w-3.5 h-3.5" />
+                {language === 'ar' ? 'الموظفين' : 'Staff'}
+              </TabsTrigger>
+              <TabsTrigger value="maps" className="flex items-center gap-1.5 text-xs">
+                <Layers className="w-3.5 h-3.5" />
+                {language === 'ar' ? 'الخرائط' : 'Maps'}
+              </TabsTrigger>
+            </>
+          )}
+          {department === 'plazas' && (
+            <>
               <TabsTrigger value="employees" className="flex items-center gap-1.5 text-xs">
                 <Users className="w-3.5 h-3.5" />
                 {language === 'ar' ? 'الموظفين' : 'Staff'}
@@ -468,6 +481,18 @@ export default function DepartmentSettings({ department }) {
             </TabsContent>
             <TabsContent value="maps" className="mt-4">
               <GateMapPage />
+            </TabsContent>
+          </>
+        )}
+
+        {/* Plazas-specific tabs */}
+        {department === 'plazas' && (
+          <>
+            <TabsContent value="employees" className="mt-4">
+              <EmployeeManagement department="plazas" />
+            </TabsContent>
+            <TabsContent value="maps" className="mt-4">
+              <MapManagementPage />
             </TabsContent>
           </>
         )}
