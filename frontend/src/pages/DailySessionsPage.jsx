@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import {
   Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, BarChart3, Activity,
-  CalendarRange,
+  CalendarRange, Users,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
   NewSessionDialog, BatchDialog, ZoneEditDialog, NewZoneDialog,
   NotesDialog, CompareDialog,
 } from "./DailySessions/components/Dialogs";
+import { ZoneEmployeesTab } from "./DailySessions/components/ZoneEmployeesTab";
 
 export default function DailySessionsPage() {
   const { language } = useLanguage();
@@ -595,10 +596,11 @@ export default function DailySessionsPage() {
               <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} />
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="map" data-testid="tab-map"><MapPin className="w-4 h-4 ml-1" />{isAr ? "الخريطة" : "Map"}<Badge variant="secondary" className="mr-1 text-[10px] px-1.5">{activeZones.length}</Badge></TabsTrigger>
-                  <TabsTrigger value="stats" data-testid="tab-stats"><BarChart3 className="w-4 h-4 ml-1" />{isAr ? "إحصائيات" : "Stats"}</TabsTrigger>
                   <TabsTrigger value="density" data-testid="tab-density"><Activity className="w-4 h-4 ml-1" />{isAr ? "الكثافات" : "Density"}{densityStats?.criticalCount > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{densityStats.criticalCount}</Badge>}</TabsTrigger>
+                  <TabsTrigger value="employees" data-testid="tab-employees"><Users className="w-4 h-4 ml-1" />{isAr ? "الموظفين" : "Staff"}</TabsTrigger>
+                  <TabsTrigger value="stats" data-testid="tab-stats"><BarChart3 className="w-4 h-4 ml-1" />{isAr ? "إحصائيات" : "Stats"}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="map" className="space-y-3">
@@ -668,6 +670,10 @@ export default function DailySessionsPage() {
 
                 <TabsContent value="stats" className="space-y-5">
                   <StatsTab sessionStats={sessionStats} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES} sessions={sessions} />
+                </TabsContent>
+
+                <TabsContent value="employees" className="space-y-5">
+                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} />
                 </TabsContent>
               </Tabs>
             </div>
