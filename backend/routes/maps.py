@@ -307,6 +307,45 @@ async def bulk_update_gate_markers(request: Request, admin: dict = Depends(requi
     return {"message": f"تم تحديث {count} باب"}
 
 
+@router.post("/admin/gate-map/sync-gates")
+async def sync_gates_to_markers(request: Request, admin: dict = Depends(require_admin)):
+    """Sync gates from gates collection to gate markers for a specific floor."""
+    data = await request.json()
+    floor_id = data.get("floor_id")
+    if not floor_id:
+        raise HTTPException(status_code=400, detail="floor_id مطلوب")
+    floor = await db.gate_map_floors.find_one({"id": floor_id}, {"_id": 0})
+    if not floor:
+        raise HTTPException(status_code=404, detail="الطابق غير موجود")
+    existing_markers = await db.gate_markers.find({"floor_id": floor_id}, {"_id": 0}).to_list(500)
+    existing_gate_names = {m.get("name_ar") for m in existing_markers}
+    gates = await db.gates.find({}, {"_id": 0}).to_list(500)
+    created = 0
+    for gate in gates:
+        gate_name = gate.get("name", "")
+        if gate_name and gate_name not in existing_gate_names:
+            marker = GateMarker(
+                floor_id=floor_id,
+                gate_id=gate.get("id"),
+                name_ar=gate_name,
+                name_en=gate.get("name_en", ""),
+                x=50.0,
+                y=50.0,
+                gate_type=gate.get("gate_type", "main"),
+                direction=gate.get("direction", "both"),
+                classification=gate.get("classification", "general"),
+                status=gate.get("status", "open"),
+                current_flow=gate.get("current_flow", 0),
+                max_flow=gate.get("max_flow", 5000),
+            )
+            doc = marker.model_dump()
+            await db.gate_markers.insert_one(doc)
+            doc.pop("_id", None)
+            created += 1
+            existing_gate_names.add(gate_name)
+    return {"created": created, "total_markers": len(existing_markers) + created}
+
+
 @router.get("/gate-map/daily-logs")
 async def get_gate_daily_logs(limit: int = 30):
     logs = await db.gate_daily_logs.find({}, {"_id": 0}).sort("date", -1).to_list(limit)

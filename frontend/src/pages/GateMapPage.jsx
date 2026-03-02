@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import {
-  Plus, Trash2, Save, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon
+  Plus, Trash2, Save, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
+  ZoomIn, ZoomOut, Maximize2, Move, DoorOpen, DoorClosed, Wrench,
+  ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,8 +14,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 import { Progress } from "@/components/ui/progress";
+import { toast as sonnerToast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const STATUS_CONFIG = {
+  open: { color: "#22c55e", label_ar: "مفتوح", label_en: "Open", icon: DoorOpen },
+  closed: { color: "#ef4444", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
+  crowded: { color: "#f97316", label_ar: "مزدحم", label_en: "Crowded", icon: DoorOpen },
+  maintenance: { color: "#6b7280", label_ar: "صيانة", label_en: "Maintenance", icon: Wrench },
+};
+
+const DIRECTIONS_MAP = {
+  entry: { label_ar: "دخول", label_en: "Entry", icon: ArrowDownRight },
+  exit: { label_ar: "خروج", label_en: "Exit", icon: ArrowUpRight },
+  both: { label_ar: "دخول وخروج", label_en: "Both", icon: ArrowLeftRight },
+};
 
 export default function GateMapPage() {
   const { language } = useLanguage();
@@ -21,7 +37,12 @@ export default function GateMapPage() {
   const { toast } = useToast();
 
   const [floors, setFloors] = useState([]);
+  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  // Floor dialog
   const [showFloorDialog, setShowFloorDialog] = useState(false);
   const [deleteFloorId, setDeleteFloorId] = useState(null);
   const [isDeletingFloor, setIsDeletingFloor] = useState(false);
@@ -31,6 +52,19 @@ export default function GateMapPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const [localImagePreview, setLocalImagePreview] = useState(null);
+
+  // Map state
+  const [zoom, setZoom] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [imgRatio, setImgRatio] = useState(null);
+  const [draggingMarkerId, setDraggingMarkerId] = useState(null);
+  const [hoveredMarker, setHoveredMarker] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  const mapContainerRef = useRef(null);
+  const svgRef = useRef(null);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
@@ -53,13 +87,24 @@ export default function GateMapPage() {
       const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
       setFloors(normalized);
       normalized.forEach(f => { if (f.image_url) { const img = new Image(); img.src = f.image_url; } });
+      if (!selectedFloor && normalized.length > 0) setSelectedFloor(normalized[0]);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, []);
 
+  const fetchMarkers = useCallback(async () => {
+    if (!selectedFloor) return;
+    try {
+      const res = await axios.get(`${API}/gate-map/markers?floor_id=${selectedFloor.id}`);
+      setMarkers(res.data);
+    } catch (e) { console.error(e); }
+  }, [selectedFloor]);
+
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
+  useEffect(() => { if (selectedFloor) fetchMarkers(); }, [selectedFloor, fetchMarkers]);
   useEffect(() => { return () => { if (localImagePreview) URL.revokeObjectURL(localImagePreview); }; }, [localImagePreview]);
 
+  // Upload
   const uploadImageFile = async (file) => {
     if (!file || (file.type && !file.type.startsWith("image/"))) {
       toast({ title: isAr ? "نوع ملف غير مدعوم" : "Unsupported file", variant: "destructive" });
@@ -100,11 +145,117 @@ export default function GateMapPage() {
     setIsDeletingFloor(true);
     try {
       await axios.delete(`${API}/admin/gate-map/floors/${deleteFloorId}`, getAuthHeaders());
+      if (selectedFloor?.id === deleteFloorId) setSelectedFloor(null);
       fetchFloors();
       toast({ title: isAr ? "تم الحذف" : "Deleted" });
     } catch (e) { toast({ title: isAr ? "تعذر الحذف" : "Error", variant: "destructive" }); }
     finally { setIsDeletingFloor(false); setDeleteFloorId(null); }
   };
+
+  const handleDeleteMarker = async (markerId) => {
+    try {
+      await axios.delete(`${API}/admin/gate-map/markers/${markerId}`, getAuthHeaders());
+      setMarkers(prev => prev.filter(m => m.id !== markerId));
+      sonnerToast.success(isAr ? "تم حذف النقطة" : "Marker deleted");
+    } catch (e) { sonnerToast.error(isAr ? "تعذر الحذف" : "Error"); }
+  };
+
+  // Sync gates to markers
+  const handleSyncGates = async () => {
+    if (!selectedFloor) return;
+    setSyncing(true);
+    try {
+      const res = await axios.post(`${API}/admin/gate-map/sync-gates`, { floor_id: selectedFloor.id }, getAuthHeaders());
+      if (res.data.created > 0) {
+        sonnerToast.success(isAr ? `تم إضافة ${res.data.created} نقطة جديدة` : `Added ${res.data.created} new markers`);
+        fetchMarkers();
+      } else {
+        sonnerToast.info(isAr ? "جميع الأبواب موجودة على الخريطة" : "All gates already on map");
+      }
+    } catch (e) { sonnerToast.error(isAr ? "تعذرت المزامنة" : "Sync failed"); }
+    finally { setSyncing(false); }
+  };
+
+  // Update marker position
+  const updateMarkerPosition = async (markerId, x, y) => {
+    try {
+      await axios.put(`${API}/admin/gate-map/markers/${markerId}`, { x, y }, getAuthHeaders());
+    } catch (e) { console.error("Failed to update marker position:", e); }
+  };
+
+  // Map mouse helpers
+  const getMousePercent = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const ctm = svgRef.current.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const t = pt.matrixTransform(ctm.inverse());
+    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+  };
+
+  const handleMapMouseDown = (e) => {
+    if (e.button !== 0) return;
+    if (draggingMarkerId) return;
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+  };
+
+  const handleMapMouseMove = (e) => {
+    if (draggingMarkerId) {
+      const pos = getMousePercent(e);
+      setMarkers(prev => prev.map(m => m.id === draggingMarkerId ? { ...m, x: pos.x, y: pos.y } : m));
+      return;
+    }
+    if (isPanning) {
+      setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    }
+    if (mapContainerRef.current) {
+      const r = mapContainerRef.current.getBoundingClientRect();
+      setTooltipPos({ x: e.clientX - r.left + 16, y: e.clientY - r.top - 10 });
+    }
+  };
+
+  const handleMapMouseUp = () => {
+    if (draggingMarkerId) {
+      const marker = markers.find(m => m.id === draggingMarkerId);
+      if (marker) updateMarkerPosition(marker.id, marker.x, marker.y);
+      setDraggingMarkerId(null);
+      return;
+    }
+    setIsPanning(false);
+  };
+
+  // Wheel zoom
+  const wheelRef = useCallback((node) => {
+    if (!node) return;
+    mapContainerRef.current = node;
+    const handler = (e) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const prev = zoomRef.current;
+      const nz = Math.max(0.5, Math.min(6, prev * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      const s = nz / prev;
+      zoomRef.current = nz; setZoom(nz);
+      setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
+    };
+    node.addEventListener("wheel", handler, { passive: false });
+  }, []);
+
+  const zoomTo = (factor) => {
+    const c = mapContainerRef.current;
+    if (!c) return;
+    const r = c.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    const p = zoomRef.current;
+    const nz = Math.max(0.5, Math.min(6, p * factor));
+    const s = nz / p;
+    zoomRef.current = nz; setZoom(nz);
+    setPanOffset(o => ({ x: cx - s * (cx - o.x), y: cy - s * (cy - o.y) }));
+  };
+
+  const resetView = () => { zoomRef.current = 1; setZoom(1); setPanOffset({ x: 0, y: 0 }); };
 
   const floorPreviewUrl = localImagePreview || (floorForm.image_url ? normalizeImageUrl(floorForm.image_url) : "");
 
@@ -120,16 +271,16 @@ export default function GateMapPage() {
   }
 
   return (
-    <div className="space-y-6" data-testid="gate-map-page">
+    <div className="space-y-5" data-testid="gate-map-page">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-l from-blue-50 via-white to-slate-50 p-6">
+      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-l from-blue-50 via-white to-slate-50 p-5">
         <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-blue-200/30 blur-2xl" />
         <div className="relative flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200"><Layers className="w-6 h-6 text-white" /></div>
             <div>
               <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "إدارة خرائط الأبواب" : "Gate Map Management"}</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">{isAr ? "إدارة طوابق خرائط الأبواب - رفع وتنظيم صور الأدوار" : "Manage gate map floors - upload and organize floor images"}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{isAr ? "ارفع الخريطة وحدد مواقع الأبواب بالسحب والإفلات" : "Upload map and drag gates to position"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -141,59 +292,215 @@ export default function GateMapPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="rounded-xl border bg-white p-4"><p className="text-xs text-muted-foreground">{isAr ? "إجمالي الطوابق" : "Total Floors"}</p><p className="text-2xl font-bold mt-1">{floors.length}</p></div>
-        <div className="rounded-xl border bg-white p-4"><p className="text-xs text-muted-foreground">{isAr ? "بصورة" : "With Image"}</p><p className="text-2xl font-bold mt-1 text-emerald-600">{floors.filter(f => f.image_url).length}</p></div>
-        <div className="rounded-xl border bg-white p-4"><p className="text-xs text-muted-foreground">{isAr ? "بدون صورة" : "No Image"}</p><p className="text-2xl font-bold mt-1 text-amber-600">{floors.filter(f => !f.image_url).length}</p></div>
-      </div>
+      {/* Floor selector + Sync */}
+      {floors.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
+            <button
+              key={floor.id}
+              onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
+              data-testid={`floor-tab-${floor.id}`}
+            >
+              <Layers className={`w-4 h-4 ${selectedFloor?.id === floor.id ? "text-blue-600" : "text-slate-400"}`} />
+              <span className={`text-sm font-medium ${selectedFloor?.id === floor.id ? "text-blue-700" : ""}`}>{isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
+                <Edit2 className="w-3 h-3" />
+              </Button>
+            </button>
+          ))}
+          <div className="flex-1" />
+          {selectedFloor && (
+            <>
+              <Button variant="outline" onClick={handleSyncGates} disabled={syncing} data-testid="sync-gates-btn">
+                <RefreshCw className={`w-4 h-4 ml-1.5 ${syncing ? "animate-spin" : ""}`} />
+                {isAr ? "مزامنة الأبواب" : "Sync Gates"}
+              </Button>
+              <Badge variant="secondary" className="text-xs px-2.5 py-1.5">
+                <Crosshair className="w-3 h-3 ml-1" />
+                {markers.length} {isAr ? "نقطة" : "markers"}
+              </Badge>
+            </>
+          )}
+        </div>
+      )}
 
-      {/* Floors Grid */}
-      {floors.length === 0 ? (
+      {/* No floors */}
+      {floors.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="py-16 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><Layers className="w-8 h-8 text-slate-400" /></div>
             <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">{isAr ? "لا توجد طوابق بعد" : "No floors yet"}</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">{isAr ? "ابدأ بإضافة طوابق خرائط الأبواب ورفع صور الأدوار" : "Start by adding gate map floors and uploading images"}</p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">{isAr ? "ابدأ بإضافة طابق ورفع صورة الخريطة" : "Start by adding a floor and uploading a map image"}</p>
             <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة أول طابق" : "Add First Floor"}
             </Button>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
-            <Card key={floor.id} className="group overflow-hidden transition-all hover:shadow-lg hover:border-blue-200" data-testid={`floor-card-${floor.id}`}>
-              <div className="relative h-44 bg-slate-100 overflow-hidden">
-                {floor.image_url ? (
-                  <img src={normalizeImageUrl(floor.image_url)} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300"><ImageIcon className="w-12 h-12 mb-2" /><span className="text-xs">{isAr ? "لا توجد صورة" : "No image"}</span></div>
-                )}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-white/90 backdrop-blur-sm text-slate-700 border shadow-sm text-xs font-bold px-2.5">
-                    {isAr ? `ترتيب ${floor.order || 0}` : `Order ${floor.order || 0}`}
-                  </Badge>
-                </div>
+      )}
+
+      {/* Interactive Map with Draggable Markers */}
+      {selectedFloor && (
+        <div className="space-y-3">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                <Move className="w-3.5 h-3.5" />
+                {isAr ? "اسحب النقطة لتحريك الباب على الخريطة" : "Drag markers to reposition gates"}
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <h3 className="font-cairo font-bold text-base">{isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}</h3>
-                    {floor.name_en && isAr && <p className="text-xs text-muted-foreground">{floor.name_en}</p>}
+            </div>
+            <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-4 h-4" /></Button>
+              <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetView} data-testid="zoom-reset"><Maximize2 className="w-4 h-4" /></Button>
+            </div>
+          </div>
+
+          {/* Map */}
+          {selectedFloor.image_url ? (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div
+                  ref={wheelRef}
+                  className="relative bg-slate-100 overflow-hidden"
+                  style={{ height: "600px", cursor: draggingMarkerId ? "grabbing" : isPanning ? "grabbing" : "grab" }}
+                  onMouseDown={handleMapMouseDown}
+                  onMouseMove={handleMapMouseMove}
+                  onMouseUp={handleMapMouseUp}
+                  onMouseLeave={handleMapMouseUp}
+                  data-testid="gate-map-canvas"
+                >
+                  <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {(() => {
+                      const ce = mapContainerRef.current;
+                      let ws = { position: "relative", width: "100%", height: "100%" };
+                      if (imgRatio && ce) {
+                        const cw = ce.clientWidth, ch = ce.clientHeight;
+                        if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
+                        else ws = { position: "relative", width: "100%", height: cw / imgRatio };
+                      }
+                      return (
+                        <div style={ws}>
+                          <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />
+                          <svg ref={svgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
+                            {markers.map(marker => {
+                              const sc = STATUS_CONFIG[marker.status] || STATUS_CONFIG.open;
+                              const isDragging = draggingMarkerId === marker.id;
+                              const isHovered = hoveredMarker?.id === marker.id;
+                              const ar = imgRatio || 1;
+                              const baseR = 0.7;
+                              const r = isDragging ? baseR * 1.5 : isHovered ? baseR * 1.3 : baseR;
+                              return (
+                                <g
+                                  key={marker.id}
+                                  data-testid={`gate-marker-${marker.id}`}
+                                  style={{ cursor: isDragging ? "grabbing" : "grab" }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setDraggingMarkerId(marker.id);
+                                  }}
+                                  onMouseEnter={() => { if (!draggingMarkerId) setHoveredMarker(marker); }}
+                                  onMouseLeave={() => setHoveredMarker(null)}
+                                >
+                                  {/* Pulse ring */}
+                                  <ellipse cx={marker.x} cy={marker.y} rx={r + 1} ry={(r + 1) * ar} fill={sc.color} fillOpacity="0.08">
+                                    <animate attributeName="rx" values={`${r};${r + 2};${r}`} dur="2s" repeatCount="indefinite" />
+                                    <animate attributeName="ry" values={`${r * ar};${(r + 2) * ar};${r * ar}`} dur="2s" repeatCount="indefinite" />
+                                    <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
+                                  </ellipse>
+                                  {/* Hover ring */}
+                                  {(isHovered || isDragging) && (
+                                    <ellipse cx={marker.x} cy={marker.y} rx={r + 0.5} ry={(r + 0.5) * ar} fill="none" stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.25" vectorEffect="non-scaling-stroke" strokeDasharray={isDragging ? "1 0.5" : "none"} />
+                                  )}
+                                  {/* Main circle */}
+                                  <ellipse cx={marker.x} cy={marker.y} rx={r} ry={r * ar} fill={sc.color} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" />
+                                  {/* Label */}
+                                  {(isHovered || isDragging) && (
+                                    <text x={marker.x} y={marker.y - r * ar - 0.8} textAnchor="middle" fill={sc.color} fontSize="1.8" fontWeight="bold" fontFamily="Cairo, sans-serif" style={{ pointerEvents: "none" }}>
+                                      {marker.name_ar}
+                                    </text>
+                                  )}
+                                </g>
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      );
+                    })()}
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} data-testid={`floor-edit-${floor.id}`}>
-                    <Edit2 className="w-3.5 h-3.5 ml-1.5" />{isAr ? "تعديل" : "Edit"}
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteFloorId(floor.id)} data-testid={`floor-delete-${floor.id}`}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+
+                  {/* Legend */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
+                    <div className="flex items-center gap-3">
+                      {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                        <span key={key} className="flex items-center gap-1 text-[10px]">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+                          {isAr ? cfg.label_ar : cfg.label_en}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-slate-400">{markers.length} {isAr ? "نقطة" : "markers"}</span>
+                  </div>
+
+                  {/* Tooltip */}
+                  {hoveredMarker && !draggingMarkerId && (() => {
+                    const sc = STATUS_CONFIG[hoveredMarker.status] || STATUS_CONFIG.open;
+                    const dir = DIRECTIONS_MAP[hoveredMarker.direction];
+                    return (
+                      <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+                        <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[200px]" style={{ direction: "rtl" }}>
+                          <div className="h-1.5" style={{ backgroundColor: sc.color }} />
+                          <div className="p-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}>
+                                <DoorOpen className="w-4 h-4 text-white" />
+                              </span>
+                              <div>
+                                <span className="font-bold text-sm">{hoveredMarker.name_ar}</span>
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                  <span style={{ color: sc.color }}>{isAr ? sc.label_ar : sc.label_en}</span>
+                                  {dir && <span>{isAr ? dir.label_ar : dir.label_en}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="border-t pt-2 flex items-center gap-2 text-[10px] text-slate-500">
+                              <Move className="w-3 h-3" />
+                              {isAr ? "اسحب لتحريك الموقع" : "Drag to move"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة - عدّل الطابق وارفع صورة" : "No map image - edit floor and upload image"}</CardContent></Card>
+          )}
+
+          {/* Markers list */}
+          {markers.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+              {markers.map(marker => {
+                const sc = STATUS_CONFIG[marker.status] || STATUS_CONFIG.open;
+                return (
+                  <div key={marker.id} className="flex items-center gap-2 p-2 rounded-lg border hover:shadow-sm transition-all group" data-testid={`marker-item-${marker.id}`}>
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${sc.color}15` }}>
+                      <DoorOpen className="w-3.5 h-3.5" style={{ color: sc.color }} />
+                    </div>
+                    <span className="text-xs font-medium truncate flex-1">{marker.name_ar}</span>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 flex-shrink-0" onClick={() => handleDeleteMarker(marker.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
