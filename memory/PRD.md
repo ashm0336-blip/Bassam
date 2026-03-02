@@ -5,43 +5,43 @@ Build a comprehensive "Crowd Services Platform" for managing prayer areas, gates
 
 ## Architecture
 ```
-إدارة الأبواب (Sidebar - 4 items)
-├── 📊 نظرة عامة                (Dashboard)
-├── 📋 السجل اليومي للأبواب     (Daily Log with Archive - /daily-gates)
-│   ├── 📁 Archive: Year → Month → Day navigation
-│   ├── 🗺️ الخريطة (drag markers, pan/edit mode)
-│   ├── 🚪 الأبواب (traffic-light quick status toggle)
-│   ├── 👥 الموظفين (staff assignment)
-│   └── 📝 التغييرات (changes tracking)
-├── 📋 المعاملات                (Transactions)
-└── ⚙️ إعدادات القسم            (6 tabs)
-    ├── 🚪 الأبواب (CRUD) │ 👥 الموظفين │ 🗺️ الخرائط
-    ├── ⏰ الورديات │ 🏖️ أنماط الراحة │ 📍 المواقع
+إدارة الأبواب (4 items)
+├── نظرة عامة
+├── السجل اليومي للأبواب (with Archive: Year→Month→Day)
+│   ├── 🗺️ الخريطة │ 🚪 الأبواب │ 👥 الموظفين │ 📝 التغييرات
+├── المعاملات
+└── إعدادات القسم (6 tabs: أبواب, موظفين, خرائط, ورديات, راحة, مواقع)
+
+إدارة المصليات
+├── السجل اليومي للخرائط (with Archive: Year→Month→Day)
+└── ...
 ```
 
 ## What's Implemented
 
-### Smart Archive System - COMPLETED
-- Year selector with arrow navigation
-- 12-month grid with session counts, progress bars, status indicators
-- Current month highlighted with blue accent
-- Seamless drill-down: Year → Month grid → Month calendar → Session
-- "All Months" back button for easy navigation
-- Year summary with total tours count
+### Smart Archive System - COMPLETED (Both Gates & Prayer Areas)
+- Year selector with navigation arrows
+- 12-month grid with counts, progress bars, status indicators
+- Current month highlighted (blue for gates, emerald for prayer areas)
+- Drill-down: Year → Month grid → Calendar → Session
+- "All Months" back button
+- Monthly stats + yearly totals
 
-### Daily Gate Log with 4 Tabs - COMPLETED
-- Map, Gates (traffic-light status), Employees, Changes
+### Gates Daily Log - COMPLETED
+- 4-tab layout: Map, Gates (traffic-light), Employees, Changes
+- Draggable map markers with pan/edit mode
+- Staff count badges + warning indicators on map
 
-### Department Settings with 6 Tabs - COMPLETED
-- Gates data, Employees, Maps, Shifts, Rest Patterns, Locations
+### Department Settings - COMPLETED
+- 6 tabs for gates: Gates, Employees, Maps, Shifts, Rest, Locations
 
-### Sidebar Cleanup - COMPLETED
-- 4 items: نظرة عامة, السجل اليومي للأبواب, المعاملات, إعدادات القسم
+### Sidebar - COMPLETED
+- Gates: نظرة عامة, السجل اليومي, المعاملات, إعدادات القسم
 
 ## Credentials
 - admin@crowd.sa / admin123
 
 ## Backlog
 - P0: Automatic Area Calculation (BLOCKED)
-- P1: Smart Alerts, Analytics Dashboard, General Manager Dashboard, Paths
+- P1: Smart Alerts, Analytics, General Manager Dashboard, Paths
 - P2: Field Supervisor Mobile, Smart Routing, Live Haram Map

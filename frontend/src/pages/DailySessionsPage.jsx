@@ -19,6 +19,7 @@ import {
 } from "./DailySessions/utils";
 
 import { SessionSidebar } from "./DailySessions/components/SessionSidebar";
+import { ArchiveSessionSidebar } from "./DailySessions/components/ArchiveSessionSidebar";
 import { SessionHeader } from "./DailySessions/components/SessionHeader";
 import { MapToolbar } from "./DailySessions/components/MapToolbar";
 import { MapCanvas } from "./DailySessions/components/MapCanvas";
@@ -61,9 +62,6 @@ export default function DailySessionsPage() {
   const [batchStartDate, setBatchStartDate] = useState("");
   const [batchEndDate, setBatchEndDate] = useState("");
   const [batchCloneSource, setBatchCloneSource] = useState("master");
-
-  // Calendar state
-  const [calendarDate, setCalendarDate] = useState(() => new Date());
 
   // Map state
   const [zoom, setZoom] = useState(1);
@@ -576,10 +574,9 @@ export default function DailySessionsPage() {
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        <SessionSidebar
+        <ArchiveSessionSidebar
           sessions={sessions} activeSession={activeSession} setActiveSession={setActiveSession}
-          calendarDate={calendarDate} setCalendarDate={setCalendarDate}
-          selectedFloor={selectedFloor} setZoom={setZoom} setPanOffset={setPanOffset} zoomRef={zoomRef}
+          setZoom={setZoom} setPanOffset={setPanOffset} zoomRef={zoomRef}
           setNewSessionDate={setNewSessionDate} setCloneSource={setCloneSource} setShowNewSessionDialog={setShowNewSessionDialog}
           handleCompare={handleCompare} handleDeleteSession={handleDeleteSession}
         />
