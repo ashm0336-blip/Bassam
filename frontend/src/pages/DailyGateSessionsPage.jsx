@@ -5,7 +5,8 @@ import {
   Eye, Clock, FileText, CheckCircle2, AlertCircle, ArrowLeftRight,
   RefreshCw, Edit2, MessageSquare, Layers, ZoomIn, ZoomOut, Maximize2,
   RotateCcw, CircleDot, CircleOff, Tag, CalendarRange, DoorOpen, DoorClosed,
-  Wrench, ArrowUpRight, ArrowDownRight, Users, FileStack, Database
+  Wrench, ArrowUpRight, ArrowDownRight, Users, FileStack, Database,
+  Hand, MousePointer2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,8 +88,11 @@ export default function DailyGateSessionsPage() {
   const [imgRatio, setImgRatio] = useState(null);
   const [hoveredGate, setHoveredGate] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [mapMode, setMapMode] = useState("pan"); // "pan" | "edit"
+  const [draggingGateId, setDraggingGateId] = useState(null);
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
+  const svgRef = useRef(null);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
@@ -166,12 +170,56 @@ export default function DailyGateSessionsPage() {
     node.addEventListener("wheel", handler, { passive: false });
   }, []);
 
-  const handleMouseDown = (e) => { if (e.button === 0) { setIsPanning(true); setPanStart({ x: e.clientX-panOffset.x, y: e.clientY-panOffset.y }); } };
-  const handleMouseMove = (e) => {
-    if (isPanning) setPanOffset({ x: e.clientX-panStart.x, y: e.clientY-panStart.y });
-    if (mapContainerRef.current) { const r = mapContainerRef.current.getBoundingClientRect(); setTooltipPos({ x: e.clientX-r.left+16, y: e.clientY-r.top-10 }); }
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    if (mapMode === "pan") {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    } else if (mapMode === "edit") {
+      if (!e.target.closest("[data-gate-id]")) {
+        // clicked empty space in edit mode - do nothing
+      }
+    }
   };
-  const handleMouseUp = () => setIsPanning(false);
+  const handleGateMouseDown = (e, gateId) => {
+    if (mapMode !== "edit" || activeSession?.status !== "draft") return;
+    e.stopPropagation();
+    e.preventDefault();
+    setDraggingGateId(gateId);
+  };
+  const getMousePercent = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const ctm = svgRef.current.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const t = pt.matrixTransform(ctm.inverse());
+    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+  };
+  const handleMouseMove = (e) => {
+    if (draggingGateId && mapMode === "edit") {
+      const pos = getMousePercent(e);
+      setActiveSession(prev => {
+        if (!prev) return prev;
+        return { ...prev, gates: prev.gates.map(g => g.id === draggingGateId ? { ...g, x: pos.x, y: pos.y } : g) };
+      });
+      return;
+    }
+    if (isPanning) setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    if (mapContainerRef.current) { const r = mapContainerRef.current.getBoundingClientRect(); setTooltipPos({ x: e.clientX - r.left + 16, y: e.clientY - r.top - 10 }); }
+  };
+  const handleMouseUp = () => {
+    if (draggingGateId) {
+      const gate = activeSession?.gates?.find(g => g.id === draggingGateId);
+      if (gate && activeSession) {
+        handleUpdateGate(draggingGateId, { x: gate.x, y: gate.y });
+        toast.success(isAr ? "تم حفظ الموقع" : "Position saved", { duration: 1500 });
+      }
+      setDraggingGateId(null);
+      return;
+    }
+    setIsPanning(false);
+  };
 
   // Session actions
   const handleCreateSession = async () => {
@@ -403,19 +451,38 @@ export default function DailyGateSessionsPage() {
                     )}
                   </div>
 
-                  {/* Zoom controls */}
-                  <div className="flex items-center justify-end">
-                    <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-4 h-4" /></Button>
-                      <span className="text-xs w-12 text-center">{Math.round(zoom*100)}%</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(6,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-4 h-4" /></Button>
+                  {/* Toolbar: Mode toggle + Zoom */}
+                  <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      {activeSession?.status === "draft" && (
+                        <>
+                          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+                            <button onClick={() => { setMapMode("pan"); setDraggingGateId(null); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "pan" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} data-testid="mode-pan">
+                              <Hand className="w-3.5 h-3.5" />{isAr ? "تحريك" : "Pan"}
+                            </button>
+                            <button onClick={() => setMapMode("edit")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "edit" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`} data-testid="mode-edit">
+                              <MousePointer2 className="w-3.5 h-3.5" />{isAr ? "تعديل المواقع" : "Edit Positions"}
+                            </button>
+                          </div>
+                          {mapMode === "edit" && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium">
+                              <MousePointer2 className="w-3 h-3" />{isAr ? "اسحب النقطة للمكان الصحيح" : "Drag markers to reposition"}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-3.5 h-3.5" /></Button>
+                      <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom*100)}%</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(6,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-3.5 h-3.5" /></Button>
                     </div>
                   </div>
 
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden"><CardContent className="p-0">
-                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: isPanning ? "grabbing" : "grab" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} data-testid="gate-map-container">
+                      <div ref={wheelRef} className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" && activeSession?.status === "draft" ? "ring-2 ring-blue-400/50" : ""}`} style={{ height: "550px", cursor: draggingGateId ? "grabbing" : mapMode === "edit" ? "default" : isPanning ? "grabbing" : "grab" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} data-testid="gate-map-container">
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
@@ -424,25 +491,49 @@ export default function DailyGateSessionsPage() {
                             return (
                               <div style={ws}>
                                 <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
-                                <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
+                                <svg ref={svgRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                                   {activeGates.map(gate => {
                                     const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
+                                    const isDragging = draggingGateId === gate.id;
                                     const isHov = hoveredGate?.id === gate.id;
+                                    const isEditMode = mapMode === "edit" && activeSession?.status === "draft";
                                     const ar = imgRatio || 1;
-                                    const s = isHov ? 1.2 : 0.7;
-                                    const rx = s, ry = s * ar;
+                                    const baseR = 0.7;
+                                    const r = isDragging ? baseR * 1.6 : isHov ? baseR * 1.3 : baseR;
+                                    const showLabel = isDragging || (isHov && isEditMode);
                                     return (
-                                      <g key={gate.id} data-testid={`gate-marker-${gate.id}`}
-                                        onMouseEnter={() => setHoveredGate(gate)} onMouseLeave={() => setHoveredGate(null)}
-                                        onClick={() => { if (activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
-                                        style={{ cursor: activeSession?.status === "draft" ? "pointer" : "default" }}>
-                                        <ellipse cx={gate.x} cy={gate.y} rx={rx + 1} ry={(rx + 1) * ar} fill={sc.color} fillOpacity="0.08">
-                                          <animate attributeName="rx" values={`${rx};${rx + 2.5};${rx}`} dur="1.5s" repeatCount="indefinite" />
-                                          <animate attributeName="ry" values={`${ry};${(rx + 2.5) * ar};${ry}`} dur="1.5s" repeatCount="indefinite" />
-                                          <animate attributeName="fill-opacity" values="0.2;0;0.2" dur="1.5s" repeatCount="indefinite" />
+                                      <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
+                                        onMouseEnter={() => { if (!draggingGateId) setHoveredGate(gate); }}
+                                        onMouseLeave={() => setHoveredGate(null)}
+                                        onMouseDown={(e) => handleGateMouseDown(e, gate.id)}
+                                        onClick={() => { if (!isEditMode && activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
+                                        style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : activeSession?.status === "draft" ? "pointer" : "default" }}>
+                                        {/* Pulse */}
+                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={sc.color} fillOpacity="0">
+                                          <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
+                                          <animate attributeName="rx" values={`${r + 0.5};${r + 2.5};${r + 0.5}`} dur="2s" repeatCount="indefinite" />
+                                          <animate attributeName="ry" values={`${(r + 0.5) * ar};${(r + 2.5) * ar};${(r + 0.5) * ar}`} dur="2s" repeatCount="indefinite" />
                                         </ellipse>
-                                        {isHov && <ellipse cx={gate.x} cy={gate.y} rx={rx + 0.5} ry={(rx + 0.5) * ar} fill="none" stroke={sc.color} strokeWidth="0.2" vectorEffect="non-scaling-stroke" />}
-                                        <ellipse cx={gate.x} cy={gate.y} rx={rx} ry={ry} fill={sc.color} stroke="white" strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
+                                        {/* Selection ring when dragging */}
+                                        {isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8"><animate attributeName="stroke-dashoffset" values="0;4.6" dur="1s" repeatCount="indefinite" /></ellipse>}
+                                        {/* Hover ring */}
+                                        {isHov && !isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={sc.color} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />}
+                                        {/* Main marker */}
+                                        <ellipse cx={gate.x} cy={gate.y} rx={r} ry={r * ar} fill={isDragging ? "#3b82f6" : sc.color} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }} />
+                                        {/* Crosshair in edit mode */}
+                                        {isEditMode && (isHov || isDragging) && (
+                                          <g transform={`translate(${gate.x}, ${gate.y})`} style={{ pointerEvents: "none" }}>
+                                            <line x1="-0.25" y1="0" x2="0.25" y2="0" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                            <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                          </g>
+                                        )}
+                                        {/* Label */}
+                                        {showLabel && (
+                                          <g style={{ pointerEvents: "none" }}>
+                                            <rect x={gate.x - 6} y={gate.y - r * ar - 2.2} width="12" height="1.6" rx="0.4" fill="white" fillOpacity="0.92" stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                            <text x={gate.x} y={gate.y - r * ar - 1.1} textAnchor="middle" dominantBaseline="middle" fill={isDragging ? "#3b82f6" : "#1e293b"} fontSize="1.1" fontWeight="700" fontFamily="Cairo, sans-serif">{gate.name_ar}</text>
+                                          </g>
+                                        )}
                                       </g>
                                     );
                                   })}
@@ -456,6 +547,12 @@ export default function DailyGateSessionsPage() {
                             );
                           })()}
                         </div>
+                        {/* Edit mode indicator */}
+                        {mapMode === "edit" && activeSession?.status === "draft" && (
+                          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                            <MousePointer2 className="w-3.5 h-3.5" />{isAr ? "وضع التعديل - اسحب النقاط" : "Edit Mode - Drag Markers"}
+                          </div>
+                        )}
                         {/* Legend */}
                         <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
                           {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
@@ -465,8 +562,8 @@ export default function DailyGateSessionsPage() {
                             </span>
                           ))}
                         </div>
-                        {/* Rich Tooltip */}
-                        {hoveredGate && (() => {
+                        {/* Rich Tooltip (pan mode only) */}
+                        {hoveredGate && !draggingGateId && mapMode === "pan" && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
                           const cl = CHANGE_LABELS[hoveredGate.change_type] || CHANGE_LABELS.unchanged;
                           const dir = DIRECTIONS.find(d => d.value === hoveredGate.direction);
