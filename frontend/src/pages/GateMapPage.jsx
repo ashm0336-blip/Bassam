@@ -3,7 +3,8 @@ import axios from "axios";
 import {
   Plus, Trash2, Save, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
   ZoomIn, ZoomOut, Maximize2, Move, DoorOpen, DoorClosed, Wrench,
-  ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair
+  ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair,
+  Hand, MousePointer2, Check
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,9 +27,9 @@ const STATUS_CONFIG = {
 };
 
 const DIRECTIONS_MAP = {
-  entry: { label_ar: "دخول", label_en: "Entry", icon: ArrowDownRight },
-  exit: { label_ar: "خروج", label_en: "Exit", icon: ArrowUpRight },
-  both: { label_ar: "دخول وخروج", label_en: "Both", icon: ArrowLeftRight },
+  entry: { label_ar: "دخول", label_en: "Entry" },
+  exit: { label_ar: "خروج", label_en: "Exit" },
+  both: { label_ar: "دخول وخروج", label_en: "Both" },
 };
 
 export default function GateMapPage() {
@@ -53,12 +54,14 @@ export default function GateMapPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [localImagePreview, setLocalImagePreview] = useState(null);
 
-  // Map state
+  // Map interaction
+  const [mapMode, setMapMode] = useState("pan"); // "pan" | "edit"
   const [zoom, setZoom] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [imgRatio, setImgRatio] = useState(null);
+  const [selectedMarkerId, setSelectedMarkerId] = useState(null);
   const [draggingMarkerId, setDraggingMarkerId] = useState(null);
   const [hoveredMarker, setHoveredMarker] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -101,7 +104,7 @@ export default function GateMapPage() {
   }, [selectedFloor]);
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
-  useEffect(() => { if (selectedFloor) fetchMarkers(); }, [selectedFloor, fetchMarkers]);
+  useEffect(() => { if (selectedFloor) { fetchMarkers(); setSelectedMarkerId(null); } }, [selectedFloor, fetchMarkers]);
   useEffect(() => { return () => { if (localImagePreview) URL.revokeObjectURL(localImagePreview); }; }, [localImagePreview]);
 
   // Upload
@@ -156,6 +159,7 @@ export default function GateMapPage() {
     try {
       await axios.delete(`${API}/admin/gate-map/markers/${markerId}`, getAuthHeaders());
       setMarkers(prev => prev.filter(m => m.id !== markerId));
+      if (selectedMarkerId === markerId) setSelectedMarkerId(null);
       sonnerToast.success(isAr ? "تم حذف النقطة" : "Marker deleted");
     } catch (e) { sonnerToast.error(isAr ? "تعذر الحذف" : "Error"); }
   };
@@ -167,8 +171,9 @@ export default function GateMapPage() {
     try {
       const res = await axios.post(`${API}/admin/gate-map/sync-gates`, { floor_id: selectedFloor.id }, getAuthHeaders());
       if (res.data.created > 0) {
-        sonnerToast.success(isAr ? `تم إضافة ${res.data.created} نقطة جديدة` : `Added ${res.data.created} new markers`);
+        sonnerToast.success(isAr ? `تم إضافة ${res.data.created} نقطة جديدة - حركها على الخريطة` : `Added ${res.data.created} new markers`);
         fetchMarkers();
+        setMapMode("edit"); // Switch to edit mode so user can move new markers
       } else {
         sonnerToast.info(isAr ? "جميع الأبواب موجودة على الخريطة" : "All gates already on map");
       }
@@ -180,10 +185,11 @@ export default function GateMapPage() {
   const updateMarkerPosition = async (markerId, x, y) => {
     try {
       await axios.put(`${API}/admin/gate-map/markers/${markerId}`, { x, y }, getAuthHeaders());
-    } catch (e) { console.error("Failed to update marker position:", e); }
+      sonnerToast.success(isAr ? "تم حفظ الموقع" : "Position saved", { duration: 1500 });
+    } catch (e) { sonnerToast.error(isAr ? "تعذر الحفظ" : "Save failed"); }
   };
 
-  // Map mouse helpers
+  // SVG coordinate helper
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const ctm = svgRef.current.getScreenCTM();
@@ -194,22 +200,41 @@ export default function GateMapPage() {
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
 
+  // Mouse handlers
   const handleMapMouseDown = (e) => {
     if (e.button !== 0) return;
-    if (draggingMarkerId) return;
-    setIsPanning(true);
-    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    if (mapMode === "pan") {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    } else if (mapMode === "edit") {
+      // In edit mode, clicking empty space deselects
+      if (!e.target.closest("[data-marker-id]")) {
+        setSelectedMarkerId(null);
+      }
+    }
+  };
+
+  const handleMarkerMouseDown = (e, markerId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (mapMode === "edit") {
+      setSelectedMarkerId(markerId);
+      setDraggingMarkerId(markerId);
+    }
   };
 
   const handleMapMouseMove = (e) => {
-    if (draggingMarkerId) {
+    // Dragging a marker in edit mode
+    if (draggingMarkerId && mapMode === "edit") {
       const pos = getMousePercent(e);
       setMarkers(prev => prev.map(m => m.id === draggingMarkerId ? { ...m, x: pos.x, y: pos.y } : m));
       return;
     }
-    if (isPanning) {
+    // Panning
+    if (isPanning && mapMode === "pan") {
       setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
     }
+    // Tooltip position
     if (mapContainerRef.current) {
       const r = mapContainerRef.current.getBoundingClientRect();
       setTooltipPos({ x: e.clientX - r.left + 16, y: e.clientY - r.top - 10 });
@@ -258,6 +283,13 @@ export default function GateMapPage() {
   const resetView = () => { zoomRef.current = 1; setZoom(1); setPanOffset({ x: 0, y: 0 }); };
 
   const floorPreviewUrl = localImagePreview || (floorForm.image_url ? normalizeImageUrl(floorForm.image_url) : "");
+  const selectedMarkerData = selectedMarkerId ? markers.find(m => m.id === selectedMarkerId) : null;
+
+  const getCursor = () => {
+    if (draggingMarkerId) return "grabbing";
+    if (mapMode === "edit") return "default";
+    return isPanning ? "grabbing" : "grab";
+  };
 
   if (loading) {
     return (
@@ -280,7 +312,7 @@ export default function GateMapPage() {
             <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200"><Layers className="w-6 h-6 text-white" /></div>
             <div>
               <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "إدارة خرائط الأبواب" : "Gate Map Management"}</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">{isAr ? "ارفع الخريطة وحدد مواقع الأبواب بالسحب والإفلات" : "Upload map and drag gates to position"}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{isAr ? "ارفع الخريطة وحدد مواقع الأبواب" : "Upload map and position gates"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -292,21 +324,21 @@ export default function GateMapPage() {
         </div>
       </div>
 
-      {/* Floor selector + Sync */}
+      {/* Floor tabs + Sync */}
       {floors.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
             <button
               key={floor.id}
-              onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); }}
+              onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); setMapMode("pan"); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
               data-testid={`floor-tab-${floor.id}`}
             >
               <Layers className={`w-4 h-4 ${selectedFloor?.id === floor.id ? "text-blue-600" : "text-slate-400"}`} />
               <span className={`text-sm font-medium ${selectedFloor?.id === floor.id ? "text-blue-700" : ""}`}>{isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
+              <button className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
                 <Edit2 className="w-3 h-3" />
-              </Button>
+              </button>
             </button>
           ))}
           <div className="flex-1" />
@@ -331,7 +363,6 @@ export default function GateMapPage() {
           <CardContent className="py-16 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><Layers className="w-8 h-8 text-slate-400" /></div>
             <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">{isAr ? "لا توجد طوابق بعد" : "No floors yet"}</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">{isAr ? "ابدأ بإضافة طابق ورفع صورة الخريطة" : "Start by adding a floor and uploading a map image"}</p>
             <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة أول طابق" : "Add First Floor"}
             </Button>
@@ -339,37 +370,62 @@ export default function GateMapPage() {
         </Card>
       )}
 
-      {/* Interactive Map with Draggable Markers */}
+      {/* Interactive Map */}
       {selectedFloor && (
         <div className="space-y-3">
           {/* Toolbar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                <Move className="w-3.5 h-3.5" />
-                {isAr ? "اسحب النقطة لتحريك الباب على الخريطة" : "Drag markers to reposition gates"}
+          <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              {/* Mode toggle */}
+              <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => { setMapMode("pan"); setSelectedMarkerId(null); setDraggingMarkerId(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "pan" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  data-testid="mode-pan"
+                >
+                  <Hand className="w-3.5 h-3.5" />
+                  {isAr ? "تحريك" : "Pan"}
+                </button>
+                <button
+                  onClick={() => setMapMode("edit")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "edit" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  data-testid="mode-edit"
+                >
+                  <MousePointer2 className="w-3.5 h-3.5" />
+                  {isAr ? "تعديل المواقع" : "Edit Positions"}
+                </button>
               </div>
+
+              {/* Mode hint */}
+              {mapMode === "edit" && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium animate-in fade-in duration-200">
+                  <MousePointer2 className="w-3 h-3" />
+                  {isAr ? "اضغط على النقطة واسحبها للمكان الصحيح" : "Click & drag markers to reposition"}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-4 h-4" /></Button>
-              <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetView} data-testid="zoom-reset"><Maximize2 className="w-4 h-4" /></Button>
+
+            {/* Zoom controls */}
+            <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-3.5 h-3.5" /></Button>
+              <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-3.5 h-3.5" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetView} data-testid="zoom-reset"><Maximize2 className="w-3.5 h-3.5" /></Button>
             </div>
           </div>
 
-          {/* Map */}
+          {/* Map Canvas */}
           {selectedFloor.image_url ? (
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div
                   ref={wheelRef}
-                  className="relative bg-slate-100 overflow-hidden"
-                  style={{ height: "600px", cursor: draggingMarkerId ? "grabbing" : isPanning ? "grabbing" : "grab" }}
+                  className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" ? "ring-2 ring-blue-400/50" : ""}`}
+                  style={{ height: "600px", cursor: getCursor() }}
                   onMouseDown={handleMapMouseDown}
                   onMouseMove={handleMapMouseMove}
                   onMouseUp={handleMapMouseUp}
-                  onMouseLeave={handleMapMouseUp}
+                  onMouseLeave={() => { handleMapMouseUp(); setHoveredMarker(null); }}
                   data-testid="gate-map-canvas"
                 >
                   <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -388,40 +444,81 @@ export default function GateMapPage() {
                             {markers.map(marker => {
                               const sc = STATUS_CONFIG[marker.status] || STATUS_CONFIG.open;
                               const isDragging = draggingMarkerId === marker.id;
+                              const isSelected = selectedMarkerId === marker.id;
                               const isHovered = hoveredMarker?.id === marker.id;
                               const ar = imgRatio || 1;
                               const baseR = 0.7;
-                              const r = isDragging ? baseR * 1.5 : isHovered ? baseR * 1.3 : baseR;
+                              const r = isDragging ? baseR * 1.6 : (isSelected || isHovered) ? baseR * 1.3 : baseR;
+                              const showLabel = isDragging || isSelected || isHovered;
+                              const isEditMode = mapMode === "edit";
+
                               return (
                                 <g
                                   key={marker.id}
+                                  data-marker-id={marker.id}
                                   data-testid={`gate-marker-${marker.id}`}
-                                  style={{ cursor: isDragging ? "grabbing" : "grab" }}
-                                  onMouseDown={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setDraggingMarkerId(marker.id);
-                                  }}
+                                  style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : "default" }}
+                                  onMouseDown={(e) => handleMarkerMouseDown(e, marker.id)}
                                   onMouseEnter={() => { if (!draggingMarkerId) setHoveredMarker(marker); }}
                                   onMouseLeave={() => setHoveredMarker(null)}
                                 >
-                                  {/* Pulse ring */}
-                                  <ellipse cx={marker.x} cy={marker.y} rx={r + 1} ry={(r + 1) * ar} fill={sc.color} fillOpacity="0.08">
-                                    <animate attributeName="rx" values={`${r};${r + 2};${r}`} dur="2s" repeatCount="indefinite" />
-                                    <animate attributeName="ry" values={`${r * ar};${(r + 2) * ar};${r * ar}`} dur="2s" repeatCount="indefinite" />
-                                    <animate attributeName="fill-opacity" values="0.15;0;0.15" dur="2s" repeatCount="indefinite" />
+                                  {/* Pulse animation */}
+                                  <ellipse cx={marker.x} cy={marker.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={sc.color} fillOpacity="0">
+                                    <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
+                                    <animate attributeName="rx" values={`${r + 0.5};${r + 2.5};${r + 0.5}`} dur="2s" repeatCount="indefinite" />
+                                    <animate attributeName="ry" values={`${(r + 0.5) * ar};${(r + 2.5) * ar};${(r + 0.5) * ar}`} dur="2s" repeatCount="indefinite" />
                                   </ellipse>
-                                  {/* Hover ring */}
-                                  {(isHovered || isDragging) && (
-                                    <ellipse cx={marker.x} cy={marker.y} rx={r + 0.5} ry={(r + 0.5) * ar} fill="none" stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.25" vectorEffect="non-scaling-stroke" strokeDasharray={isDragging ? "1 0.5" : "none"} />
+
+                                  {/* Selection ring - blue dashed in edit mode */}
+                                  {isSelected && isEditMode && (
+                                    <ellipse cx={marker.x} cy={marker.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8">
+                                      <animate attributeName="stroke-dashoffset" values="0;4.6" dur="1s" repeatCount="indefinite" />
+                                    </ellipse>
                                   )}
-                                  {/* Main circle */}
-                                  <ellipse cx={marker.x} cy={marker.y} rx={r} ry={r * ar} fill={sc.color} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" />
+
+                                  {/* Hover ring */}
+                                  {isHovered && !isSelected && (
+                                    <ellipse cx={marker.x} cy={marker.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={sc.color} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />
+                                  )}
+
+                                  {/* Main marker */}
+                                  <ellipse
+                                    cx={marker.x} cy={marker.y} rx={r} ry={r * ar}
+                                    fill={isDragging ? "#3b82f6" : sc.color}
+                                    stroke="white" strokeWidth={isSelected || isDragging ? "0.25" : "0.15"}
+                                    vectorEffect="non-scaling-stroke"
+                                    style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : isSelected ? "drop-shadow(0 0 3px rgba(59,130,246,0.4))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }}
+                                  />
+
+                                  {/* Move icon when in edit mode and selected/hovered */}
+                                  {isEditMode && (isSelected || isHovered) && !isDragging && (
+                                    <g transform={`translate(${marker.x}, ${marker.y})`} style={{ pointerEvents: "none" }}>
+                                      {/* Crosshair */}
+                                      <line x1="-0.25" y1="0" x2="0.25" y2="0" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                      <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                    </g>
+                                  )}
+
                                   {/* Label */}
-                                  {(isHovered || isDragging) && (
-                                    <text x={marker.x} y={marker.y - r * ar - 0.8} textAnchor="middle" fill={sc.color} fontSize="1.8" fontWeight="bold" fontFamily="Cairo, sans-serif" style={{ pointerEvents: "none" }}>
-                                      {marker.name_ar}
-                                    </text>
+                                  {showLabel && (
+                                    <g style={{ pointerEvents: "none" }}>
+                                      <rect
+                                        x={marker.x - 6} y={marker.y - r * ar - 2.2}
+                                        width="12" height="1.6"
+                                        rx="0.4" fill="white" fillOpacity="0.92"
+                                        stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.06"
+                                        vectorEffect="non-scaling-stroke"
+                                      />
+                                      <text
+                                        x={marker.x} y={marker.y - r * ar - 1.1}
+                                        textAnchor="middle" dominantBaseline="middle"
+                                        fill={isDragging ? "#3b82f6" : "#1e293b"}
+                                        fontSize="1.1" fontWeight="700"
+                                        fontFamily="Cairo, sans-serif"
+                                      >
+                                        {marker.name_ar}
+                                      </text>
+                                    </g>
                                   )}
                                 </g>
                               );
@@ -445,15 +542,15 @@ export default function GateMapPage() {
                     <span className="text-[10px] text-slate-400">{markers.length} {isAr ? "نقطة" : "markers"}</span>
                   </div>
 
-                  {/* Tooltip */}
-                  {hoveredMarker && !draggingMarkerId && (() => {
+                  {/* Tooltip (pan mode only) */}
+                  {hoveredMarker && !draggingMarkerId && mapMode === "pan" && (() => {
                     const sc = STATUS_CONFIG[hoveredMarker.status] || STATUS_CONFIG.open;
                     const dir = DIRECTIONS_MAP[hoveredMarker.direction];
                     return (
                       <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
                         <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[200px]" style={{ direction: "rtl" }}>
                           <div className="h-1.5" style={{ backgroundColor: sc.color }} />
-                          <div className="p-3 space-y-2">
+                          <div className="p-3 space-y-1.5">
                             <div className="flex items-center gap-2">
                               <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}>
                                 <DoorOpen className="w-4 h-4 text-white" />
@@ -466,20 +563,24 @@ export default function GateMapPage() {
                                 </div>
                               </div>
                             </div>
-                            <div className="border-t pt-2 flex items-center gap-2 text-[10px] text-slate-500">
-                              <Move className="w-3 h-3" />
-                              {isAr ? "اسحب لتحريك الموقع" : "Drag to move"}
-                            </div>
                           </div>
                         </div>
                       </div>
                     );
                   })()}
+
+                  {/* Edit mode indicator */}
+                  {mapMode === "edit" && (
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <MousePointer2 className="w-3.5 h-3.5" />
+                      {isAr ? "وضع التعديل - اسحب النقاط" : "Edit Mode - Drag Markers"}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة - عدّل الطابق وارفع صورة" : "No map image - edit floor and upload image"}</CardContent></Card>
+            <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة - عدّل الطابق وارفع صورة" : "No map image"}</CardContent></Card>
           )}
 
           {/* Markers list */}
@@ -487,13 +588,19 @@ export default function GateMapPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
               {markers.map(marker => {
                 const sc = STATUS_CONFIG[marker.status] || STATUS_CONFIG.open;
+                const isSelected = selectedMarkerId === marker.id;
                 return (
-                  <div key={marker.id} className="flex items-center gap-2 p-2 rounded-lg border hover:shadow-sm transition-all group" data-testid={`marker-item-${marker.id}`}>
+                  <div
+                    key={marker.id}
+                    className={`flex items-center gap-2 p-2 rounded-lg border transition-all group cursor-pointer ${isSelected ? "border-blue-400 bg-blue-50 shadow-sm" : "hover:shadow-sm"}`}
+                    onClick={() => { setSelectedMarkerId(marker.id); setMapMode("edit"); }}
+                    data-testid={`marker-item-${marker.id}`}
+                  >
                     <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${sc.color}15` }}>
                       <DoorOpen className="w-3.5 h-3.5" style={{ color: sc.color }} />
                     </div>
                     <span className="text-xs font-medium truncate flex-1">{marker.name_ar}</span>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 flex-shrink-0" onClick={() => handleDeleteMarker(marker.id)}>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 flex-shrink-0" onClick={(e) => { e.stopPropagation(); handleDeleteMarker(marker.id); }}>
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
@@ -530,8 +637,8 @@ export default function GateMapPage() {
                 <input type="file" accept="image/*" onChange={(e) => { uploadImageFile(e.target.files?.[0]); e.target.value = ""; }} className="hidden" />
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center"><Upload className="w-6 h-6 text-blue-500" /></div>
-                  <p className="text-sm text-slate-600">{isAr ? "اسحب الصورة هنا أو انقر للاختيار" : "Drag & drop or click to browse"}</p>
-                  <p className="text-xs text-slate-400">{isDragOver ? (isAr ? "أفلت الصورة للرفع" : "Drop to upload") : "PNG, JPG, WEBP"}</p>
+                  <p className="text-sm text-slate-600">{isAr ? "اسحب الصورة هنا أو انقر للاختيار" : "Drag & drop or click"}</p>
+                  <p className="text-xs text-slate-400">PNG, JPG, WEBP</p>
                 </div>
               </label>
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" />}
@@ -553,7 +660,7 @@ export default function GateMapPage() {
             <DialogTitle className="font-cairo flex items-center gap-2 text-red-600"><Trash2 className="w-5 h-5" />{isAr ? "تأكيد حذف الطابق" : "Confirm Deletion"}</DialogTitle>
           </DialogHeader>
           <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-            <p className="text-sm text-red-700">{isAr ? `هل تريد حذف الطابق "${floors.find(f => f.id === deleteFloorId)?.name_ar || ""}"؟ لا يمكن التراجع عن هذا الإجراء.` : `Delete "${floors.find(f => f.id === deleteFloorId)?.name_en || ""}"? This cannot be undone.`}</p>
+            <p className="text-sm text-red-700">{isAr ? `هل تريد حذف الطابق "${floors.find(f => f.id === deleteFloorId)?.name_ar || ""}"؟` : `Delete "${floors.find(f => f.id === deleteFloorId)?.name_en || ""}"?`}</p>
           </div>
           <DialogFooter>
             <Button variant="destructive" onClick={handleDeleteFloor} disabled={isDeletingFloor}><Trash2 className="w-4 h-4 ml-2" />{isDeletingFloor ? (isAr ? "جاري الحذف..." : "Deleting...") : (isAr ? "حذف" : "Delete")}</Button>
