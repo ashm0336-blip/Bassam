@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
+import { GatesTab } from "./DailyGateSessions/GatesTab";
+import { EmployeesTab } from "./DailyGateSessions/EmployeesTab";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -293,8 +295,8 @@ export default function DailyGateSessionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للأبواب" : "Daily Gate Log"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{isAr ? "تتبع حالة الأبواب يومياً مع التغييرات والملاحظات" : "Track daily gate status changes and notes"}</p>
+          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "مركز عمليات الأبواب" : "Gates Operations Center"}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{isAr ? "مركز التحكم اليومي - الأبواب والموظفين والخريطة" : "Daily control center - gates, staff & map"}</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
@@ -393,7 +395,12 @@ export default function DailyGateSessionsPage() {
                       <h2 className="font-cairo font-bold text-lg">{isAr ? "جولة " : "Tour "}{formatDate(activeSession.date)}</h2>
                       <div className="flex items-center gap-3 mt-0.5">
                         <Badge className={`text-xs ${activeSession.status === "completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{activeSession.status === "completed" ? (isAr ? "مكتملة" : "Done") : (isAr ? "مسودة" : "Draft")}</Badge>
-                        <span className="text-xs text-muted-foreground">{stats.total} {isAr ? "باب" : "gates"} | {stats.open} {isAr ? "مفتوح" : "open"} | {stats.closed} {isAr ? "مغلق" : "closed"}</span>
+                        <span className="text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-blue-500" />{stats.total} {isAr ? "باب" : "gates"}</span>
+                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-emerald-500" />{stats.open} {isAr ? "مفتوح" : "open"}</span>
+                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-red-500" />{stats.closed} {isAr ? "مغلق" : "closed"}</span>
+                          {stats.crowded > 0 && <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-orange-500" />{stats.crowded} {isAr ? "مزدحم" : "crowded"}</span>}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -417,10 +424,11 @@ export default function DailyGateSessionsPage() {
 
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="map" data-testid="tab-map"><DoorOpen className="w-4 h-4 ml-1" />{isAr ? "الخريطة" : "Map"}</TabsTrigger>
-                  <TabsTrigger value="table" data-testid="tab-table"><Tag className="w-4 h-4 ml-1" />{isAr ? "قائمة الأبواب" : "Gates"}{changedGates.length > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{changedGates.length}</Badge>}</TabsTrigger>
-                  <TabsTrigger value="changes" data-testid="tab-changes"><FileText className="w-4 h-4 ml-1" />{isAr ? "التغييرات" : "Changes"}</TabsTrigger>
+                  <TabsTrigger value="gates" data-testid="tab-gates"><Tag className="w-4 h-4 ml-1" />{isAr ? "الأبواب" : "Gates"}<Badge variant="secondary" className="mr-1 text-[10px] px-1.5">{activeGates.length}</Badge></TabsTrigger>
+                  <TabsTrigger value="employees" data-testid="tab-employees"><Users className="w-4 h-4 ml-1" />{isAr ? "الموظفين" : "Staff"}</TabsTrigger>
+                  <TabsTrigger value="changes" data-testid="tab-changes"><FileText className="w-4 h-4 ml-1" />{isAr ? "التغييرات" : "Changes"}{changedGates.length > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{changedGates.length}</Badge>}</TabsTrigger>
                 </TabsList>
 
                 {/* MAP TAB - Rich map with markers, tooltips, stats */}
@@ -520,6 +528,22 @@ export default function DailyGateSessionsPage() {
                                         {isHov && !isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={sc.color} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />}
                                         {/* Main marker */}
                                         <ellipse cx={gate.x} cy={gate.y} rx={r} ry={r * ar} fill={isDragging ? "#3b82f6" : sc.color} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }} />
+                                        {/* Staff count badge */}
+                                        {!isDragging && (gate.assigned_staff || 0) > 0 && (
+                                          <g style={{ pointerEvents: "none" }}>
+                                            <circle cx={gate.x + r * 0.7} cy={gate.y - r * ar * 0.7} r="0.45" fill="#3b82f6" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                            <text x={gate.x + r * 0.7} y={gate.y - r * ar * 0.7} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="0.55" fontWeight="800">{gate.assigned_staff}</text>
+                                          </g>
+                                        )}
+                                        {/* Warning: open gate with no staff */}
+                                        {!isDragging && gate.status === "open" && (gate.assigned_staff || 0) === 0 && (
+                                          <g style={{ pointerEvents: "none" }}>
+                                            <circle cx={gate.x + r * 0.7} cy={gate.y - r * ar * 0.7} r="0.4" fill="#f59e0b" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke">
+                                              <animate attributeName="fill-opacity" values="1;0.4;1" dur="1.5s" repeatCount="indefinite" />
+                                            </circle>
+                                            <text x={gate.x + r * 0.7} y={gate.y - r * ar * 0.7} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="0.5" fontWeight="800">!</text>
+                                          </g>
+                                        )}
                                         {/* Crosshair in edit mode */}
                                         {isEditMode && (isHov || isDragging) && (
                                           <g transform={`translate(${gate.x}, ${gate.y})`} style={{ pointerEvents: "none" }}>
@@ -609,66 +633,25 @@ export default function DailyGateSessionsPage() {
                   ) : <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr?"لا توجد خريطة":"No map"}</CardContent></Card>}
                 </TabsContent>
 
-                {/* TABLE TAB */}
-                <TabsContent value="table" className="space-y-3">
-                  {/* Filter */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {["all", "open", "closed", "crowded", "maintenance"].map(st => {
-                      const sc = st === "all" ? null : STATUS_CONFIG[st];
-                      const cnt = st === "all" ? activeGates.length : activeGates.filter(g => g.status === st).length;
-                      return (
-                        <Button key={st} variant={filterStatus === st ? "default" : "outline"} size="sm" onClick={() => setFilterStatus(st)} className={filterStatus === st && sc ? "" : ""} data-testid={`filter-${st}`}>
-                          {sc && <span className="w-2 h-2 rounded-full ml-1" style={{backgroundColor:sc.color}} />}
-                          {st === "all" ? (isAr ? "الكل" : "All") : (isAr ? sc.label_ar : sc.label_en)} ({cnt})
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  {/* Gates grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {filteredGates.map(gate => {
-                      const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
-                      const cl = CHANGE_LABELS[gate.change_type] || CHANGE_LABELS.unchanged;
-                      const isChanged = gate.change_type && gate.change_type !== "unchanged";
-                      const Icon = sc.icon;
-                      return (
-                        <Card key={gate.id} className={`transition-all hover:shadow-md cursor-pointer ${isChanged ? "ring-1" : ""}`} style={isChanged ? {borderColor:cl.color+"40"} : {}} onClick={() => { setSelectedGate(gate); setShowGateDialog(true); }} data-testid={`gate-card-${gate.id}`}>
-                          <CardContent className="p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{backgroundColor:`${sc.color}15`}}><Icon className="w-5 h-5" style={{color:sc.color}} /></div>
-                                <div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-semibold text-sm">{gate.name_ar}</span>
-                                    {isChanged && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                                    <span style={{color:sc.color}}>{isAr?sc.label_ar:sc.label_en}</span>
-                                    <span>{CLASSIFICATIONS.find(c=>c.value===gate.classification)?.[isAr?"label_ar":"label_en"]}</span>
-                                    {gate.assigned_staff > 0 && <span><Users className="w-3 h-3 inline" /> {gate.assigned_staff}</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            {gate.daily_note && <div className="mt-2 p-1.5 bg-amber-50 rounded text-[10px] text-amber-700"><MessageSquare className="w-3 h-3 inline ml-0.5" />{gate.daily_note}</div>}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                  {removedGates.length > 0 && (
-                    <div>
-                      <h3 className="font-cairo font-semibold text-sm mb-2 flex items-center gap-2 text-red-500"><CircleOff className="w-4 h-4" />{isAr?"أبواب معطلة":"Disabled"}<Badge variant="destructive">{removedGates.length}</Badge></h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        {removedGates.map(gate => (
-                          <Card key={gate.id} className="border-red-200/50 bg-red-50/30 opacity-70"><CardContent className="p-2.5 flex items-center justify-between">
-                            <span className="text-sm line-through text-red-400">{gate.name_ar}</span>
-                            {activeSession.status === "draft" && <Button variant="outline" size="sm" className="text-emerald-600 text-xs h-7" onClick={() => handleUpdateGate(gate.id, {is_removed:false})}><RotateCcw className="w-3 h-3 ml-1" />{isAr?"استعادة":"Restore"}</Button>}
-                          </CardContent></Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                {/* GATES TAB - Quick status toggle cards */}
+                <TabsContent value="gates" className="space-y-3">
+                  <GatesTab
+                    activeGates={activeGates}
+                    removedGates={removedGates}
+                    activeSession={activeSession}
+                    isAr={isAr}
+                    onUpdateGate={handleUpdateGate}
+                  />
+                </TabsContent>
+
+                {/* EMPLOYEES TAB */}
+                <TabsContent value="employees" className="space-y-3">
+                  <EmployeesTab
+                    activeGates={activeGates}
+                    activeSession={activeSession}
+                    isAr={isAr}
+                    onUpdateGate={handleUpdateGate}
+                  />
                 </TabsContent>
 
                 {/* CHANGES TAB */}
