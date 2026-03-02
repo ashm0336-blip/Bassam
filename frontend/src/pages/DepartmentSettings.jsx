@@ -11,7 +11,10 @@ import {
   Plus,
   Edit,
   Trash2,
-  Loader2
+  Loader2,
+  DoorOpen,
+  Users,
+  Layers
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,13 +38,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import GatesDataManagement from "@/components/GatesDataManagement";
+import EmployeeManagement from "@/components/EmployeeManagement";
+import GateMapPage from "@/pages/GateMapPage";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
-  const [activeTab, setActiveTab] = useState("shifts");
+  const [activeTab, setActiveTab] = useState(department === 'gates' ? 'gates_data' : 'shifts');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -412,26 +418,59 @@ export default function DepartmentSettings({ department }) {
           {language === 'ar' ? 'إعدادات القسم' : 'Department Settings'}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 text-right">
-          {language === 'ar' ? 'إدارة الورديات وأنماط الراحة ومواقع التغطية' : 'Manage shifts, rest patterns, and coverage locations'}
+          {department === 'gates'
+            ? (language === 'ar' ? 'إدارة البيانات الأساسية - الأبواب والموظفين والخرائط والورديات' : 'Manage base data - gates, staff, maps, shifts')
+            : (language === 'ar' ? 'إدارة الورديات وأنماط الراحة ومواقع التغطية' : 'Manage shifts, rest patterns, and coverage locations')}
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="shifts" className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
+        <TabsList className={`grid w-full ${department === 'gates' ? 'grid-cols-6' : 'grid-cols-3'}`}>
+          {department === 'gates' && (
+            <>
+              <TabsTrigger value="gates_data" className="flex items-center gap-1.5 text-xs">
+                <DoorOpen className="w-3.5 h-3.5" />
+                {language === 'ar' ? 'الأبواب' : 'Gates'}
+              </TabsTrigger>
+              <TabsTrigger value="employees" className="flex items-center gap-1.5 text-xs">
+                <Users className="w-3.5 h-3.5" />
+                {language === 'ar' ? 'الموظفين' : 'Staff'}
+              </TabsTrigger>
+              <TabsTrigger value="maps" className="flex items-center gap-1.5 text-xs">
+                <Layers className="w-3.5 h-3.5" />
+                {language === 'ar' ? 'الخرائط' : 'Maps'}
+              </TabsTrigger>
+            </>
+          )}
+          <TabsTrigger value="shifts" className="flex items-center gap-1.5 text-xs">
+            <Clock className="w-3.5 h-3.5" />
             {language === 'ar' ? 'الورديات' : 'Shifts'}
           </TabsTrigger>
-          <TabsTrigger value="rest_patterns" className="flex items-center gap-2">
-            <Coffee className="w-4 h-4" />
-            {language === 'ar' ? 'أنماط الراحة' : 'Rest Patterns'}
+          <TabsTrigger value="rest_patterns" className="flex items-center gap-1.5 text-xs">
+            <Coffee className="w-3.5 h-3.5" />
+            {language === 'ar' ? 'أنماط الراحة' : 'Rest'}
           </TabsTrigger>
-          <TabsTrigger value="coverage_locations" className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            {language === 'ar' ? 'مواقع التغطية' : 'Locations'}
+          <TabsTrigger value="coverage_locations" className="flex items-center gap-1.5 text-xs">
+            <MapPin className="w-3.5 h-3.5" />
+            {language === 'ar' ? 'المواقع' : 'Locations'}
           </TabsTrigger>
         </TabsList>
+
+        {/* Gates-specific tabs */}
+        {department === 'gates' && (
+          <>
+            <TabsContent value="gates_data" className="mt-4">
+              <GatesDataManagement />
+            </TabsContent>
+            <TabsContent value="employees" className="mt-4">
+              <EmployeeManagement department="gates" />
+            </TabsContent>
+            <TabsContent value="maps" className="mt-4">
+              <GateMapPage />
+            </TabsContent>
+          </>
+        )}
 
         <TabsContent value="shifts" className="mt-6">
           <Card>{renderShiftsTable()}</Card>

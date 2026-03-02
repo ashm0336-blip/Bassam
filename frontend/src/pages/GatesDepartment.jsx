@@ -337,8 +337,8 @@ export default function GatesDepartment() {
         </>
       )}
 
-      {activeTab === 'data' && <GatesDataManagement />}
-      {activeTab === 'employees' && <EmployeeManagement department="gates" />}
+      {activeTab === 'data' && <DepartmentSettings department="gates" />}
+      {activeTab === 'employees' && <DepartmentSettings department="gates" />}
       {activeTab === 'transactions' && <TransactionsPage department="gates" />}
       {activeTab === 'settings' && <DepartmentSettings department="gates" />}
     </div>
