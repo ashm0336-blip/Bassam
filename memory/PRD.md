@@ -5,68 +5,43 @@ Build a comprehensive "Crowd Services Platform" for managing prayer areas, gates
 
 ## Architecture
 ```
-إدارة الأبواب (Sidebar)
-├── 📊 متابعة إدارة الأبواب  (Dashboard)
-├── 🎯 مركز العمليات          (Daily Operations - /daily-gates)
+إدارة الأبواب (Sidebar - 4 items)
+├── 📊 نظرة عامة                (Dashboard)
+├── 📋 السجل اليومي للأبواب     (Daily Log with Archive - /daily-gates)
+│   ├── 📁 Archive: Year → Month → Day navigation
 │   ├── 🗺️ الخريطة (drag markers, pan/edit mode)
 │   ├── 🚪 الأبواب (traffic-light quick status toggle)
-│   ├── 👥 الموظفين (staff assignment to gates)
+│   ├── 👥 الموظفين (staff assignment)
 │   └── 📝 التغييرات (changes tracking)
-├── 📋 المعاملات              (Transactions)
-└── ⚙️ إعدادات القسم          (6 tabs - /gates?tab=settings)
-    ├── 🚪 الأبواب (CRUD gates data)
-    ├── 👥 الموظفين (CRUD employees)
-    ├── 🗺️ الخرائط (map management, drag markers)
-    ├── ⏰ الورديات (shifts config)
-    ├── 🏖️ أنماط الراحة (rest patterns)
-    └── 📍 المواقع (coverage locations)
+├── 📋 المعاملات                (Transactions)
+└── ⚙️ إعدادات القسم            (6 tabs)
+    ├── 🚪 الأبواب (CRUD) │ 👥 الموظفين │ 🗺️ الخرائط
+    ├── ⏰ الورديات │ 🏖️ أنماط الراحة │ 📍 المواقع
 ```
 
 ## What's Implemented
 
-### Gates Operations Center (`/daily-gates`) - COMPLETED
-- 4-tab layout: Map, Gates, Employees, Changes
-- Map: Interactive with draggable markers, pan/edit mode, staff count badges, warning indicators
-- Gates: Traffic-light status buttons, search, filter, notes
-- Employees: Assignment to gates, shift filtering, unassigned alerts
-- Changes: Daily change tracking
+### Smart Archive System - COMPLETED
+- Year selector with arrow navigation
+- 12-month grid with session counts, progress bars, status indicators
+- Current month highlighted with blue accent
+- Seamless drill-down: Year → Month grid → Month calendar → Session
+- "All Months" back button for easy navigation
+- Year summary with total tours count
 
-### Department Settings (`/gates?tab=settings`) - COMPLETED
-- 6 tabs for gates department (3 new + 3 existing)
-- Gates data management (moved from sidebar)
-- Employee management (moved from sidebar)
-- Map management with drag & sync (moved from sidebar)
-- Shifts, Rest Patterns, Coverage Locations (existing)
+### Daily Gate Log with 4 Tabs - COMPLETED
+- Map, Gates (traffic-light status), Employees, Changes
+
+### Department Settings with 6 Tabs - COMPLETED
+- Gates data, Employees, Maps, Shifts, Rest Patterns, Locations
 
 ### Sidebar Cleanup - COMPLETED
-- Removed: قائمة الأبواب, الموظفين, إدارة خرائط الأبواب
-- Renamed: السجل اليومي → مركز العمليات
-- Result: 4 clean items in sidebar
-
-### Backend APIs
-- `POST /api/admin/gate-map/sync-gates`
-- `PUT /api/admin/gate-sessions/{id}/gates/{gate_id}`
-- All CRUD for gates, sessions, floors, markers, employees
+- 4 items: نظرة عامة, السجل اليومي للأبواب, المعاملات, إعدادات القسم
 
 ## Credentials
-- **System Admin**: admin@crowd.sa / admin123
+- admin@crowd.sa / admin123
 
-## Prioritized Backlog
-
-### P0
-- [ ] Automatic Area Calculation (BLOCKED - needs map with known scale)
-
-### P1
-- [ ] Smart Alert System
-- [ ] Analytics Dashboard
-- [ ] General Manager Dashboard
-- [ ] Paths Feature (المسارات)
-
-### P2
-- [ ] Field Supervisor Mobile Mode
-- [ ] Smart Routing System
-- [ ] Live Haram Map
-- [ ] AI Recommendations
-
-## Testing
-- Last test: iteration_32.json - 100% pass rate
+## Backlog
+- P0: Automatic Area Calculation (BLOCKED)
+- P1: Smart Alerts, Analytics Dashboard, General Manager Dashboard, Paths
+- P2: Field Supervisor Mobile, Smart Routing, Live Haram Map

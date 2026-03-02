@@ -21,6 +21,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { GatesTab } from "./DailyGateSessions/GatesTab";
 import { EmployeesTab } from "./DailyGateSessions/EmployeesTab";
+import { ArchiveSidebar } from "./DailyGateSessions/ArchiveSidebar";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -53,7 +54,6 @@ const CHANGE_LABELS = {
 };
 
 const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-const AR_WEEKDAYS = ["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"];
 
 export default function DailyGateSessionsPage() {
   const { language } = useLanguage();
@@ -79,7 +79,6 @@ export default function DailyGateSessionsPage() {
   const [batchStartDate, setBatchStartDate] = useState("");
   const [batchEndDate, setBatchEndDate] = useState("");
   const [batchCloneSource, setBatchCloneSource] = useState("master");
-  const [calendarDate, setCalendarDate] = useState(() => new Date());
   const [filterStatus, setFilterStatus] = useState("all");
 
   // Map
@@ -132,28 +131,6 @@ export default function DailyGateSessionsPage() {
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { if (selectedFloor) { fetchSessions(); setActiveSession(null); setImgRatio(null); } }, [selectedFloor, fetchSessions]);
-
-  const sessionDatesMap = useMemo(() => { const m = {}; sessions.forEach(s => { m[s.date] = s; }); return m; }, [sessions]);
-
-  const calYear = calendarDate.getFullYear(), calMonth = calendarDate.getMonth();
-  const calDays = useMemo(() => {
-    const fd = new Date(calYear, calMonth, 1).getDay();
-    const td = new Date(calYear, calMonth + 1, 0).getDate();
-    const d = [];
-    for (let i = 0; i < fd; i++) d.push(null);
-    for (let i = 1; i <= td; i++) d.push(i);
-    return d;
-  }, [calYear, calMonth]);
-
-  const getDayStr = (day) => day ? `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}` : null;
-
-  const handleCalendarClick = (day) => {
-    if (!day) return;
-    const ds = getDayStr(day);
-    const s = sessionDatesMap[ds];
-    if (s) { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }
-    else { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }
-  };
 
   // Wheel zoom
   const wheelRef = useCallback((node) => {
@@ -295,8 +272,8 @@ export default function DailyGateSessionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "مركز عمليات الأبواب" : "Gates Operations Center"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{isAr ? "مركز التحكم اليومي - الأبواب والموظفين والخريطة" : "Daily control center - gates, staff & map"}</p>
+          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للأبواب" : "Daily Gate Log"}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{isAr ? "تتبع حالة الأبواب يومياً مع التغييرات والملاحظات" : "Track daily gate status changes and notes"}</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
@@ -309,72 +286,18 @@ export default function DailyGateSessionsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        {/* Sidebar: Calendar + Sessions */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Calendar */}
-          <Card data-testid="monthly-calendar">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between mb-3">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarDate(p => new Date(p.getFullYear(), p.getMonth()+1, 1))}><ChevronRight className="w-4 h-4" /></Button>
-                <span className="font-cairo font-semibold text-sm">{isAr ? AR_MONTHS[calMonth] : new Date(calYear,calMonth).toLocaleDateString("en",{month:"long"})} {calYear}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCalendarDate(p => new Date(p.getFullYear(), p.getMonth()-1, 1))}><ChevronLeft className="w-4 h-4" /></Button>
-              </div>
-              <div className="grid grid-cols-7 gap-0.5 mb-1">{AR_WEEKDAYS.map((d,i) => <div key={i} className="text-center text-[10px] font-medium text-muted-foreground py-1">{isAr ? d : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]}</div>)}</div>
-              <div className="grid grid-cols-7 gap-0.5">
-                {calDays.map((day, i) => {
-                  if (!day) return <div key={`b-${i}`} />;
-                  const ds = getDayStr(day);
-                  const s = sessionDatesMap[ds];
-                  const isToday = ds === today;
-                  const isActive = activeSession?.date === ds;
-                  return (
-                    <button key={day} onClick={() => handleCalendarClick(day)} data-testid={`calendar-day-${day}`}
-                      className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-xs transition-all ${isActive ? "bg-blue-600 text-white font-bold shadow-md" : isToday ? "bg-slate-100 font-semibold ring-1 ring-slate-300" : "hover:bg-slate-50"} ${s && !isActive ? "font-medium" : ""}`}>
-                      <span>{day}</span>
-                      {s && <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isActive ? "bg-white" : s.status === "completed" ? "bg-blue-500" : "bg-amber-400"}`} />}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t">
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><span className="w-2 h-2 rounded-full bg-blue-500" />{isAr ? "مكتمل" : "Done"}</div>
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><span className="w-2 h-2 rounded-full bg-amber-400" />{isAr ? "مسودة" : "Draft"}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Session list */}
-          <div className="space-y-2">
-            <h3 className="font-cairo font-semibold text-xs text-muted-foreground flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{isAr ? "سجل الجولات" : "History"}<Badge variant="secondary" className="text-[10px] px-1.5">{sessions.length}</Badge></h3>
-            {sessions.length === 0 ? <div className="text-center py-6"><DoorOpen className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" /><p className="text-xs text-muted-foreground">{isAr ? "لا توجد جولات" : "No tours"}</p></div> : (
-              <div className="space-y-1.5 max-h-[calc(100vh-620px)] overflow-y-auto pr-1">
-                {sessions.map(s => {
-                  const isAct = activeSession?.id === s.id;
-                  const ch = s.changes_summary || {};
-                  const tc = (ch.added||0) + (ch.removed||0) + (ch.modified||0);
-                  return (
-                    <div key={s.id} data-testid={`session-card-${s.id}`} className={`p-2.5 rounded-lg border cursor-pointer transition-all group ${isAct ? "border-blue-500 bg-blue-50/60 shadow-sm" : "hover:border-slate-300"}`}
-                      onClick={() => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-semibold text-xs">{formatDateShort(s.date)}</span>
-                          <Badge className={`text-[9px] px-1 py-0 ${s.status === "completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{s.status === "completed" ? (isAr ? "مكتمل" : "Done") : (isAr ? "مسودة" : "Draft")}</Badge>
-                        </div>
-                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-red-400 hover:text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteSession(s.id); }}><Trash2 className="w-3 h-3" /></Button>
-                        </div>
-                      </div>
-                      {tc > 0 && <div className="flex items-center gap-2 mt-1 text-[10px]">
-                        {ch.added > 0 && <span className="text-emerald-600 flex items-center gap-0.5"><Plus className="w-3 h-3" />{ch.added}</span>}
-                        {ch.removed > 0 && <span className="text-red-500 flex items-center gap-0.5"><X className="w-3 h-3" />{ch.removed}</span>}
-                        {ch.modified > 0 && <span className="text-amber-600 flex items-center gap-0.5"><Edit2 className="w-3 h-3" />{ch.modified}</span>}
-                      </div>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        {/* Sidebar: Archive System */}
+        <div className="lg:col-span-1">
+          <ArchiveSidebar
+            sessions={sessions}
+            activeSession={activeSession}
+            isAr={isAr}
+            today={today}
+            onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
+            onDeleteSession={handleDeleteSession}
+            onNewSession={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
+            onCalendarClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
+          />
         </div>
 
         {/* Main Content */}
