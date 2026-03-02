@@ -328,18 +328,18 @@ export default function GateMapPage() {
       {floors.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
-            <button
+            <div
               key={floor.id}
               onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); setMapMode("pan"); }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all cursor-pointer ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
               data-testid={`floor-tab-${floor.id}`}
             >
               <Layers className={`w-4 h-4 ${selectedFloor?.id === floor.id ? "text-blue-600" : "text-slate-400"}`} />
               <span className={`text-sm font-medium ${selectedFloor?.id === floor.id ? "text-blue-700" : ""}`}>{isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}</span>
-              <button className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
+              <span role="button" tabIndex={0} className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
                 <Edit2 className="w-3 h-3" />
-              </button>
-            </button>
+              </span>
+            </div>
           ))}
           <div className="flex-1" />
           {selectedFloor && (

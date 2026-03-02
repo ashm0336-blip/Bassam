@@ -1,70 +1,85 @@
-# Al-Haram OS - Crowd Services Platform
+# Crowd Services Platform - PRD
 
 ## Original Problem Statement
-Build an interactive map for a "Crowd Services Platform" - a live, interactive digital version of a daily operational report focusing on "Daily Map Sessions" for the Grand Mosque (Al-Haram). The platform manages prayer areas, gates, and crowd services.
+Build a comprehensive "Crowd Services Platform" for managing prayer areas, gates, and crowd operations at Al-Haram. The platform includes daily session management, interactive maps, employee management, and real-time monitoring.
+
+## Core Modules
+1. **Prayer Areas (مناطق الصلاة)** - Daily sessions with interactive map drawing tools
+2. **Gates Operations Center (مركز عمليات الأبواب)** - Daily gate management hub
+3. **Gate Map Management (إدارة خرائط الأبواب)** - Map setup with draggable markers
+4. **Dashboard** - Overview statistics
+5. **Employee Management** - Staff tracking per department
+6. **Settings & Admin** - System configuration
+
+## What's Been Implemented
+
+### Gates Operations Center (`/daily-gates`) - COMPLETED
+- **4-tab layout**: الخريطة | الأبواب | الموظفين | التغييرات
+- **Map Tab**: Interactive map with gate markers, pan/edit mode toggle, draggable markers
+- **Gates Tab**: Traffic-light style quick status toggle (مفتوح/مغلق/مزدحم/صيانة), search, filter
+- **Employees Tab**: Staff assignment to gates, shift filtering, unassigned alerts
+- **Changes Tab**: Daily changes tracking
+- **Map markers show**: Staff count badges, warning indicators for unstaffed gates
+
+### Gate Map Management (`/gate-map`) - COMPLETED
+- Floor management with image upload
+- Interactive map with draggable gate markers
+- Pan/Edit mode toggle for marker positioning
+- "Sync Gates" button to auto-create markers from gates data
+- Marker list with delete capability
+
+### Backend APIs
+- `POST /api/admin/gate-map/sync-gates` - Syncs gates to map markers
+- `PUT /api/admin/gate-sessions/{id}/gates/{gate_id}` - Updates gate status/position
+- `GET /api/gate-map/markers` - Get gate markers for a floor
+- All existing CRUD endpoints for gates, sessions, floors, markers
 
 ## Architecture
-### Frontend Components (DailySessions)
 ```
-/app/frontend/src/pages/
-├── DailySessionsPage.jsx         # Main orchestrator
-└── DailySessions/
-    ├── constants.js               # SHAPE_LIBRARY, DRAG_SHAPE_MODES, etc.
-    ├── utils.js                   # Shape generators, geometry, helpers
-    └── components/
-        ├── SessionSidebar.jsx     # Calendar + session list
-        ├── SessionHeader.jsx      # Session header
-        ├── MapToolbar.jsx         # Pan|Edit|Shapes|Zones|Zoom (clean)
-        ├── MapCanvas.jsx          # SVG map + FloatingToolbar + PPT editing
-        ├── MapZoneCards.jsx       # ChangesLog only
-        ├── DensityTab.jsx         # Density tracking + heatmap
-        ├── StatsTab.jsx           # Statistics tab
-        └── Dialogs.jsx            # All modal dialogs
+/app/
+├── backend/
+│   ├── server.py
+│   ├── routes/
+│   │   ├── maps.py (gate-map endpoints + sync-gates)
+│   │   ├── sessions.py (gate sessions)
+│   │   ├── employees.py
+│   │   └── ...
+│   └── models.py
+└── frontend/
+    └── src/
+        ├── pages/
+        │   ├── DailyGateSessionsPage.jsx (main operations center)
+        │   ├── DailyGateSessions/
+        │   │   ├── GatesTab.jsx (traffic light status cards)
+        │   │   └── EmployeesTab.jsx (staff assignment)
+        │   ├── GateMapPage.jsx (map management with drag)
+        │   └── ...
+        └── ...
 ```
-
-### Gates Section
-```
-/app/frontend/src/pages/
-├── GatesDepartment.jsx           # Gates Dashboard with KPI cards
-├── GateMapPage.jsx               # Gate Map Management (floor CRUD)
-└── DailyGateSessionsPage.jsx     # Daily Gate Sessions with interactive map
-```
-
-### Routes
-- `/gates` - Gates Dashboard
-- `/gate-map` - Gate Map Management (Admin)
-- `/daily-gates` - Daily Gate Sessions (Admin)
-- `/map-management` - Prayer Area Map Management (Admin)
-- `/daily-sessions` - Prayer Area Daily Sessions (Admin)
-
-## Implemented Features (as of Feb 27, 2026)
-- Full backend + frontend refactoring
-- **Clean Toolbar**: Pan|Edit|Shapes|Zones|Zoom (no duplicates)
-- **Rich Shapes Library**: 10 shapes + 2 freehand
-- **Floating Toolbar**: Appears above selected zone with edit|copy|smooth|color|remove
-- **PPT-Style Editing**: White square handles, green rotation, dashed blue selection
-- **Delete Point**: Double-click vertex to remove it
-- **Zones Dropdown**: Search + category filter in toolbar
-- **Changes Log**: Below-map changes summary
-- **Gates Dashboard**: Professional KPI cards with live stats
-- **Gate Map Management**: Full floor CRUD (add/edit/delete with image upload)
-- **Daily Gate Sessions**: Interactive map with gate status management
-- **Unified Zone Dialogs**: Shared ZoneFormFields component for add/edit
-- **Global Undo/Redo**: History stack for all map operations
-- All E2E tests passing (iteration 31, 100% backend + frontend)
-
-## Prioritized Backlog
-### P0
-- Auto-calculate zone area from drawing (pending map with scale from user)
-
-### P1
-- Build General Manager Dashboard ("Overview")
-- "Paths" Feature (managing paths/routes)
-- Advanced Drawing: smart drawing, rotation by angle, layers, ruler, keyboard shortcuts
-- Live Gates Dashboard with real-time alerts
-
-### P2
-- Smart shape recognition, mini map, templates, analytics, export
 
 ## Credentials
-- System Admin: admin@crowd.sa / admin123
+- **System Admin**: admin@crowd.sa / admin123
+
+## Prioritized Backlog
+
+### P0 (High Priority)
+- [ ] Automatic Area Calculation (BLOCKED - needs map with known scale)
+- [ ] Live Haram Map - unified real-time view
+
+### P1 (Medium Priority)
+- [ ] Smart Alert System
+- [ ] Analytics Dashboard
+- [ ] Advanced Drawing Tool Enhancements
+- [ ] General Manager Dashboard
+- [ ] Paths Feature (المسارات)
+
+### P2 (Lower Priority)
+- [ ] Field Supervisor Mobile Mode
+- [ ] Smart Routing System
+- [ ] Live Gates Dashboard
+- [ ] AI Recommendations
+- [ ] External Integrations (CCTV, emergency)
+
+## Testing
+- Last test: iteration_32.json - 100% pass rate (backend & frontend)
+- No known issues or regressions
