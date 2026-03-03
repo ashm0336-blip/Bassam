@@ -530,13 +530,17 @@ export default function DailyGateSessionsPage() {
                         {hoveredGate && !draggingGateId && mapMode === "pan" && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
                           const INDICATOR_LABELS = { light: { ar: "خفيف", en: "Light", color: "#22c55e" }, medium: { ar: "متوسط", en: "Medium", color: "#f59e0b" }, crowded: { ar: "مزدحم", en: "Crowded", color: "#ef4444" } };
+                          const TYPE_LABELS = { main: "رئيسي", secondary: "فرعي", escalator: "سلم كهربائي", elevator: "مصعد", stairs: "درج", bridge: "جسر", wheelchair: "عربات", emergency: "طوارئ" };
+                          const CLASS_LABELS = { general: "عام", men: "رجال", women: "نساء", emergency: "طوارئ", funeral: "جنائز" };
+                          const DIR_LABELS = { entry: "دخول", exit: "خروج", both: "دخول وخروج" };
                           const ind = INDICATOR_LABELS[hoveredGate.indicator || "light"] || INDICATOR_LABELS.light;
                           const cl = CHANGE_LABELS[hoveredGate.change_type] || CHANGE_LABELS.unchanged;
-                          const dir = DIRECTIONS.find(d => d.value === hoveredGate.direction);
                           const hasChange = hoveredGate.change_type && hoveredGate.change_type !== "unchanged";
-                          const pct = hoveredGate.max_flow ? Math.round(((hoveredGate.current_flow || 0) / hoveredGate.max_flow) * 100) : 0;
                           const isOpen = hoveredGate.status === "open";
                           const topColor = isOpen ? ind.color : sc.color;
+                          const gateType = TYPE_LABELS[hoveredGate.gate_type] || hoveredGate.gate_type || "";
+                          const gateClass = CLASS_LABELS[hoveredGate.classification] || hoveredGate.classification || "";
+                          const gateDir = DIR_LABELS[hoveredGate.direction] || hoveredGate.direction || "";
                           return (
                             <div className="absolute pointer-events-none z-50" style={{ left:tooltipPos.x, top:tooltipPos.y }}>
                               <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[230px]" style={{ direction:"rtl" }}>
@@ -557,19 +561,13 @@ export default function DailyGateSessionsPage() {
                                   {hasChange && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
                                   <div className="border-t border-dashed border-slate-200" />
                                   <div className="space-y-1 text-[11px]">
-                                    {hoveredGate.gate_type && <div className="flex justify-between"><span className="text-slate-500">{isAr?"النوع":"Type"}</span><span className="font-medium">{hoveredGate.gate_type}</span></div>}
-                                    {dir && <div className="flex justify-between"><span className="text-slate-500">{isAr?"الاتجاه":"Dir"}</span><span>{isAr?dir.label_ar:dir.label_en}</span></div>}
-                                    {hoveredGate.classification && <div className="flex justify-between"><span className="text-slate-500">{isAr?"التصنيف":"Class"}</span><span>{hoveredGate.classification}</span></div>}
-                                    <div className="flex justify-between"><span className="text-slate-500">{isAr?"التدفق":"Flow"}</span><span className="font-semibold">{hoveredGate.current_flow || 0} / {hoveredGate.max_flow || 0}</span></div>
-                                    {hoveredGate.max_flow > 0 && (
-                                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                        <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: topColor }} />
-                                      </div>
-                                    )}
+                                    {gateType && <div className="flex justify-between"><span className="text-slate-500">{isAr?"النوع":"Type"}</span><span className="font-medium">{gateType}</span></div>}
+                                    {gateDir && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المسار":"Direction"}</span><span>{gateDir}</span></div>}
+                                    {gateClass && <div className="flex justify-between"><span className="text-slate-500">{isAr?"التصنيف":"Class"}</span><span>{gateClass}</span></div>}
                                   </div>
-                                  {hoveredGate.assigned_staff > 0 && <div className="flex items-center gap-1 text-[10px] text-slate-500 pt-1 border-t"><Users className="w-3 h-3" />{hoveredGate.assigned_staff} {isAr?"موظف":"staff"}</div>}
-                                  {hoveredGate.assigned_staff === 0 && hoveredGate.status === "open" && <p className="text-[10px] text-amber-600 font-medium pt-1 border-t"><AlertCircle className="w-3 h-3 inline ml-0.5" />{isAr?"بدون موظفين!":"No staff!"}</p>}
-                                  {hoveredGate.daily_note && <p className="text-[10px] text-slate-500 pt-1 border-t">{hoveredGate.daily_note}</p>}
+                                  {hoveredGate.assigned_staff > 0 && <div className="flex items-center gap-1 text-[10px] text-blue-600 pt-1 border-t border-dashed border-slate-200"><Users className="w-3 h-3" />{hoveredGate.assigned_staff} {isAr?"موظف":"staff"}</div>}
+                                  {hoveredGate.assigned_staff === 0 && hoveredGate.status === "open" && <p className="text-[10px] text-amber-600 font-medium pt-1 border-t border-dashed border-slate-200"><AlertCircle className="w-3 h-3 inline ml-0.5" />{isAr?"بدون موظفين!":"No staff!"}</p>}
+                                  {hoveredGate.daily_note && <p className="text-[10px] text-slate-500 pt-1 border-t border-dashed border-slate-200">{hoveredGate.daily_note}</p>}
                                 </div>
                               </div>
                             </div>
