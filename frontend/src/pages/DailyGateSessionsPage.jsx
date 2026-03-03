@@ -427,7 +427,11 @@ export default function DailyGateSessionsPage() {
                                 <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
                                 <svg ref={svgRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                                   {activeGates.map(gate => {
-                                    const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
+                                    const isOpen = gate.status === "open";
+                                    const INDICATOR_COLORS = { light: "#22c55e", medium: "#f59e0b", crowded: "#ef4444" };
+                                    const statusColor = isOpen ? "#22c55e" : "#ef4444";
+                                    const indicatorColor = isOpen ? (INDICATOR_COLORS[gate.indicator || "light"] || "#22c55e") : "#ef4444";
+                                    const markerColor = isOpen ? indicatorColor : statusColor;
                                     const isDragging = draggingGateId === gate.id;
                                     const isHov = hoveredGate?.id === gate.id;
                                     const isEditMode = mapMode === "edit" && activeSession?.status === "draft";
@@ -443,17 +447,21 @@ export default function DailyGateSessionsPage() {
                                         onClick={() => { if (!isEditMode && activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
                                         style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : activeSession?.status === "draft" ? "pointer" : "default" }}>
                                         {/* Pulse */}
-                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={sc.color} fillOpacity="0">
+                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={markerColor} fillOpacity="0">
                                           <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
                                           <animate attributeName="rx" values={`${r + 0.5};${r + 2.5};${r + 0.5}`} dur="2s" repeatCount="indefinite" />
                                           <animate attributeName="ry" values={`${(r + 0.5) * ar};${(r + 2.5) * ar};${(r + 0.5) * ar}`} dur="2s" repeatCount="indefinite" />
                                         </ellipse>
+                                        {/* Outer indicator ring for open gates */}
+                                        {isOpen && !isDragging && indicatorColor !== statusColor && (
+                                          <ellipse cx={gate.x} cy={gate.y} rx={r + 0.5} ry={(r + 0.5) * ar} fill="none" stroke={indicatorColor} strokeWidth="0.25" vectorEffect="non-scaling-stroke" strokeOpacity="0.6" />
+                                        )}
                                         {/* Selection ring when dragging */}
                                         {isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8"><animate attributeName="stroke-dashoffset" values="0;4.6" dur="1s" repeatCount="indefinite" /></ellipse>}
                                         {/* Hover ring */}
-                                        {isHov && !isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={sc.color} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />}
-                                        {/* Main marker */}
-                                        <ellipse cx={gate.x} cy={gate.y} rx={r} ry={r * ar} fill={isDragging ? "#3b82f6" : sc.color} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }} />
+                                        {isHov && !isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={markerColor} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />}
+                                        {/* Main marker - uses indicator color for open gates */}
+                                        <ellipse cx={gate.x} cy={gate.y} rx={r} ry={r * ar} fill={isDragging ? "#3b82f6" : markerColor} stroke="white" strokeWidth={isDragging ? "0.25" : "0.15"} vectorEffect="non-scaling-stroke" style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }} />
                                         {/* Staff count badge */}
                                         {!isDragging && (gate.assigned_staff || 0) > 0 && (
                                           <g style={{ pointerEvents: "none" }}>
@@ -480,7 +488,7 @@ export default function DailyGateSessionsPage() {
                                         {/* Label */}
                                         {showLabel && (
                                           <g style={{ pointerEvents: "none" }}>
-                                            <rect x={gate.x - 6} y={gate.y - r * ar - 2.2} width="12" height="1.6" rx="0.4" fill="white" fillOpacity="0.92" stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
+                                            <rect x={gate.x - 6} y={gate.y - r * ar - 2.2} width="12" height="1.6" rx="0.4" fill="white" fillOpacity="0.92" stroke={isDragging ? "#3b82f6" : markerColor} strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                             <text x={gate.x} y={gate.y - r * ar - 1.1} textAnchor="middle" dominantBaseline="middle" fill={isDragging ? "#3b82f6" : "#1e293b"} fontSize="1.1" fontWeight="700" fontFamily="Cairo, sans-serif">{gate.name_ar}</text>
                                           </g>
                                         )}
@@ -504,25 +512,35 @@ export default function DailyGateSessionsPage() {
                           </div>
                         )}
                         {/* Legend */}
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
-                          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                            <span key={key} className="flex items-center gap-1 text-[10px]">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
-                              {isAr ? cfg.label_ar : cfg.label_en}
-                            </span>
-                          ))}
+                        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                            <span>{isAr ? "الحالة:" : "Status:"}</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />{isAr ? "مفتوح" : "Open"}</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" />{isAr ? "مغلق" : "Closed"}</span>
+                          </div>
+                          <div className="w-px h-4 bg-slate-200" />
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                            <span>{isAr ? "الازدحام:" : "Crowd:"}</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#22c55e"}} />{isAr ? "خفيف" : "Light"}</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#f59e0b"}} />{isAr ? "متوسط" : "Medium"}</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#ef4444"}} />{isAr ? "مزدحم" : "Crowded"}</span>
+                          </div>
                         </div>
                         {/* Rich Tooltip (pan mode only) */}
                         {hoveredGate && !draggingGateId && mapMode === "pan" && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
+                          const INDICATOR_LABELS = { light: { ar: "خفيف", en: "Light", color: "#22c55e" }, medium: { ar: "متوسط", en: "Medium", color: "#f59e0b" }, crowded: { ar: "مزدحم", en: "Crowded", color: "#ef4444" } };
+                          const ind = INDICATOR_LABELS[hoveredGate.indicator || "light"] || INDICATOR_LABELS.light;
                           const cl = CHANGE_LABELS[hoveredGate.change_type] || CHANGE_LABELS.unchanged;
                           const dir = DIRECTIONS.find(d => d.value === hoveredGate.direction);
                           const hasChange = hoveredGate.change_type && hoveredGate.change_type !== "unchanged";
                           const pct = hoveredGate.max_flow ? Math.round(((hoveredGate.current_flow || 0) / hoveredGate.max_flow) * 100) : 0;
+                          const isOpen = hoveredGate.status === "open";
+                          const topColor = isOpen ? ind.color : sc.color;
                           return (
                             <div className="absolute pointer-events-none z-50" style={{ left:tooltipPos.x, top:tooltipPos.y }}>
                               <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[230px]" style={{ direction:"rtl" }}>
-                                <div className="h-1.5" style={{ backgroundColor: sc.color }} />
+                                <div className="h-1.5" style={{ backgroundColor: topColor }} />
                                 <div className="p-3 space-y-2">
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
@@ -531,7 +549,10 @@ export default function DailyGateSessionsPage() {
                                       </span>
                                       <span className="font-bold text-sm">{hoveredGate.name_ar}</span>
                                     </div>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:`${sc.color}15`,color:sc.color}}>{isAr ? sc.label_ar : sc.label_en}</span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:`${sc.color}15`,color:sc.color}}>{isAr ? sc.label_ar : sc.label_en}</span>
+                                      {isOpen && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:`${ind.color}15`,color:ind.color}}>{isAr ? ind.ar : ind.en}</span>}
+                                    </div>
                                   </div>
                                   {hasChange && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
                                   <div className="border-t border-dashed border-slate-200" />
@@ -542,7 +563,7 @@ export default function DailyGateSessionsPage() {
                                     <div className="flex justify-between"><span className="text-slate-500">{isAr?"التدفق":"Flow"}</span><span className="font-semibold">{hoveredGate.current_flow || 0} / {hoveredGate.max_flow || 0}</span></div>
                                     {hoveredGate.max_flow > 0 && (
                                       <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                        <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: sc.color }} />
+                                        <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: topColor }} />
                                       </div>
                                     )}
                                   </div>
