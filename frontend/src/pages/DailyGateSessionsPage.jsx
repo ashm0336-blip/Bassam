@@ -561,8 +561,10 @@ export default function DailyGateSessionsPage() {
                                   {hasChange && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
                                   <div className="border-t border-dashed border-slate-200" />
                                   <div className="space-y-1 text-[11px]">
+                                    {hoveredGate.plaza && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المنطقة":"Plaza"}</span><span className="font-medium" style={{color: hoveredGate.plaza_color || '#333'}}>{hoveredGate.plaza}</span></div>}
                                     {gateType && <div className="flex justify-between"><span className="text-slate-500">{isAr?"النوع":"Type"}</span><span className="font-medium">{gateType}</span></div>}
                                     {gateDir && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المسار":"Direction"}</span><span>{gateDir}</span></div>}
+                                    {hoveredGate.category && hoveredGate.category.length > 0 && <div className="flex justify-between"><span className="text-slate-500">{isAr?"الفئة":"Category"}</span><span>{hoveredGate.category.join("، ")}</span></div>}
                                     {gateClass && <div className="flex justify-between"><span className="text-slate-500">{isAr?"التصنيف":"Class"}</span><span>{gateClass}</span></div>}
                                   </div>
                                   {hoveredGate.assigned_staff > 0 && <div className="flex items-center gap-1 text-[10px] text-blue-600 pt-1 border-t border-dashed border-slate-200"><Users className="w-3 h-3" />{hoveredGate.assigned_staff} {isAr?"موظف":"staff"}</div>}

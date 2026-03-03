@@ -621,6 +621,9 @@ class SessionGate(BaseModel):
     gate_type: str = "main"
     direction: str = "both"
     classification: str = "general"
+    plaza: str = ""
+    plaza_color: str = ""
+    category: List[str] = []
     status: str = "open"
     indicator: str = "light"
     current_flow: int = 0

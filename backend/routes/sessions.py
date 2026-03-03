@@ -307,17 +307,40 @@ async def compare_sessions(session_id_1: str, session_id_2: str):
 
 
 # ============= Daily Gate Sessions =============
-def _build_gate_snapshot(marker):
-    return {
+def _build_gate_snapshot(marker, master_gate=None):
+    snap = {
         "id": str(uuid.uuid4()), "original_marker_id": marker.get("id"),
         "gate_id": marker.get("gate_id"), "floor_id": marker.get("floor_id"),
         "name_ar": marker.get("name_ar", ""), "name_en": marker.get("name_en", ""),
         "x": marker.get("x", 50), "y": marker.get("y", 50),
         "gate_type": marker.get("gate_type", "main"), "direction": marker.get("direction", "both"),
-        "classification": marker.get("classification", "general"), "status": marker.get("status", "open"),
+        "classification": marker.get("classification", "general"),
+        "plaza": marker.get("plaza", ""), "plaza_color": marker.get("plaza_color", ""),
+        "category": marker.get("category", []),
+        "status": marker.get("status", "open"), "indicator": marker.get("indicator", "light"),
         "current_flow": marker.get("current_flow", 0), "max_flow": marker.get("max_flow", 5000),
         "assigned_staff": marker.get("assigned_staff", 0), "is_removed": False, "change_type": "unchanged",
     }
+    if master_gate:
+        snap["plaza"] = master_gate.get("plaza", snap["plaza"])
+        snap["plaza_color"] = master_gate.get("plaza_color", snap["plaza_color"])
+        snap["category"] = master_gate.get("category", snap["category"])
+    return snap
+
+
+async def _enrich_gates_with_master(gates_snapshot):
+    """Enrich session gates with plaza/category from master gates collection."""
+    master_gates = await db.gates.find({}, {"_id": 0}).to_list(500)
+    name_map = {g.get("name"): g for g in master_gates}
+    for gs in gates_snapshot:
+        mg = name_map.get(gs.get("name_ar"))
+        if mg:
+            if not gs.get("plaza"):
+                gs["plaza"] = mg.get("plaza", "")
+            if not gs.get("plaza_color"):
+                gs["plaza_color"] = mg.get("plaza_color", "")
+            if not gs.get("category"):
+                gs["category"] = mg.get("category", [])
 
 
 @router.get("/gate-sessions")
@@ -365,6 +388,7 @@ async def create_gate_session(data: GateSessionCreate, admin: dict = Depends(req
             markers = await db.gate_markers.find({"floor_id": data.floor_id}, {"_id": 0}).to_list(500)
             for m in markers:
                 gates_snapshot.append(_build_gate_snapshot(m))
+    await _enrich_gates_with_master(gates_snapshot)
     session = GateSession(date=data.date, floor_id=data.floor_id, floor_name=floor.get("name_ar", ""), created_by=admin.get("name", ""), gates=gates_snapshot, changes_summary={"added": 0, "removed": 0, "modified": 0, "unchanged": len(gates_snapshot)})
     doc = session.model_dump()
     await db.gate_sessions.insert_one(doc)
