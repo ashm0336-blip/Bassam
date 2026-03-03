@@ -129,9 +129,9 @@ export const Layout = () => {
               <Icon className="w-5 h-5 flex-shrink-0" />
               {(sidebarOpen || mobile) && (
                 <>
-                  <span className="flex-1 text-right">{item.name}</span>
+                  <span className="flex-1 text-right whitespace-nowrap truncate text-[13px]">{item.name}</span>
                   <ChevronDown 
-                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                    className={`w-4 h-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                   />
                 </>
               )}
