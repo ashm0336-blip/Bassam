@@ -3,63 +3,63 @@ The user's primary goal is to build a highly interactive and efficient Crowd Ser
 
 The core of the application now revolves around two main modules: Gates Management and Prayer Area Management. Both modules have been restructured to separate daily, dynamic operations from static, foundational settings. The daily work is handled in Daily Log pages (which function as Operations Centers), while all master data (like lists of gates/zones, employees, map floor plans) is managed in a unified Department Settings area for each module.
 
-Key features implemented include interactive maps with pan/zoom and draggable elements, an edit mode toggle for positioning items, real-time statistical dashboards, and a smart archiving system that organizes daily records by year and month. The user has consistently requested highly professional, user-friendly interfaces with creative touches.
+Key features implemented include interactive maps with pan/zoom and draggable elements, an edit mode toggle for positioning items, real-time statistical dashboards, and a smart archiving system that organizes daily records by year and month. A major new feature is a dynamic Monthly Scheduling system that allows managers to set employee shifts, locations, and rest days on a per-month basis. The user has consistently requested highly professional, user-friendly interfaces with creative touches.
 
 **User's preferred language**: Arabic (العربية). The next agent MUST respond in Arabic.
 
 **what currently exists?**
-The application is a full-stack platform with a FastAPI backend and a heavily modified React frontend.
-
-*   **Unified Structure:** Both the Gates and Prayer Areas modules now share a consistent structure:
-    *   **Overview Page:** A dashboard with KPIs, charts, and a live status summary. The Prayer Areas dashboard includes an interactive heatmap.
-    *   **Daily Log Page:** The hub for daily work, featuring a smart archiving system (Year -> Month -> Day) and a tabbed interface for managing the Map, entity status (Gates/Density), and Employee assignments for that specific day.
-    *   **Department Settings Page:** A centralized location for managing all master data through a tabbed interface (e.g., Gates/Prayer Zones, Employees, Maps, Shifts).
-
-*   **Interactive Maps:**
-    *   **Gates:** Draggable markers with an edit/pan mode toggle for setting default and daily positions.
-    *   **Prayer Areas:** Interactive heatmap on the dashboard and a daily map that displays employee counts on each zone, with detailed tooltips showing employee names.
-
-*   **Streamlined Navigation:** The main sidebars for both modules have been cleaned up to reflect the new structure, containing only Overview, Daily Log, and Department Settings.
+The application is a full-stack platform (FastAPI backend, React frontend) with two core modules: Gates and Prayer Areas.
+- **Unified Structure:** Each module has an Overview dashboard, a Daily Log for operations, and a Department Settings page for master data.
+- **Professional UI:** The Department Settings pages feature a custom-designed, icon-based Card Tabs component that displays item counts for each category (e.g., Gates, Employees, Shifts).
+- **Monthly Scheduling System:** A major new feature has been integrated into the Employees tab within Department Settings. This system allows managers to create, edit, and activate monthly schedules for each department, defining each employee's specific rest days, shift, and location for that month. The entire application's logic (dashboards, daily logs) is now driven by the active monthly schedule.
+- **Interactive Maps:** The Daily Log for gates features an interactive map where markers now correctly reflect both the gate's  (open/closed) and its  (light/medium/crowded), with a detailed tooltip showing all relevant data in Arabic.
+- **Logical Data Separation:** The concepts of a gate's operational  (open/closed) and its crowd  have been logically and technically separated throughout the backend models, APIs, and frontend components, providing more accurate data representation.
 
 **Last working item**:
--   **Last item agent was working:** The user requested to enhance the Prayer Areas Overview dashboard by making the heatmap interactive and adding a KPI card for the number of floors. The agent successfully implemented a fully interactive heatmap component with zoom, pan, and scroll functionality, and added the requested Floors KPI card.
--   **Status:** USER VERIFICATION PENDING
--   **Agent Testing Done:** N (Agent took a screenshot to visually confirm the feature).
--   **Which testing method agent to use?** Frontend testing agent. The agent should test the new interactive heatmap component to verify that zoom, pan, scroll, and tooltip functionalities work correctly.
--   **User Testing Done:** N
+- **Last item agent was working:** The user pointed out that the interactive map tooltip for gates was missing key information (, ) and was not fully translated. The agent successfully implemented a fix by:
+    1.  Updating the backend  model to include  and .
+    2.  Creating a migration to enrich existing daily sessions with this data.
+    3.  Updating the session creation logic to include this data going forward.
+    4.  Overhauling the frontend  component to display all fields correctly in the tooltip in Arabic.
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** N (Agent performed API tests but no final visual verification).
+- **Which testing method agent to use?** Frontend testing agent. The agent should test the Daily Log for the Gates department, navigate to the map, hover over a gate marker, and verify that the tooltip correctly displays all fields: المنطقة, الفئة, النوع, المسار, التصنيف, الحالة, المؤشر, الموظفين, and الملاحظة.
+- **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   None.
+- None.
 
 **In progress Task List**:
-*   **Task 1: User Verification for Interactive Heatmap** (Priority: P0)
-    *   **Where to resume:** The agent must ask the user in Arabic to review the newly implemented interactive heatmap on the Prayer Areas Overview page and confirm if it meets their expectations.
-    *   **What will be achieved with this?** This will confirm the completion of the last user request and allow the project to move forward.
+*   **Task 1: User Verification for Gate Map Tooltip** (Priority: P0)
+    *   **Where to resume:** The agent must ask the user in Arabic to review the newly enhanced tooltip on the interactive map in the Gates Daily Log page and confirm it meets their expectations.
+    *   **What will be achieved with this?** This will confirm the completion of the last bug fix and allow the project to move forward.
     -   **Status:** USER VERIFICATION PENDING
     -   **Should Test frontend/backend/both after fix?** Frontend.
     -   **Blocked on something:** User feedback.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **P0: Populate and Test Employee Distribution:** The user has not yet added employees to the system. The next logical step is to add employees in Department Settings and then test the employee assignment feature in the Daily Log for both Gates and Prayer Areas.
-    *   **P1: Add Monthly Summary to Archive:** Enhance the archiving system to automatically generate a summary report for each completed month, as proposed in the agent's creative suggestion.
+    *   **P0: Implement Professional Gate Management View for Scale:** The user wants to manage 200+ gates, which is not feasible with the current card-based UI. The agent must implement the proposals for a **Compact Table View** and a **Grouped by Plaza** view within the Gates Daily Log () to handle the large number of gates efficiently. This is the next major feature request.
+    *   **P1: Implement Advanced Role Hierarchy:** The user has shown significant interest in the detailed proposals for a 5-level role-based access control (RBAC) system (System Admin, General Manager, Department Manager, Shift Supervisor, Field Staff). This is a large architectural task for future implementation.
 
 *   **Future Tasks (Backlog):**
-    *   **P0: Automatic Area Calculation:** Implement a feature to calculate a zone's area automatically from the map drawing. This is **BLOCKED** until the user provides a map with a known real-world scale.
-    *   **P1: The Live Haram Map:** A unified, real-time 3D or heatmap view of the entire area.
+    *   **P0: Automatic Area Calculation:** Blocked until the user provides a map with a known real-world scale.
+    *   **P1: Live Haram Map:** A unified, real-time 3D or heatmap view of the entire area.
     *   **P1: Smart Alert System:** An advanced, multi-level alert system with escalations.
+    *   **P1: Implement Tour Mode for Gates:** A creative proposal for a mobile-first flashcard style UI for field staff conducting tours.
     *   **P1: Implement Paths Feature:** A separate feature for managing crowd flow paths.
     *   **P2: Field Supervisor Mobile Mode:** A simplified mobile-first interface for staff on the ground.
-    *   And other creative ideas previously discussed (Analytics, Smart Routing, etc.).
+    *   **P2: Rotate Rests Feature:** Add the proposed auto-rotation feature to the monthly scheduling system.
 
 **Completed work in this session**
--   **Bug Fix:** Restored the main gates map and its associated markers, which had been inadvertently deleted.
--   **Major Refactor (Gates & Prayer Areas):** Transformed both modules by creating Operations Center style Daily Log pages and consolidating all master data management into unified Department Settings pages.
--   **Feature (Interactive Maps):** Implemented draggable markers with an edit/pan mode for Gates and enhanced the Prayer Area map to show employee counts and detailed tooltips.
--   **Feature (Archiving System):** Built a smart, three-level (Year/Month/Day) archiving system for the daily logs in both the Gates and Prayer Areas modules.
--   **Feature (Dashboards):** Created brand new, data-rich Overview dashboards for both the Gates and Prayer Areas modules, including an interactive heatmap for the latter.
--   **Feature (Employee Management):** Added Employees tabs to both daily log pages to manage daily staff assignments, complete with alerts for uncovered areas.
--   **UI/UX Overhaul:** Re-organized the sidebars for both modules to be cleaner and more intuitive, reflecting the new application structure.
+- **Feature (Monthly Scheduling):** Implemented a complete, dynamic monthly scheduling system within the Employees tab, allowing managers to define employee rest days, locations, and shifts on a per-month basis. This replaced the previous static rest day system.
+- **UI/UX (Professional Tabs):** Redesigned the Department Settings tabs into a professional Card Tab layout with icons and item counts, and applied unique theme colors for different departments.
+- **Refactor (Unified Employee Management):** Moved the Employees management for all departments into a unified tab within Department Settings, creating a consistent structure and decluttering the sidebar.
+- **Bug Fix & Refactor (Gate Status/Indicator):** Separated the logical concepts of a gate's  (open/closed) from its  (crowdedness) across the entire stack (backend models, APIs, frontend UI), resolving a core design flaw.
+- **Bug Fix (Map Indicator):** Fixed a bug where the interactive map did not visually update when a gate's crowd indicator was changed. The map now correctly reflects the indicator's color.
+- **Feature (Enhanced Map Tooltip):** Completely revamped the gate map tooltip to be fully translated into Arabic and to include all relevant gate data, such as  (المنطقة) and  (الفئة).
+- **Documentation:** Created a professional analysis document () explaining the platform's benefits and future potential.
+- **Proposals:** Provided detailed, non-implemented proposals for an advanced role hierarchy and a mobile-first Field Supervisor interface.
 
 **Earlier issues found/mentioned but not fixed**
 -   None.
@@ -71,56 +71,57 @@ The application is a full-stack platform with a FastAPI backend and a heavily mo
 
 
 **Key Technical Concepts**
--   **Component-Driven Refactoring:** Broke down large, monolithic pages into smaller, focused components (e.g., Dashboards, Archive Sidebars, specific Tabs), leading to a cleaner and more maintainable codebase.
--   **Interactive SVG:** Extensive use of React state and event handlers to create complex, interactive SVG-based maps with features like pan, zoom, draggable elements, and dynamic tooltips.
--   **Modular Design:** The application is now structured around a clear separation of concerns: daily operations vs. foundational settings, which has been applied consistently across both major modules.
+-   **Dynamic Data Models:** The data model shifted from static employee properties to a dynamic, time-based system with the new  collection, which dictates operational data for any given month.
+-   **Complex Frontend State Management:** The  component now handles a complex state, including navigating between months, managing draft vs. active schedules, and updating individual assignments within a large data structure.
+-   **On-the-Fly Backend Migrations:** The agent used temporary API endpoints to perform several data migrations to align existing database records with the evolving schemas (e.g., separating status/indicator, adding plaza/category to sessions).
+-   **Component-Driven UI:** The new Card Tabs in  and the separated controls in  are good examples of breaking down UI into logical, reusable components.
 
 **key DB schema**
--   **menu_items_collection:** Significantly modified to reflect the new, streamlined sidebar navigation for both Gates and Prayer Areas departments.
--   **gate_markers_collection:** Endpoint  updates marker positions.
--   **gate_sessions_collection:** Endpoint  updates the state of a gate within a specific daily session.
+-   **:** The master list of all gates and their static properties.
+-   **:** Stores the daily operational data for gates. A record for a gate within a session now has separate  ('open'/'closed') and  ('light'/'medium'/'crowded') fields, as well as  and  copied from the master gate data.
+-   ** (NEW):** This new collection is central to operations. Each document contains a ,  (e.g., 2026-03),  ('draft'/'active'), and an  array linking each employee to their specific , , and  for that month.
+-   **:** Now only contains static employee data (name, ID, job title). All scheduling information has been moved to .
 
 **changes in tech stack**
 -   None.
 
 **All files of reference**
--   
--   
--   
--   
--   
--   
+-    (Core of the new scheduling system)
+-    (Contains the new tab design)
+-    (Contains separated status/indicator controls)
+-    (Contains updated map marker and tooltip logic)
+-    (Contains all new models and APIs for monthly schedules and updated gate session logic)
 
 **Areas that need refactoring**:
--   The two archive components,  (for Gates) and  (for Prayer Areas), are nearly identical. They should be merged into a single, reusable component that accepts props for theme (color) and API endpoints to reduce code duplication.
+-   The two archive components,  (for Gates) and  (for Prayer Areas), are nearly identical and can be merged into a single reusable component. This task was mentioned in the previous handoff but has not been addressed.
 
 **key api endpoints**
--   : Creates map markers for new gates.
--   : Updates a gate marker's position.
--   : Updates a gate's state within a daily session.
--   : Provides data for the prayer areas overview.
--   : Provides data for the gates overview.
+-   : A new set of CRUD endpoints to manage the monthly schedules.
+-   : Endpoint to approve and activate a draft schedule.
+-   : The payload for this endpoint was updated to accept  and  as separate fields.
+-   : The response now includes  and  for each gate in the session.
 
 **Critical Info for New Agent**
 -   **Language is Arabic:** You MUST communicate with the user exclusively in Arabic.
--   **Verify Last Task:** Your first action should be to ask the user to verify the new interactive heatmap on the Prayer Areas Overview page.
--   **Follow the Pattern:** The user responds very well to a structured approach: understand the request, propose a detailed creative/technical solution in Arabic, get approval, then implement. Continue this pattern.
--   **Refactoring Opportunity:** You can propose merging the two  components into one as a code quality improvement task after handling any immediate user requests.
+-   **Verify Last Task:** Your first action should be to ask the user to verify the updated gate map tooltip.
+-   **Monthly Schedules are Core:** The new monthly scheduling system is a major architectural change. You must understand that employee assignments (rest days, location, shift) are no longer static but are defined per month in the Employees tab within .
+-   **Next Task: Gate Management at Scale:** The user wants to scale the gate management features to handle 200+ gates. Be prepared to implement the agent's proposals for a compact table view and grouping by plaza.
 
 **documents and test reports created in this job**
 -   
+-   Multiple test reports were generated by the testing agent, e.g., .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requested a professional proposal for an archiving system to organize long lists of daily entries by month and year.
-2.  **User:** Approved the implementation of the archiving system.
-3.  **User:** Scoped the current task to implementing the archiving system for Prayer Areas and then pausing.
-4.  **User:** Requested a proposal to refactor Prayer Area management to match the new structure of the Gates module (moving settings into a unified Department Settings page).
-5.  **User:** Approved the Prayer Area refactoring but asked to exclude the Transactions feature.
-6.  **User:** Requested to show employee counts on the prayer area map zones, with a warning for zones without staff.
-7.  **User:** Requested to enhance the map tooltip to show the names of assigned employees.
-8.  **User:** Requested a creative proposal for a new Overview dashboard for the Prayer Areas module.
-9.  **User:** Approved the implementation of the Prayer Areas dashboard.
-10. **User:** Requested to make the heatmap on the new dashboard interactive (zoom/pan) and to add a KPI card for the number of floors. **(This is the last implemented feature awaiting verification).**
+1.  **User (approves monthly scheduling):** Approves the detailed proposal for the integrated monthly scheduling system (without the rotate rests feature) and asks for implementation.
+2.  **User (identifies logic flaw):** Points out the logical flaw of mixing a gate's  (open/closed) with its  (crowdedness) and asks for a proposal to separate them.
+3.  **User (approves refactor):** Approves the status/indicator separation proposal and asks for implementation.
+4.  **User (new requirement):** Asks for proposals to handle 200+ gates effectively, as the current UI will not scale.
+5.  **User (identifies bug):** Asks why the interactive map does not update its color when the  (crowdedness) is changed from the gate list.
+6.  **User (identifies bug):** Points out that the map tooltip is missing data (plaza, category), is not fully translated, and has a useless flow section.
+7.  **User (clarifies bug):** Asks to add  (المنطقة) and  (الفئة) to the tooltip specifically.
+8.  **User (proposes idea):** Asks for professional ideas to enhance the gate management features beyond what currently exists, considering the goal of managing 200+ gates.
+9.  **User (identifies bug):** Reports that changing the gate's crowd indicator in the daily log's Gates tab does not reflect on the interactive map tab.
+10. **User (identifies bug):** Reports that the tooltip on the interactive map is missing many important gate details (Area, Type, Path, Category, Classification) and that the Flow data seems pointless.
 
 **Project Health Check:**
 -   **Broken:** None
@@ -130,7 +131,7 @@ The application is a full-stack platform with a FastAPI backend and a heavily mo
 -   None.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (for the Gates Operations Center refactor).
+-   **Testing agent used after significant changes:** YES. The agent was used multiple times to validate major features like the monthly scheduling system and the gate status/indicator separation.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
 -   **Known regressions:** None.
@@ -139,4 +140,4 @@ The application is a full-stack platform with a FastAPI backend and a heavily mo
 -   **System Admin:**  / 
 
 **What agent forgot to execute**
--   The agent has successfully followed all user requests in sequence. The next logical task, which was suggested but not yet requested for implementation, is to add employee data to the system to fully test the new employee distribution features.</analysis>
+-   The refactoring of the two nearly identical archive components ( and ) into a single reusable component is still pending from a previous handoff.</analysis>
