@@ -7,11 +7,15 @@
 ├── السجل اليومي للأبواب (Archive)       ├── السجل اليومي للخرائط (Archive)
 │   ├── الخريطة │ الأبواب │ الموظفين     │   ├── الخريطة │ الكثافات │ الموظفين
 │   └── التغييرات                        │   └── إحصائيات
-├── المعاملات                            └── إعدادات القسم (4 tabs)
-└── إعدادات القسم (5 tabs)                   ├── الموظفين │ الخرائط
-    ├── الأبواب │ الموظفين │ الخرائط          ├── الورديات │ المواقع
-    ├── الورديات │ المواقع                    └── (أنماط الراحة - تم حذفها ونقلها للموظف مباشرة)
-    └── (أنماط الراحة - تم حذفها)
+├── المعاملات                            └── إعدادات القسم (4 card-tabs)
+└── إعدادات القسم (5 card-tabs)              ├── الموظفين │ الخرائط
+    ├── الأبواب │ الموظفين │ الخرائط          └── الورديات │ المواقع
+    └── الورديات │ المواقع
+
+تخطيط خدمات الحشود / خدمات الحشود / المطاف
+└── إعدادات القسم (3 card-tabs)
+    ├── الموظفين
+    └── الورديات │ المواقع
 ```
 
 ## Credentials
@@ -22,18 +26,20 @@
 - Full Prayer Areas Management (60 zones, heatmap, daily sessions)
 - Interactive SVG Maps with pan/zoom/drag
 - Smart Archiving System (Year → Month → Day)
-- Employee Management with direct Rest Days multi-select (Feb 2026)
+- Employee Management with direct Rest Days multi-select (March 2026)
+- Professional card-style Department Settings tabs with department themes (March 2026)
+- Unified employee management inside Department Settings for ALL departments (March 2026)
 - Dashboards with KPIs for both modules
 - Multi-level auth (system_admin, general_manager, department_manager, field_staff)
 - Weekly Coverage indicator for employee availability
 
 ## Recent Changes (March 2026)
-- **Removed** "أنماط الراحة" (Rest Patterns) tab from Department Settings
-- **Added** direct rest days multi-select picker on employee add/edit forms
-- **Added** rest_days array field in employee model (migrated from text weekly_rest)
-- **Added** colored day badges in employee table
-- **Added** Weekly Coverage Card showing daily employee availability
-- **Added** automatic "في راحة" status based on today matching rest_days
+- **Redesigned** Department Settings tabs from flat style to card-based with icons, counts, and department color themes
+- **Moved** employees tab into Department Settings for Planning, Crowd Services, and Mataf departments
+- **Removed** separate "الموظفين" sidebar links (now inside Settings for all departments)
+- **Added** department-specific color themes: Gates=emerald, Plazas=blue, Planning=violet, Crowd=amber, Mataf=rose
+- **Replaced** Rest Patterns system with direct rest days multi-select
+- **Added** Weekly Coverage Card for employee availability
 
 ## Backlog
 - P0: Employee distribution testing with real data
@@ -41,8 +47,8 @@
 - P1: Monthly Summary for Archive
 - P1: Smart Alerts with escalation system  
 - P1: General Manager unified dashboard
-- P1: Shift Supervisor role + interface (NEW)
-- P1: Field Staff mobile interface (NEW)
+- P1: Shift Supervisor role + interface
+- P1: Field Staff mobile interface
 - P1: Link employees to user accounts
 - P2: Field Supervisor Mobile Mode
 - P2: Smart Routing, Live Haram Map
