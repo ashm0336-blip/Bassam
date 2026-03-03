@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
+import { useZoneEmployees } from "./useZoneEmployees";
 
 function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
   if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
@@ -77,6 +78,7 @@ export function MapCanvas({
 
   const [hoveredZone, setHoveredZone] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const zoneEmployeeMap = useZoneEmployees(activeZones);
 
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
@@ -268,6 +270,35 @@ export function MapCanvas({
                               strokeDasharray="5 3"
                               vectorEffect="non-scaling-stroke" pointerEvents="none" />
                           )}
+                          {/* Staff count badge at zone center */}
+                          {!isSelected && zone.polygon_points?.length > 2 && (() => {
+                            const cx = zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length;
+                            const cy = zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length;
+                            const staffCount = zoneEmployeeMap[zone.zone_code] || 0;
+                            const hasStaff = staffCount > 0;
+                            return (
+                              <g style={{ pointerEvents: "none" }}>
+                                {hasStaff ? (
+                                  <>
+                                    <circle cx={cx} cy={cy} r="1.2" fill="white" fillOpacity="0.9" stroke={zone.fill_color || "#22c55e"} strokeWidth="0.08" vectorEffect="non-scaling-stroke" />
+                                    <text x={cx} y={cy - 0.15} textAnchor="middle" dominantBaseline="middle" fill="#1e293b" fontSize="0.9" fontWeight="800" fontFamily="Cairo, sans-serif">{staffCount}</text>
+                                    <text x={cx} y={cy + 0.7} textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="0.45" fontWeight="600">👤</text>
+                                  </>
+                                ) : (
+                                  <>
+                                    <circle cx={cx} cy={cy} r="0.9" fill="#f59e0b" fillOpacity="0.15" stroke="#f59e0b" strokeWidth="0.06" vectorEffect="non-scaling-stroke">
+                                      <animate attributeName="fill-opacity" values="0.25;0.05;0.25" dur="1.5s" repeatCount="indefinite" />
+                                      <animate attributeName="r" values="0.9;1.2;0.9" dur="1.5s" repeatCount="indefinite" />
+                                    </circle>
+                                    <circle cx={cx} cy={cy} r="0.55" fill="#f59e0b" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke">
+                                      <animate attributeName="fill-opacity" values="1;0.6;1" dur="1.5s" repeatCount="indefinite" />
+                                    </circle>
+                                    <text x={cx} y={cy + 0.05} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="0.55" fontWeight="900">!</text>
+                                  </>
+                                )}
+                              </g>
+                            );
+                          })()}
                           {/* Vertex handles - PPT style white squares */}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
                             const isActive = i === draggingPoint || i === hoveredPoint;
