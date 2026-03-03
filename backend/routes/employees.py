@@ -5,7 +5,7 @@ import uuid
 
 from database import db
 from auth import get_current_user, require_admin, log_activity, check_department_access
-from models import EmployeeCreate, EmployeeUpdate
+from models import EmployeeCreate, EmployeeUpdate, MonthlyScheduleCreate, ScheduleAssignmentUpdate
 
 router = APIRouter()
 
@@ -95,3 +95,124 @@ async def get_employee_stats(department: str, user: dict = Depends(get_current_u
         "shifts": {"shift_1": shift_1, "shift_2": shift_2, "shift_3": shift_3, "shift_4": shift_4},
         "locations_count": unique_locations, "employees_with_location": employees_with_location
     }
+
+
+
+# ============= Monthly Schedules =============
+@router.get("/schedules/{department}")
+async def get_schedules(department: str, month: Optional[str] = None, user: dict = Depends(get_current_user)):
+    query = {"department": department}
+    if month:
+        query["month"] = month
+    schedules = await db.monthly_schedules.find(query, {"_id": 0}).sort("month", -1).to_list(60)
+    return schedules
+
+
+@router.get("/schedules/{department}/{month}")
+async def get_schedule(department: str, month: str, user: dict = Depends(get_current_user)):
+    schedule = await db.monthly_schedules.find_one({"department": department, "month": month}, {"_id": 0})
+    return schedule
+
+
+@router.post("/admin/schedules")
+async def create_schedule(data: MonthlyScheduleCreate, user: dict = Depends(get_current_user)):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    existing = await db.monthly_schedules.find_one({"department": data.department, "month": data.month}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="يوجد جدول لهذا الشهر بالفعل")
+
+    assignments = []
+    if data.clone_from:
+        source = await db.monthly_schedules.find_one({"department": data.department, "month": data.clone_from}, {"_id": 0})
+        if source:
+            assignments = source.get("assignments", [])
+    
+    if not assignments:
+        employees = await db.employees.find({"department": data.department}, {"_id": 0}).to_list(500)
+        assignments = [
+            {"employee_id": e["id"], "rest_days": e.get("rest_days", []), "location": e.get("location", ""), "shift": e.get("shift", "")}
+            for e in employees
+        ]
+
+    schedule_id = str(uuid.uuid4())
+    doc = {
+        "id": schedule_id, "department": data.department, "month": data.month,
+        "status": "draft", "assignments": assignments,
+        "created_by": user.get("name", ""), "approved_by": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.monthly_schedules.insert_one(doc)
+    await log_activity("schedule_created", user, data.month, f"تم إنشاء جدول شهري: {data.month} - {data.department}")
+    doc.pop("_id", None)
+    return doc
+
+
+@router.put("/admin/schedules/{schedule_id}/assignment/{employee_id}")
+async def update_assignment(schedule_id: str, employee_id: str, data: ScheduleAssignmentUpdate, user: dict = Depends(get_current_user)):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="الجدول غير موجود")
+
+    assignments = schedule.get("assignments", [])
+    found = False
+    for a in assignments:
+        if a["employee_id"] == employee_id:
+            if data.rest_days is not None:
+                a["rest_days"] = data.rest_days
+            if data.location is not None:
+                a["location"] = data.location
+            if data.shift is not None:
+                a["shift"] = data.shift
+            found = True
+            break
+    
+    if not found:
+        new_a = {"employee_id": employee_id, "rest_days": data.rest_days or [], "location": data.location or "", "shift": data.shift or ""}
+        assignments.append(new_a)
+
+    await db.monthly_schedules.update_one(
+        {"id": schedule_id},
+        {"$set": {"assignments": assignments, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "تم تحديث التعيين بنجاح"}
+
+
+@router.put("/admin/schedules/{schedule_id}/status")
+async def update_schedule_status(schedule_id: str, status: str = "active", user: dict = Depends(get_current_user)):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="الجدول غير موجود")
+
+    if status == "active":
+        await db.monthly_schedules.update_many(
+            {"department": schedule["department"], "status": "active"},
+            {"$set": {"status": "archived"}}
+        )
+
+    await db.monthly_schedules.update_one(
+        {"id": schedule_id},
+        {"$set": {"status": status, "approved_by": user.get("name", ""), "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    action = "اعتماد" if status == "active" else "أرشفة"
+    await log_activity("schedule_status", user, schedule["month"], f"تم {action} جدول شهري: {schedule['month']}")
+    return {"message": f"تم {action} الجدول بنجاح"}
+
+
+@router.delete("/admin/schedules/{schedule_id}")
+async def delete_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="الجدول غير موجود")
+    if schedule.get("status") == "active":
+        raise HTTPException(status_code=400, detail="لا يمكن حذف جدول نشط")
+    await db.monthly_schedules.delete_one({"id": schedule_id})
+    await log_activity("schedule_deleted", user, schedule["month"], f"تم حذف جدول شهري: {schedule['month']}")
+    return {"message": "تم حذف الجدول بنجاح"}

@@ -155,6 +155,34 @@ class EmployeeUpdate(BaseModel):
     work_tasks: Optional[str] = None
     is_active: Optional[bool] = None
 
+# ============= Monthly Schedule Models =============
+class ScheduleAssignment(BaseModel):
+    employee_id: str
+    rest_days: List[str] = []
+    location: str = ""
+    shift: str = ""
+
+class MonthlySchedule(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    department: str
+    month: str
+    status: str = "draft"
+    assignments: List[ScheduleAssignment] = []
+    created_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class MonthlyScheduleCreate(BaseModel):
+    department: str
+    month: str
+    clone_from: Optional[str] = None
+
+class ScheduleAssignmentUpdate(BaseModel):
+    rest_days: Optional[List[str]] = None
+    location: Optional[str] = None
+    shift: Optional[str] = None
+
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
