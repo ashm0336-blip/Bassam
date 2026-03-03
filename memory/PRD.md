@@ -14,30 +14,21 @@
 ## Credentials
 - admin@crowd.sa / admin123
 
-## Key Data Models
-- `employees` - Base employee data (name, number, job_title)
-- `monthly_schedules` - Monthly assignments (rest_days, location, shift per employee)
-  - Status: draft → active → archived
-  - Clone from previous month supported
+## Gate Data Model (Updated)
+- `status`: "open" / "closed" (الحالة التشغيلية)
+- `indicator`: "light" / "medium" / "crowded" (مؤشر الازدحام - للأبواب المفتوحة فقط)
 
 ## Completed Features
 - Gates Management (17 gates, maps, daily log, archiving)
+- **Separated Gate Status from Indicator** (March 2026) - status (open/closed) vs indicator (light/medium/crowded)
 - Prayer Areas Management (60 zones, heatmap, daily sessions)
 - Interactive SVG Maps with pan/zoom/drag
 - Smart Archiving System (Year → Month → Day)
-- **Monthly Employee Schedules** (March 2026) - rest days, locations, shifts change monthly
+- Monthly Employee Schedules - rest days, locations, shifts change monthly
 - Professional card-style Department Settings tabs with department themes
 - Unified employee management inside Department Settings for ALL departments
 - Dashboards with KPIs, Weekly Coverage indicator
 - Multi-level auth (system_admin, general_manager, department_manager, field_staff)
-
-## Recent Changes (March 2026)
-- **Monthly Schedules System** - employees' rest days/locations/shifts now managed per-month
-- **Month Navigation Bar** - navigate between months, create/clone/approve/delete schedules
-- **Inline editing** - change rest days, shifts, locations directly in the table
-- **Schedule states** - draft/active/archived with proper transitions
-- Card-based Department Settings tabs with department color themes
-- Removed separate employee sidebar links (now inside Settings)
 
 ## Backlog
 - P0: Automatic Area Calculation (BLOCKED - needs scaled map)
