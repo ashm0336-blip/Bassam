@@ -28,7 +28,6 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const STATUS_CONFIG = {
   open: { color: "#22c55e", label_ar: "مفتوح", label_en: "Open", icon: DoorOpen },
   closed: { color: "#ef4444", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
-  crowded: { color: "#f97316", label_ar: "مزدحم", label_en: "Crowded", icon: DoorOpen },
   maintenance: { color: "#6b7280", label_ar: "صيانة", label_en: "Maintenance", icon: Wrench },
 };
 
@@ -257,8 +256,11 @@ export default function DailyGateSessionsPage() {
   const stats = useMemo(() => {
     const open = activeGates.filter(g => g.status === "open").length;
     const closed = activeGates.filter(g => g.status === "closed").length;
-    const crowded = activeGates.filter(g => g.status === "crowded").length;
-    return { total: activeGates.length, open, closed, crowded, noStaff: activeGates.filter(g => g.status === "open" && (g.assigned_staff || 0) === 0).length };
+    const openGates = activeGates.filter(g => g.status === "open");
+    const light = openGates.filter(g => (g.indicator || "light") === "light").length;
+    const medium = openGates.filter(g => (g.indicator || "light") === "medium").length;
+    const crowded = openGates.filter(g => (g.indicator || "light") === "crowded").length;
+    return { total: activeGates.length, open, closed, light, medium, crowded, noStaff: openGates.filter(g => (g.assigned_staff || 0) === 0).length };
   }, [activeGates]);
 
   const formatDate = (ds) => { try { return new Date(ds+"T00:00:00").toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }); } catch { return ds; } };
@@ -322,7 +324,8 @@ export default function DailyGateSessionsPage() {
                           <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-blue-500" />{stats.total} {isAr ? "باب" : "gates"}</span>
                           <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-emerald-500" />{stats.open} {isAr ? "مفتوح" : "open"}</span>
                           <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-red-500" />{stats.closed} {isAr ? "مغلق" : "closed"}</span>
-                          {stats.crowded > 0 && <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-orange-500" />{stats.crowded} {isAr ? "مزدحم" : "crowded"}</span>}
+                          {stats.crowded > 0 && <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium"><span className="w-2 h-2 rounded-full bg-red-500" />{stats.crowded} {isAr ? "مزدحم" : "crowded"}</span>}
+                          {stats.medium > 0 && <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium"><span className="w-2 h-2 rounded-full bg-amber-500" />{stats.medium} {isAr ? "متوسط" : "medium"}</span>}
                         </span>
                       </div>
                     </div>

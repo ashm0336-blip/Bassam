@@ -622,6 +622,7 @@ class SessionGate(BaseModel):
     direction: str = "both"
     classification: str = "general"
     status: str = "open"
+    indicator: str = "light"
     current_flow: int = 0
     max_flow: int = 5000
     assigned_staff: int = 0
@@ -654,6 +655,7 @@ class GateSessionUpdate(BaseModel):
 class SessionGateUpdate(BaseModel):
     name_ar: Optional[str] = None
     status: Optional[str] = None
+    indicator: Optional[str] = None
     direction: Optional[str] = None
     classification: Optional[str] = None
     current_flow: Optional[int] = None
