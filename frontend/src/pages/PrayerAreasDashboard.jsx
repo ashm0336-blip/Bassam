@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   MapPin, Users, UserCheck, UserX, Layers, Calendar, ArrowLeft,
-  CheckCircle2, Clock, AlertCircle, TrendingUp, Maximize2, BarChart3
+  CheckCircle2, Clock, AlertCircle, TrendingUp, Maximize2, BarChart3,
+  ZoomIn, ZoomOut
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -125,7 +126,7 @@ export default function PrayerAreasDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3" data-testid="kpi-cards">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3" data-testid="kpi-cards">
         {/* Zones */}
         <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-emerald-50 to-white p-4">
           <div className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-emerald-200/30 blur-xl" />
@@ -135,7 +136,18 @@ export default function PrayerAreasDashboard() {
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center"><MapPin className="w-4 h-4 text-emerald-600" /></div>
             </div>
             <p className="text-3xl font-bold text-emerald-700">{stats.totalZones}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{floors.length} {isAr ? "طابق" : "floors"}</p>
+          </div>
+        </div>
+
+        {/* Floors */}
+        <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-indigo-50 to-white p-4">
+          <div className="absolute -top-6 -left-6 w-16 h-16 rounded-full bg-indigo-200/30 blur-xl" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] text-muted-foreground font-medium">{isAr ? "الأدوار" : "Floors"}</span>
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><Layers className="w-4 h-4 text-indigo-600" /></div>
+            </div>
+            <p className="text-3xl font-bold text-indigo-700">{floors.length}</p>
           </div>
         </div>
 
@@ -254,91 +266,8 @@ export default function PrayerAreasDashboard() {
         </Card>
       </div>
 
-      {/* Row 2.5: Density Heatmap Mini-Map */}
-      {latestSession && activeZones.length > 0 && floors.length > 0 && (() => {
-        const floor = floors[0];
-        const floorImageUrl = (() => {
-          let url = floor.image_url || "";
-          if (url.startsWith("/")) url = `${process.env.REACT_APP_BACKEND_URL}${url}`;
-          if (url.includes("/uploads/") && !url.includes("/api/uploads/")) url = url.replace("/uploads/", "/api/uploads/");
-          return url;
-        })();
-        const getDensityColor = (z) => {
-          const curr = z.current_count || 0;
-          const max = z.max_capacity || 0;
-          if (max === 0) return { color: "#94a3b8", label: isAr ? "غير محدد" : "N/A" };
-          const pct = (curr / max) * 100;
-          if (pct >= 80) return { color: "#ef4444", label: isAr ? "مزدحم" : "Crowded" };
-          if (pct >= 50) return { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" };
-          return { color: "#22c55e", label: isAr ? "خفيف" : "Light" };
-        };
-        const densityCounts = { light: 0, medium: 0, crowded: 0, na: 0 };
-        activeZones.forEach(z => {
-          const curr = z.current_count || 0;
-          const max = z.max_capacity || 0;
-          if (max === 0) { densityCounts.na++; return; }
-          const pct = (curr / max) * 100;
-          if (pct >= 80) densityCounts.crowded++;
-          else if (pct >= 50) densityCounts.medium++;
-          else densityCounts.light++;
-        });
-        const getPath = (pts) => {
-          if (!pts || pts.length < 2) return "";
-          return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ") + " Z";
-        };
-        return (
-          <Card data-testid="density-heatmap-card">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="font-cairo text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange-500" />{isAr ? "مؤشر الكثافة - آخر جولة" : "Density - Latest Tour"}</CardTitle>
-                <Badge variant="secondary" className="text-[10px]">{latestSession.date}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Mini Map */}
-                <div className="lg:col-span-2 relative rounded-xl overflow-hidden border bg-slate-50" style={{ height: "280px" }}>
-                  {floorImageUrl && (
-                    <div className="relative w-full h-full">
-                      <img src={floorImageUrl} alt="" className="w-full h-full object-contain pointer-events-none select-none" style={{ opacity: 0.4 }} />
-                      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        {activeZones.filter(z => z.polygon_points?.length > 2).map(zone => {
-                          const dc = getDensityColor(zone);
-                          return (
-                            <path key={zone.id} d={getPath(zone.polygon_points)} fill={dc.color} fillOpacity="0.5" stroke={dc.color} strokeWidth="0.3" strokeOpacity="0.8" vectorEffect="non-scaling-stroke" />
-                          );
-                        })}
-                      </svg>
-                    </div>
-                  )}
-                  {/* Floor label */}
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[10px] font-medium text-slate-600 border">{floor.name_ar}</div>
-                </div>
-                {/* Density Stats */}
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    {[
-                      { key: "light", label: isAr ? "خفيف" : "Light", color: "#22c55e", count: densityCounts.light },
-                      { key: "medium", label: isAr ? "متوسط" : "Medium", color: "#f59e0b", count: densityCounts.medium },
-                      { key: "crowded", label: isAr ? "مزدحم" : "Crowded", color: "#ef4444", count: densityCounts.crowded },
-                      { key: "na", label: isAr ? "غير محدد" : "N/A", color: "#94a3b8", count: densityCounts.na },
-                    ].map(item => (
-                      <div key={item.key} className="flex items-center gap-2 p-2.5 rounded-xl border bg-white">
-                        <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                        <span className="text-xs font-medium flex-1">{item.label}</span>
-                        <span className="text-lg font-bold" style={{ color: item.color }}>{item.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full text-xs" onClick={() => navigate("/daily-sessions")}>
-                    {isAr ? "فتح السجل اليومي" : "Open Daily Log"} →
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
+      {/* Row 2.5: Density Heatmap - Interactive */}
+      {latestSession && activeZones.length > 0 && floors.length > 0 && <HeatmapCard floors={floors} activeZones={activeZones} latestSession={latestSession} isAr={isAr} navigate={navigate} />}
 
       {/* Row 3: Employees + Recent Sessions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -439,5 +368,219 @@ export default function PrayerAreasDashboard() {
         </Card>
       )}
     </div>
+  );
+}
+
+// Interactive Heatmap Component with zoom/pan
+function HeatmapCard({ floors, activeZones, latestSession, isAr, navigate }) {
+  const [heatZoom, setHeatZoom] = useState(1);
+  const [heatPan, setHeatPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [imgRatio, setImgRatio] = useState(null);
+  const [hoveredZone, setHoveredZone] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  const containerRef = useRef(null);
+
+  const floor = floors[0];
+  const floorImageUrl = (() => {
+    let url = floor.image_url || "";
+    if (url.startsWith("/")) url = `${process.env.REACT_APP_BACKEND_URL}${url}`;
+    if (url.includes("/uploads/") && !url.includes("/api/uploads/")) url = url.replace("/uploads/", "/api/uploads/");
+    return url;
+  })();
+
+  const getDensityColor = (z) => {
+    const curr = z.current_count || 0;
+    const max = z.max_capacity || 0;
+    if (max === 0) return { color: "#94a3b8", label: isAr ? "غير محدد" : "N/A" };
+    const pct = (curr / max) * 100;
+    if (pct >= 80) return { color: "#ef4444", label: isAr ? "مزدحم" : "Crowded" };
+    if (pct >= 50) return { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" };
+    return { color: "#22c55e", label: isAr ? "خفيف" : "Light" };
+  };
+
+  const densityCounts = useMemo(() => {
+    const c = { light: 0, medium: 0, crowded: 0, na: 0 };
+    activeZones.forEach(z => {
+      const curr = z.current_count || 0;
+      const max = z.max_capacity || 0;
+      if (max === 0) { c.na++; return; }
+      const pct = (curr / max) * 100;
+      if (pct >= 80) c.crowded++;
+      else if (pct >= 50) c.medium++;
+      else c.light++;
+    });
+    return c;
+  }, [activeZones]);
+
+  const getPath = (pts) => {
+    if (!pts || pts.length < 2) return "";
+    return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ") + " Z";
+  };
+
+  // Wheel zoom
+  const wheelHandler = useCallback((node) => {
+    if (!node) return;
+    containerRef.current = node;
+    const handler = (e) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const prev = zoomRef.current;
+      const nz = Math.max(0.5, Math.min(8, prev * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      const s = nz / prev;
+      zoomRef.current = nz; setHeatZoom(nz);
+      setHeatPan(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
+    };
+    node.addEventListener("wheel", handler, { passive: false });
+  }, []);
+
+  const handleMouseDown = (e) => { if (e.button === 0) { setIsPanning(true); setPanStart({ x: e.clientX - heatPan.x, y: e.clientY - heatPan.y }); } };
+  const handleMouseMove = (e) => {
+    if (isPanning) setHeatPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    if (containerRef.current) {
+      const r = containerRef.current.getBoundingClientRect();
+      setTooltipPos({ x: e.clientX - r.left + 14, y: e.clientY - r.top - 10 });
+    }
+  };
+  const handleMouseUp = () => setIsPanning(false);
+
+  const zoomTo = (factor) => {
+    const c = containerRef.current; if (!c) return;
+    const r = c.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    const p = zoomRef.current;
+    const nz = Math.max(0.5, Math.min(8, p * factor));
+    const s = nz / p;
+    zoomRef.current = nz; setHeatZoom(nz);
+    setHeatPan(o => ({ x: cx - s * (cx - o.x), y: cy - s * (cy - o.y) }));
+  };
+  const resetView = () => { zoomRef.current = 1; setHeatZoom(1); setHeatPan({ x: 0, y: 0 }); };
+
+  return (
+    <Card data-testid="density-heatmap-card">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="font-cairo text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange-500" />{isAr ? "مؤشر الكثافة - آخر جولة" : "Density - Latest Tour"}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-[10px]">{latestSession.date}</Badge>
+            <div className="flex items-center gap-0.5 border rounded-lg p-0.5 bg-slate-50">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => zoomTo(0.8)}><ZoomOut className="w-3 h-3" /></Button>
+              <span className="text-[10px] w-8 text-center font-medium text-slate-500">{Math.round(heatZoom * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => zoomTo(1.25)}><ZoomIn className="w-3 h-3" /></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetView}><Maximize2 className="w-3 h-3" /></Button>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Interactive Map */}
+          <div className="lg:col-span-3 relative rounded-xl overflow-hidden border bg-slate-100" style={{ height: "340px" }}>
+            <div
+              ref={wheelHandler}
+              className="relative w-full h-full overflow-hidden"
+              style={{ cursor: isPanning ? "grabbing" : "grab" }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={() => { handleMouseUp(); setHoveredZone(null); }}
+              data-testid="heatmap-canvas"
+            >
+              <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {(() => {
+                  const ce = containerRef.current;
+                  let ws = { position: "relative", width: "100%", height: "100%" };
+                  if (imgRatio && ce) {
+                    const cw = ce.clientWidth, ch = ce.clientHeight;
+                    if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
+                    else ws = { position: "relative", width: "100%", height: cw / imgRatio };
+                  }
+                  return (
+                    <div style={ws}>
+                      {floorImageUrl && <img src={floorImageUrl} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />}
+                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                        {activeZones.filter(z => z.polygon_points?.length > 2).map(zone => {
+                          const dc = getDensityColor(zone);
+                          const isHov = hoveredZone?.id === zone.id;
+                          return (
+                            <g key={zone.id}
+                              onMouseEnter={() => setHoveredZone(zone)}
+                              onMouseLeave={() => setHoveredZone(null)}
+                              style={{ cursor: "pointer" }}>
+                              <path d={getPath(zone.polygon_points)} fill={dc.color} fillOpacity={isHov ? 0.7 : 0.45} stroke={isHov ? "#1e293b" : dc.color} strokeWidth={isHov ? "0.5" : "0.2"} strokeOpacity={isHov ? 1 : 0.7} vectorEffect="non-scaling-stroke" />
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  );
+                })()}
+              </div>
+              {/* Floor label */}
+              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[10px] font-medium text-slate-600 border">{floor.name_ar}</div>
+              {/* Legend */}
+              <div className="absolute bottom-2 left-2 right-2 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border shadow-sm">
+                {[
+                  { label: isAr ? "خفيف" : "Light", color: "#22c55e" },
+                  { label: isAr ? "متوسط" : "Medium", color: "#f59e0b" },
+                  { label: isAr ? "مزدحم" : "Crowded", color: "#ef4444" },
+                  { label: isAr ? "غير محدد" : "N/A", color: "#94a3b8" },
+                ].map(l => <span key={l.label} className="flex items-center gap-1 text-[9px]"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />{l.label}</span>)}
+              </div>
+              {/* Tooltip */}
+              {hoveredZone && !isPanning && (() => {
+                const dc = getDensityColor(hoveredZone);
+                const curr = hoveredZone.current_count || 0;
+                const max = hoveredZone.max_capacity || 0;
+                const pct = max > 0 ? Math.round((curr / max) * 100) : 0;
+                return (
+                  <div className="absolute pointer-events-none z-50" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+                    <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[180px]" style={{ direction: "rtl" }}>
+                      <div className="h-1" style={{ backgroundColor: dc.color }} />
+                      <div className="p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold" style={{ backgroundColor: hoveredZone.fill_color }}>{hoveredZone.zone_code?.split("-").pop()}</span>
+                          <span className="font-bold text-xs">{hoveredZone.zone_code}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium mr-auto" style={{ backgroundColor: `${dc.color}20`, color: dc.color }}>{dc.label}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-600">{isAr ? hoveredZone.name_ar : hoveredZone.name_en}</p>
+                        {max > 0 && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: dc.color }} /></div>
+                            <span className="text-[10px] font-bold" style={{ color: dc.color }}>{pct}%</span>
+                          </div>
+                        )}
+                        <div className="text-[10px] text-slate-500">{curr.toLocaleString()} / {max.toLocaleString()} {isAr ? "مصلي" : "cap"}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+          {/* Density Stats */}
+          <div className="space-y-3">
+            {[
+              { key: "light", label: isAr ? "خفيف" : "Light", color: "#22c55e", count: densityCounts.light },
+              { key: "medium", label: isAr ? "متوسط" : "Medium", color: "#f59e0b", count: densityCounts.medium },
+              { key: "crowded", label: isAr ? "مزدحم" : "Crowded", color: "#ef4444", count: densityCounts.crowded },
+              { key: "na", label: isAr ? "غير محدد" : "N/A", color: "#94a3b8", count: densityCounts.na },
+            ].map(item => (
+              <div key={item.key} className="flex items-center gap-2 p-2.5 rounded-xl border bg-white">
+                <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                <span className="text-xs font-medium flex-1">{item.label}</span>
+                <span className="text-lg font-bold" style={{ color: item.color }}>{item.count}</span>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full text-xs" onClick={() => navigate("/daily-sessions")}>
+              {isAr ? "فتح السجل اليومي" : "Open Daily Log"} →
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
