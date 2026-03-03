@@ -254,6 +254,92 @@ export default function PrayerAreasDashboard() {
         </Card>
       </div>
 
+      {/* Row 2.5: Density Heatmap Mini-Map */}
+      {latestSession && activeZones.length > 0 && floors.length > 0 && (() => {
+        const floor = floors[0];
+        const floorImageUrl = (() => {
+          let url = floor.image_url || "";
+          if (url.startsWith("/")) url = `${process.env.REACT_APP_BACKEND_URL}${url}`;
+          if (url.includes("/uploads/") && !url.includes("/api/uploads/")) url = url.replace("/uploads/", "/api/uploads/");
+          return url;
+        })();
+        const getDensityColor = (z) => {
+          const curr = z.current_count || 0;
+          const max = z.max_capacity || 0;
+          if (max === 0) return { color: "#94a3b8", label: isAr ? "غير محدد" : "N/A" };
+          const pct = (curr / max) * 100;
+          if (pct >= 80) return { color: "#ef4444", label: isAr ? "مزدحم" : "Crowded" };
+          if (pct >= 50) return { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" };
+          return { color: "#22c55e", label: isAr ? "خفيف" : "Light" };
+        };
+        const densityCounts = { light: 0, medium: 0, crowded: 0, na: 0 };
+        activeZones.forEach(z => {
+          const curr = z.current_count || 0;
+          const max = z.max_capacity || 0;
+          if (max === 0) { densityCounts.na++; return; }
+          const pct = (curr / max) * 100;
+          if (pct >= 80) densityCounts.crowded++;
+          else if (pct >= 50) densityCounts.medium++;
+          else densityCounts.light++;
+        });
+        const getPath = (pts) => {
+          if (!pts || pts.length < 2) return "";
+          return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ") + " Z";
+        };
+        return (
+          <Card data-testid="density-heatmap-card">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="font-cairo text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange-500" />{isAr ? "مؤشر الكثافة - آخر جولة" : "Density - Latest Tour"}</CardTitle>
+                <Badge variant="secondary" className="text-[10px]">{latestSession.date}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Mini Map */}
+                <div className="lg:col-span-2 relative rounded-xl overflow-hidden border bg-slate-50" style={{ height: "280px" }}>
+                  {floorImageUrl && (
+                    <div className="relative w-full h-full">
+                      <img src={floorImageUrl} alt="" className="w-full h-full object-contain pointer-events-none select-none" style={{ opacity: 0.4 }} />
+                      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        {activeZones.filter(z => z.polygon_points?.length > 2).map(zone => {
+                          const dc = getDensityColor(zone);
+                          return (
+                            <path key={zone.id} d={getPath(zone.polygon_points)} fill={dc.color} fillOpacity="0.5" stroke={dc.color} strokeWidth="0.3" strokeOpacity="0.8" vectorEffect="non-scaling-stroke" />
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  )}
+                  {/* Floor label */}
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[10px] font-medium text-slate-600 border">{floor.name_ar}</div>
+                </div>
+                {/* Density Stats */}
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    {[
+                      { key: "light", label: isAr ? "خفيف" : "Light", color: "#22c55e", count: densityCounts.light },
+                      { key: "medium", label: isAr ? "متوسط" : "Medium", color: "#f59e0b", count: densityCounts.medium },
+                      { key: "crowded", label: isAr ? "مزدحم" : "Crowded", color: "#ef4444", count: densityCounts.crowded },
+                      { key: "na", label: isAr ? "غير محدد" : "N/A", color: "#94a3b8", count: densityCounts.na },
+                    ].map(item => (
+                      <div key={item.key} className="flex items-center gap-2 p-2.5 rounded-xl border bg-white">
+                        <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs font-medium flex-1">{item.label}</span>
+                        <span className="text-lg font-bold" style={{ color: item.color }}>{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" className="w-full text-xs" onClick={() => navigate("/daily-sessions")}>
+                    {isAr ? "فتح السجل اليومي" : "Open Daily Log"} →
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Row 3: Employees + Recent Sessions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Employee Distribution */}
