@@ -140,6 +140,7 @@ class EmployeeCreate(BaseModel):
     shift: str
     employee_number: Optional[str] = None
     weekly_rest: Optional[str] = None
+    rest_days: Optional[List[str]] = None
     work_tasks: Optional[str] = None
     is_active: bool = True
 
@@ -150,6 +151,7 @@ class EmployeeUpdate(BaseModel):
     shift: Optional[str] = None
     employee_number: Optional[str] = None
     weekly_rest: Optional[str] = None
+    rest_days: Optional[List[str]] = None
     work_tasks: Optional[str] = None
     is_active: Optional[bool] = None
 

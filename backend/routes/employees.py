@@ -47,7 +47,15 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
         raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي قسمك فقط")
     if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
-    update_data = {k: v for k, v in employee.model_dump().items() if v is not None}
+    dump = employee.model_dump()
+    update_data = {}
+    for k, v in dump.items():
+        if k == "rest_days" and v is not None:
+            update_data[k] = v
+        elif v is not None:
+            update_data[k] = v
+    if "rest_days" in dump and dump["rest_days"] is not None:
+        update_data["rest_days"] = dump["rest_days"]
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.employees.update_one({"id": employee_id}, {"$set": update_data})
     await log_activity("employee_updated", user, existing["name"], f"تم تحديث بيانات الموظف: {existing['name']}")

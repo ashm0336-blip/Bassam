@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Settings,
   Clock,
-  Coffee,
   MapPin,
   Plus,
   Edit,
@@ -57,7 +56,6 @@ export default function DepartmentSettings({ department }) {
 
   // States for each setting type
   const [shifts, setShifts] = useState([]);
-  const [restPatterns, setRestPatterns] = useState([]);
   const [locations, setLocations] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -78,11 +76,8 @@ export default function DepartmentSettings({ department }) {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const [shiftsRes, restRes, locationsRes] = await Promise.all([
+      const [shiftsRes, locationsRes] = await Promise.all([
         axios.get(`${API}/${department}/settings/shifts`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API}/${department}/settings/rest_patterns`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API}/${department}/settings/coverage_locations`, {
@@ -91,7 +86,6 @@ export default function DepartmentSettings({ department }) {
       ]);
       
       setShifts(shiftsRes.data);
-      setRestPatterns(restRes.data);
       setLocations(locationsRes.data);
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -265,75 +259,6 @@ export default function DepartmentSettings({ department }) {
     </div>
   );
 
-  const renderRestPatternsTable = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-cairo font-semibold text-lg">
-            {language === 'ar' ? 'أنماط الراحة' : 'Rest Patterns'}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {language === 'ar' ? 'إدارة أنماط الراحة الأسبوعية' : 'Manage weekly rest patterns'}
-          </p>
-        </div>
-        {!isReadOnly() && (
-          <Button onClick={() => handleOpenDialog('rest_patterns')} className="bg-primary">
-            <Plus className="w-4 h-4 ml-2" />
-            {language === 'ar' ? 'إضافة نمط راحة' : 'Add Rest Pattern'}
-          </Button>
-        )}
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-            <TableHead className="text-right">{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
-            <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {restPatterns.map((pattern) => (
-            <TableRow key={pattern.id}>
-              <TableCell className="text-right font-medium">{pattern.label}</TableCell>
-              <TableCell className="text-right">{pattern.description || '-'}</TableCell>
-              <TableCell className="text-center">
-                <div className="flex items-center gap-2 justify-center">
-                  {!isReadOnly() && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleOpenDialog('rest_patterns', pattern)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(pattern.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {restPatterns.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                {language === 'ar' ? 'لا توجد أنماط راحة' : 'No rest patterns found'}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
-
   const renderLocationsTable = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -427,7 +352,7 @@ export default function DepartmentSettings({ department }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className={`grid w-full ${(department === 'gates' || department === 'plazas') ? 'grid-cols-5' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${(department === 'gates' || department === 'plazas') ? 'grid-cols-4' : 'grid-cols-2'}`}>
           {department === 'gates' && (
             <>
               <TabsTrigger value="gates_data" className="flex items-center gap-1.5 text-xs">
@@ -459,10 +384,6 @@ export default function DepartmentSettings({ department }) {
           <TabsTrigger value="shifts" className="flex items-center gap-1.5 text-xs">
             <Clock className="w-3.5 h-3.5" />
             {language === 'ar' ? 'الورديات' : 'Shifts'}
-          </TabsTrigger>
-          <TabsTrigger value="rest_patterns" className="flex items-center gap-1.5 text-xs">
-            <Coffee className="w-3.5 h-3.5" />
-            {language === 'ar' ? 'أنماط الراحة' : 'Rest'}
           </TabsTrigger>
           <TabsTrigger value="coverage_locations" className="flex items-center gap-1.5 text-xs">
             <MapPin className="w-3.5 h-3.5" />
@@ -499,10 +420,6 @@ export default function DepartmentSettings({ department }) {
 
         <TabsContent value="shifts" className="mt-6">
           <Card>{renderShiftsTable()}</Card>
-        </TabsContent>
-
-        <TabsContent value="rest_patterns" className="mt-6">
-          <Card>{renderRestPatternsTable()}</Card>
         </TabsContent>
 
         <TabsContent value="coverage_locations" className="mt-6">
