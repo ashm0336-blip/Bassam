@@ -7,7 +7,7 @@ export function useZoneEmployees(activeZones) {
   const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(`${API}/employees?department=plazas`, {
@@ -16,16 +16,20 @@ export function useZoneEmployees(activeZones) {
         setEmployees(res.data.filter(e => e.is_active));
       } catch {}
     };
-    fetch();
+    fetchData();
   }, []);
 
+  // Returns { zone_code: { count, employees: [...] } }
   const zoneEmployeeMap = useMemo(() => {
     const map = {};
-    activeZones.forEach(z => { map[z.zone_code] = 0; });
+    activeZones.forEach(z => { map[z.zone_code] = { count: 0, employees: [] }; });
     employees.forEach(emp => {
       if (emp.location) {
         const zone = activeZones.find(z => z.zone_code === emp.location || z.name_ar === emp.location || z.name_en === emp.location);
-        if (zone) map[zone.zone_code] = (map[zone.zone_code] || 0) + 1;
+        if (zone && map[zone.zone_code]) {
+          map[zone.zone_code].count++;
+          map[zone.zone_code].employees.push(emp);
+        }
       }
     });
     return map;

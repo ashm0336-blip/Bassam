@@ -274,7 +274,8 @@ export function MapCanvas({
                           {!isSelected && zone.polygon_points?.length > 2 && (() => {
                             const cx = zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length;
                             const cy = zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length;
-                            const staffCount = zoneEmployeeMap[zone.zone_code] || 0;
+                            const zoneData = zoneEmployeeMap[zone.zone_code];
+                            const staffCount = zoneData?.count || 0;
                             const hasStaff = staffCount > 0;
                             return (
                               <g style={{ pointerEvents: "none" }}>
@@ -385,14 +386,14 @@ export function MapCanvas({
             />
           )}
           {/* Tooltip for non-selected zones */}
-          {hoveredZone && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />}
+          {hoveredZone && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr }) {
+function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap }) {
   const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
   const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
   const hasChange = zone.change_type && zone.change_type !== "unchanged";
@@ -401,6 +402,11 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr }) {
   const currentCount = zone.current_count || 0;
   const utilPct = capacity > 0 ? Math.round((currentCount / capacity) * 100) : 0;
   const densityInfo = getDensityLevel(currentCount, capacity);
+  const zoneData = zoneEmployeeMap?.[zone.zone_code];
+  const staffCount = zoneData?.count || 0;
+  const staffList = zoneData?.employees || [];
+
+  const SHIFT_COLORS = { "الأولى": "#3b82f6", "الثانية": "#22c55e", "الثالثة": "#f97316", "الرابعة": "#8b5cf6" };
 
   return (
     <div className="absolute pointer-events-none z-50" style={{ left: pos.x, top: pos.y }} data-testid="zone-hover-tooltip">
@@ -433,6 +439,27 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr }) {
               <span className="text-[10px] font-bold font-mono" style={{ color: densityInfo.color }}>{utilPct}%</span>
             </div>
           )}
+          {/* Staff section */}
+          <div className="border-t border-dashed border-slate-200 pt-1.5">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-slate-500">{isAr ? "الموظفين" : "Staff"}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${staffCount > 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{staffCount}</span>
+            </div>
+            {staffList.length > 0 ? (
+              <div className="space-y-1">
+                {staffList.slice(0, 4).map(emp => (
+                  <div key={emp.id} className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0" style={{ backgroundColor: SHIFT_COLORS[emp.shift] || "#94a3b8" }}>{emp.name.charAt(0)}</div>
+                    <span className="text-[10px] text-slate-700 font-medium">{emp.name}</span>
+                    <span className="text-[8px] text-slate-400 mr-auto">{emp.shift}</span>
+                  </div>
+                ))}
+                {staffList.length > 4 && <p className="text-[9px] text-slate-400">+{staffList.length - 4} {isAr ? "آخرين" : "more"}</p>}
+              </div>
+            ) : (
+              <p className="text-[10px] text-amber-600 font-medium">{isAr ? "بدون موظفين!" : "No staff!"}</p>
+            )}
+          </div>
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${zone.is_removed ? "bg-red-500" : "bg-emerald-500"}`} />
             <span className={`text-[10px] font-semibold ${zone.is_removed ? "text-red-500" : "text-emerald-600"}`}>{zone.is_removed ? (isAr ? "مزالة" : "Removed") : (isAr ? "نشطة" : "Active")}</span>
