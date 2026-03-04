@@ -511,7 +511,7 @@ export default function DailySessionsPage() {
   const densityStats = useMemo(() => {
     if (!activeSession?.zones) return null;
     const active = activeSession.zones.filter(z => !z.is_removed);
-    let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0;
+    let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0, mediumCount = 0, safeCount = 0;
     const zonesDensity = active.map(z => {
       const area = z.area_sqm || 0;
       const capMax = area > 0 ? Math.round(area / 0.55) : (z.max_capacity || 1000);
@@ -532,11 +532,13 @@ export default function DailySessionsPage() {
       const filledRows = totalRows > 0 ? Math.round((fillPct / 100) * totalRows) : 0;
       if (info.level === "critical") criticalCount++;
       if (info.level === "high") highCount++;
+      if (info.level === "medium") mediumCount++;
+      if (info.level === "safe") safeCount++;
       return { ...z, fillPct, actualCount, capMax, capSafe, capMedium, currentDisplay: actualCount, maxDisplay: capMax, densityInfo: info, prayerCounts: { ...prayerCounts, ...editedPrayers }, totalRows, carpetsPerRow, totalCarpets, filledRows };
     });
     const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
     const overallLevel = getDensityLevel(totalCurrent, totalCapacity);
-    return { zonesDensity, totalCurrent, totalCapacity, overallPct, overallLevel, criticalCount, highCount };
+    return { zonesDensity, totalCurrent, totalCapacity, overallPct, overallLevel, criticalCount, highCount, mediumCount, safeCount, totalZones: active.length };
   }, [activeSession, densityEdits, activePrayer]);
 
   // ─── Loading ──────────────────────────────────────────────
