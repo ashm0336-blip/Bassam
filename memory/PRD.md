@@ -14,29 +14,55 @@
 ## Credentials
 - admin@crowd.sa / admin123
 
-## Gate Data Model (Updated)
+## Gate Data Model
 - `status`: "open" / "closed" (الحالة التشغيلية)
 - `indicator`: "light" / "medium" / "crowded" (مؤشر الازدحام - للأبواب المفتوحة فقط)
 
 ## Completed Features
 - Gates Management (17 gates, maps, daily log, archiving)
-- **Separated Gate Status from Indicator** (March 2026) - status (open/closed) vs indicator (light/medium/crowded)
+- Separated Gate Status from Indicator (March 2026)
 - Prayer Areas Management (60 zones, heatmap, daily sessions)
 - Interactive SVG Maps with pan/zoom/drag
-- Smart Archiving System (Year → Month → Day)
-- Monthly Employee Schedules - rest days, locations, shifts change monthly
+- Smart Archiving System (Year > Month > Day)
+- Monthly Employee Schedules - rest days, locations, shifts
 - Professional card-style Department Settings tabs with department themes
-- Unified employee management inside Department Settings for ALL departments
+- Unified employee management inside Department Settings
 - Dashboards with KPIs, Weekly Coverage indicator
 - Multi-level auth (system_admin, general_manager, department_manager, field_staff)
+- Enhanced gate map tooltip (plaza, category, full Arabic translation)
 
-## Backlog
-- P0: Automatic Area Calculation (BLOCKED - needs scaled map)
-- P1: Monthly Summary report for Archive
-- P1: Smart Alerts with escalation system
-- P1: General Manager unified dashboard
-- P1: Shift Supervisor role + interface
-- P1: Field Staff mobile interface
-- P1: Link employees to user accounts
-- P2: Smart Routing, Live Haram Map
-- P2: Attendance & check-in system
+## Pending Verification
+- Gate map tooltip update (المنطقة، الفئة، النوع، المسار، التصنيف، الحالة، المؤشر، الموظفين، الملاحظة)
+
+## Planned Tasks (Awaiting User Direction)
+
+### P0 - عالي الأولوية
+- **عرض احترافي لإدارة 200+ بوابة**: عرض جدول مضغوط (Compact Table) + تجميع حسب الساحة (Grouped by Plaza) في السجل اليومي
+- الحساب التلقائي للمساحة (محظور - يحتاج خريطة بمقياس معروف)
+
+### P1 - متوسط الأولوية
+- نظام أدوار متقدم (5 مستويات: مدير نظام، مدير عام، مدير قسم، مشرف وردية، موظف ميداني)
+- خريطة الحرم الحية (عرض موحد ثلاثي الأبعاد أو heatmap)
+- نظام التنبيهات الذكية مع التصعيد
+- وضع الجولات للبوابات (Tour Mode - واجهة بطاقات للموظف الميداني)
+- ميزة المسارات (Paths) لإدارة تدفق الحشود
+
+### P2 - منخفض الأولوية
+- واجهة الموظف الميداني للهاتف (Field Supervisor Mobile Mode)
+- تدوير أيام الراحة التلقائي (Rotate Rests)
+
+### Refactoring
+- دمج ArchiveSidebar.jsx و ArchiveSessionSidebar.jsx في مكون واحد
+
+## Key Files
+- `/app/frontend/src/pages/PrayerAreas/EmployeeManagement.jsx`
+- `/app/frontend/src/pages/DepartmentSettings.jsx`
+- `/app/frontend/src/pages/DailyGateSessions/GatesTab.jsx`
+- `/app/frontend/src/components/HaramInteractiveMap.jsx`
+- `/app/backend/server.py`
+
+## Key DB Collections
+- `gates_collection`: البوابات وخصائصها الثابتة
+- `gate_sessions_collection`: البيانات التشغيلية اليومية (status + indicator منفصلين)
+- `monthly_schedules`: الجداول الشهرية للموظفين (department, month, status, assignments)
+- `employees`: بيانات الموظفين الثابتة فقط
