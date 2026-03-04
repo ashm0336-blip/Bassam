@@ -128,21 +128,21 @@ export function DensityTab({
             {/* KPIs - Row 2: 4 level cards - Same style as Row 1 */}
             <div className="grid grid-cols-4 gap-2">
               {[
-                { label: isAr ? "آمن" : "Safe", value: densityStats.safeCount, icon: ShieldAlert, color: "#16a34a", bg: "#f0fdf4" },
-                { label: isAr ? "متوسط" : "Medium", value: densityStats.mediumCount, icon: AlertCircle, color: "#f59e0b", bg: "#fffbeb" },
-                { label: isAr ? "مرتفع" : "High", value: densityStats.highCount, icon: Flame, color: "#ea580c", bg: "#fff7ed" },
-                { label: isAr ? "حرج" : "Critical", value: densityStats.criticalCount, icon: ShieldAlert, color: "#dc2626", bg: "#fef2f2" },
+                { label: isAr ? "آمن" : "Safe", value: densityStats.safeCount, icon: ShieldAlert, color: "#16a34a", cardBg: "#f0fdf4", iconBg: "#dcfce7" },
+                { label: isAr ? "متوسط" : "Medium", value: densityStats.mediumCount, icon: AlertCircle, color: "#f59e0b", cardBg: "#fffbeb", iconBg: "#fef3c7" },
+                { label: isAr ? "مرتفع" : "High", value: densityStats.highCount, icon: Flame, color: "#ea580c", cardBg: "#fff7ed", iconBg: "#fed7aa" },
+                { label: isAr ? "حرج" : "Critical", value: densityStats.criticalCount, icon: ShieldAlert, color: "#dc2626", cardBg: "#fef2f2", iconBg: "#fecaca" },
               ].map((kpi, i) => {
                 const Icon = kpi.icon;
                 return (
-                  <div key={i} className="relative rounded-xl p-2 border border-slate-100 bg-white overflow-hidden" data-testid={`density-level-${i}`}>
-                    <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+                  <div key={i} className="relative rounded-xl p-2 border overflow-hidden" style={{ backgroundColor: kpi.cardBg, borderColor: kpi.color + "25" }} data-testid={`density-level-${i}`}>
+                    <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[2rem] opacity-[0.08]" style={{ backgroundColor: kpi.color }} />
                     <div className="flex items-start justify-between gap-1 relative">
                       <div>
-                        <p className="text-[9px] font-medium text-slate-400">{kpi.label}</p>
+                        <p className="text-[9px] font-medium" style={{ color: kpi.color + "99" }}>{kpi.label}</p>
                         <span className="text-lg font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
                       </div>
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.bg }}>
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.iconBg }}>
                         <Icon className="w-3 h-3" style={{ color: kpi.color }} />
                       </div>
                     </div>
