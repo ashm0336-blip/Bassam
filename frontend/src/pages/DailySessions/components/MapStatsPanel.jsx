@@ -72,16 +72,20 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
 
         {/* Panel Header with close button */}
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold font-cairo text-slate-500">{isAr ? "الإحصائيات" : "Statistics"}</p>
-          <button
-            onClick={onToggle}
-            className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
-            data-testid="stats-panel-close"
-            title={isAr ? "إخفاء" : "Hide"}
-          >
-            <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
-          </button>
+          <div className="flex-1" />
+          <p className="text-xs font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "الإحصائيات" : "Statistics"}</p>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={onToggle}
+              className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+              data-testid="stats-panel-close"
+              title={isAr ? "إخفاء" : "Hide"}
+            >
+              <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+          </div>
         </div>
+        <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
         {/* KPI Grid - 2x2 */}
         <div className="grid grid-cols-2 gap-2.5" data-testid="live-kpi-grid">
@@ -121,7 +125,10 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
         {/* Donut + Full Legend */}
         {sessionStats.totalActive > 0 && (
           <div className="rounded-xl border border-slate-100 bg-white p-4" data-testid="live-donut">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">{isAr ? "توزيع الفئات" : "Distribution"}</p>
+            <div className="text-center mb-3">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{isAr ? "توزيع الفئات" : "Distribution"}</p>
+              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
                 <svg viewBox="0 0 120 120" className="w-[110px] h-[110px]">
@@ -190,9 +197,13 @@ function PrevDayCompact({ sessionStats, ZONE_TYPES, isAr }) {
 
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-4" data-testid="live-prev-comparison">
-      <div className="flex items-center gap-1.5 mb-3">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex-1">{isAr ? "مقارنة" : "Compare"}</p>
-        <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{formatDateShort(sessionStats.prevSession.date)}</span>
+      <div className="text-center mb-3">
+        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{isAr ? "مقارنة" : "Compare"}</p>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200" />
+          <span className="text-[9px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{formatDateShort(sessionStats.prevSession.date)}</span>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-200" />
+        </div>
       </div>
 
       <div className="flex items-center gap-3 mb-3">
