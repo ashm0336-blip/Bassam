@@ -113,8 +113,8 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
                       </div>
                     )}
                   </div>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.bg }}>
-                    <Icon className="w-4 h-4" style={{ color: kpi.color }} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5" style={{ color: kpi.color, opacity: 0.5 }} />
                   </div>
                 </div>
               </div>

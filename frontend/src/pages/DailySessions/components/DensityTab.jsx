@@ -117,8 +117,8 @@ export function DensityTab({
                           {kpi.sub && <span className="text-[8px] text-slate-300">{kpi.sub}</span>}
                         </div>
                       </div>
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.bg }}>
-                        <Icon className="w-3 h-3" style={{ color: kpi.color }} />
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4" style={{ color: kpi.color, opacity: 0.5 }} />
                       </div>
                     </div>
                   </div>
