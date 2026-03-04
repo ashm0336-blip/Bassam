@@ -157,9 +157,9 @@ export function DensityTab({
             </div>
 
             {/* Mini Grid */}
-            <div className="grid grid-cols-4 gap-1.5 max-h-[340px] overflow-y-auto pr-0.5" data-testid="density-zone-list">
+            <div className="grid grid-cols-6 gap-1.5 max-h-[340px] overflow-y-auto pr-0.5" data-testid="density-zone-list">
               {filteredZones.length === 0 ? (
-                <p className="col-span-4 text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
+                <p className="col-span-6 text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
               ) : filteredZones.map(zone => (
                 <ZoneMiniCard key={zone.id} zone={zone} ZONE_TYPES={ZONE_TYPES}
                   densityEdits={densityEdits} activePrayer={activePrayer}
@@ -202,7 +202,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
           data-testid={`density-cell-${zone.id}`}
         >
           {isEdited && <span className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-amber-400 z-10" />}
-          <p className="text-[8px] text-slate-400 font-medium truncate leading-none">{code}</p>
+          <p className="text-[7px] text-slate-400 font-medium truncate leading-none">{zone.zone_code}</p>
           <p className="text-sm font-extrabold tabular-nums leading-tight mt-0.5" style={{ color: zone.fillPct > 0 ? di.color : "#cbd5e1" }}>{zone.fillPct}%</p>
           <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mt-1">
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
