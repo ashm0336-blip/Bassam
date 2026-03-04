@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Activity, Users, ShieldAlert, Flame, Gauge, AlertCircle, RefreshCw, SaveAll,
-  MapPin, ZoomIn, ZoomOut, Maximize2, Layers,
+  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, ArrowUpDown, Filter,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +17,45 @@ export function DensityTab({
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const [selectedZoneId, setSelectedZoneId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterLevel, setFilterLevel] = useState("all");
+  const [sortBy, setSortBy] = useState("density-desc");
+
+  // Filter & sort zones
+  const filteredZones = useMemo(() => {
+    if (!densityStats) return [];
+    let zones = [...densityStats.zonesDensity];
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      zones = zones.filter(z => z.zone_code?.toLowerCase().includes(q) || z.name_ar?.toLowerCase().includes(q));
+    }
+    if (filterLevel !== "all") {
+      zones = zones.filter(z => {
+        const lvl = z.densityInfo.level;
+        if (filterLevel === "critical") return lvl === "max" || lvl === "over";
+        if (filterLevel === "high") return lvl === "medium";
+        if (filterLevel === "low") return lvl === "safe" || lvl === "low" || lvl === "empty";
+        return true;
+      });
+    }
+    if (sortBy === "density-desc") zones.sort((a, b) => b.fillPct - a.fillPct);
+    else if (sortBy === "density-asc") zones.sort((a, b) => a.fillPct - b.fillPct);
+    else if (sortBy === "name") zones.sort((a, b) => (a.zone_code || "").localeCompare(b.zone_code || ""));
+    return zones;
+  }, [densityStats, searchQuery, filterLevel, sortBy]);
 
   if (!densityStats) return null;
 
+  const selectedZone = selectedZoneId ? densityStats.zonesDensity.find(z => z.id === selectedZoneId) : null;
+
+  const handleZoneClick = (zoneId) => {
+    setSelectedZoneId(prev => prev === zoneId ? null : zoneId);
+  };
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
+      {/* Prayer Time Selector */}
       <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl" data-testid="prayer-time-selector">
         {PRAYER_TIMES.map(pt => (
           <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`prayer-btn-${pt.key}`}
@@ -33,110 +66,211 @@ export function DensityTab({
         ))}
       </div>
 
-      <DensityKPIs densityStats={densityStats} activePrayer={activePrayer} isAr={isAr} />
-
+      {/* Save bar */}
       {Object.keys(densityEdits).length > 0 && (
         <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid="density-save-bar">
-          <div className="flex items-center gap-2 text-sm text-amber-700"><AlertCircle className="w-4 h-4" />{isAr ? `${Object.keys(densityEdits).length} تعديل غير محفوظ` : `${Object.keys(densityEdits).length} unsaved changes`}</div>
+          <div className="flex items-center gap-2 text-sm text-amber-700"><AlertCircle className="w-4 h-4" />{isAr ? `${Object.keys(densityEdits).length} تعديل غير محفوظ` : `${Object.keys(densityEdits).length} unsaved`}</div>
           <Button onClick={handleSaveDensityBatch} disabled={savingDensity} className="bg-emerald-600 hover:bg-emerald-700" size="sm" data-testid="density-save-btn">
             {savingDensity ? <RefreshCw className="w-4 h-4 ml-1 animate-spin" /> : <SaveAll className="w-4 h-4 ml-1" />}{isAr ? "حفظ الكل" : "Save All"}
           </Button>
         </div>
       )}
 
-      <DensityZoneGrid densityStats={densityStats} densityEdits={densityEdits} activePrayer={activePrayer} handleDensityChange={handleDensityChange} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />
+      {/* Main Layout: Heatmap (60%) + Panel (40%) */}
+      <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }}>
+        {/* Heatmap */}
+        <div className="flex-1 min-w-0">
+          {selectedFloor?.image_url ? (
+            <DensityHeatmapInline
+              densityStats={densityStats} selectedFloor={selectedFloor} imgRatio={imgRatio}
+              ZONE_TYPES={ZONE_TYPES} isAr={isAr}
+              selectedZoneId={selectedZoneId} onZoneClick={handleZoneClick}
+            />
+          ) : (
+            <div className="h-full min-h-[500px] bg-slate-50 flex items-center justify-center text-sm text-slate-400">{isAr ? "لا توجد صورة خريطة" : "No map image"}</div>
+          )}
+        </div>
 
-      {selectedFloor?.image_url && (
-        <DensityHeatmap densityStats={densityStats} selectedFloor={selectedFloor} imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />
+        {/* Side Panel */}
+        <div className="w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto flex flex-col" data-testid="density-side-panel">
+          <div className="p-4 space-y-3 flex-1">
+            {/* Panel Title */}
+            <div className="text-center">
+              <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "لوحة الكثافات" : "Density Panel"}</p>
+              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+            </div>
+
+            {/* KPIs - 2x2 */}
+            <div className="grid grid-cols-2 gap-2" data-testid="density-kpi-grid">
+              {[
+                { label: isAr ? "إشغال" : "Utilization", value: `${densityStats.overallPct}%`, icon: Gauge, color: densityStats.overallLevel.color, bg: densityStats.overallLevel.color + "15" },
+                { label: isAr ? "العدد" : "Count", value: densityStats.totalCurrent.toLocaleString(), icon: Users, color: "#3b82f6", bg: "#eff6ff", sub: `/ ${densityStats.totalCapacity.toLocaleString()}` },
+                { label: isAr ? "حرجة" : "Critical", value: densityStats.criticalCount, icon: ShieldAlert, color: "#ef4444", bg: "#fef2f2" },
+                { label: isAr ? "مرتفعة" : "High", value: densityStats.highCount, icon: Flame, color: "#f97316", bg: "#fff7ed" },
+              ].map((kpi, i) => {
+                const Icon = kpi.icon;
+                return (
+                  <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden" data-testid={`density-kpi-${i}`}>
+                    <div className="absolute top-0 right-0 w-12 h-12 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+                    <div className="flex items-start justify-between gap-1 relative">
+                      <div>
+                        <p className="text-[10px] font-medium text-slate-400">{kpi.label}</p>
+                        <div className="flex items-baseline gap-0.5 mt-0.5">
+                          <span className="text-xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                          {kpi.sub && <span className="text-[9px] text-slate-300">{kpi.sub}</span>}
+                        </div>
+                      </div>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.bg }}>
+                        <Icon className="w-3.5 h-3.5" style={{ color: kpi.color }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Zone List Title + Controls */}
+            <div className="text-center">
+              <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "كثافة المناطق" : "Zone Density"}</p>
+              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+            </div>
+
+            {/* Search + Filter */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none" />
+                <Input placeholder={isAr ? "بحث..." : "Search..."} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-7 text-[10px] pr-7 font-cairo" data-testid="density-search" />
+              </div>
+              <div className="flex border rounded-lg overflow-hidden">
+                {[
+                  { key: "all", label: isAr ? "الكل" : "All" },
+                  { key: "critical", label: isAr ? "حرجة" : "Crit", color: "#ef4444" },
+                  { key: "high", label: isAr ? "عالية" : "High", color: "#f97316" },
+                  { key: "low", label: isAr ? "منخفضة" : "Low", color: "#22c55e" },
+                ].map(f => (
+                  <button key={f.key} onClick={() => setFilterLevel(f.key)} data-testid={`density-filter-${f.key}`}
+                    className={`px-2 py-1 text-[9px] font-semibold transition-all ${filterLevel === f.key ? "bg-slate-800 text-white" : "bg-white text-slate-400 hover:bg-slate-50"}`}>
+                    {f.color && <span className="inline-block w-1.5 h-1.5 rounded-full ml-0.5" style={{ backgroundColor: filterLevel === f.key ? "#fff" : f.color }} />}
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Zone List */}
+            <div className="space-y-1 max-h-[280px] overflow-y-auto pr-1" data-testid="density-zone-list">
+              {filteredZones.length === 0 ? (
+                <p className="text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
+              ) : filteredZones.map(zone => {
+                const di = zone.densityInfo;
+                const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                const isSelected = zone.id === selectedZoneId;
+                const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
+                return (
+                  <div key={zone.id} onClick={() => handleZoneClick(zone.id)}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all border ${
+                      isSelected ? "bg-blue-50 border-blue-300 shadow-sm" :
+                      (di.level === "max" || di.level === "over") ? "border-red-200 bg-red-50/30 hover:bg-red-50/60" :
+                      di.level === "medium" ? "border-amber-200 bg-amber-50/20 hover:bg-amber-50/40" :
+                      "border-transparent hover:bg-slate-50 hover:border-slate-200"
+                    }`}
+                    data-testid={`density-row-${zone.id}`}
+                  >
+                    <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold truncate">{zone.zone_code}</p>
+                    </div>
+                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
+                    </div>
+                    <span className="text-[10px] font-bold tabular-nums w-8 text-left" style={{ color: di.color }}>{zone.fillPct}%</span>
+                    {isEdited && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Selected Zone Detail */}
+            {selectedZone && (
+              <SelectedZoneDetail
+                zone={selectedZone} densityEdits={densityEdits} activePrayer={activePrayer}
+                handleDensityChange={handleDensityChange} ZONE_TYPES={ZONE_TYPES} isAr={isAr}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelectedZoneDetail({ zone, densityEdits, activePrayer, handleDensityChange, ZONE_TYPES, isAr }) {
+  const di = zone.densityInfo;
+  const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+  const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
+  const safePos = zone.capMax > 0 ? Math.round((zone.capSafe / zone.capMax) * 100) : 73;
+  const medPos = zone.capMax > 0 ? Math.round((zone.capMedium / zone.capMax) * 100) : 92;
+
+  return (
+    <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-b from-blue-50/50 to-white p-3 space-y-2.5" data-testid="density-selected-detail">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold">{zone.zone_code}</p>
+          <p className="text-[9px] text-slate-500 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+        </div>
+        <span className="text-[9px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span>
+      </div>
+
+      {/* Progress bar with markers */}
+      <div>
+        <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
+          <div className="absolute top-0 bottom-0 w-0.5 bg-green-600/70 z-10" style={{ left: `${safePos}%` }} />
+          <div className="absolute top-0 bottom-0 w-0.5 bg-amber-600/70 z-10" style={{ left: `${medPos}%` }} />
+        </div>
+        <div className="flex items-center justify-between mt-1 text-[8px] text-slate-400">
+          <span>0</span>
+          <span style={{ color: "#16a34a" }}>{zone.capSafe}</span>
+          <span style={{ color: "#d97706" }}>{zone.capMedium}</span>
+          <span>{zone.capMax}</span>
+        </div>
+      </div>
+
+      {/* Input + Stats */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center border rounded-lg overflow-hidden flex-1">
+          <Input type="number" min={0} max={120}
+            className={`h-9 text-center text-sm font-mono font-bold border-0 ${isEdited ? "ring-2 ring-amber-300 bg-amber-50" : ""}`}
+            value={zone.fillPct}
+            onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}
+            data-testid={`density-detail-input`}
+          />
+          <span className="text-xs font-bold text-slate-400 px-2 bg-slate-50 h-9 flex items-center">%</span>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-extrabold tabular-nums" style={{ color: di.color }}>{zone.actualCount.toLocaleString()}</p>
+          <p className="text-[8px] text-slate-400">{isAr ? "مصلي" : "people"}</p>
+        </div>
+      </div>
+
+      {/* Rows info */}
+      {zone.totalRows > 0 && (
+        <div className="flex items-center gap-2 pt-1 border-t border-dashed border-slate-200">
+          <Layers className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[10px] text-slate-500">{isAr ? "الصفوف:" : "Rows:"}</span>
+          <span className="text-[10px] font-bold text-slate-700">{zone.filledRows} / {zone.totalRows}</span>
+          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${zone.totalRows > 0 ? (zone.filledRows / zone.totalRows) * 100 : 0}%` }} />
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function DensityKPIs({ densityStats, activePrayer, isAr }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="density-kpi-row">
-      <div className="relative overflow-hidden rounded-xl border p-4" style={{ background: `linear-gradient(135deg, ${densityStats.overallLevel.bg}, white)` }}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-muted-foreground font-medium">{isAr ? "نسبة الإشغال" : "Utilization"} - {isAr ? PRAYER_TIMES.find(p => p.key === activePrayer)?.label_ar : activePrayer}</span>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: densityStats.overallLevel.color + "20" }}><Gauge className="w-4 h-4" style={{ color: densityStats.overallLevel.color }} /></div>
-        </div>
-        <p className="text-3xl font-bold" style={{ color: densityStats.overallLevel.color }} data-testid="density-overall-pct">{densityStats.overallPct}%</p>
-        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-2"><div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(densityStats.overallPct, 100)}%`, backgroundColor: densityStats.overallLevel.color }} /></div>
-      </div>
-      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-blue-50 to-white p-4">
-        <div className="flex items-center justify-between mb-2"><span className="text-xs text-muted-foreground font-medium">{isAr ? "العدد الحالي" : "Current Count"}</span><div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><Users className="w-4 h-4 text-blue-600" /></div></div>
-        <p className="text-3xl font-bold text-blue-700" data-testid="density-total-current">{densityStats.totalCurrent.toLocaleString()}</p>
-        <p className="text-[11px] text-muted-foreground mt-1">{isAr ? `من أصل ${densityStats.totalCapacity.toLocaleString()}` : `of ${densityStats.totalCapacity.toLocaleString()}`}</p>
-      </div>
-      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-red-50 to-white p-4">
-        <div className="flex items-center justify-between mb-2"><span className="text-xs text-muted-foreground font-medium">{isAr ? "مناطق حرجة" : "Critical Zones"}</span><div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"><ShieldAlert className="w-4 h-4 text-red-500" /></div></div>
-        <p className="text-3xl font-bold text-red-600" data-testid="density-critical-count">{densityStats.criticalCount}</p>
-        <p className="text-[11px] text-muted-foreground mt-1">{isAr ? "تجاوز 90% من السعة" : "> 90% capacity"}</p>
-      </div>
-      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-bl from-orange-50 to-white p-4">
-        <div className="flex items-center justify-between mb-2"><span className="text-xs text-muted-foreground font-medium">{isAr ? "مناطق مرتفعة" : "High Zones"}</span><div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center"><Flame className="w-4 h-4 text-orange-500" /></div></div>
-        <p className="text-3xl font-bold text-orange-600" data-testid="density-high-count">{densityStats.highCount}</p>
-        <p className="text-[11px] text-muted-foreground mt-1">{isAr ? "بين 70% - 90%" : "70% - 90%"}</p>
-      </div>
-    </div>
-  );
-}
-
-function DensityZoneGrid({ densityStats, densityEdits, activePrayer, handleDensityChange, ZONE_TYPES, isAr }) {
-  return (
-    <Card data-testid="density-zones-card">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-cairo flex items-center gap-2"><Activity className="w-4 h-4 text-blue-600" />{isAr ? "كثافة المناطق" : "Zone Density"}<Badge variant="secondary" className="text-[10px]">{densityStats.zonesDensity.length} {isAr ? "منطقة" : "zones"}</Badge></CardTitle>
-          <div className="flex items-center gap-3">
-            {[{ color: "#0ea5e9", label: isAr ? "منخفض" : "Low" },{ color: "#16a34a", label: isAr ? "طبيعي" : "Normal" },{ color: "#d97706", label: isAr ? "متوسط" : "Medium" },{ color: "#ea580c", label: isAr ? "مرتفع" : "High" },{ color: "#dc2626", label: isAr ? "حرج" : "Critical" }].map(l => (
-              <div key={l.color} className="flex items-center gap-1 text-[10px] text-muted-foreground"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />{l.label}</div>
-            ))}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" data-testid="density-zone-list">
-          {densityStats.zonesDensity.map(zone => {
-            const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-            const di = zone.densityInfo;
-            const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
-            const safePos = zone.capMax > 0 ? Math.round((zone.capSafe / zone.capMax) * 100) : 73;
-            const medPos = zone.capMax > 0 ? Math.round((zone.capMedium / zone.capMax) * 100) : 92;
-            return (
-              <div key={zone.id} className={`rounded-xl border p-3 transition-all hover:shadow-md ${di.level === "max" || di.level === "over" ? "border-red-200 bg-red-50/50" : di.level === "medium" ? "border-amber-200 bg-amber-50/30" : "border-slate-200 hover:border-slate-300"}`} data-testid={`density-zone-${zone.id}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
-                    <div className="min-w-0"><p className="text-xs font-bold truncate leading-tight">{zone.zone_code}</p><p className="text-[9px] text-muted-foreground truncate leading-tight">{isAr ? zone.name_ar : zone.name_en}</p></div>
-                  </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span>
-                </div>
-                <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-1">
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
-                  <div className="absolute top-0 bottom-0 w-px bg-green-600/60" style={{ left: `${safePos}%` }} title={`${isAr ? "آمن" : "Safe"}: ${zone.capSafe}`} />
-                  <div className="absolute top-0 bottom-0 w-px bg-amber-600/60" style={{ left: `${medPos}%` }} title={`${isAr ? "متوسط" : "Medium"}: ${zone.capMedium}`} />
-                </div>
-                <div className="flex items-center justify-between text-[8px] text-muted-foreground mb-2"><span>{zone.capSafe} <span style={{color:"#16a34a"}}>|</span> {zone.capMedium} <span style={{color:"#d97706"}}>|</span> {zone.capMax}</span></div>
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center border rounded-md overflow-hidden flex-1">
-                    <Input type="number" min={0} max={120} className={`h-7 text-center text-xs font-mono border-0 ${isEdited ? "ring-2 ring-amber-300" : ""}`} value={zone.fillPct} onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))} data-testid={`density-input-${zone.id}`} />
-                    <span className="text-[10px] font-bold text-muted-foreground px-1.5 bg-slate-50 h-7 flex items-center">%</span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold" style={{ color: di.color }}>{zone.actualCount.toLocaleString()}</span>
-                </div>
-                {zone.totalRows > 0 && <div className="flex items-center gap-1 mt-1.5 text-[9px] text-muted-foreground"><Layers className="w-3 h-3" /><span>{zone.filledRows} / {zone.totalRows} {isAr ? "صف" : "rows"}</span></div>}
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function DensityHeatmap({ densityStats, selectedFloor, imgRatio, ZONE_TYPES, isAr }) {
+function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPES, isAr, selectedZoneId, onZoneClick }) {
   const [heatZoom, setHeatZoom] = useState(1);
   const [heatPan, setHeatPan] = useState({ x: 0, y: 0 });
   const [heatPanning, setHeatPanning] = useState(false);
@@ -167,91 +301,127 @@ function DensityHeatmap({ densityStats, selectedFloor, imgRatio, ZONE_TYPES, isA
   const zoomHeat = (factor) => {
     const c = heatContainerRef.current; if (!c) return;
     const r = c.getBoundingClientRect();
-    const cx = r.width/2, cy = r.height/2;
+    const cx = r.width / 2, cy = r.height / 2;
     const p = heatZoomRef.current;
     const nz = Math.max(0.3, Math.min(20, p * factor));
     const s = nz / p;
     heatZoomRef.current = nz; setHeatZoom(nz);
-    setHeatPan(o => ({ x: cx - s*(cx-o.x), y: cy - s*(cy-o.y) }));
+    setHeatPan(o => ({ x: cx - s * (cx - o.x), y: cy - s * (cy - o.y) }));
+  };
+
+  const getMousePercent = (e) => {
+    const c = heatContainerRef.current; if (!c) return null;
+    const innerDiv = c.querySelector("[data-heat-inner]"); if (!innerDiv) return null;
+    const innerRect = innerDiv.getBoundingClientRect();
+    return { x: ((e.clientX - innerRect.left) / innerRect.width) * 100, y: ((e.clientY - innerRect.top) / innerRect.height) * 100 };
+  };
+
+  const handleClick = (e) => {
+    if (heatPanning) return;
+    const pos = getMousePercent(e);
+    if (!pos) return;
+    for (const zone of (densityStats?.zonesDensity || [])) {
+      if (zone.polygon_points && isPointInPolygon(pos, zone.polygon_points)) {
+        onZoneClick(zone.id);
+        return;
+      }
+    }
+    onZoneClick(null);
   };
 
   return (
-    <Card data-testid="density-heatmap-card">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-cairo flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-600" />{isAr ? "خريطة الكثافة الحرارية" : "Density Heat Map"}</CardTitle>
-          <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-            <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-out" onClick={() => zoomHeat(0.8)}><ZoomOut className="w-4 h-4" /></Button>
-            <span className="text-xs w-12 text-center font-mono">{Math.round(heatZoom * 100)}%</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-in" onClick={() => zoomHeat(1.25)}><ZoomIn className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-reset" onClick={() => { heatZoomRef.current=1; setHeatZoom(1); setHeatPan({x:0,y:0}); }}><Maximize2 className="w-4 h-4" /></Button>
-          </div>
+    <div className="relative h-full" style={{ minHeight: "500px" }}>
+      {/* Zoom controls */}
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm">
+        <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-out" onClick={() => zoomHeat(0.8)}><ZoomOut className="w-4 h-4" /></Button>
+        <span className="text-xs w-10 text-center font-mono">{Math.round(heatZoom * 100)}%</span>
+        <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-in" onClick={() => zoomHeat(1.25)}><ZoomIn className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-reset" onClick={() => { heatZoomRef.current = 1; setHeatZoom(1); setHeatPan({ x: 0, y: 0 }); }}><Maximize2 className="w-4 h-4" /></Button>
+      </div>
+
+      {/* Legend */}
+      <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
+        {[
+          { color: "#22c55e", label: isAr ? "آمن" : "Safe" },
+          { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" },
+          { color: "#ef4444", label: isAr ? "أقصى" : "Max" },
+        ].map(l => (
+          <div key={l.color} className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm" style={{ backgroundColor: l.color }} /><span className="text-[9px]">{l.label}</span></div>
+        ))}
+        <span className="text-[9px] text-muted-foreground mr-auto">{isAr ? "انقر على منطقة للتعديل" : "Click zone to edit"}</span>
+      </div>
+
+      {/* Heatmap */}
+      <div ref={heatWheelRef} className="relative bg-slate-50 overflow-hidden h-full" style={{ cursor: heatPanning ? "grabbing" : "grab" }} data-testid="density-heatmap-container"
+        onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setHeatPanning(true); setHeatPanStart({ x: e.clientX - heatPan.x, y: e.clientY - heatPan.y }); }}
+        onMouseMove={(e) => {
+          if (heatPanning) { setHeatPan({ x: e.clientX - heatPanStart.x, y: e.clientY - heatPanStart.y }); return; }
+          const c = heatContainerRef.current; if (!c) return;
+          const rect = c.getBoundingClientRect();
+          setHeatTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
+          const pos = getMousePercent(e);
+          if (!pos) return;
+          let found = null;
+          for (const zone of (densityStats?.zonesDensity || [])) { if (zone.polygon_points && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; } }
+          setHeatHovered(found);
+        }}
+        onMouseUp={() => setHeatPanning(false)}
+        onMouseLeave={() => { setHeatPanning(false); setHeatHovered(null); }}
+        onClick={handleClick}
+      >
+        <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {(() => {
+            let ws = { position: "relative", width: "100%", height: "100%" };
+            if (imgRatio) {
+              const ch = 600;
+              const cw = heatContainerRef.current?.clientWidth || 800;
+              if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
+              else ws = { position: "relative", width: "100%", height: cw / imgRatio };
+            }
+            return (
+              <div style={ws} data-heat-inner="true">
+                <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" />
+                <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="density-heatmap-svg">
+                  {(densityStats?.zonesDensity || []).map(zone => {
+                    const di = zone.densityInfo;
+                    const isHovered = heatHovered?.id === zone.id;
+                    const isSelected = zone.id === selectedZoneId;
+                    const pts = zone.polygon_points || [];
+                    const minY = pts.length > 0 ? Math.min(...pts.map(p => p.y)) : 0;
+                    const maxY = pts.length > 0 ? Math.max(...pts.map(p => p.y)) : 0;
+                    const minX = pts.length > 0 ? Math.min(...pts.map(p => p.x)) : 0;
+                    const maxX = pts.length > 0 ? Math.max(...pts.map(p => p.x)) : 0;
+                    const totalRows = zone.totalRows || 0;
+                    const filledRows = zone.filledRows || 0;
+                    const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
+                    const gap = rowHeight * 0.15;
+                    return (
+                      <g key={zone.id} style={{ pointerEvents: "all", cursor: "pointer" }}>
+                        <defs><clipPath id={`clip-d-${zone.id}`}><path d={getPath(pts)} /></clipPath></defs>
+                        <path d={getPath(pts)}
+                          fill={isSelected ? "#dbeafe" : isHovered ? "#f1f5f9" : "#f8fafc"}
+                          fillOpacity={isSelected ? 0.6 : isHovered ? 0.5 : 0.3}
+                          stroke={isSelected ? "#3b82f6" : isHovered ? "#1e293b" : "#94a3b8"}
+                          strokeWidth={isSelected ? 1.2 : isHovered ? 1 : 0.3}
+                          strokeOpacity={isSelected || isHovered ? 1 : 0.4}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                        {totalRows > 0 && Array.from({ length: totalRows }, (_, r) => {
+                          const y = minY + r * rowHeight + rowHeight * 0.5;
+                          const isFilled = r < filledRows;
+                          return <line key={r} x1={minX} y1={y} x2={maxX} y2={y} stroke={isFilled ? di.color : "#cbd5e1"} strokeWidth={isFilled ? Math.max(rowHeight - gap, 0.08) : Math.max((rowHeight - gap) * 0.3, 0.04)} strokeOpacity={isFilled ? 0.7 : 0.3} strokeDasharray={isFilled ? "none" : `${rowHeight * 0.5} ${rowHeight * 0.4}`} clipPath={`url(#clip-d-${zone.id})`} />;
+                        })}
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            );
+          })()}
         </div>
-      </CardHeader>
-      <CardContent className="p-2">
-        <div ref={heatWheelRef} className="relative bg-slate-50 rounded-lg overflow-hidden" style={{ height: "550px", cursor: heatPanning ? "grabbing" : "grab" }} data-testid="density-heatmap-container"
-          onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setHeatPanning(true); setHeatPanStart({ x: e.clientX - heatPan.x, y: e.clientY - heatPan.y }); }}
-          onMouseMove={(e) => {
-            if (heatPanning) { setHeatPan({ x: e.clientX - heatPanStart.x, y: e.clientY - heatPanStart.y }); return; }
-            const c = heatContainerRef.current; if (!c) return;
-            const rect = c.getBoundingClientRect();
-            setHeatTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
-            const innerDiv = c.querySelector('[data-heat-inner]'); if (!innerDiv) return;
-            const innerRect = innerDiv.getBoundingClientRect();
-            const px = ((e.clientX - innerRect.left) / innerRect.width) * 100;
-            const py = ((e.clientY - innerRect.top) / innerRect.height) * 100;
-            let found = null;
-            for (const zone of (densityStats?.zonesDensity || [])) { if (zone.polygon_points && isPointInPolygon({ x: px, y: py }, zone.polygon_points)) { found = zone; break; } }
-            setHeatHovered(found);
-          }}
-          onMouseUp={() => setHeatPanning(false)} onMouseLeave={() => { setHeatPanning(false); setHeatHovered(null); }}>
-          <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {(() => {
-              let ws = { position: "relative", width: "100%", height: "100%" };
-              if (imgRatio) { const ch = 550; const cw = heatContainerRef.current?.clientWidth || 800; if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio }; else ws = { position: "relative", width: "100%", height: cw / imgRatio }; }
-              return (
-                <div style={ws} data-heat-inner="true">
-                  <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" />
-                  <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="density-heatmap-svg">
-                    {(densityStats?.zonesDensity || []).map(zone => {
-                      const di = zone.densityInfo;
-                      const isHovered = heatHovered?.id === zone.id;
-                      const pts = zone.polygon_points || [];
-                      const minY = pts.length > 0 ? Math.min(...pts.map(p => p.y)) : 0;
-                      const maxY = pts.length > 0 ? Math.max(...pts.map(p => p.y)) : 0;
-                      const minX = pts.length > 0 ? Math.min(...pts.map(p => p.x)) : 0;
-                      const maxX = pts.length > 0 ? Math.max(...pts.map(p => p.x)) : 0;
-                      const totalRows = zone.totalRows || 0;
-                      const filledRows = zone.filledRows || 0;
-                      const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
-                      const gap = rowHeight * 0.15;
-                      return (
-                        <g key={zone.id}>
-                          <defs><clipPath id={`clip-${zone.id}`}><path d={getPath(pts)} /></clipPath></defs>
-                          <path d={getPath(pts)} fill={isHovered ? "#f1f5f9" : "#f8fafc"} fillOpacity={isHovered ? 0.5 : 0.3} stroke={isHovered ? "#1e293b" : "#94a3b8"} strokeWidth={isHovered ? 1 : 0.3} strokeOpacity={isHovered ? 1 : 0.4} vectorEffect="non-scaling-stroke" />
-                          {totalRows > 0 && Array.from({ length: totalRows }, (_, r) => {
-                            const y = minY + r * rowHeight + rowHeight * 0.5;
-                            const isFilled = r < filledRows;
-                            return <line key={r} x1={minX} y1={y} x2={maxX} y2={y} stroke={isFilled ? di.color : "#cbd5e1"} strokeWidth={isFilled ? Math.max(rowHeight - gap, 0.08) : Math.max((rowHeight - gap) * 0.3, 0.04)} strokeOpacity={isFilled ? 0.7 : 0.3} strokeDasharray={isFilled ? "none" : `${rowHeight * 0.5} ${rowHeight * 0.4}`} clipPath={`url(#clip-${zone.id})`} />;
-                          })}
-                        </g>
-                      );
-                    })}
-                  </svg>
-                </div>
-              );
-            })()}
-          </div>
-          {heatHovered && !heatPanning && <HeatmapTooltip zone={heatHovered} pos={heatTooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />}
-          <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
-            <div className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-green-500" /><span className="text-[9px]">{isAr ? "آمن" : "Safe"}</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-amber-500" /><span className="text-[9px]">{isAr ? "متوسط" : "Medium"}</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-red-500" /><span className="text-[9px]">{isAr ? "أقصى" : "Max"}</span></div>
-            <span className="text-[9px] text-muted-foreground mr-auto">{isAr ? "الخطوط = صفوف المصلين" : "Lines = prayer rows"}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        {heatHovered && !heatPanning && <HeatmapTooltip zone={heatHovered} pos={heatTooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />}
+      </div>
+    </div>
   );
 }
 
@@ -271,7 +441,7 @@ function HeatmapTooltip({ zone, pos, ZONE_TYPES, isAr }) {
       </div>
       <div className="space-y-1 text-[10px]">
         <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? "عدد المصلين" : "Count"}</span><span className="font-mono font-bold">{(zone.actualCount || 0).toLocaleString()}</span></div>
-        {zone.totalRows > 0 && (<><div className="border-t border-dashed border-slate-200 my-1" /><div className="flex justify-between"><span className="text-muted-foreground">{isAr ? "الصفوف الممتلئة" : "Filled rows"}</span><span className="font-mono font-bold">{zone.filledRows} / {zone.totalRows}</span></div></>)}
+        {zone.totalRows > 0 && (<><div className="border-t border-dashed border-slate-200 my-1" /><div className="flex justify-between"><span className="text-muted-foreground">{isAr ? "الصفوف" : "Rows"}</span><span className="font-mono font-bold">{zone.filledRows} / {zone.totalRows}</span></div></>)}
       </div>
       <div className="mt-1.5"><span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span></div>
     </div>
