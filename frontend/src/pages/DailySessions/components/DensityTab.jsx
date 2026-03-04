@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Activity, Users, ShieldAlert, Flame, Gauge, AlertCircle, RefreshCw, SaveAll,
-  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, ArrowUpDown, Filter,
+  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
 import { PRAYER_TIMES } from "../constants";
 import { getPath, isPointInPolygon, getDensityLevel } from "../utils";
@@ -155,46 +156,21 @@ export function DensityTab({
               </div>
             </div>
 
-            {/* Zone List */}
-            <div className="space-y-1 max-h-[280px] overflow-y-auto pr-1" data-testid="density-zone-list">
+            {/* Mini Grid */}
+            <div className="grid grid-cols-4 gap-1.5 max-h-[340px] overflow-y-auto pr-0.5" data-testid="density-zone-list">
               {filteredZones.length === 0 ? (
-                <p className="text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
-              ) : filteredZones.map(zone => {
-                const di = zone.densityInfo;
-                const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                const isSelected = zone.id === selectedZoneId;
-                const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
-                return (
-                  <div key={zone.id} onClick={() => handleZoneClick(zone.id)}
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all border ${
-                      isSelected ? "bg-blue-50 border-blue-300 shadow-sm" :
-                      (di.level === "max" || di.level === "over") ? "border-red-200 bg-red-50/30 hover:bg-red-50/60" :
-                      di.level === "medium" ? "border-amber-200 bg-amber-50/20 hover:bg-amber-50/40" :
-                      "border-transparent hover:bg-slate-50 hover:border-slate-200"
-                    }`}
-                    data-testid={`density-row-${zone.id}`}
-                  >
-                    <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold truncate">{zone.zone_code}</p>
-                    </div>
-                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden flex-shrink-0">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
-                    </div>
-                    <span className="text-[10px] font-bold tabular-nums w-8 text-left" style={{ color: di.color }}>{zone.fillPct}%</span>
-                    {isEdited && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
-                  </div>
-                );
-              })}
+                <p className="col-span-4 text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
+              ) : filteredZones.map(zone => (
+                <ZoneMiniCard key={zone.id} zone={zone} ZONE_TYPES={ZONE_TYPES}
+                  densityEdits={densityEdits} activePrayer={activePrayer}
+                  handleDensityChange={handleDensityChange}
+                  isSelected={zone.id === selectedZoneId}
+                  onSelect={() => handleZoneClick(zone.id)}
+                  isAr={isAr}
+                />
+              ))}
             </div>
 
-            {/* Selected Zone Detail */}
-            {selectedZone && (
-              <SelectedZoneDetail
-                zone={selectedZone} densityEdits={densityEdits} activePrayer={activePrayer}
-                handleDensityChange={handleDensityChange} ZONE_TYPES={ZONE_TYPES} isAr={isAr}
-              />
-            )}
           </div>
         </div>
       </div>
@@ -202,69 +178,91 @@ export function DensityTab({
   );
 }
 
-function SelectedZoneDetail({ zone, densityEdits, activePrayer, handleDensityChange, ZONE_TYPES, isAr }) {
+function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDensityChange, isSelected, onSelect, isAr }) {
   const di = zone.densityInfo;
   const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
   const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
+  const code = zone.zone_code?.replace("ط - 0 - ", "").replace("ط-0-", "") || "?";
   const safePos = zone.capMax > 0 ? Math.round((zone.capSafe / zone.capMax) * 100) : 73;
   const medPos = zone.capMax > 0 ? Math.round((zone.capMedium / zone.capMax) * 100) : 92;
 
   return (
-    <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-b from-blue-50/50 to-white p-3 space-y-2.5" data-testid="density-selected-detail">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold">{zone.zone_code}</p>
-          <p className="text-[9px] text-slate-500 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
-        </div>
-        <span className="text-[9px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span>
-      </div>
-
-      {/* Progress bar with markers */}
-      <div>
-        <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-          <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
-          <div className="absolute top-0 bottom-0 w-0.5 bg-green-600/70 z-10" style={{ left: `${safePos}%` }} />
-          <div className="absolute top-0 bottom-0 w-0.5 bg-amber-600/70 z-10" style={{ left: `${medPos}%` }} />
-        </div>
-        <div className="flex items-center justify-between mt-1 text-[8px] text-slate-400">
-          <span>0</span>
-          <span style={{ color: "#16a34a" }}>{zone.capSafe}</span>
-          <span style={{ color: "#d97706" }}>{zone.capMedium}</span>
-          <span>{zone.capMax}</span>
-        </div>
-      </div>
-
-      {/* Input + Stats */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center border rounded-lg overflow-hidden flex-1">
-          <Input type="number" min={0} max={120}
-            className={`h-9 text-center text-sm font-mono font-bold border-0 ${isEdited ? "ring-2 ring-amber-300 bg-amber-50" : ""}`}
-            value={zone.fillPct}
-            onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}
-            data-testid={`density-detail-input`}
-          />
-          <span className="text-xs font-bold text-slate-400 px-2 bg-slate-50 h-9 flex items-center">%</span>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-extrabold tabular-nums" style={{ color: di.color }}>{zone.actualCount.toLocaleString()}</p>
-          <p className="text-[8px] text-slate-400">{isAr ? "مصلي" : "people"}</p>
-        </div>
-      </div>
-
-      {/* Rows info */}
-      {zone.totalRows > 0 && (
-        <div className="flex items-center gap-2 pt-1 border-t border-dashed border-slate-200">
-          <Layers className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-[10px] text-slate-500">{isAr ? "الصفوف:" : "Rows:"}</span>
-          <span className="text-[10px] font-bold text-slate-700">{zone.filledRows} / {zone.totalRows}</span>
-          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${zone.totalRows > 0 ? (zone.filledRows / zone.totalRows) * 100 : 0}%` }} />
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          onClick={onSelect}
+          className={`relative rounded-lg p-1.5 text-center transition-all border cursor-pointer group overflow-hidden ${
+            isSelected ? "border-blue-400 ring-2 ring-blue-200 shadow-md" :
+            di.level === "critical" ? "border-red-300 hover:border-red-400 hover:shadow-sm" :
+            di.level === "high" ? "border-orange-300 hover:border-orange-400 hover:shadow-sm" :
+            di.level === "medium" ? "border-amber-200 hover:border-amber-300 hover:shadow-sm" :
+            "border-slate-200 hover:border-slate-300 hover:shadow-sm"
+          }`}
+          style={{ backgroundColor: zone.fillPct > 0 ? di.color + "08" : "#fff" }}
+          data-testid={`density-cell-${zone.id}`}
+        >
+          {isEdited && <span className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-amber-400 z-10" />}
+          <p className="text-[8px] text-slate-400 font-medium truncate leading-none">{code}</p>
+          <p className="text-sm font-extrabold tabular-nums leading-tight mt-0.5" style={{ color: zone.fillPct > 0 ? di.color : "#cbd5e1" }}>{zone.fillPct}%</p>
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mt-1">
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
           </div>
+          {zone.fillPct > 0 && <p className="text-[7px] text-slate-400 tabular-nums mt-0.5 leading-none">{zone.actualCount.toLocaleString()}</p>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0" align="center" side="top" data-testid={`density-popover-${zone.id}`}>
+        <div className="p-3 space-y-2.5">
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[8px] font-bold" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold">{zone.zone_code}</p>
+              <p className="text-[8px] text-slate-400 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+            </div>
+            <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: di.bg, color: di.color }}>{isAr ? di.label_ar : di.label_en}</span>
+          </div>
+          {/* Progress with markers */}
+          <div>
+            <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
+              <div className="absolute top-0 bottom-0 w-px bg-green-600/60 z-10" style={{ left: `${safePos}%` }} />
+              <div className="absolute top-0 bottom-0 w-px bg-amber-600/60 z-10" style={{ left: `${medPos}%` }} />
+            </div>
+            <div className="flex justify-between mt-0.5 text-[7px] text-slate-300">
+              <span>0</span><span style={{ color: "#16a34a" }}>{zone.capSafe}</span><span style={{ color: "#d97706" }}>{zone.capMedium}</span><span>{zone.capMax}</span>
+            </div>
+          </div>
+          {/* Input */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border rounded-lg overflow-hidden flex-1">
+              <Input type="number" min={0} max={120}
+                className={`h-8 text-center text-sm font-mono font-bold border-0 ${isEdited ? "ring-2 ring-amber-300 bg-amber-50" : ""}`}
+                value={zone.fillPct}
+                onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}
+                onClick={(e) => e.stopPropagation()}
+                data-testid={`density-input-${zone.id}`}
+              />
+              <span className="text-[10px] font-bold text-slate-400 px-1.5 bg-slate-50 h-8 flex items-center">%</span>
+            </div>
+            <div className="text-center min-w-[45px]">
+              <p className="text-base font-extrabold tabular-nums" style={{ color: di.color }}>{zone.actualCount.toLocaleString()}</p>
+              <p className="text-[7px] text-slate-400">{isAr ? "مصلي" : "people"}</p>
+            </div>
+          </div>
+          {/* Rows */}
+          {zone.totalRows > 0 && (
+            <div className="flex items-center gap-1.5 pt-1.5 border-t border-dashed border-slate-100">
+              <Layers className="w-3 h-3 text-slate-400" />
+              <span className="text-[9px] text-slate-500">{isAr ? "الصفوف:" : "Rows:"}</span>
+              <span className="text-[9px] font-bold">{zone.filledRows} / {zone.totalRows}</span>
+              <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-blue-500" style={{ width: `${zone.totalRows > 0 ? (zone.filledRows / zone.totalRows) * 100 : 0}%` }} />
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
