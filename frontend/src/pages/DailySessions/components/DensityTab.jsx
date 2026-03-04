@@ -125,16 +125,17 @@ export function DensityTab({
                 );
               })}
             </div>
-            {/* KPIs - Row 2: 4 level cards */}
+            {/* KPIs - Row 2: 4 level cards with icons */}
             <div className="grid grid-cols-4 gap-1.5">
               {[
-                { label: isAr ? "آمن" : "Safe", value: densityStats.safeCount, color: "#16a34a", bg: "#f0fdf4" },
-                { label: isAr ? "متوسط" : "Medium", value: densityStats.mediumCount, color: "#f59e0b", bg: "#fffbeb" },
-                { label: isAr ? "مرتفع" : "High", value: densityStats.highCount, color: "#ea580c", bg: "#fff7ed" },
-                { label: isAr ? "حرج" : "Critical", value: densityStats.criticalCount, color: "#dc2626", bg: "#fef2f2" },
+                { label: isAr ? "آمن" : "Safe", value: densityStats.safeCount, color: "#16a34a", bg: "#f0fdf4", icon: <svg viewBox="0 0 20 20" className="w-4 h-4"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.5"/><path d="M6 10l3 3 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                { label: isAr ? "متوسط" : "Medium", value: densityStats.mediumCount, color: "#f59e0b", bg: "#fffbeb", icon: <svg viewBox="0 0 20 20" className="w-4 h-4"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.5"/><line x1="10" y1="6" x2="10" y2="11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="10" cy="13.5" r="0.8" fill="currentColor"/></svg> },
+                { label: isAr ? "مرتفع" : "High", value: densityStats.highCount, color: "#ea580c", bg: "#fff7ed", icon: <svg viewBox="0 0 20 20" className="w-4 h-4"><path d="M10 3L18 17H2L10 3z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><line x1="10" y1="8" x2="10" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="10" cy="14.5" r="0.8" fill="currentColor"/></svg> },
+                { label: isAr ? "حرج" : "Critical", value: densityStats.criticalCount, color: "#dc2626", bg: "#fef2f2", icon: <svg viewBox="0 0 20 20" className="w-4 h-4"><circle cx="10" cy="10" r="8" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5"/><line x1="7" y1="7" x2="13" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><line x1="13" y1="7" x2="7" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
               ].map((kpi, i) => (
-                <div key={i} className="rounded-lg p-1.5 border text-center" style={{ borderColor: kpi.color + "30", backgroundColor: kpi.bg + "80" }} data-testid={`density-level-${i}`}>
-                  <p className="text-lg font-extrabold tabular-nums" style={{ color: kpi.color }}>{kpi.value}</p>
+                <div key={i} className="rounded-lg p-1.5 border text-center transition-all hover:shadow-sm" style={{ borderColor: kpi.color + "30", backgroundColor: kpi.bg + "80" }} data-testid={`density-level-${i}`}>
+                  <div className="flex justify-center mb-0.5" style={{ color: kpi.color }}>{kpi.icon}</div>
+                  <p className="text-lg font-extrabold tabular-nums leading-tight" style={{ color: kpi.color }}>{kpi.value}</p>
                   <p className="text-[8px] font-semibold" style={{ color: kpi.color + "99" }}>{kpi.label}</p>
                 </div>
               ))}
