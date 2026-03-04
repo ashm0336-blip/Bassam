@@ -148,8 +148,8 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
                       return el;
                     });
                   })()}
-                  <text x="60" y="55" textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="800" fill="#1e293b">{sessionStats.totalActive}</text>
-                  <text x="60" y="73" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
+                  <text x="60" y="58" textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="800" fill="#1e293b">{sessionStats.totalActive}</text>
+                  <text x="60" y="76" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
                 </svg>
               </div>
               {/* Full Legend - zone style swatches matching the map */}
