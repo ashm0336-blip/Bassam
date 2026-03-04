@@ -679,6 +679,10 @@ class SessionZone(BaseModel):
     zone_type: str
     polygon_points: List[dict]
     fill_color: str = "#22c55e"
+    fill_type: str = "solid"
+    pattern_type: Optional[str] = None
+    pattern_fg_color: str = "#000000"
+    pattern_bg_color: str = "#ffffff"
     stroke_color: str = "#000000"
     opacity: float = 0.4
     stroke_opacity: float = 1.0
@@ -729,6 +733,10 @@ class SessionZoneUpdate(BaseModel):
     is_removed: Optional[bool] = None
     daily_note: Optional[str] = None
     fill_color: Optional[str] = None
+    fill_type: Optional[str] = None
+    pattern_type: Optional[str] = None
+    pattern_fg_color: Optional[str] = None
+    pattern_bg_color: Optional[str] = None
     stroke_color: Optional[str] = None
     opacity: Optional[float] = None
     stroke_opacity: Optional[float] = None

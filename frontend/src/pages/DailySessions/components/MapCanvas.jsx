@@ -5,6 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 import { useZoneEmployees } from "./useZoneEmployees";
+import { ZonePatternDefs } from "./ZonePatterns";
 
 function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
   if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
@@ -234,9 +235,17 @@ export function MapCanvas({
               return (
                 <div style={ws}>
                   <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />
-                  <svg ref={svgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="session-map-svg">
+                  <svg ref={svgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="session-map-svg">
+                    <ZonePatternDefs zones={sessionZones} />
                     {activeZones.map(zone => {
                       const isSelected = zone.id === selectedZoneId;
+                      const usePattern = zone.fill_type === "pattern" && zone.pattern_type;
+                      const fillValue = usePattern ? `url(#zone-pattern-${zone.id})` : zone.fill_color;
+                      const strokeDash = isSelected && mapMode === "edit" ? "none"
+                        : (zone.stroke_style === "solid" ? "none"
+                        : zone.stroke_style === "dotted" ? "0.5 0.8"
+                        : zone.stroke_style === "dash-dot" ? "2 0.6 0.5 0.6"
+                        : "2 1");
                       return (
                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
@@ -246,11 +255,9 @@ export function MapCanvas({
                             if (activeSession?.status !== "draft") return;
                             e.stopPropagation();
                             if (mapMode === "pan") {
-                              // Double-click in pan mode → enter edit mode + select zone
                               setMapMode("edit");
                               setSelectedZoneId(zone.id);
                             } else if (mapMode === "edit" && isSelected) {
-                              // Double-click on selected zone in edit mode → open edit dialog
                               setSelectedZone(zone);
                               setShowZoneDialog(true);
                             } else if (mapMode === "edit" && !isSelected) {
@@ -258,11 +265,13 @@ export function MapCanvas({
                             }
                           }}
                           style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? (isSelected ? "move" : "pointer") : "inherit" }}>
-                          <path d={getPath(zone.polygon_points)} fill={zone.fill_color} fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
+                          <path d={getPath(zone.polygon_points)}
+                            fill={fillValue}
+                            fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
                             stroke={isSelected && mapMode === "edit" ? "#3b82f6" : (zone.stroke_color || "#000000")}
                             strokeWidth={isSelected && mapMode === "edit" ? 0.6 : (zone.stroke_width ?? 0.3)}
                             strokeOpacity={isSelected && mapMode === "edit" ? 1 : (zone.stroke_opacity ?? 1)}
-                            strokeDasharray={isSelected && mapMode === "edit" ? "none" : (zone.stroke_style === "solid" ? "none" : zone.stroke_style === "dotted" ? "0.5 0.8" : "2 1")}
+                            strokeDasharray={strokeDash}
                             vectorEffect="non-scaling-stroke" />
                           {isSelected && (
                             <path d={getPath(zone.polygon_points)} fill="none"

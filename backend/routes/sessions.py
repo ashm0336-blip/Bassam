@@ -233,6 +233,8 @@ async def add_session_zone(session_id: str, request: Request, admin: dict = Depe
         zone_type=body.get("zone_type", "men_prayer"), polygon_points=body.get("polygon_points", []),
         fill_color=body.get("fill_color", "#22c55e"), stroke_color=body.get("stroke_color", "#000000"),
         opacity=body.get("opacity", 0.4), stroke_opacity=body.get("stroke_opacity", 1.0),
+        fill_type=body.get("fill_type", "solid"), pattern_type=body.get("pattern_type"),
+        pattern_fg_color=body.get("pattern_fg_color", "#000000"), pattern_bg_color=body.get("pattern_bg_color", "#ffffff"),
         max_capacity=body.get("max_capacity", 1000), area_sqm=body.get("area_sqm", 0), change_type="added"
     )
     zones = session.get("zones", [])

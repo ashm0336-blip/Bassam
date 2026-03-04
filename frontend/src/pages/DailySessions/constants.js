@@ -27,6 +27,22 @@ export const PRAYER_TIMES = [
   { key: "taraweeh", label_ar: "التراويح", label_en: "Taraweeh", icon: "✨" },
 ];
 
+// Pattern fill types for zone styling (PowerPoint-like)
+export const PATTERN_TYPES = [
+  { value: "diagonal-right", label_ar: "مائل يمين", label_en: "Diagonal Right" },
+  { value: "diagonal-left", label_ar: "مائل يسار", label_en: "Diagonal Left" },
+  { value: "diagonal-cross", label_ar: "تقاطع مائل", label_en: "Diagonal Cross" },
+  { value: "horizontal", label_ar: "أفقي", label_en: "Horizontal" },
+  { value: "vertical", label_ar: "عمودي", label_en: "Vertical" },
+  { value: "grid", label_ar: "شبكة", label_en: "Grid" },
+  { value: "dots-small", label_ar: "نقاط صغيرة", label_en: "Small Dots" },
+  { value: "dots-large", label_ar: "نقاط كبيرة", label_en: "Large Dots" },
+  { value: "dense", label_ar: "كثيف", label_en: "Dense" },
+  { value: "light-fill", label_ar: "خفيف", label_en: "Light" },
+  { value: "medium-fill", label_ar: "متوسط", label_en: "Medium" },
+  { value: "diamonds", label_ar: "معيّنات", label_en: "Diamonds" },
+];
+
 export const DRAW_POINT_RADIUS = 0.08;
 export const SNAP_DISTANCE = 1.2;
 
