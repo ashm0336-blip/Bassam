@@ -29,7 +29,7 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
   }
 
   return (
-    <div className="relative w-1/2 flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden" data-testid="map-stats-panel">
+    <div className="relative w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden" data-testid="map-stats-panel">
       {ToggleBtn}
 
       <div className="p-4 space-y-4">
