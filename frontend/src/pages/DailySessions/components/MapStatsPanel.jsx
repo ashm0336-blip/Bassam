@@ -123,46 +123,6 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
           </div>
         )}
 
-        {/* Category Bars */}
-        <div className="rounded-xl border border-slate-100 bg-white p-3" data-testid="live-category-bars">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{isAr ? "تفصيل الفئات" : "Breakdown"}</p>
-          <div className="space-y-2">
-            {ZONE_TYPES.map(cat => {
-              const count = sessionStats.catCounts[cat.value] || 0;
-              const prevCount = sessionStats.prevCatCounts?.[cat.value];
-              const delta = sessionStats.hasPrevious && prevCount !== undefined ? count - prevCount : null;
-              const pct = sessionStats.totalActive > 0 ? Math.round((count / sessionStats.totalActive) * 100) : 0;
-              if (count === 0 && (prevCount === undefined || prevCount === 0)) return null;
-              return (
-                <div key={cat.value} className="group" data-testid={`live-cat-${cat.value}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0 shadow-sm" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
-                    <span className="text-[10px] font-medium text-slate-600 flex-1 truncate">{isAr ? cat.label_ar : cat.label_en}</span>
-                    <span className="text-xs font-bold text-slate-800 tabular-nums">{count}</span>
-                    {delta !== null && delta !== 0 && (
-                      <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${delta > 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"}`}>
-                        {delta > 0 ? "+" : ""}{delta}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${pct}%`, backgroundColor: cat.color }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-0.5">
-                    <span className="text-[8px] text-slate-300 tabular-nums">{pct}%</span>
-                    {sessionStats.hasPrevious && prevCount !== undefined && (
-                      <span className="text-[8px] text-slate-300">{isAr ? `سابق: ${prevCount}` : `prev: ${prevCount}`}</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Previous Day Comparison */}
         {sessionStats.hasPrevious && (
           <PrevDayCompact sessionStats={sessionStats} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />
