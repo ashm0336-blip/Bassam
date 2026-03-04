@@ -386,6 +386,7 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
                     const di = zone.densityInfo;
                     const isHovered = heatHovered?.id === zone.id;
                     const isSelected = zone.id === selectedZoneId;
+                    const hasDensity = zone.fillPct > 0;
                     const pts = zone.polygon_points || [];
                     const minY = pts.length > 0 ? Math.min(...pts.map(p => p.y)) : 0;
                     const maxY = pts.length > 0 ? Math.max(...pts.map(p => p.y)) : 0;
@@ -395,15 +396,22 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
                     const filledRows = zone.filledRows || 0;
                     const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
                     const gap = rowHeight * 0.15;
+                    // Fill color based on density level
+                    const zoneFill = isSelected ? "#dbeafe"
+                      : isHovered ? (hasDensity ? di.color : "#f1f5f9")
+                      : hasDensity ? di.color : "#f8fafc";
+                    const zoneFillOpacity = isSelected ? 0.6
+                      : isHovered ? (hasDensity ? 0.35 : 0.5)
+                      : hasDensity ? Math.min(0.15 + (zone.fillPct / 100) * 0.35, 0.5) : 0.15;
                     return (
                       <g key={zone.id} style={{ pointerEvents: "all", cursor: "pointer" }}>
                         <defs><clipPath id={`clip-d-${zone.id}`}><path d={getPath(pts)} /></clipPath></defs>
                         <path d={getPath(pts)}
-                          fill={isSelected ? "#dbeafe" : isHovered ? "#f1f5f9" : "#f8fafc"}
-                          fillOpacity={isSelected ? 0.6 : isHovered ? 0.5 : 0.3}
-                          stroke={isSelected ? "#3b82f6" : isHovered ? "#1e293b" : "#94a3b8"}
-                          strokeWidth={isSelected ? 1.2 : isHovered ? 1 : 0.3}
-                          strokeOpacity={isSelected || isHovered ? 1 : 0.4}
+                          fill={zoneFill}
+                          fillOpacity={zoneFillOpacity}
+                          stroke={isSelected ? "#3b82f6" : isHovered ? "#1e293b" : hasDensity ? di.color : "#94a3b8"}
+                          strokeWidth={isSelected ? 1.2 : isHovered ? 1 : hasDensity ? 0.5 : 0.3}
+                          strokeOpacity={isSelected || isHovered ? 1 : hasDensity ? 0.7 : 0.4}
                           vectorEffect="non-scaling-stroke"
                         />
                         {totalRows > 0 && Array.from({ length: totalRows }, (_, r) => {
