@@ -49,7 +49,7 @@ export function ZonePatternDefs({ zones }) {
   return (
     <defs>
       {patternZones.map(zone => {
-        const patternSize = 1.2;
+        const patternSize = 0.45;
         const fg = zone.pattern_fg_color || "#000000";
         const bg = zone.pattern_bg_color || "#ffffff";
         return (
