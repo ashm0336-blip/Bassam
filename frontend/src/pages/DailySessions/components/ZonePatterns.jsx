@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 // Generate SVG pattern content based on pattern type
 // s = tile size, sw = stroke width - tuned for tight, professional patterns
-function getPatternContent(type, fgColor, size) {
+export function getPatternContent(type, fgColor, size) {
   const s = size;
   const h = s / 2;
   const sw = Math.max(s * 0.06, 0.03);

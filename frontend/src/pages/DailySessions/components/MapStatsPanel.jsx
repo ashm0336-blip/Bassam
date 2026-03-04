@@ -5,8 +5,46 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDateShort } from "../utils";
+import { getPatternContent } from "./ZonePatterns";
 
-export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapsed, onToggle }) {
+// Mini swatch that mirrors the exact zone style from the map
+function ZoneStyleSwatch({ zone, fallbackColor }) {
+  const size = 14;
+  const ts = 4; // pattern tile size for swatch
+  if (!zone) {
+    return <span className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: fallbackColor }} />;
+  }
+  const usePattern = zone.fill_type === "pattern" && zone.pattern_type;
+  const patId = `swatch-pat-${zone.id}`;
+  const fillVal = usePattern ? `url(#${patId})` : (zone.fill_color || fallbackColor);
+  const strokeDash = zone.stroke_style === "solid" ? "none"
+    : zone.stroke_style === "dotted" ? "1 1.5"
+    : zone.stroke_style === "dash-dot" ? "3 1 1 1"
+    : "3 2";
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
+      {usePattern && (
+        <defs>
+          <pattern id={patId} patternUnits="userSpaceOnUse" width={ts} height={ts}>
+            <rect width={ts} height={ts} fill={zone.pattern_bg_color || "#fff"} />
+            {getPatternContent(zone.pattern_type, zone.pattern_fg_color || "#000", ts)}
+          </pattern>
+        </defs>
+      )}
+      <rect x="0.5" y="0.5" width={size - 1} height={size - 1} rx="2"
+        fill={fillVal}
+        fillOpacity={zone.opacity ?? 0.4}
+        stroke={zone.stroke_color || "#000"}
+        strokeWidth={Math.min((zone.stroke_width ?? 0.3) * 2, 2)}
+        strokeOpacity={zone.stroke_opacity ?? 1}
+        strokeDasharray={strokeDash}
+      />
+    </svg>
+  );
+}
+
+export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZones, collapsed, onToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
@@ -114,14 +152,15 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
                   <text x="60" y="73" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
                 </svg>
               </div>
-              {/* Full Legend - all categories visible */}
+              {/* Full Legend - zone style swatches matching the map */}
               <div className="flex-1 space-y-2 min-w-0 pt-1">
                 {sessionStats.activeCats.map(cat => {
                   const count = sessionStats.catCounts[cat.value];
                   const pct = Math.round((count / sessionStats.totalActive) * 100);
+                  const repZone = (activeZones || []).find(z => z.zone_type === cat.value);
                   return (
                     <div key={cat.value} className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                      <ZoneStyleSwatch zone={repZone} fallbackColor={cat.color} />
                       <span className="text-[11px] text-slate-600 truncate flex-1">{isAr ? cat.label_ar : cat.label_en}</span>
                       <span className="text-[11px] font-bold text-slate-700 tabular-nums">{count}</span>
                       <span className="text-[10px] text-slate-300 w-7 text-left tabular-nums">{pct}%</span>

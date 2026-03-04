@@ -673,6 +673,7 @@ export default function DailySessionsPage() {
                       sessionStats={sessionStats}
                       changedZones={changedZones}
                       ZONE_TYPES={ZONE_TYPES}
+                      activeZones={activeZones}
                       collapsed={statsCollapsed}
                       onToggle={() => setStatsCollapsed(prev => !prev)}
                     />
