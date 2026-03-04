@@ -33,10 +33,7 @@ export function DensityTab({
     if (filterLevel !== "all") {
       zones = zones.filter(z => {
         const lvl = z.densityInfo.level;
-        if (filterLevel === "critical") return lvl === "max" || lvl === "over";
-        if (filterLevel === "high") return lvl === "medium";
-        if (filterLevel === "low") return lvl === "safe" || lvl === "low" || lvl === "empty";
-        return true;
+        return lvl === filterLevel;
       });
     }
     if (sortBy === "density-desc") zones.sort((a, b) => b.fillPct - a.fillPct);
@@ -144,9 +141,10 @@ export function DensityTab({
               <div className="flex border rounded-lg overflow-hidden">
                 {[
                   { key: "all", label: isAr ? "الكل" : "All" },
-                  { key: "critical", label: isAr ? "حرجة" : "Crit", color: "#ef4444" },
-                  { key: "high", label: isAr ? "عالية" : "High", color: "#f97316" },
-                  { key: "low", label: isAr ? "منخفضة" : "Low", color: "#22c55e" },
+                  { key: "critical", label: isAr ? "حرج" : "Critical", color: "#dc2626" },
+                  { key: "high", label: isAr ? "مرتفع" : "High", color: "#ea580c" },
+                  { key: "medium", label: isAr ? "متوسط" : "Medium", color: "#f59e0b" },
+                  { key: "safe", label: isAr ? "آمن" : "Safe", color: "#16a34a" },
                 ].map(f => (
                   <button key={f.key} onClick={() => setFilterLevel(f.key)} data-testid={`density-filter-${f.key}`}
                     className={`px-2 py-1 text-[9px] font-semibold transition-all ${filterLevel === f.key ? "bg-slate-800 text-white" : "bg-white text-slate-400 hover:bg-slate-50"}`}>
@@ -342,9 +340,10 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
       {/* Legend */}
       <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
         {[
-          { color: "#22c55e", label: isAr ? "آمن" : "Safe" },
+          { color: "#16a34a", label: isAr ? "آمن" : "Safe" },
           { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" },
-          { color: "#ef4444", label: isAr ? "أقصى" : "Max" },
+          { color: "#ea580c", label: isAr ? "مرتفع" : "High" },
+          { color: "#dc2626", label: isAr ? "حرج" : "Critical" },
         ].map(l => (
           <div key={l.color} className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm" style={{ backgroundColor: l.color }} /><span className="text-[9px]">{l.label}</span></div>
         ))}

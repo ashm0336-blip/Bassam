@@ -530,8 +530,8 @@ export default function DailySessionsPage() {
       const carpetsPerRow = zw > 0 ? Math.floor(zw / cw) : 0;
       const totalCarpets = totalRows * carpetsPerRow;
       const filledRows = totalRows > 0 ? Math.round((fillPct / 100) * totalRows) : 0;
-      if (info.level === "max" || info.level === "over") criticalCount++;
-      if (info.level === "medium") highCount++;
+      if (info.level === "critical") criticalCount++;
+      if (info.level === "high") highCount++;
       return { ...z, fillPct, actualCount, capMax, capSafe, capMedium, currentDisplay: actualCount, maxDisplay: capMax, densityInfo: info, prayerCounts: { ...prayerCounts, ...editedPrayers }, totalRows, carpetsPerRow, totalCarpets, filledRows };
     });
     const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
