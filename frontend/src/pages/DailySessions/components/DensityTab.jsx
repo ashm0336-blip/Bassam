@@ -142,8 +142,8 @@ export function DensityTab({
                         <p className="text-[9px] font-medium" style={{ color: kpi.color + "99" }}>{kpi.label}</p>
                         <span className="text-lg font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
                       </div>
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.iconBg }}>
-                        <Icon className="w-3 h-3" style={{ color: kpi.color }} />
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4" style={{ color: kpi.color, opacity: 0.5 }} />
                       </div>
                     </div>
                   </div>
