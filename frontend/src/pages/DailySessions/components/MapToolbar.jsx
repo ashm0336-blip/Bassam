@@ -426,13 +426,13 @@ export function MapToolbar({
                         <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "معاينة" : "Preview"}</span>
                       </div>
                       <div className="flex items-center justify-center p-3 bg-slate-50 rounded-lg border" data-testid="style-preview">
-                        <svg width="120" height="60" viewBox="0 0 120 60">
+                        <svg width="140" height="60" viewBox="0 0 140 60">
                           {fillType === "pattern" && (
                             <defs>
-                              <pattern id="preview-current-pattern" patternUnits="userSpaceOnUse" width="10" height="10">
-                                <rect width="10" height="10" fill={patternBg} />
+                              <pattern id="preview-current-pattern" patternUnits="userSpaceOnUse" width="6" height="6">
+                                <rect width="6" height="6" fill={patternBg} />
                                 {(() => {
-                                  const s = 10, h = 5, sw = s * 0.08;
+                                  const s = 6, h = 3, sw = s * 0.06;
                                   switch(patternType) {
                                     case "diagonal-right": return <><line x1="0" y1={s} x2={s} y2="0" stroke={patternFg} strokeWidth={sw} /><line x1={-h} y1={h} x2={h} y2={-h} stroke={patternFg} strokeWidth={sw} /><line x1={h} y1={s+h} x2={s+h} y2={h} stroke={patternFg} strokeWidth={sw} /></>;
                                     case "diagonal-left": return <><line x1="0" y1="0" x2={s} y2={s} stroke={patternFg} strokeWidth={sw} /><line x1={-h} y1={h} x2={h} y2={s+h} stroke={patternFg} strokeWidth={sw} /><line x1={h} y1={-h} x2={s+h} y2={h} stroke={patternFg} strokeWidth={sw} /></>;
@@ -440,11 +440,11 @@ export function MapToolbar({
                                     case "horizontal": return <line x1="0" y1={h} x2={s} y2={h} stroke={patternFg} strokeWidth={sw} />;
                                     case "vertical": return <line x1={h} y1="0" x2={h} y2={s} stroke={patternFg} strokeWidth={sw} />;
                                     case "grid": return <><line x1={h} y1="0" x2={h} y2={s} stroke={patternFg} strokeWidth={sw*0.7} /><line x1="0" y1={h} x2={s} y2={h} stroke={patternFg} strokeWidth={sw*0.7} /></>;
-                                    case "dots-small": return <circle cx={h} cy={h} r={s*0.1} fill={patternFg} />;
-                                    case "dots-large": return <circle cx={h} cy={h} r={s*0.2} fill={patternFg} />;
-                                    case "dense": return <><line x1="0" y1={s*0.25} x2={s} y2={s*0.25} stroke={patternFg} strokeWidth={sw} /><line x1="0" y1={s*0.5} x2={s} y2={s*0.5} stroke={patternFg} strokeWidth={sw} /><line x1="0" y1={s*0.75} x2={s} y2={s*0.75} stroke={patternFg} strokeWidth={sw} /><line x1={s*0.25} y1="0" x2={s*0.25} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /><line x1={s*0.75} y1="0" x2={s*0.75} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /></>;
-                                    case "light-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.04} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.04} fill={patternFg} /></>;
-                                    case "medium-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.06} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.06} fill={patternFg} /><circle cx={s*0.75} cy={s*0.25} r={s*0.04} fill={patternFg} /><circle cx={s*0.25} cy={s*0.75} r={s*0.04} fill={patternFg} /></>;
+                                    case "dots-small": return <circle cx={h} cy={h} r={s*0.12} fill={patternFg} />;
+                                    case "dots-large": return <circle cx={h} cy={h} r={s*0.22} fill={patternFg} />;
+                                    case "dense": return <><line x1="0" y1={s*0.25} x2={s} y2={s*0.25} stroke={patternFg} strokeWidth={sw*0.8} /><line x1="0" y1={s*0.5} x2={s} y2={s*0.5} stroke={patternFg} strokeWidth={sw*0.8} /><line x1="0" y1={s*0.75} x2={s} y2={s*0.75} stroke={patternFg} strokeWidth={sw*0.8} /><line x1={s*0.25} y1="0" x2={s*0.25} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /><line x1={s*0.75} y1="0" x2={s*0.75} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /></>;
+                                    case "light-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.05} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.05} fill={patternFg} /></>;
+                                    case "medium-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.08} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.08} fill={patternFg} /><circle cx={s*0.75} cy={s*0.25} r={s*0.05} fill={patternFg} /><circle cx={s*0.25} cy={s*0.75} r={s*0.05} fill={patternFg} /></>;
                                     case "diamonds": return <path d={`M${h} ${s*0.1} L${s*0.9} ${h} L${h} ${s*0.9} L${s*0.1} ${h} Z`} fill="none" stroke={patternFg} strokeWidth={sw*0.7} />;
                                     default: return null;
                                   }
@@ -452,7 +452,7 @@ export function MapToolbar({
                               </pattern>
                             </defs>
                           )}
-                          <rect x="5" y="5" width="110" height="50" rx="4"
+                          <rect x="5" y="5" width="130" height="50" rx="4"
                             fill={fillType === "pattern" ? "url(#preview-current-pattern)" : styleZone.fill_color}
                             fillOpacity={styleZone.opacity ?? 0.4}
                             stroke={styleZone.stroke_color || "#000"}

@@ -43,6 +43,7 @@
 - Multi-level auth (system_admin, general_manager, department_manager, field_staff)
 - Enhanced gate map tooltip (plaza, category, full Arabic translation)
 - **Enhanced Zone Format Panel (March 2026)**: PowerPoint-style formatting with 12 SVG patterns, pattern colors, stroke opacity, dash-dot border type, live preview
+- **Clean Map View (March 2026)**: Removed staff badges from zone centers - staff info only in hover tooltip
 
 ## Pending Verification
 - Gate map tooltip update (المنطقة، الفئة، النوع، المسار، التصنيف، الحالة، المؤشر، الموظفين، الملاحظة)
@@ -69,8 +70,8 @@
 
 ## Key Files
 - `/app/frontend/src/pages/DailySessions/components/MapToolbar.jsx` (Enhanced style panel)
-- `/app/frontend/src/pages/DailySessions/components/ZonePatterns.jsx` (SVG pattern definitions)
-- `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx` (Pattern rendering)
+- `/app/frontend/src/pages/DailySessions/components/ZonePatterns.jsx` (SVG pattern definitions - tileSize=1.2)
+- `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx` (Pattern rendering, no staff badges)
 - `/app/frontend/src/pages/DailySessions/constants.js` (PATTERN_TYPES)
 - `/app/frontend/src/pages/PrayerAreas/EmployeeManagement.jsx`
 - `/app/frontend/src/pages/DepartmentSettings.jsx`
