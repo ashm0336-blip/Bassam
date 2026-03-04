@@ -73,7 +73,7 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
         {/* Panel Header with close button */}
         <div className="flex items-center justify-between">
           <div className="flex-1" />
-          <p className="text-xs font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "الإحصائيات" : "Statistics"}</p>
+          <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "الإحصائيات" : "Statistics"}</p>
           <div className="flex-1 flex justify-end">
             <button
               onClick={onToggle}
@@ -126,7 +126,7 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
         {sessionStats.totalActive > 0 && (
           <div className="rounded-xl border border-slate-100 bg-white p-4" data-testid="live-donut">
             <div className="text-center mb-3">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{isAr ? "توزيع الفئات" : "Distribution"}</p>
+              <p className="text-[12px] font-bold text-slate-500 tracking-wider font-cairo">{isAr ? "توزيع الفئات" : "Distribution"}</p>
               <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
             </div>
             <div className="flex items-center gap-4">
@@ -198,7 +198,7 @@ function PrevDayCompact({ sessionStats, ZONE_TYPES, isAr }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-4" data-testid="live-prev-comparison">
       <div className="text-center mb-3">
-        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{isAr ? "مقارنة" : "Compare"}</p>
+        <p className="text-[12px] font-bold text-slate-500 tracking-wider font-cairo">{isAr ? "مقارنة" : "Compare"}</p>
         <div className="flex items-center justify-center gap-2 mt-1">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200" />
           <span className="text-[9px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{formatDateShort(sessionStats.prevSession.date)}</span>
