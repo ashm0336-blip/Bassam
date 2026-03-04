@@ -34,26 +34,26 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
 
       <div className="p-3 space-y-3">
 
-        {/* KPI Grid */}
+        {/* KPI Grid - 2x2 */}
         <div className="grid grid-cols-2 gap-2" data-testid="live-kpi-grid">
           {[
             { label: isAr ? "نشطة" : "Active", value: sessionStats.totalActive, icon: CircleDot, color: "#10b981", bg: "#ecfdf5", delta: sessionStats.hasPrevious ? sessionStats.totalActive - sessionStats.prevTotalActive : null },
-            { label: isAr ? "مزالة" : "Removed", value: sessionStats.totalRemoved, icon: CircleOff, color: "#ef4444", bg: "#fef2f2" },
-            { label: isAr ? "تغييرات" : "Changes", value: changedZones.length, icon: Edit2, color: "#f59e0b", bg: "#fffbeb" },
+            { label: isAr ? "مزالة" : "Removed", value: sessionStats.totalRemoved, icon: CircleOff, color: "#ef4444", bg: "#fef2f2", delta: null },
+            { label: isAr ? "تغييرات" : "Changes", value: changedZones.length, icon: Edit2, color: "#f59e0b", bg: "#fffbeb", delta: null },
             { label: isAr ? "فئات" : "Categories", value: sessionStats.uniqueCategories, icon: Layers, color: "#3b82f6", bg: "#eff6ff", sub: `/${ZONE_TYPES.length}` },
           ].map((kpi, i) => {
             const Icon = kpi.icon;
             return (
-              <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden hover:shadow-sm transition-shadow" data-testid={`live-kpi-${i}`}>
+              <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden group hover:shadow-sm transition-shadow" data-testid={`live-kpi-${i}`}>
                 <div className="absolute top-0 right-0 w-12 h-12 rounded-bl-[2rem] opacity-[0.07]" style={{ backgroundColor: kpi.color }} />
-                <div className="flex items-start justify-between gap-1 relative">
+                <div className="flex items-start justify-between gap-1">
                   <div>
                     <p className="text-[10px] font-medium text-slate-400 leading-tight">{kpi.label}</p>
                     <div className="flex items-baseline gap-0.5 mt-1">
                       <span className="text-2xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
                       {kpi.sub && <span className="text-[10px] text-slate-300 font-medium">{kpi.sub}</span>}
                     </div>
-                    {kpi.delta != null && kpi.delta !== 0 && (
+                    {kpi.delta !== null && kpi.delta !== undefined && kpi.delta !== 0 && (
                       <div className={`flex items-center gap-0.5 mt-0.5 text-[9px] font-semibold ${kpi.delta > 0 ? "text-emerald-600" : "text-red-500"}`}>
                         {kpi.delta > 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
                         {kpi.delta > 0 ? "+" : ""}{kpi.delta}
@@ -69,70 +69,52 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
           })}
         </div>
 
-        {/* Unified: Donut + Category Bars */}
+        {/* Donut + Legend */}
         {sessionStats.totalActive > 0 && (
-          <div className="rounded-xl border border-slate-100 bg-white overflow-hidden" data-testid="live-distribution">
-            <div className="px-3 pt-3 pb-2 flex items-center gap-1.5">
-              <div className="w-1 h-4 rounded-full bg-emerald-500" />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isAr ? "توزيع الفئات" : "Distribution"}</p>
-              <span className="text-[9px] text-slate-300 mr-auto tabular-nums">{sessionStats.activeCats.length} {isAr ? "فئة" : "types"}</span>
-            </div>
-
-            {/* Donut centered */}
-            <div className="flex justify-center pb-2">
-              <svg viewBox="0 0 120 120" className="w-[100px] h-[100px]">
-                {(() => {
-                  const total = sessionStats.totalActive;
-                  const cx = 60, cy = 60, r = 42, sw = 14;
-                  const circ = 2 * Math.PI * r;
-                  let offset = 0;
-                  return sessionStats.activeCats.map((cat) => {
-                    const count = sessionStats.catCounts[cat.value];
-                    const dashLen = (count / total) * circ;
-                    const el = (
-                      <circle key={cat.value} cx={cx} cy={cy} r={r} fill="none"
-                        stroke={cat.color} strokeWidth={sw}
-                        strokeDasharray={`${dashLen} ${circ - dashLen}`}
-                        strokeDashoffset={-offset}
-                        strokeLinecap="butt"
-                        transform={`rotate(-90 ${cx} ${cy})`}
-                        className="transition-all duration-700"
-                      />
-                    );
-                    offset += dashLen;
-                    return el;
-                  });
-                })()}
-                <text x="60" y="56" textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="800" fill="#1e293b">{sessionStats.totalActive}</text>
-                <text x="60" y="72" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
-              </svg>
-            </div>
-
-            {/* Category Bars List */}
-            <div className="border-t border-slate-100">
-              <div className="max-h-[200px] overflow-y-auto">
-                {ZONE_TYPES.map(cat => {
-                  const count = sessionStats.catCounts[cat.value] || 0;
-                  if (count === 0) return null;
+          <div className="rounded-xl border border-slate-100 bg-white p-3" data-testid="live-donut">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{isAr ? "توزيع الفئات" : "Distribution"}</p>
+            <div className="flex items-start gap-3">
+              {/* Donut */}
+              <div className="flex-shrink-0">
+                <svg viewBox="0 0 100 100" className="w-[80px] h-[80px]">
+                  {(() => {
+                    const total = sessionStats.totalActive;
+                    const cx = 50, cy = 50, r = 36, sw = 12;
+                    const circ = 2 * Math.PI * r;
+                    let offset = 0;
+                    return sessionStats.activeCats.map((cat) => {
+                      const count = sessionStats.catCounts[cat.value];
+                      const pct = count / total;
+                      const dashLen = pct * circ;
+                      const el = (
+                        <circle key={cat.value} cx={cx} cy={cy} r={r} fill="none"
+                          stroke={cat.color} strokeWidth={sw}
+                          strokeDasharray={`${dashLen} ${circ - dashLen}`}
+                          strokeDashoffset={-offset}
+                          strokeLinecap="butt"
+                          transform={`rotate(-90 ${cx} ${cy})`}
+                          className="transition-all duration-700"
+                        />
+                      );
+                      offset += dashLen;
+                      return el;
+                    });
+                  })()}
+                  <text x="50" y="47" textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="800" fill="#1e293b">{sessionStats.totalActive}</text>
+                  <text x="50" y="61" textAnchor="middle" dominantBaseline="middle" fontSize="7" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
+                </svg>
+              </div>
+              {/* Legend - scrollable if too many */}
+              <div className="flex-1 space-y-1 min-w-0 max-h-[120px] overflow-y-auto">
+                {sessionStats.activeCats.map(cat => {
+                  const count = sessionStats.catCounts[cat.value];
                   const pct = Math.round((count / sessionStats.totalActive) * 100);
-                  const prevCount = sessionStats.prevCatCounts?.[cat.value];
-                  const delta = sessionStats.hasPrevious && prevCount !== undefined ? count - prevCount : null;
                   return (
-                    <div key={cat.value} className="px-3 py-2 border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50 transition-colors" data-testid={`live-cat-${cat.value}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
-                        <span className="text-[10px] font-medium text-slate-600 flex-1 truncate">{isAr ? cat.label_ar : cat.label_en}</span>
-                        <span className="text-[11px] font-bold text-slate-800 tabular-nums">{count}</span>
-                        <span className="text-[9px] text-slate-300 tabular-nums w-7 text-left">{pct}%</span>
-                        {delta != null && delta !== 0 && (
-                          <span className={`text-[8px] font-bold px-1 py-0.5 rounded-full min-w-[20px] text-center ${delta > 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"}`}>
-                            {delta > 0 ? "+" : ""}{delta}
-                          </span>
-                        )}
-                      </div>
-                      <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${pct}%`, backgroundColor: cat.color }} />
-                      </div>
+                    <div key={cat.value} className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="text-[9px] text-slate-600 truncate flex-1">{isAr ? cat.label_ar : cat.label_en}</span>
+                      <span className="text-[9px] font-bold text-slate-700 tabular-nums">{count}</span>
+                      <span className="text-[8px] text-slate-300 w-5 text-left tabular-nums">{pct}%</span>
                     </div>
                   );
                 })}
@@ -140,6 +122,46 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
             </div>
           </div>
         )}
+
+        {/* Category Bars */}
+        <div className="rounded-xl border border-slate-100 bg-white p-3" data-testid="live-category-bars">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{isAr ? "تفصيل الفئات" : "Breakdown"}</p>
+          <div className="space-y-2">
+            {ZONE_TYPES.map(cat => {
+              const count = sessionStats.catCounts[cat.value] || 0;
+              const prevCount = sessionStats.prevCatCounts?.[cat.value];
+              const delta = sessionStats.hasPrevious && prevCount !== undefined ? count - prevCount : null;
+              const pct = sessionStats.totalActive > 0 ? Math.round((count / sessionStats.totalActive) * 100) : 0;
+              if (count === 0 && (prevCount === undefined || prevCount === 0)) return null;
+              return (
+                <div key={cat.value} className="group" data-testid={`live-cat-${cat.value}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0 shadow-sm" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
+                    <span className="text-[10px] font-medium text-slate-600 flex-1 truncate">{isAr ? cat.label_ar : cat.label_en}</span>
+                    <span className="text-xs font-bold text-slate-800 tabular-nums">{count}</span>
+                    {delta !== null && delta !== 0 && (
+                      <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${delta > 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"}`}>
+                        {delta > 0 ? "+" : ""}{delta}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-[8px] text-slate-300 tabular-nums">{pct}%</span>
+                    {sessionStats.hasPrevious && prevCount !== undefined && (
+                      <span className="text-[8px] text-slate-300">{isAr ? `سابق: ${prevCount}` : `prev: ${prevCount}`}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Previous Day Comparison */}
         {sessionStats.hasPrevious && (
@@ -161,8 +183,7 @@ function PrevDayCompact({ sessionStats, ZONE_TYPES, isAr }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-3" data-testid="live-prev-comparison">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-1 h-4 rounded-full bg-indigo-500" />
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex-1">{isAr ? "مقارنة" : "Compare"}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-1">{isAr ? "مقارنة" : "Compare"}</p>
         <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{formatDateShort(sessionStats.prevSession.date)}</span>
       </div>
 
@@ -181,7 +202,7 @@ function PrevDayCompact({ sessionStats, ZONE_TYPES, isAr }) {
       </div>
 
       {changes.length > 0 && (
-        <div className="space-y-1 pt-1.5 border-t border-dashed border-slate-100">
+        <div className="space-y-1 pt-1 border-t border-dashed border-slate-100">
           {changes.map(c => (
             <div key={c.value} className="flex items-center gap-1.5 py-0.5">
               <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
