@@ -15,24 +15,35 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, collapse
   const ToggleBtn = (
     <button
       onClick={onToggle}
-      className="absolute top-2 left-0 z-10 w-7 h-14 rounded-l-lg bg-white/90 backdrop-blur border border-r-0 border-slate-200 shadow-md flex items-center justify-center hover:bg-slate-50 transition-all"
-      style={{ transform: "translateX(-100%)" }}
+      className="absolute top-3 left-3 z-10 w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:shadow transition-all"
       data-testid="stats-panel-toggle"
-      title={collapsed ? (isAr ? "إظهار الإحصائيات" : "Show Stats") : (isAr ? "إخفاء الإحصائيات" : "Hide Stats")}
+      title={isAr ? "إخفاء الإحصائيات" : "Hide Stats"}
     >
-      {collapsed ? <PanelLeftOpen className="w-3.5 h-3.5 text-slate-500" /> : <PanelLeftClose className="w-3.5 h-3.5 text-slate-500" />}
+      <PanelLeftClose className="w-4 h-4 text-slate-400" />
     </button>
   );
 
   if (collapsed) {
-    return <div className="relative w-0">{ToggleBtn}</div>;
+    return null;
   }
 
   return (
     <div className="relative w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden" data-testid="map-stats-panel">
-      {ToggleBtn}
 
       <div className="p-4 space-y-4">
+
+        {/* Panel Header with close button */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold font-cairo text-slate-500">{isAr ? "الإحصائيات" : "Statistics"}</p>
+          <button
+            onClick={onToggle}
+            className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+            data-testid="stats-panel-close"
+            title={isAr ? "إخفاء" : "Hide"}
+          >
+            <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+          </button>
+        </div>
 
         {/* KPI Grid - 2x2 */}
         <div className="grid grid-cols-2 gap-2.5" data-testid="live-kpi-grid">

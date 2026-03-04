@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import {
   Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, Activity,
-  CalendarRange, Users,
+  CalendarRange, Users, BarChart3,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -623,7 +623,18 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
-                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60">
+                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative">
+                    {statsCollapsed && (
+                      <button
+                        onClick={() => setStatsCollapsed(false)}
+                        className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
+                        data-testid="stats-panel-show"
+                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                      </button>
+                    )}
                     <div className={`transition-all duration-300 ${statsCollapsed ? "flex-1" : "flex-1 min-w-0"}`}>
                       <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
