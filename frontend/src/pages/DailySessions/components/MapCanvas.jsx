@@ -222,10 +222,10 @@ export function MapCanvas({
   const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
 
   return (
-    <Card className="overflow-hidden border-0 shadow-none rounded-none">
-      <CardContent className="p-0">
-        <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden"
-          style={{ height: "600px", cursor: cursorStyle }}
+    <Card className="overflow-hidden border-0 shadow-none rounded-none h-full">
+      <CardContent className="p-0 h-full">
+        <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden h-full"
+          style={{ minHeight: "500px", cursor: cursorStyle }}
           onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onClick={handleClick}>
           <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {(() => {

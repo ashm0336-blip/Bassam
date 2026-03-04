@@ -623,7 +623,7 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
-                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative">
+                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
                     {statsCollapsed && (
                       <button
                         onClick={() => setStatsCollapsed(false)}
