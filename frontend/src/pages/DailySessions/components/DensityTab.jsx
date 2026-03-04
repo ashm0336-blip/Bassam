@@ -125,53 +125,30 @@ export function DensityTab({
                 );
               })}
             </div>
-            {/* KPIs - Row 2: 4 level cards - Creative Design */}
-            <div className="grid grid-cols-4 gap-1.5">
-              {/* آمن - Safe */}
-              <div className="relative rounded-xl p-2 border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white overflow-hidden text-center group hover:shadow-lg hover:shadow-emerald-100 transition-all duration-300" data-testid="density-level-0">
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent" />
-                <div className="relative">
-                  <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
-                    <svg viewBox="0 0 20 20" className="w-4 h-4 text-white"><path d="M6 10l3 3 5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            {/* KPIs - Row 2: 4 level cards - Same style as Row 1 */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: isAr ? "آمن" : "Safe", value: densityStats.safeCount, icon: ShieldAlert, color: "#16a34a", bg: "#f0fdf4" },
+                { label: isAr ? "متوسط" : "Medium", value: densityStats.mediumCount, icon: AlertCircle, color: "#f59e0b", bg: "#fffbeb" },
+                { label: isAr ? "مرتفع" : "High", value: densityStats.highCount, icon: Flame, color: "#ea580c", bg: "#fff7ed" },
+                { label: isAr ? "حرج" : "Critical", value: densityStats.criticalCount, icon: ShieldAlert, color: "#dc2626", bg: "#fef2f2" },
+              ].map((kpi, i) => {
+                const Icon = kpi.icon;
+                return (
+                  <div key={i} className="relative rounded-xl p-2 border border-slate-100 bg-white overflow-hidden" data-testid={`density-level-${i}`}>
+                    <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+                    <div className="flex items-start justify-between gap-1 relative">
+                      <div>
+                        <p className="text-[9px] font-medium text-slate-400">{kpi.label}</p>
+                        <span className="text-lg font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                      </div>
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: kpi.bg }}>
+                        <Icon className="w-3 h-3" style={{ color: kpi.color }} />
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xl font-black tabular-nums text-emerald-700 leading-tight">{densityStats.safeCount}</p>
-                  <p className="text-[7px] font-bold text-emerald-500 uppercase tracking-widest">{isAr ? "آمن" : "Safe"}</p>
-                </div>
-              </div>
-              {/* متوسط - Medium */}
-              <div className="relative rounded-xl p-2 border border-amber-200 bg-gradient-to-b from-amber-50 to-white overflow-hidden text-center group hover:shadow-lg hover:shadow-amber-100 transition-all duration-300" data-testid="density-level-1">
-                <div className="absolute inset-0 bg-gradient-to-t from-amber-500/5 to-transparent" />
-                <div className="relative">
-                  <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-110 transition-transform duration-300">
-                    <svg viewBox="0 0 20 20" className="w-4 h-4 text-white"><rect x="9" y="5" width="2.5" height="7" rx="1.2" fill="currentColor"/><circle cx="10.2" cy="14.5" r="1.3" fill="currentColor"/></svg>
-                  </div>
-                  <p className="text-xl font-black tabular-nums text-amber-700 leading-tight">{densityStats.mediumCount}</p>
-                  <p className="text-[7px] font-bold text-amber-500 uppercase tracking-widest">{isAr ? "متوسط" : "Medium"}</p>
-                </div>
-              </div>
-              {/* مرتفع - High */}
-              <div className="relative rounded-xl p-2 border border-orange-200 bg-gradient-to-b from-orange-50 to-white overflow-hidden text-center group hover:shadow-lg hover:shadow-orange-100 transition-all duration-300" data-testid="density-level-2">
-                <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 to-transparent" />
-                <div className="relative">
-                  <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-md shadow-orange-200 group-hover:scale-110 transition-transform duration-300">
-                    <svg viewBox="0 0 20 20" className="w-4.5 h-4.5 text-white"><path d="M10 2L18.5 17H1.5L10 2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><rect x="9" y="8" width="2" height="4.5" rx="1" fill="currentColor"/><circle cx="10" cy="14.5" r="1" fill="currentColor"/></svg>
-                  </div>
-                  <p className="text-xl font-black tabular-nums text-orange-700 leading-tight">{densityStats.highCount}</p>
-                  <p className="text-[7px] font-bold text-orange-500 uppercase tracking-widest">{isAr ? "مرتفع" : "High"}</p>
-                </div>
-              </div>
-              {/* حرج - Critical */}
-              <div className="relative rounded-xl p-2 border border-red-300 bg-gradient-to-b from-red-50 to-white overflow-hidden text-center group hover:shadow-lg hover:shadow-red-100 transition-all duration-300" data-testid="density-level-3">
-                <div className="absolute inset-0 bg-gradient-to-t from-red-500/5 to-transparent" />
-                {densityStats.criticalCount > 0 && <div className="absolute inset-0 rounded-xl border-2 border-red-400 animate-pulse opacity-40" />}
-                <div className="relative">
-                  <div className={`w-8 h-8 mx-auto mb-1 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-md shadow-red-200 group-hover:scale-110 transition-transform duration-300 ${densityStats.criticalCount > 0 ? "animate-pulse" : ""}`}>
-                    <svg viewBox="0 0 20 20" className="w-4 h-4 text-white"><line x1="6" y1="6" x2="14" y2="14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="14" y1="6" x2="6" y2="14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                  </div>
-                  <p className="text-xl font-black tabular-nums text-red-700 leading-tight">{densityStats.criticalCount}</p>
-                  <p className="text-[7px] font-bold text-red-500 uppercase tracking-widest">{isAr ? "حرج" : "Critical"}</p>
-                </div>
-              </div>
+                );
+              })}
             </div>
 
             {/* Zone List Title + Controls */}
