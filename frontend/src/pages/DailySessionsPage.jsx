@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import {
-  Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, BarChart3, Activity,
+  Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, Activity,
   CalendarRange, Users,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import { MapToolbar } from "./DailySessions/components/MapToolbar";
 import { MapCanvas } from "./DailySessions/components/MapCanvas";
 import { ChangesLog } from "./DailySessions/components/MapZoneCards";
 import { DensityTab } from "./DailySessions/components/DensityTab";
-import { StatsTab } from "./DailySessions/components/StatsTab";
+import { MapStatsPanel } from "./DailySessions/components/MapStatsPanel";
 import {
   NewSessionDialog, BatchDialog, ZoneEditDialog, NewZoneDialog,
   NotesDialog, CompareDialog,
@@ -56,6 +56,7 @@ export default function DailySessionsPage() {
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
+  const [statsCollapsed, setStatsCollapsed] = useState(false);
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -598,11 +599,10 @@ export default function DailySessionsPage() {
               <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} />
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="map" data-testid="tab-map"><MapPin className="w-4 h-4 ml-1" />{isAr ? "الخريطة" : "Map"}<Badge variant="secondary" className="mr-1 text-[10px] px-1.5">{activeZones.length}</Badge></TabsTrigger>
                   <TabsTrigger value="density" data-testid="tab-density"><Activity className="w-4 h-4 ml-1" />{isAr ? "الكثافات" : "Density"}{densityStats?.criticalCount > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{densityStats.criticalCount}</Badge>}</TabsTrigger>
                   <TabsTrigger value="employees" data-testid="tab-employees"><Users className="w-4 h-4 ml-1" />{isAr ? "الموظفين" : "Staff"}</TabsTrigger>
-                  <TabsTrigger value="stats" data-testid="tab-stats"><BarChart3 className="w-4 h-4 ml-1" />{isAr ? "إحصائيات" : "Stats"}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="map" className="space-y-3">
@@ -623,7 +623,9 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
-                  <MapCanvas
+                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60">
+                    <div className={`transition-all duration-300 ${statsCollapsed ? "flex-1" : "flex-1 min-w-0"}`}>
+                      <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
                     sessionZones={sessionZones} activeZones={activeZones} removedZones={removedZones}
                     mapMode={mapMode} zoom={zoom} panOffset={panOffset} setPanOffset={setPanOffset}
@@ -655,6 +657,15 @@ export default function DailySessionsPage() {
                     addDrawingPoint={addDrawingPoint}
                     onEditStart={onEditStart} setMapMode={setMapMode}
                   />
+                    </div>
+                    <MapStatsPanel
+                      sessionStats={sessionStats}
+                      changedZones={changedZones}
+                      ZONE_TYPES={ZONE_TYPES}
+                      collapsed={statsCollapsed}
+                      onToggle={() => setStatsCollapsed(prev => !prev)}
+                    />
+                  </div>
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
                   />
@@ -668,10 +679,6 @@ export default function DailySessionsPage() {
                     savingDensity={savingDensity} selectedFloor={selectedFloor}
                     imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
                   />
-                </TabsContent>
-
-                <TabsContent value="stats" className="space-y-5">
-                  <StatsTab sessionStats={sessionStats} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES} sessions={sessions} />
                 </TabsContent>
 
                 <TabsContent value="employees" className="space-y-5">
