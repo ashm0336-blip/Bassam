@@ -121,11 +121,9 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
         {/* Donut + Full Legend */}
         {sessionStats.totalActive > 0 && (
           <div className="rounded-xl border border-slate-100 bg-white p-4" data-testid="live-donut">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">{isAr ? "توزيع الفئات" : "Distribution"}</p>
-            <div className="flex items-start gap-4">
-              {/* Donut */}
-              <div className="flex-shrink-0">
-                <svg viewBox="0 0 120 120" className="w-[110px] h-[110px]">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 text-center">{isAr ? "توزيع الفئات" : "Distribution"}</p>
+            <div className="flex justify-center mb-3">
+              <svg viewBox="0 0 120 120" className="w-[110px] h-[110px]">
                   {(() => {
                     const total = sessionStats.totalActive;
                     const cx = 60, cy = 60, r = 44, sw = 14;
@@ -151,9 +149,9 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
                   <text x="60" y="58" textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="800" fill="#1e293b">{sessionStats.totalActive}</text>
                   <text x="60" y="76" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{isAr ? "منطقة" : "zones"}</text>
                 </svg>
-              </div>
-              {/* Full Legend - zone style swatches matching the map */}
-              <div className="flex-1 space-y-2 min-w-0 pt-1">
+            </div>
+              {/* Legend below donut */}
+              <div className="space-y-2">
                 {sessionStats.activeCats.map(cat => {
                   const count = sessionStats.catCounts[cat.value];
                   const pct = Math.round((count / sessionStats.totalActive) * 100);
@@ -168,7 +166,6 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
                   );
                 })}
               </div>
-            </div>
           </div>
         )}
 
