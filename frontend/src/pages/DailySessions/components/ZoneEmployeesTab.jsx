@@ -200,7 +200,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
             <div
               ref={wheelCallbackRef}
               className="relative bg-slate-50 overflow-hidden h-full"
-              style={{ cursor: isPanning ? "grabbing" : "grab" }}
+              style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
               data-testid="coverage-map-container"
               onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); }}
               onMouseMove={(e) => {
@@ -221,6 +221,10 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
               }}
               onMouseUp={() => setIsPanning(false)}
               onMouseLeave={() => { setIsPanning(false); setHoveredZone(null); }}
+              onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; setIsPanning(true); setPanStart({ x: t.clientX - panOffset.x, y: t.clientY - panOffset.y }); }}
+              onTouchMove={(e) => { if (isPanning) { e.preventDefault(); const t = e.touches[0]; setPanOffset({ x: t.clientX - panStart.x, y: t.clientY - panStart.y }); } }}
+              onTouchEnd={() => setIsPanning(false)}
+              onTouchCancel={() => setIsPanning(false)}
             >
               <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {(() => {

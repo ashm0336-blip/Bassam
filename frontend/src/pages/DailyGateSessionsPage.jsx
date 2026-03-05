@@ -165,12 +165,18 @@ export default function DailyGateSessionsPage() {
     e.preventDefault();
     setDraggingGateId(gateId);
   };
+  const getClientXY = (e) => {
+    if (e.touches && e.touches.length > 0) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches.length > 0) return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
+  };
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const ctm = svgRef.current.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
+    const { clientX, clientY } = getClientXY(e);
     const pt = svgRef.current.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
+    pt.x = clientX; pt.y = clientY;
     const t = pt.matrixTransform(ctm.inverse());
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
@@ -197,6 +203,38 @@ export default function DailyGateSessionsPage() {
       return;
     }
     setIsPanning(false);
+  };
+  // Touch event handlers for gates map
+  const handleTouchStartGates = (e) => {
+    e.preventDefault();
+    const { clientX, clientY } = getClientXY(e);
+    if (mapMode === "pan") {
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    }
+  };
+  const handleGateTouchStart = (e, gateId) => {
+    if (mapMode !== "edit" || activeSession?.status !== "draft") return;
+    e.stopPropagation();
+    e.preventDefault();
+    setDraggingGateId(gateId);
+  };
+  const handleTouchMoveGates = (e) => {
+    const { clientX, clientY } = getClientXY(e);
+    if (draggingGateId && mapMode === "edit") {
+      e.preventDefault();
+      const pos = getMousePercent(e);
+      setActiveSession(prev => {
+        if (!prev) return prev;
+        return { ...prev, gates: prev.gates.map(g => g.id === draggingGateId ? { ...g, x: pos.x, y: pos.y } : g) };
+      });
+      return;
+    }
+    if (isPanning) { e.preventDefault(); setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y }); }
+  };
+  const handleTouchEndGates = (e) => {
+    e.preventDefault();
+    handleMouseUp();
   };
 
   // Session actions
@@ -461,7 +499,7 @@ export default function DailyGateSessionsPage() {
 
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden"><CardContent className="p-0">
-                      <div ref={wheelRef} className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" && activeSession?.status === "draft" ? "ring-2 ring-blue-400/50" : ""}`} style={{ height: "550px", cursor: draggingGateId ? "grabbing" : mapMode === "edit" ? "default" : isPanning ? "grabbing" : "grab" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} data-testid="gate-map-container">
+                      <div ref={wheelRef} className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" && activeSession?.status === "draft" ? "ring-2 ring-blue-400/50" : ""}`} style={{ height: "550px", cursor: draggingGateId ? "grabbing" : mapMode === "edit" ? "default" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
@@ -489,6 +527,7 @@ export default function DailyGateSessionsPage() {
                                         onMouseEnter={() => { if (!draggingGateId) setHoveredGate(gate); }}
                                         onMouseLeave={() => setHoveredGate(null)}
                                         onMouseDown={(e) => handleGateMouseDown(e, gate.id)}
+                                        onTouchStart={(e) => handleGateTouchStart(e, gate.id)}
                                         onClick={() => { if (!isEditMode && activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
                                         style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : activeSession?.status === "draft" ? "pointer" : "default" }}>
                                         {/* Pulse */}

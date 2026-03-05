@@ -34,6 +34,7 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
       style={{ left: posX, top: posY, transform: "translateX(-50%)" }}
       data-testid="floating-toolbar"
       onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       <div className="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
         <button onClick={onEdit} className={`${btnClass} text-blue-600 hover:bg-blue-50`} data-testid="float-edit-btn" title={isAr ? "تعديل البيانات" : "Edit Data"}>
@@ -81,23 +82,32 @@ export function MapCanvas({
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const zoneEmployeeMap = useZoneEmployees(activeZones);
 
+  // Extract clientX/clientY from mouse or touch events
+  const getClientXY = (e) => {
+    if (e.touches && e.touches.length > 0) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches.length > 0) return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
+  };
+
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const ctm = svgRef.current.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
+    const { clientX, clientY } = getClientXY(e);
     const pt = svgRef.current.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
+    pt.x = clientX; pt.y = clientY;
     const t = pt.matrixTransform(ctm.inverse());
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
 
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return;
+  const handlePointerDown = (e, isTouch = false) => {
+    if (!isTouch && e.button !== 0) return;
     e.preventDefault();
+    const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
     if (activeSession?.status === "completed" || mapMode === "pan") {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     } else if (DRAG_SHAPE_MODES.includes(mapMode)) {
       setRectStart(pos); setRectEnd(pos);
     } else if (mapMode === "freehand") {
@@ -107,12 +117,14 @@ export function MapCanvas({
       if (!zone?.polygon_points) return;
       onEditStart(selectedZoneId); // capture before-state for undo
       const rotHandle = getRotationHandle(zone.polygon_points, zoom);
-      if (rotHandle && getDistance(pos, rotHandle) < (2.5 / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
-      const hitRadius = 2 / Math.max(zoom, 0.5);
+      // Use larger hit radius on touch for easier targeting
+      const touchMultiplier = isTouch ? 2.5 : 1;
+      if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
+      const hitRadius = (2 * touchMultiplier) / Math.max(zoom, 0.5);
       const hitIndex = zone.polygon_points.findIndex(p => getDistance(pos, p) < hitRadius);
       if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
       const pts = zone.polygon_points;
-      const midRadius = 1.5 / Math.max(zoom, 0.5);
+      const midRadius = (1.5 * touchMultiplier) / Math.max(zoom, 0.5);
       for (let i = 0; i < pts.length; i++) {
         const j = (i + 1) % pts.length;
         const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
@@ -126,10 +138,14 @@ export function MapCanvas({
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseDown = (e) => handlePointerDown(e, false);
+  const handleTouchStart = (e) => handlePointerDown(e, true);
+
+  const handlePointerMove = (e) => {
+    const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
     setMousePos(pos);
-    if (isPanning && mapMode === "pan") { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
+    if (isPanning && mapMode === "pan") { setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y }); return; }
     if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
     if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
     if (isRotating && selectedZoneId) {
@@ -171,7 +187,7 @@ export function MapCanvas({
     if (mapMode !== "draw" && draggingPoint === null && !isPanning && !isRotating && !isDraggingZone) {
       if (mapContainerRef.current) {
         const rect = mapContainerRef.current.getBoundingClientRect();
-        setTooltipPos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
+        setTooltipPos({ x: clientX - rect.left + 16, y: clientY - rect.top - 10 });
       }
       let found = null;
       for (const zone of sessionZones) {
@@ -181,7 +197,20 @@ export function MapCanvas({
     } else if (hoveredZone) setHoveredZone(null);
   };
 
+  const handleMouseMove = (e) => handlePointerMove(e);
+  const handleTouchMove = (e) => {
+    // Prevent scrolling/bouncing when interacting with the map
+    if (isPanning || draggingPoint !== null || isRotating || isDraggingZone || isDrawingFreehand || rectStart) {
+      e.preventDefault();
+    }
+    handlePointerMove(e);
+  };
+
   const handleMouseUp = () => onMapMouseUp();
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
+    onMapMouseUp();
+  };
 
   const handleClick = (e) => {
     if (isPanning || draggingPoint !== null) return;
@@ -225,8 +254,10 @@ export function MapCanvas({
     <Card className="overflow-hidden border-0 shadow-none rounded-none h-full">
       <CardContent className="p-0 h-full">
         <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden h-full"
-          style={{ minHeight: "500px", cursor: cursorStyle }}
-          onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onClick={handleClick}>
+          style={{ minHeight: "500px", cursor: cursorStyle, touchAction: "none" }}
+          onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}
+          onClick={handleClick}>
           <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {(() => {
               const ce = mapContainerRef.current;

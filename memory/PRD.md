@@ -1,68 +1,76 @@
 # Crowd Services Platform - PRD
 
+## Original Problem Statement
+Build a highly interactive and efficient "Crowd Services Platform" with two main modules: "Gates Management" and "Prayer Area Management." Both modules feature interactive maps with pan/zoom, real-time statistical dashboards, smart archiving system, and dynamic monthly scheduling for employees.
+
+## User Language
+Arabic (العربية)
+
 ## Architecture
-```
-إدارة الأبواب                           إدارة المصليات
-├── نظرة عامة                           ├── نظرة عامة
-├── السجل اليومي (Archive)              ├── السجل اليومي (Archive)
-├── المعاملات                            └── إعدادات القسم
-└── إعدادات القسم                            ├── الموظفين (+ جداول شهرية)
-    ├── الأبواب │ الموظفين (+ جداول شهرية)    ├── الخرائط │ الورديات │ المواقع
-    ├── الخرائط │ الورديات │ المواقع
-```
+- **Backend:** FastAPI + MongoDB
+- **Frontend:** React + Shadcn/UI + Tailwind CSS
+- **Auth:** JWT-based (admin@crowd.sa / admin123)
 
-## Credentials
-- admin@crowd.sa / admin123
+## What's Been Implemented
 
-## Completed Features
-- Gates Management (17 gates, maps, daily log, archiving)
-- Separated Gate Status from Indicator
-- Prayer Areas Management (60 zones, heatmap, daily sessions)
-- Interactive SVG Maps with pan/zoom/drag
-- Smart Archiving System (Year > Month > Day)
-- Monthly Employee Schedules
-- Professional card-style Department Settings tabs
-- Unified employee management
-- Dashboards with KPIs
-- Multi-level auth
-- Enhanced gate map tooltip
-- **Enhanced Zone Format Panel**: 12 SVG patterns, pattern colors, stroke opacity, dash-dot border, live preview
-- **Clean Map View**: Removed staff badges - staff info only in hover tooltip
-- **Live Stats Panel (March 2026)**: Merged stats alongside map - real-time KPIs, donut chart, category bars, previous day comparison. Removed separate stats tab.
-- **Density Tab Overhaul (March 2026)**: Split-screen with live heatmap + interactive control panel with mini-grid cards and popover editing
-- **Unified Density Levels (March 2026)**: Consistent 4-level system (آمن, متوسط, مرتفع, حرج) across all UI
-- **Professional Iconography (March 2026)**: Standardized KPI cards with larger icons, transparent backgrounds, and color-matched styling across the entire app
-- **Circular Session Cards (March 2026)**: Redesigned session lists in both Gates and Prayer Areas Daily Logs from vertical cards to circular professional cards arranged 5 per row, with color-coded borders, hover tooltips, staggered entrance animations, and active state glow effects
-- **Professional Daily Log Tabs (March 2026)**: Applied the same card-style tab design from Department Settings to Daily Log tabs - Gates (blue theme, 4 tabs) and Prayer Areas (emerald theme, 3 tabs) with icons in colored boxes, count badges, and accent underlines
-- **New Prayer Area KPIs (March 2026)**: Replaced old stats (نشطة/مزالة/تغييرات/فئات) with 6 new professional KPIs: إجمالي المواقع, إجمالي الفئات, المساحة الإجمالية, متوسط المصلين, متوسط السعة, مناطق حرجة (dynamic color)
-- **Employee Tab Overhaul (March 2026)**: Complete redesign to 60/40 split-screen with interactive coverage map (zones colored green/red/gray by staffing) and control panel with KPIs, shift filters, zone distribution list, and assign/unassign functionality
-- **Zone Edit Bug Fix (March 2026)**: Fixed 422 error when saving zone edits by converting empty string numeric fields to null
+### Core Features
+- Gates Management (Daily Log + Department Settings)
+- Prayer Area Management (Daily Log + Department Settings)
+- Interactive maps with pan/zoom (useZoomPan hook)
+- Real-time statistical dashboards
+- Smart archiving system with circular session grid
+- Monthly employee scheduling
+- Zone drawing tools (polygon, shapes, freehand)
+- Zone editing (drag points, rotate, move, smooth, copy)
+- Density management with heatmap visualization
+- Employee assignment with coverage map
+- Undo/Redo system for map edits
 
-## Planned Tasks (Awaiting User Direction)
+### Recent Fixes (Feb 2026)
+- Professional tab restyling for both modules
+- Circular session list redesign
+- Prayer Area Stats Panel with 6 KPIs
+- Employees Tab 60/40 split-screen overhaul
+- Map pan/zoom consistency fix
+- Save prayer area bug fix (empty strings → null)
+
+### Touch Support Fix (Mar 5, 2026)
+- Added full touch event support (touchstart/touchmove/touchend) to ALL map components:
+  - MapCanvas.jsx (prayer area zone editing)
+  - DensityTab.jsx (density heatmap)
+  - ZoneEmployeesTab.jsx (employee coverage map)
+  - DailyGateSessionsPage.jsx (gate position editing)
+- Added `touchAction: "none"` CSS to prevent page scroll during map interaction
+- Increased touch hit radius by 2.5x for easier point targeting on mobile
+- Files modified: MapCanvas.jsx, DensityTab.jsx, ZoneEmployeesTab.jsx, DailyGateSessionsPage.jsx
+
+## Prioritized Backlog
 
 ### P0
-- عرض احترافي لإدارة 200+ بوابة (Compact Table + Grouped by Plaza)
-- الحساب التلقائي للمساحة (محظور)
+- **Gate Management at Scale:** Compact Table View + Grouped by Plaza view for 200+ gates
 
 ### P1
-- نظام أدوار متقدم (5 مستويات)
-- خريطة الحرم الحية
-- نظام التنبيهات الذكية مع التصعيد
-- وضع الجولات للبوابات (Tour Mode)
-- ميزة المسارات (Paths)
+- Advanced Role Hierarchy (5-level RBAC)
+- Live Haram Map (unified real-time 3D/heatmap)
+- Smart Alert System (multi-level with escalations)
+- Tour Mode for Gates (mobile flashcard UI)
 
 ### P2
-- واجهة الموظف الميداني للهاتف
-- تدوير أيام الراحة التلقائي
+- Rotate Rests feature (auto-rotation for scheduling)
+- Field Supervisor Mobile Mode
+- Merge duplicate archive components (ArchiveSidebar.jsx + ArchiveSessionSidebar.jsx)
 
-### Refactoring
-- دمج ArchiveSidebar.jsx و ArchiveSessionSidebar.jsx
+### Blocked
+- Automatic Area Calculation (pending user-provided map with scale)
 
 ## Key Files
-- `/app/frontend/src/pages/DailySessions/components/MapStatsPanel.jsx` (Live stats panel)
-- `/app/frontend/src/pages/DailySessions/components/MapToolbar.jsx`
-- `/app/frontend/src/pages/DailySessions/components/ZonePatterns.jsx`
 - `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx`
+- `/app/frontend/src/pages/DailySessions/components/DensityTab.jsx`
+- `/app/frontend/src/pages/DailySessions/components/ZoneEmployeesTab.jsx`
+- `/app/frontend/src/pages/DailyGateSessionsPage.jsx`
 - `/app/frontend/src/pages/DailySessionsPage.jsx`
-- `/app/backend/models.py`
-- `/app/backend/routes/sessions.py`
+- `/app/frontend/src/hooks/useZoomPan.js`
+- `/app/backend/server.py`
+
+## Credentials
+- System Admin: admin@crowd.sa / admin123

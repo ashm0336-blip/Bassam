@@ -373,7 +373,7 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
       </div>
 
       {/* Heatmap */}
-      <div ref={heatWheelRef} className="relative bg-slate-50 overflow-hidden h-full" style={{ cursor: heatPanning ? "grabbing" : "grab" }} data-testid="density-heatmap-container"
+      <div ref={heatWheelRef} className="relative bg-slate-50 overflow-hidden h-full" style={{ cursor: heatPanning ? "grabbing" : "grab", touchAction: "none" }} data-testid="density-heatmap-container"
         onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setHeatPanning(true); setHeatPanStart({ x: e.clientX - heatPan.x, y: e.clientY - heatPan.y }); }}
         onMouseMove={(e) => {
           if (heatPanning) { setHeatPan({ x: e.clientX - heatPanStart.x, y: e.clientY - heatPanStart.y }); return; }
@@ -388,6 +388,10 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
         }}
         onMouseUp={() => setHeatPanning(false)}
         onMouseLeave={() => { setHeatPanning(false); setHeatHovered(null); }}
+        onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; setHeatPanning(true); setHeatPanStart({ x: t.clientX - heatPan.x, y: t.clientY - heatPan.y }); }}
+        onTouchMove={(e) => { if (heatPanning) { e.preventDefault(); const t = e.touches[0]; setHeatPan({ x: t.clientX - heatPanStart.x, y: t.clientY - heatPanStart.y }); } }}
+        onTouchEnd={() => setHeatPanning(false)}
+        onTouchCancel={() => setHeatPanning(false)}
         onClick={handleClick}
       >
         <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>

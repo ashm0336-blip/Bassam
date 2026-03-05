@@ -84,7 +84,7 @@ CORS_ORIGINS=*
 
 **Frontend (.env):**
 ```env
-REACT_APP_BACKEND_URL=https://prayer-zone-dash.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://crowd-ops.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 ENABLE_HEALTH_CHECK=false
 ```
