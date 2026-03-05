@@ -500,7 +500,6 @@ export function MapToolbar({
 function MapInstructions({ mapMode, drawingPointsCount }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
-  if (mapMode === "pan") return null;
   const shapeNames = { rect: isAr ? "مستطيل" : "Rectangle", circle: isAr ? "دائرة" : "Circle", ellipse: isAr ? "بيضاوي" : "Ellipse", triangle: isAr ? "مثلث" : "Triangle", pentagon: isAr ? "خماسي" : "Pentagon", hexagon: isAr ? "سداسي" : "Hexagon", star: isAr ? "نجمة" : "Star", diamond: isAr ? "معين" : "Diamond", lshape: isAr ? "شكل L" : "L-Shape", ushape: isAr ? "شكل U" : "U-Shape" };
   if (DRAG_SHAPE_MODES.includes(mapMode)) {
     return (

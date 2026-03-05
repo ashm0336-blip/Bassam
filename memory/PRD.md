@@ -34,7 +34,16 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Archive Component Merge (Mar 5, 2026)
+### Smart Cursor Implementation (Mar 5, 2026)
+- **Removed Pan/Edit mode toggle buttons** from all 3 map interfaces (DailyGateSessionsPage, GateMapPage, DailySessionsPage)
+- **Smart cursor behavior:** drag on gate/marker = reposition; drag on background = pan map; 2 fingers = pinch-to-zoom
+- Added `hasPannedRef` to prevent accidental zone deselection after panning in edit mode
+- Added `hasDraggedRef` to prevent gate dialog from opening after dragging in DailyGateSessionsPage
+- Added full **touch support** to `GateMapPage.jsx` (was missing): touch drag, touch pan, pinch-to-zoom
+- Updated MapCanvas pan fallback in edit mode, default mode changed to "edit"
+- Updated MapToolbar: removed Pan button, kept Edit button only
+- Professional green hint badge replaces mode toggle: "اسحب الباب لتغيير موقعه • اسحب الخلفية للتنقل"
+
 - Merged `ArchiveSessionSidebar.jsx` and `ArchiveSidebar.jsx` into single reusable `ArchiveSidebar` at `/app/frontend/src/components/shared/ArchiveSidebar.jsx`
 - Supports theme prop (blue/emerald), optional compare button, notes display
 - Deleted old duplicate files, updated imports in DailySessionsPage.jsx and DailyGateSessionsPage.jsx
