@@ -239,8 +239,8 @@ export function ArchiveSidebar({
         </CardContent>
       </Card>
 
-      {/* Session list for this month */}
-      <div className="space-y-2">
+      {/* Session circles for this month */}
+      <div className="space-y-3">
         <h3 className="font-cairo font-semibold text-xs text-muted-foreground flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />
           {isAr ? `جولات ${AR_MONTHS[selectedMonth]}` : "Tours"}
@@ -252,38 +252,85 @@ export function ArchiveSidebar({
             <p className="text-xs text-muted-foreground">{isAr ? "لا توجد جولات في هذا الشهر" : "No tours this month"}</p>
           </div>
         ) : (
-          <div className="space-y-1.5 max-h-[calc(100vh-640px)] overflow-y-auto pr-1">
-            {monthSessions.map(s => {
+          <div className="grid grid-cols-5 gap-x-2 gap-y-4 max-h-[calc(100vh-640px)] overflow-y-auto py-3 px-1 justify-items-center">
+            {monthSessions.map((s, idx) => {
               const isAct = activeSession?.id === s.id;
+              const d = new Date(s.date + "T00:00:00");
+              const dayNum = d.getDate();
+              const dayName = AR_WEEKDAYS[d.getDay()];
+              const isCompleted = s.status === "completed";
               const ch = s.changes_summary || {};
               const tc = (ch.added || 0) + (ch.removed || 0) + (ch.modified || 0);
+
               return (
                 <div
                   key={s.id}
-                  data-testid={`session-card-${s.id}`}
-                  className={`p-2.5 rounded-lg border cursor-pointer transition-all group ${isAct ? "border-blue-500 bg-blue-50/60 shadow-sm" : "hover:border-slate-300"}`}
-                  onClick={() => onSelectSession(s)}
+                  data-testid={`session-circle-${s.id}`}
+                  className="relative group flex flex-col items-center"
+                  style={{ animation: `fadeInUp 0.4s ease-out ${idx * 60}ms both` }}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-semibold text-xs">{formatDateShort(s.date)}</span>
-                      <Badge className={`text-[9px] px-1 py-0 ${s.status === "completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
-                        {s.status === "completed" ? (isAr ? "مكتمل" : "Done") : (isAr ? "مسودة" : "Draft")}
-                      </Badge>
-                    </div>
-                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-5 w-5 text-red-400 hover:text-red-600" onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => onSelectSession(s)}
+                    className={`relative w-[3.2rem] h-[3.2rem] rounded-full flex flex-col items-center justify-center transition-all duration-300 cursor-pointer
+                      ${isAct
+                        ? `ring-[3px] ring-offset-2 shadow-lg scale-110 ${isCompleted ? 'bg-gradient-to-br from-blue-500 to-blue-600 ring-blue-300 shadow-blue-300/50' : 'bg-gradient-to-br from-amber-400 to-amber-500 ring-amber-300 shadow-amber-300/50'}`
+                        : `border-[2.5px] hover:scale-110 hover:shadow-md ${isCompleted ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-white hover:border-blue-500 hover:shadow-blue-200/50' : 'border-amber-400 bg-gradient-to-br from-amber-50 to-white hover:border-amber-500 hover:shadow-amber-200/50'}`
+                      }`}
+                  >
+                    <span className={`text-[15px] font-extrabold leading-none ${isAct ? 'text-white' : isCompleted ? 'text-blue-700' : 'text-amber-700'}`}>
+                      {dayNum}
+                    </span>
+                    <span className={`text-[7px] mt-0.5 font-semibold ${isAct ? 'text-white/80' : isCompleted ? 'text-blue-400' : 'text-amber-400'}`}>
+                      {dayName}
+                    </span>
+                    {isCompleted && !isAct && (
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-blue-500 border-[2px] border-white flex items-center justify-center shadow-sm">
+                        <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                      </span>
+                    )}
+                    {isAct && isCompleted && (
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white border-[2px] border-blue-500 flex items-center justify-center">
+                        <CheckCircle2 className="w-2.5 h-2.5 text-blue-500" />
+                      </span>
+                    )}
+                    {isAct && (
+                      <span className="absolute inset-0 rounded-full animate-ping opacity-15"
+                        style={{ animationDuration: '2.5s', backgroundColor: isCompleted ? '#3b82f6' : '#f59e0b' }} />
+                    )}
+                  </button>
+
                   {tc > 0 && (
-                    <div className="flex items-center gap-2 mt-1 text-[10px]">
-                      {ch.added > 0 && <span className="text-emerald-600 flex items-center gap-0.5"><Plus className="w-3 h-3" />{ch.added}</span>}
-                      {ch.removed > 0 && <span className="text-red-500 flex items-center gap-0.5"><X className="w-3 h-3" />{ch.removed}</span>}
-                      {ch.modified > 0 && <span className="text-amber-600 flex items-center gap-0.5"><Edit2 className="w-3 h-3" />{ch.modified}</span>}
+                    <div className="flex items-center gap-[3px] mt-1.5">
+                      {ch.added > 0 && <span className="w-[5px] h-[5px] rounded-full bg-emerald-400" />}
+                      {ch.removed > 0 && <span className="w-[5px] h-[5px] rounded-full bg-red-400" />}
+                      {ch.modified > 0 && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
                     </div>
                   )}
+
+                  <div className="absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none scale-90 group-hover:scale-100">
+                    <div className="bg-slate-900 text-white text-[9px] px-3 py-2 rounded-xl whitespace-nowrap shadow-xl backdrop-blur-sm">
+                      <p className="font-bold text-[10px]">{formatDateShort(s.date)}</p>
+                      <p className={`mt-0.5 ${isCompleted ? 'text-blue-300' : 'text-amber-300'}`}>
+                        {isCompleted ? (isAr ? 'مكتمل' : 'Done') : (isAr ? 'مسودة' : 'Draft')}
+                      </p>
+                      {tc > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-white/10">
+                          {ch.added > 0 && <span className="text-emerald-300">+{ch.added}</span>}
+                          {ch.removed > 0 && <span className="text-red-300">-{ch.removed}</span>}
+                          {ch.modified > 0 && <span className="text-amber-300">~{ch.modified}</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-2 h-2 bg-slate-900 rotate-45 mx-auto -mt-1" />
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-125"
+                    data-testid={`delete-session-${s.id}`}
+                  >
+                    <Trash2 className="w-2.5 h-2.5" />
+                  </button>
                 </div>
               );
             })}
