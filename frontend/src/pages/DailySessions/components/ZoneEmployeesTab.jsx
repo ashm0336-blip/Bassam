@@ -134,23 +134,29 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     return c;
   }, [employees]);
 
-  const handleMouseDown = useCallback((e) => {
-    if (e.button !== 0) return;
-    setIsPanning(true);
-    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-  }, [panOffset]);
+  // Zoom helper
+  const zoomMap = (factor) => {
+    const c = mapContainerRef.current; if (!c) return;
+    const r = c.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    const p = zoomRef.current;
+    const nz = Math.max(0.3, Math.min(20, p * factor));
+    const s = nz / p;
+    zoomRef.current = nz; setZoom(nz);
+    setPanOffset(o => ({ x: cx - s * (cx - o.x), y: cy - s * (cy - o.y) }));
+  };
 
-  const handleMouseMove = useCallback((e) => {
-    if (mapContainerRef.current) {
-      const rect = mapContainerRef.current.getBoundingClientRect();
-      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    }
-    if (!isPanning) return;
-    setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
-  }, [isPanning, panStart]);
-
-  const handleMouseUp = useCallback(() => setIsPanning(false), []);
   const resetView = () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; };
+
+  // Point-in-polygon test
+  const isPointInPoly = (pt, poly) => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+      if ((yi > pt.y) !== (yj > pt.y) && pt.x < ((xj - xi) * (pt.y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center py-12"><div className="w-8 h-8 rounded-lg bg-emerald-100 animate-pulse flex items-center justify-center"><Users className="w-4 h-4 text-emerald-600" /></div></div>;
@@ -178,122 +184,144 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   return (
     <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
       {/* LEFT: Coverage Map (60%) */}
-      <div className="flex-[3] min-w-0 relative bg-slate-50">
+      <div className="flex-[3] min-w-0 relative bg-slate-50 flex flex-col">
         {mapImageUrl ? (
-          <div
-            ref={wheelCallbackRef}
-            className="relative w-full overflow-hidden"
-            style={{ paddingBottom: imgRatio ? `${(1 / imgRatio) * 100}%` : "75%", cursor: isPanning ? "grabbing" : "grab" }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={() => { handleMouseUp(); setHoveredZone(null); }}
-          >
-            <svg
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="absolute inset-0 w-full h-full"
-              style={{ transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`, transformOrigin: "center center", transition: isPanning ? "none" : "transform 0.1s ease-out" }}
-              data-testid="coverage-map"
-            >
-              <image href={mapImageUrl} x="0" y="0" width="100" height="100" preserveAspectRatio="none" />
-              {activeZones.filter(z => !z.is_removed && z.polygon_points?.length > 1).map(zone => {
-                const { fill, opacity } = getZoneCoverageColor(zone);
-                const pts = zone.polygon_points.map(p => `${p.x},${p.y}`).join(" ");
-                const emps = zoneEmployeeMap[zone.zone_code] || [];
-                const isHovered = hoveredZone === zone.id;
-                const cx = zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length;
-                const cy = zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length;
-                return (
-                  <g key={zone.id}
-                    onMouseEnter={() => setHoveredZone(zone.id)}
-                    className="cursor-pointer"
-                    style={{ pointerEvents: "all" }}
-                  >
-                    <polygon
-                      points={pts}
-                      fill={fill}
-                      fillOpacity={isHovered ? opacity + 0.2 : opacity}
-                      stroke={isHovered ? "#1e293b" : fill}
-                      strokeWidth={isHovered ? 0.5 : 0.25}
-                      strokeOpacity={0.8}
-                      className="transition-all duration-200"
-                    />
-                    {emps.length > 0 && (
-                      <>
-                        <circle cx={cx} cy={cy} r="2.2" fill="#fff" fillOpacity="0.9" style={{ pointerEvents: "none" }} />
-                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.8" fontWeight="800" fill="#16a34a" style={{ pointerEvents: "none" }}>{emps.length}</text>
-                      </>
-                    )}
-                    {emps.length === 0 && zone.zone_type !== "service" && (
-                      <>
-                        <circle cx={cx} cy={cy} r="1.5" fill="#ef4444" fillOpacity="0.8" style={{ pointerEvents: "none" }} />
-                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.2" fontWeight="800" fill="#fff" style={{ pointerEvents: "none" }}>!</text>
-                      </>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
+          <>
+          <div className="relative flex-1" style={{ minHeight: "500px" }}>
+            {/* Zoom controls */}
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm">
+              <button onClick={() => zoomMap(0.8)} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="emp-map-zoom-out"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
+              <span className="text-xs w-10 text-center font-mono">{Math.round(zoom * 100)}%</span>
+              <button onClick={() => zoomMap(1.25)} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="emp-map-zoom-in"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
+              <button onClick={resetView} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="emp-map-reset"><Maximize2 className="w-4 h-4 text-slate-600" /></button>
+            </div>
 
-            {/* Floating tooltip near mouse */}
-            {hoveredZone && (() => {
-              const zone = activeZones.find(z => z.id === hoveredZone);
-              if (!zone) return null;
-              const emps = zoneEmployeeMap[zone.zone_code] || [];
-              return (
-                <div
-                  className="absolute z-30 pointer-events-none"
-                  style={{ left: mousePos.x + 12, top: mousePos.y - 10, transform: "translateY(-100%)" }}
-                  data-testid="coverage-tooltip"
-                >
-                  <div className="bg-slate-900/95 text-white rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm max-w-[180px]">
-                    <p className="text-[11px] font-bold">{zone.zone_code}</p>
-                    <p className="text-[9px] text-slate-300 mt-0.5">{isAr ? zone.name_ar : zone.name_en}</p>
-                    {emps.length > 0 ? (
-                      <div className="mt-1.5 pt-1.5 border-t border-white/10 space-y-1">
-                        {emps.map(e => {
-                          const shift = SHIFTS.find(s => s.value === e.shift);
+            {/* Map container */}
+            <div
+              ref={wheelCallbackRef}
+              className="relative bg-slate-50 overflow-hidden h-full"
+              style={{ cursor: isPanning ? "grabbing" : "grab" }}
+              data-testid="coverage-map-container"
+              onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); }}
+              onMouseMove={(e) => {
+                if (isPanning) { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
+                const c = mapContainerRef.current; if (!c) return;
+                const rect = c.getBoundingClientRect();
+                setMousePos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
+                // Hit test zones
+                const innerDiv = c.querySelector("[data-map-inner]"); if (!innerDiv) return;
+                const innerRect = innerDiv.getBoundingClientRect();
+                const px = ((e.clientX - innerRect.left) / innerRect.width) * 100;
+                const py = ((e.clientY - innerRect.top) / innerRect.height) * 100;
+                let found = null;
+                for (const z of activeZones) {
+                  if (!z.is_removed && z.polygon_points?.length > 2 && isPointInPoly({ x: px, y: py }, z.polygon_points)) { found = z.id; break; }
+                }
+                setHoveredZone(found);
+              }}
+              onMouseUp={() => setIsPanning(false)}
+              onMouseLeave={() => { setIsPanning(false); setHoveredZone(null); }}
+            >
+              <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {(() => {
+                  let ws = { position: "relative", width: "100%", height: "100%" };
+                  if (imgRatio) {
+                    const ch = 600;
+                    const cw = mapContainerRef.current?.clientWidth || 800;
+                    if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
+                    else ws = { position: "relative", width: "100%", height: cw / imgRatio };
+                  }
+                  return (
+                    <div style={ws} data-map-inner="true">
+                      <img src={mapImageUrl} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" />
+                      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="coverage-map">
+                        {activeZones.filter(z => !z.is_removed && z.polygon_points?.length > 1).map(zone => {
+                          const { fill, opacity } = getZoneCoverageColor(zone);
+                          const pts = zone.polygon_points.map(p => `${p.x},${p.y}`).join(" ");
+                          const emps = zoneEmployeeMap[zone.zone_code] || [];
+                          const isHovered = hoveredZone === zone.id;
+                          const cx = zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length;
+                          const cy = zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length;
                           return (
-                            <div key={e.id} className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift?.color || "#94a3b8" }} />
-                              <span className="text-[9px]">{e.name}</span>
-                            </div>
+                            <g key={zone.id}>
+                              <polygon
+                                points={pts}
+                                fill={fill}
+                                fillOpacity={isHovered ? opacity + 0.25 : opacity}
+                                stroke={isHovered ? "#1e293b" : fill}
+                                strokeWidth={isHovered ? 0.5 : 0.25}
+                                strokeOpacity={0.8}
+                                className="transition-all duration-200"
+                              />
+                              {emps.length > 0 && (
+                                <>
+                                  <circle cx={cx} cy={cy} r="2.2" fill="#fff" fillOpacity="0.9" />
+                                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.8" fontWeight="800" fill="#16a34a">{emps.length}</text>
+                                </>
+                              )}
+                              {emps.length === 0 && zone.zone_type !== "service" && (
+                                <>
+                                  <circle cx={cx} cy={cy} r="1.5" fill="#ef4444" fillOpacity="0.8" />
+                                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.2" fontWeight="800" fill="#fff">!</text>
+                                </>
+                              )}
+                            </g>
                           );
                         })}
-                      </div>
-                    ) : (
-                      <p className="text-[9px] text-red-300 mt-1">{zone.zone_type === "service" ? (isAr ? "منطقة خدمات" : "Service zone") : (isAr ? "بدون موظف" : "No staff")}</p>
-                    )}
-                  </div>
-                  <div className="w-2 h-2 bg-slate-900/95 rotate-45 mx-4 -mt-1" />
-                </div>
-              );
-            })()}
-
-            {/* Zoom controls */}
-            <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
-              <button onClick={() => { zoomRef.current = Math.min(5, zoom * 1.3); setZoom(zoomRef.current); }} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-zoom-in"><ZoomIn className="w-3.5 h-3.5 text-slate-600" /></button>
-              <button onClick={() => { zoomRef.current = Math.max(0.5, zoom * 0.7); setZoom(zoomRef.current); }} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-zoom-out"><ZoomOut className="w-3.5 h-3.5 text-slate-600" /></button>
-              <button onClick={resetView} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-reset"><Maximize2 className="w-3.5 h-3.5 text-slate-600" /></button>
-            </div>
-
-            {/* Legend */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 border border-slate-200/60 shadow-md">
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500/60 border border-green-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
-              <div className="w-px h-4 bg-slate-200" />
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500/60 border border-red-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
-              <div className="w-px h-4 bg-slate-200" />
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400/40 border border-slate-400/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
-            </div>
-
-            {/* Zoom indicator */}
-            {zoom !== 1 && (
-              <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-slate-200/60 shadow-sm">
-                <span className="text-[10px] font-medium text-slate-600">{Math.round(zoom * 100)}%</span>
+                      </svg>
+                    </div>
+                  );
+                })()}
               </div>
-            )}
+
+              {/* Floating tooltip near mouse */}
+              {hoveredZone && (() => {
+                const zone = activeZones.find(z => z.id === hoveredZone);
+                if (!zone) return null;
+                const emps = zoneEmployeeMap[zone.zone_code] || [];
+                return (
+                  <div className="absolute z-30 pointer-events-none" style={{ left: mousePos.x, top: mousePos.y, transform: "translateY(-100%)" }} data-testid="coverage-tooltip">
+                    <div className="bg-slate-900/95 text-white rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm max-w-[180px]">
+                      <p className="text-[11px] font-bold">{zone.zone_code}</p>
+                      <p className="text-[9px] text-slate-300 mt-0.5">{isAr ? zone.name_ar : zone.name_en}</p>
+                      {emps.length > 0 ? (
+                        <div className="mt-1.5 pt-1.5 border-t border-white/10 space-y-1">
+                          {emps.map(e => {
+                            const shift = SHIFTS.find(s => s.value === e.shift);
+                            return (
+                              <div key={e.id} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift?.color || "#94a3b8" }} />
+                                <span className="text-[9px]">{e.name}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-[9px] text-red-300 mt-1">{zone.zone_type === "service" ? (isAr ? "منطقة خدمات" : "Service zone") : (isAr ? "بدون موظف" : "No staff")}</p>
+                      )}
+                    </div>
+                    <div className="w-2 h-2 bg-slate-900/95 rotate-45 mx-4 -mt-1" />
+                  </div>
+                );
+              })()}
+            </div>
           </div>
+          {/* Legend - below map */}
+          <div className="flex items-center justify-center gap-4 py-2.5 bg-white border-t border-slate-100">
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500/60 border border-green-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
+            <div className="w-px h-4 bg-slate-200" />
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500/60 border border-red-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
+            <div className="w-px h-4 bg-slate-200" />
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400/40 border border-slate-400/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
+          </div>
+          {/* All assigned message - below map */}
+          {unassignedEmployees.length === 0 && employees.length > 0 && (
+            <div className="flex items-center justify-center gap-2 py-2 bg-emerald-50/80 border-t border-emerald-100">
+              <UserCheck className="w-4 h-4 text-emerald-500" />
+              <p className="text-[11px] text-emerald-600 font-semibold">{isAr ? "جميع الموظفين معيّنين" : "All employees assigned"}</p>
+            </div>
+          )}
+        </>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">{isAr ? "لا توجد خريطة" : "No map"}</div>
         )}
@@ -422,13 +450,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {unassignedEmployees.length === 0 && employees.length > 0 && (
-            <div className="text-center py-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50">
-              <UserCheck className="w-5 h-5 mx-auto text-emerald-400 mb-1" />
-              <p className="text-[10px] text-emerald-600 font-medium">{isAr ? "جميع الموظفين معيّنين" : "All assigned"}</p>
             </div>
           )}
 
