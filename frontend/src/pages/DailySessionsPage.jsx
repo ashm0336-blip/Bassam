@@ -756,7 +756,7 @@ export default function DailySessionsPage() {
                 </TabsContent>
 
                 <TabsContent value="employees" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} />
+                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio} />
                 </TabsContent>
               </Tabs>
             </div>
