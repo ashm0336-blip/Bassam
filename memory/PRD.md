@@ -34,7 +34,18 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Floating Toolbar - Quick Style Button (Mar 5, 2026)
+### Floating Toolbar - Pattern Section (Mar 5, 2026)
+- Added pattern toggle section to FloatingStyleButton Popover (12 pattern types + fg/bg colors + live preview with pattern)
+- Fixed React portal click-bubbling bug that caused zone deselection when clicking inside Popover
+
+### Zone Category Manager Rebuild (Mar 5, 2026)
+- Complete redesign with SVG polygon ZonePreview per card, pattern support per category
+- Backend models extended: fill_type, pattern_type, pattern_fg_color, pattern_bg_color
+- Stats row: total/pattern/active counts
+- Add/Edit dialog: live zone preview, color swatches, pattern picker with 12 types
+- Pattern badge indicator on category cards that have pattern enabled
+
+
 - Added **تنسيق سريع** (Quick Style) button to the floating toolbar on prayer area maps
 - Button position: between Smooth (تنعيم) and Remove (إزالة)
 - Opening a compact Popover with: 10 quick color swatches, fill color picker + opacity slider, border color + width slider, 4 border style buttons (solid/dashed/dotted/dash-dot), live SVG preview
