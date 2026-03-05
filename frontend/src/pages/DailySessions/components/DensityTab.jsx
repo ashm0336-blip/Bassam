@@ -314,8 +314,30 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
       heatZoomRef.current = nz; setHeatZoom(nz);
       setHeatPan(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
     };
+    // Pinch-to-zoom
+    let pinchDist = null, pinchZoom = null;
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const onTs = (e) => { if (e.touches.length === 2) { e.preventDefault(); pinchDist = dist(e.touches[0], e.touches[1]); pinchZoom = heatZoomRef.current; } };
+    const onTm = (e) => {
+      if (e.touches.length === 2 && pinchDist) {
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const rect = node.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        const prev = heatZoomRef.current;
+        const nz = Math.max(0.3, Math.min(20, pinchZoom * (d / pinchDist)));
+        const s = nz / prev;
+        heatZoomRef.current = nz; setHeatZoom(nz);
+        setHeatPan(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      }
+    };
+    const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };
     node.addEventListener("wheel", handler, { passive: false });
-    return () => node.removeEventListener("wheel", handler);
+    node.addEventListener("touchstart", onTs, { passive: false });
+    node.addEventListener("touchmove", onTm, { passive: false });
+    node.addEventListener("touchend", onTe);
+    return () => { node.removeEventListener("wheel", handler); node.removeEventListener("touchstart", onTs); node.removeEventListener("touchmove", onTm); node.removeEventListener("touchend", onTe); };
   }, []);
 
   const zoomHeat = (factor) => {
@@ -388,8 +410,8 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
         }}
         onMouseUp={() => setHeatPanning(false)}
         onMouseLeave={() => { setHeatPanning(false); setHeatHovered(null); }}
-        onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; setHeatPanning(true); setHeatPanStart({ x: t.clientX - heatPan.x, y: t.clientY - heatPan.y }); }}
-        onTouchMove={(e) => { if (heatPanning) { e.preventDefault(); const t = e.touches[0]; setHeatPan({ x: t.clientX - heatPanStart.x, y: t.clientY - heatPanStart.y }); } }}
+        onTouchStart={(e) => { if (e.touches.length !== 1) return; e.preventDefault(); const t = e.touches[0]; setHeatPanning(true); setHeatPanStart({ x: t.clientX - heatPan.x, y: t.clientY - heatPan.y }); }}
+        onTouchMove={(e) => { if (e.touches.length !== 1) return; if (heatPanning) { e.preventDefault(); const t = e.touches[0]; setHeatPan({ x: t.clientX - heatPanStart.x, y: t.clientY - heatPanStart.y }); } }}
         onTouchEnd={() => setHeatPanning(false)}
         onTouchCancel={() => setHeatPanning(false)}
         onClick={handleClick}

@@ -34,15 +34,11 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Touch Support Fix (Mar 5, 2026)
-- Added full touch event support (touchstart/touchmove/touchend) to ALL map components:
-  - MapCanvas.jsx (prayer area zone editing)
-  - DensityTab.jsx (density heatmap)
-  - ZoneEmployeesTab.jsx (employee coverage map)
-  - DailyGateSessionsPage.jsx (gate position editing)
-- Added `touchAction: "none"` CSS to prevent page scroll during map interaction
-- Increased touch hit radius by 2.5x for easier point targeting on mobile
-- Files modified: MapCanvas.jsx, DensityTab.jsx, ZoneEmployeesTab.jsx, DailyGateSessionsPage.jsx
+### Pinch-to-Zoom Support (Mar 5, 2026)
+- Added pinch-to-zoom (2-finger zoom) to all 4 map components
+- Zoom centers between the two fingers (like Google Maps behavior)
+- Clean separation: 1-finger = pan/drag, 2-fingers = pinch zoom
+- Files modified: DailySessionsPage.jsx, DensityTab.jsx, ZoneEmployeesTab.jsx, DailyGateSessionsPage.jsx, MapCanvas.jsx
 
 ## Prioritized Backlog
 

@@ -139,7 +139,7 @@ export function MapCanvas({
   };
 
   const handleMouseDown = (e) => handlePointerDown(e, false);
-  const handleTouchStart = (e) => handlePointerDown(e, true);
+  const handleTouchStart = (e) => { if (e.touches.length !== 1) return; handlePointerDown(e, true); };
 
   const handlePointerMove = (e) => {
     const { clientX, clientY } = getClientXY(e);
@@ -199,7 +199,7 @@ export function MapCanvas({
 
   const handleMouseMove = (e) => handlePointerMove(e);
   const handleTouchMove = (e) => {
-    // Prevent scrolling/bouncing when interacting with the map
+    if (e.touches.length !== 1) return; // multi-touch handled by pinch-to-zoom
     if (isPanning || draggingPoint !== null || isRotating || isDraggingZone || isDrawingFreehand || rectStart) {
       e.preventDefault();
     }

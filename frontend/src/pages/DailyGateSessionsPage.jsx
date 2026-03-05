@@ -145,7 +145,29 @@ export default function DailyGateSessionsPage() {
       zoomRef.current = nz; setZoom(nz);
       setPanOffset(p => ({ x: mx - s*(mx-p.x), y: my - s*(my-p.y) }));
     };
+    // Pinch-to-zoom
+    let pinchDist = null, pinchZoom = null;
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const onTs = (e) => { if (e.touches.length === 2) { e.preventDefault(); pinchDist = dist(e.touches[0], e.touches[1]); pinchZoom = zoomRef.current; } };
+    const onTm = (e) => {
+      if (e.touches.length === 2 && pinchDist) {
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const rect = node.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        const prev = zoomRef.current;
+        const nz = Math.max(0.5, Math.min(6, pinchZoom * (d / pinchDist)));
+        const s = nz / prev;
+        zoomRef.current = nz; setZoom(nz);
+        setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      }
+    };
+    const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };
     node.addEventListener("wheel", handler, { passive: false });
+    node.addEventListener("touchstart", onTs, { passive: false });
+    node.addEventListener("touchmove", onTm, { passive: false });
+    node.addEventListener("touchend", onTe);
   }, []);
 
   const handleMouseDown = (e) => {
@@ -206,6 +228,7 @@ export default function DailyGateSessionsPage() {
   };
   // Touch event handlers for gates map
   const handleTouchStartGates = (e) => {
+    if (e.touches.length !== 1) return;
     e.preventDefault();
     const { clientX, clientY } = getClientXY(e);
     if (mapMode === "pan") {
@@ -220,6 +243,7 @@ export default function DailyGateSessionsPage() {
     setDraggingGateId(gateId);
   };
   const handleTouchMoveGates = (e) => {
+    if (e.touches.length !== 1) return;
     const { clientX, clientY } = getClientXY(e);
     if (draggingGateId && mapMode === "edit") {
       e.preventDefault();

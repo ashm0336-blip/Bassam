@@ -55,8 +55,30 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
       zoomRef.current = nz; setZoom(nz);
       setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
     };
+    // Pinch-to-zoom
+    let pinchDist = null, pinchZoom = null;
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const onTs = (e) => { if (e.touches.length === 2) { e.preventDefault(); pinchDist = dist(e.touches[0], e.touches[1]); pinchZoom = zoomRef.current; } };
+    const onTm = (e) => {
+      if (e.touches.length === 2 && pinchDist) {
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const rect = node.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        const prev = zoomRef.current;
+        const nz = Math.max(0.5, Math.min(5, pinchZoom * (d / pinchDist)));
+        const s = nz / prev;
+        zoomRef.current = nz; setZoom(nz);
+        setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      }
+    };
+    const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };
     node.addEventListener("wheel", handler, { passive: false });
-    return () => node.removeEventListener("wheel", handler);
+    node.addEventListener("touchstart", onTs, { passive: false });
+    node.addEventListener("touchmove", onTm, { passive: false });
+    node.addEventListener("touchend", onTe);
+    return () => { node.removeEventListener("wheel", handler); node.removeEventListener("touchstart", onTs); node.removeEventListener("touchmove", onTm); node.removeEventListener("touchend", onTe); };
   }, []);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
@@ -221,8 +243,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
               }}
               onMouseUp={() => setIsPanning(false)}
               onMouseLeave={() => { setIsPanning(false); setHoveredZone(null); }}
-              onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; setIsPanning(true); setPanStart({ x: t.clientX - panOffset.x, y: t.clientY - panOffset.y }); }}
-              onTouchMove={(e) => { if (isPanning) { e.preventDefault(); const t = e.touches[0]; setPanOffset({ x: t.clientX - panStart.x, y: t.clientY - panStart.y }); } }}
+              onTouchStart={(e) => { if (e.touches.length !== 1) return; e.preventDefault(); const t = e.touches[0]; setIsPanning(true); setPanStart({ x: t.clientX - panOffset.x, y: t.clientY - panOffset.y }); }}
+              onTouchMove={(e) => { if (e.touches.length !== 1) return; if (isPanning) { e.preventDefault(); const t = e.touches[0]; setPanOffset({ x: t.clientX - panStart.x, y: t.clientY - panStart.y }); } }}
               onTouchEnd={() => setIsPanning(false)}
               onTouchCancel={() => setIsPanning(false)}
             >
