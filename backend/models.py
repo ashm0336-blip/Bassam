@@ -314,6 +314,10 @@ class ZoneCategory(BaseModel):
     icon: str = "M"
     order: int = 0
     is_active: bool = True
+    fill_type: str = "solid"
+    pattern_type: Optional[str] = None
+    pattern_fg_color: Optional[str] = None
+    pattern_bg_color: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class ZoneCategoryCreate(BaseModel):
@@ -323,6 +327,10 @@ class ZoneCategoryCreate(BaseModel):
     color: str = "#22c55e"
     icon: str = "M"
     order: Optional[int] = 0
+    fill_type: str = "solid"
+    pattern_type: Optional[str] = None
+    pattern_fg_color: Optional[str] = None
+    pattern_bg_color: Optional[str] = None
 
 class ZoneCategoryUpdate(BaseModel):
     value: Optional[str] = None
@@ -332,6 +340,10 @@ class ZoneCategoryUpdate(BaseModel):
     icon: Optional[str] = None
     order: Optional[int] = None
     is_active: Optional[bool] = None
+    fill_type: Optional[str] = None
+    pattern_type: Optional[str] = None
+    pattern_fg_color: Optional[str] = None
+    pattern_bg_color: Optional[str] = None
 
 # ============= Settings Models =============
 class LoginPageSettings(BaseModel):
