@@ -513,7 +513,12 @@ export default function DailySessionsPage() {
       const vals = Object.values(pc).filter(v => typeof v === 'number' && v > 0);
       return sum + (vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
     }, 0) / active.length) : 0;
-    return { totalActive: active.length, totalRemoved: removed.length, totalAll: activeSession.zones.length, uniqueCategories: activeCats.length, catCounts, prevSession, prevCatCounts, prevTotalActive, hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0, activeCats, totalArea, avgWorshippers };
+    // Average safe capacity per zone (area / 0.75)
+    const avgCapacity = active.length > 0 ? Math.round(active.reduce((sum, z) => {
+      const area = z.area_sqm || 0;
+      return sum + (area > 0 ? Math.round(area / 0.75) : 0);
+    }, 0) / active.length) : 0;
+    return { totalActive: active.length, totalRemoved: removed.length, totalAll: activeSession.zones.length, uniqueCategories: activeCats.length, catCounts, prevSession, prevCatCounts, prevTotalActive, hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0, activeCats, totalArea, avgWorshippers, avgCapacity };
   }, [activeSession, sessions, ZONE_TYPES]);
 
   const densityStats = useMemo(() => {

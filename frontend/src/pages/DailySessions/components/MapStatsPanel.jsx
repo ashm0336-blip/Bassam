@@ -1,5 +1,5 @@
 import {
-  CircleDot, Layers, MapPin, Maximize2, Users, Activity, AlertTriangle,
+  Layers, MapPin, Maximize2, Users, ShieldCheck, AlertTriangle,
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
   Minus, PanelLeftClose,
 } from "lucide-react";
@@ -88,30 +88,30 @@ export function MapStatsPanel({ sessionStats, densityStats, changedZones, ZONE_T
         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
         {/* KPI Grid - 3x2 */}
-        <div className="grid grid-cols-2 gap-2.5" data-testid="live-kpi-grid">
+        <div className="grid grid-cols-3 gap-2.5" data-testid="live-kpi-grid">
           {[
-            { label: isAr ? "إجمالي المواقع" : "Total Zones", value: sessionStats.totalActive, icon: MapPin, color: "#10b981", bg: "#ecfdf5" },
-            { label: isAr ? "إجمالي الفئات" : "Categories", value: sessionStats.uniqueCategories, icon: Layers, color: "#3b82f6", bg: "#eff6ff", sub: `/${ZONE_TYPES.length}` },
-            { label: isAr ? "المساحة الإجمالية" : "Total Area", value: sessionStats.totalArea > 0 ? sessionStats.totalArea.toLocaleString() : "0", icon: Maximize2, color: "#8b5cf6", bg: "#f5f3ff", unit: isAr ? "م²" : "m²" },
-            { label: isAr ? "متوسط المصلين" : "Avg. Worshippers", value: sessionStats.avgWorshippers, icon: Users, color: "#0ea5e9", bg: "#f0f9ff", unit: isAr ? "مصلي" : "" },
-            { label: isAr ? "نسبة الإشغال" : "Occupancy", value: densityStats?.overallPct ?? 0, icon: Activity, color: (densityStats?.overallPct ?? 0) > 80 ? "#ef4444" : (densityStats?.overallPct ?? 0) > 50 ? "#f59e0b" : "#10b981", bg: (densityStats?.overallPct ?? 0) > 80 ? "#fef2f2" : (densityStats?.overallPct ?? 0) > 50 ? "#fffbeb" : "#ecfdf5", unit: "%" },
-            { label: isAr ? "مناطق حرجة" : "Critical Zones", value: densityStats?.criticalCount ?? 0, icon: AlertTriangle, color: (densityStats?.criticalCount ?? 0) > 0 ? "#ef4444" : "#10b981", bg: (densityStats?.criticalCount ?? 0) > 0 ? "#fef2f2" : "#ecfdf5" },
+            { label: isAr ? "إجمالي المواقع" : "Total Zones", value: sessionStats.totalActive, icon: MapPin, color: "#10b981" },
+            { label: isAr ? "إجمالي الفئات" : "Categories", value: sessionStats.uniqueCategories, icon: Layers, color: "#3b82f6", sub: `/${ZONE_TYPES.length}` },
+            { label: isAr ? "المساحة الإجمالية" : "Total Area", value: sessionStats.totalArea > 0 ? sessionStats.totalArea.toLocaleString() : "0", icon: Maximize2, color: "#8b5cf6", unit: isAr ? "م²" : "m²" },
+            { label: isAr ? "متوسط المصلين" : "Avg. Worshippers", value: sessionStats.avgWorshippers, icon: Users, color: "#0ea5e9", unit: isAr ? "مصلي" : "" },
+            { label: isAr ? "متوسط السعة" : "Avg. Capacity", value: sessionStats.avgCapacity, icon: ShieldCheck, color: "#f59e0b", unit: isAr ? "مصلي" : "" },
+            { label: isAr ? "مناطق حرجة" : "Critical Zones", value: densityStats?.criticalCount ?? 0, icon: AlertTriangle, color: (densityStats?.criticalCount ?? 0) > 0 ? "#ef4444" : "#10b981" },
           ].map((kpi, i) => {
             const Icon = kpi.icon;
             return (
-              <div key={i} className="relative rounded-xl p-3 border border-slate-100 bg-white overflow-hidden hover:shadow-sm transition-shadow" data-testid={`live-kpi-${i}`}>
-                <div className="absolute top-0 right-0 w-14 h-14 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+              <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden hover:shadow-sm transition-shadow" data-testid={`live-kpi-${i}`}>
+                <div className="absolute top-0 right-0 w-12 h-12 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
                 <div className="flex items-start justify-between gap-1 relative">
-                  <div>
-                    <p className="text-[10px] font-medium text-slate-400 leading-tight">{kpi.label}</p>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-2xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
-                      {kpi.sub && <span className="text-[11px] text-slate-300 font-medium">{kpi.sub}</span>}
-                      {kpi.unit && <span className="text-[10px] text-slate-400 font-medium">{kpi.unit}</span>}
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-medium text-slate-400 leading-tight truncate">{kpi.label}</p>
+                    <div className="flex items-baseline gap-0.5 mt-1">
+                      <span className="text-xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                      {kpi.sub && <span className="text-[10px] text-slate-300 font-medium">{kpi.sub}</span>}
+                      {kpi.unit && <span className="text-[9px] text-slate-400 font-medium">{kpi.unit}</span>}
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5" style={{ color: kpi.color, opacity: 0.5 }} />
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4" style={{ color: kpi.color, opacity: 0.5 }} />
                   </div>
                 </div>
               </div>
