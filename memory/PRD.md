@@ -32,6 +32,7 @@
 - **Density Tab Overhaul (March 2026)**: Split-screen with live heatmap + interactive control panel with mini-grid cards and popover editing
 - **Unified Density Levels (March 2026)**: Consistent 4-level system (آمن, متوسط, مرتفع, حرج) across all UI
 - **Professional Iconography (March 2026)**: Standardized KPI cards with larger icons, transparent backgrounds, and color-matched styling across the entire app
+- **Circular Session Cards (March 2026)**: Redesigned session lists in both Gates and Prayer Areas Daily Logs from vertical cards to circular professional cards arranged 5 per row, with color-coded borders, hover tooltips, staggered entrance animations, and active state glow effects
 
 ## Planned Tasks (Awaiting User Direction)
 
