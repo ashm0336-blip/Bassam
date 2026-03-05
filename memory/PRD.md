@@ -29,6 +29,9 @@
 - **Enhanced Zone Format Panel**: 12 SVG patterns, pattern colors, stroke opacity, dash-dot border, live preview
 - **Clean Map View**: Removed staff badges - staff info only in hover tooltip
 - **Live Stats Panel (March 2026)**: Merged stats alongside map - real-time KPIs, donut chart, category bars, previous day comparison. Removed separate stats tab.
+- **Density Tab Overhaul (March 2026)**: Split-screen with live heatmap + interactive control panel with mini-grid cards and popover editing
+- **Unified Density Levels (March 2026)**: Consistent 4-level system (آمن, متوسط, مرتفع, حرج) across all UI
+- **Professional Iconography (March 2026)**: Standardized KPI cards with larger icons, transparent backgrounds, and color-matched styling across the entire app
 
 ## Planned Tasks (Awaiting User Direction)
 
