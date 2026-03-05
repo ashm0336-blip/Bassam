@@ -76,7 +76,7 @@ export default function DailySessionsPage() {
   const svgRef = useRef(null);
 
   // Drawing state
-  const [mapMode, setMapMode] = useState("pan");
+  const [mapMode, setMapMode] = useState("edit");
   const [drawingPoints, setDrawingPoints] = useState([]);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [draggingPoint, setDraggingPoint] = useState(null);
@@ -281,7 +281,7 @@ export default function DailySessionsPage() {
     try {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}`, updateData, getAuthHeaders());
       setActiveSession(res.data);
-      if (updateData.status) { setMapMode("pan"); setSelectedZoneId(null); setDrawingPoints([]); }
+      if (updateData.status) { setMapMode("edit"); setSelectedZoneId(null); setDrawingPoints([]); }
       fetchSessions();
       toast.success(isAr ? "تم الحفظ" : "Saved");
     } catch (e) { toast.error(isAr ? "تعذر الحفظ" : "Save failed"); }
@@ -399,7 +399,7 @@ export default function DailySessionsPage() {
       }, getAuthHeaders());
       setActiveSession(res.data); setShowNewZoneDialog(false); setDrawingPoints([]);
       setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0, length_m: "", width_m: "", carpet_length: "1.2", carpet_width: "0.7", daily_note: "" });
-      setMapMode("pan");
+      setMapMode("edit");
       toast.success(isAr ? "تم إضافة المنطقة" : "Zone added");
     } catch (e) { toast.error(isAr ? "تعذرت الإضافة" : "Error adding zone"); }
   };
@@ -437,7 +437,7 @@ export default function DailySessionsPage() {
   // ─── Effects ──────────────────────────────────────────────
   useEffect(() => {
     if (!activeSession || activeSession.status === "completed") {
-      setMapMode("pan"); setSelectedZoneId(null); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]);
+      setMapMode("edit"); setSelectedZoneId(null); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]);
       setMapUndoStack([]); setMapRedoStack([]);
       setUndoStack([]); setRedoStack([]);
     }
@@ -462,7 +462,7 @@ export default function DailySessionsPage() {
         if (rectStart) { setRectStart(null); setRectEnd(null); }
         else if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
         else if (selectedZoneId) setSelectedZoneId(null);
-        else if (mapMode !== "pan") setMapMode("pan");
+        else if (DRAG_SHAPE_MODES.includes(mapMode) || mapMode === "draw" || mapMode === "freehand") setMapMode("edit");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -793,7 +793,7 @@ export default function DailySessionsPage() {
       <NewSessionDialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog} newSessionDate={newSessionDate} setNewSessionDate={setNewSessionDate} cloneSource={cloneSource} setCloneSource={setCloneSource} sessions={sessions} saving={saving} handleCreateSession={handleCreateSession} />
       <BatchDialog open={showBatchDialog} onOpenChange={setShowBatchDialog} batchStartDate={batchStartDate} setBatchStartDate={setBatchStartDate} batchEndDate={batchEndDate} setBatchEndDate={setBatchEndDate} batchCloneSource={batchCloneSource} setBatchCloneSource={setBatchCloneSource} sessions={sessions} saving={saving} handleBatchCreate={handleBatchCreate} />
       <ZoneEditDialog open={showZoneDialog} onOpenChange={setShowZoneDialog} selectedZone={selectedZone} setSelectedZone={setSelectedZone} activeSession={activeSession} handleUpdateZone={handleUpdateZone} handleToggleRemove={handleToggleRemove} handleCategoryChange={handleCategoryChange} setActiveSession={setActiveSession} setSelectedZoneId={setSelectedZoneId} ZONE_TYPES={ZONE_TYPES} />
-      <NewZoneDialog open={showNewZoneDialog} onOpenChange={(v) => { setShowNewZoneDialog(v); if (!v) setMapMode("pan"); }} newZoneForm={newZoneForm} setNewZoneForm={setNewZoneForm} drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints} handleSaveNewZone={handleSaveNewZone} ZONE_TYPES={ZONE_TYPES} />
+      <NewZoneDialog open={showNewZoneDialog} onOpenChange={(v) => { setShowNewZoneDialog(v); if (!v) setMapMode("edit"); }} newZoneForm={newZoneForm} setNewZoneForm={setNewZoneForm} drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints} handleSaveNewZone={handleSaveNewZone} ZONE_TYPES={ZONE_TYPES} />
       <NotesDialog open={showNotesDialog} onOpenChange={setShowNotesDialog} sessionNotes={sessionNotes} setSessionNotes={setSessionNotes} handleUpdateSession={handleUpdateSession} />
       <CompareDialog open={showCompareDialog} onOpenChange={setShowCompareDialog} compareData={compareData} ZONE_TYPES={ZONE_TYPES} />
     </div>

@@ -6,7 +6,7 @@ import {
   RefreshCw, Edit2, MessageSquare, Layers, ZoomIn, ZoomOut, Maximize2,
   RotateCcw, CircleDot, CircleOff, Tag, CalendarRange, DoorOpen, DoorClosed,
   Wrench, ArrowUpRight, ArrowDownRight, Users, FileStack, Database,
-  Hand, MousePointer2
+  Crosshair
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,11 +88,11 @@ export default function DailyGateSessionsPage() {
   const [imgRatio, setImgRatio] = useState(null);
   const [hoveredGate, setHoveredGate] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [mapMode, setMapMode] = useState("pan"); // "pan" | "edit"
   const [draggingGateId, setDraggingGateId] = useState(null);
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
+  const hasDraggedRef = useRef(false);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
@@ -170,21 +170,17 @@ export default function DailyGateSessionsPage() {
     node.addEventListener("touchend", onTe);
   }, []);
 
+  // Smart cursor: pan on background, drag on gate marker
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
-    if (mapMode === "pan") {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (mapMode === "edit") {
-      if (!e.target.closest("[data-gate-id]")) {
-        // clicked empty space in edit mode - do nothing
-      }
-    }
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
   };
   const handleGateMouseDown = (e, gateId) => {
-    if (mapMode !== "edit" || activeSession?.status !== "draft") return;
+    if (activeSession?.status !== "draft") return;
     e.stopPropagation();
     e.preventDefault();
+    hasDraggedRef.current = false;
     setDraggingGateId(gateId);
   };
   const getClientXY = (e) => {
@@ -203,7 +199,8 @@ export default function DailyGateSessionsPage() {
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
   const handleMouseMove = (e) => {
-    if (draggingGateId && mapMode === "edit") {
+    if (draggingGateId) {
+      hasDraggedRef.current = true;
       const pos = getMousePercent(e);
       setActiveSession(prev => {
         if (!prev) return prev;
@@ -226,27 +223,27 @@ export default function DailyGateSessionsPage() {
     }
     setIsPanning(false);
   };
-  // Touch event handlers for gates map
+  // Touch event handlers for gates map - smart cursor
   const handleTouchStartGates = (e) => {
     if (e.touches.length !== 1) return;
     e.preventDefault();
     const { clientX, clientY } = getClientXY(e);
-    if (mapMode === "pan") {
-      setIsPanning(true);
-      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
-    }
+    setIsPanning(true);
+    setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
   };
   const handleGateTouchStart = (e, gateId) => {
-    if (mapMode !== "edit" || activeSession?.status !== "draft") return;
+    if (activeSession?.status !== "draft") return;
     e.stopPropagation();
     e.preventDefault();
+    hasDraggedRef.current = false;
     setDraggingGateId(gateId);
   };
   const handleTouchMoveGates = (e) => {
     if (e.touches.length !== 1) return;
     const { clientX, clientY } = getClientXY(e);
-    if (draggingGateId && mapMode === "edit") {
+    if (draggingGateId) {
       e.preventDefault();
+      hasDraggedRef.current = true;
       const pos = getMousePercent(e);
       setActiveSession(prev => {
         if (!prev) return prev;
@@ -495,21 +492,10 @@ export default function DailyGateSessionsPage() {
                   <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
                     <div className="flex items-center gap-1.5">
                       {activeSession?.status === "draft" && (
-                        <>
-                          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-                            <button onClick={() => { setMapMode("pan"); setDraggingGateId(null); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "pan" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} data-testid="mode-pan">
-                              <Hand className="w-3.5 h-3.5" />{isAr ? "تحريك" : "Pan"}
-                            </button>
-                            <button onClick={() => setMapMode("edit")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "edit" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`} data-testid="mode-edit">
-                              <MousePointer2 className="w-3.5 h-3.5" />{isAr ? "تعديل المواقع" : "Edit Positions"}
-                            </button>
-                          </div>
-                          {mapMode === "edit" && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium">
-                              <MousePointer2 className="w-3 h-3" />{isAr ? "اسحب النقطة للمكان الصحيح" : "Drag markers to reposition"}
-                            </div>
-                          )}
-                        </>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-700 font-medium">
+                          <Crosshair className="w-3 h-3" />
+                          {isAr ? "اسحب الباب لتغيير موقعه • اسحب الخلفية للتنقل" : "Drag gate to reposition • Drag background to pan"}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
@@ -522,7 +508,7 @@ export default function DailyGateSessionsPage() {
 
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden"><CardContent className="p-0">
-                      <div ref={wheelRef} className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" && activeSession?.status === "draft" ? "ring-2 ring-blue-400/50" : ""}`} style={{ height: "550px", cursor: draggingGateId ? "grabbing" : mapMode === "edit" ? "default" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
+                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: draggingGateId ? "grabbing" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
@@ -540,19 +526,19 @@ export default function DailyGateSessionsPage() {
                                     const markerColor = isOpen ? indicatorColor : statusColor;
                                     const isDragging = draggingGateId === gate.id;
                                     const isHov = hoveredGate?.id === gate.id;
-                                    const isEditMode = mapMode === "edit" && activeSession?.status === "draft";
+                                    const isDraft = activeSession?.status === "draft";
                                     const ar = imgRatio || 1;
                                     const baseR = 0.7;
                                     const r = isDragging ? baseR * 1.6 : isHov ? baseR * 1.3 : baseR;
-                                    const showLabel = isDragging || (isHov && isEditMode);
+                                    const showLabel = isDragging || isHov;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
                                         onMouseEnter={() => { if (!draggingGateId) setHoveredGate(gate); }}
                                         onMouseLeave={() => setHoveredGate(null)}
                                         onMouseDown={(e) => handleGateMouseDown(e, gate.id)}
                                         onTouchStart={(e) => handleGateTouchStart(e, gate.id)}
-                                        onClick={() => { if (!isEditMode && activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
-                                        style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : activeSession?.status === "draft" ? "pointer" : "default" }}>
+                                        onClick={() => { if (!hasDraggedRef.current && isDraft) { setSelectedGate(gate); setShowGateDialog(true); } }}
+                                        style={{ cursor: isDraft ? (isDragging ? "grabbing" : "grab") : "default" }}>
                                         {/* Pulse */}
                                         <ellipse cx={gate.x} cy={gate.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={markerColor} fillOpacity="0">
                                           <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
@@ -586,7 +572,7 @@ export default function DailyGateSessionsPage() {
                                           </g>
                                         )}
                                         {/* Crosshair in edit mode */}
-                                        {isEditMode && (isHov || isDragging) && (
+                                        {isDraft && (isHov || isDragging) && (
                                           <g transform={`translate(${gate.x}, ${gate.y})`} style={{ pointerEvents: "none" }}>
                                             <line x1="-0.25" y1="0" x2="0.25" y2="0" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                             <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
@@ -612,12 +598,6 @@ export default function DailyGateSessionsPage() {
                             );
                           })()}
                         </div>
-                        {/* Edit mode indicator */}
-                        {mapMode === "edit" && activeSession?.status === "draft" && (
-                          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-                            <MousePointer2 className="w-3.5 h-3.5" />{isAr ? "وضع التعديل - اسحب النقاط" : "Edit Mode - Drag Markers"}
-                          </div>
-                        )}
                         {/* Legend */}
                         <div className="absolute bottom-3 left-3 right-3 flex items-center gap-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
                           <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
@@ -633,8 +613,8 @@ export default function DailyGateSessionsPage() {
                             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#ef4444"}} />{isAr ? "مزدحم" : "Crowded"}</span>
                           </div>
                         </div>
-                        {/* Rich Tooltip (pan mode only) */}
-                        {hoveredGate && !draggingGateId && mapMode === "pan" && (() => {
+                        {/* Rich Tooltip (when hovering and not dragging) */}
+                        {hoveredGate && !draggingGateId && !isPanning && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
                           const INDICATOR_LABELS = { light: { ar: "خفيف", en: "Light", color: "#22c55e" }, medium: { ar: "متوسط", en: "Medium", color: "#f59e0b" }, crowded: { ar: "مزدحم", en: "Crowded", color: "#ef4444" } };
                           const TYPE_LABELS = { main: "رئيسي", secondary: "فرعي", escalator: "سلم كهربائي", elevator: "مصعد", stairs: "درج", bridge: "جسر", wheelchair: "عربات", emergency: "طوارئ" };

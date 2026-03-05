@@ -4,7 +4,7 @@ import {
   Plus, Trash2, Save, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
   ZoomIn, ZoomOut, Maximize2, Move, DoorOpen, DoorClosed, Wrench,
   ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair,
-  Hand, MousePointer2, Check
+  Check
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,7 @@ export default function GateMapPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [localImagePreview, setLocalImagePreview] = useState(null);
 
-  // Map interaction
-  const [mapMode, setMapMode] = useState("pan"); // "pan" | "edit"
+  // Map interaction - Smart cursor (no mode toggle needed)
   const [zoom, setZoom] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -68,6 +67,7 @@ export default function GateMapPage() {
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
+  const hasDraggedRef = useRef(false);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
@@ -173,7 +173,6 @@ export default function GateMapPage() {
       if (res.data.created > 0) {
         sonnerToast.success(isAr ? `تم إضافة ${res.data.created} نقطة جديدة - حركها على الخريطة` : `Added ${res.data.created} new markers`);
         fetchMarkers();
-        setMapMode("edit"); // Switch to edit mode so user can move new markers
       } else {
         sonnerToast.info(isAr ? "جميع الأبواب موجودة على الخريطة" : "All gates already on map");
       }
@@ -189,52 +188,49 @@ export default function GateMapPage() {
     } catch (e) { sonnerToast.error(isAr ? "تعذر الحفظ" : "Save failed"); }
   };
 
-  // SVG coordinate helper
+  // SVG coordinate helper - handles both mouse and touch
+  const getClientXY = (e) => {
+    if (e.touches && e.touches.length > 0) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches.length > 0) return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
+  };
+
   const getMousePercent = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const ctm = svgRef.current.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
+    const { clientX, clientY } = getClientXY(e);
     const pt = svgRef.current.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
+    pt.x = clientX; pt.y = clientY;
     const t = pt.matrixTransform(ctm.inverse());
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
 
-  // Mouse handlers
+  // Smart cursor: background = pan, marker = drag
   const handleMapMouseDown = (e) => {
     if (e.button !== 0) return;
-    if (mapMode === "pan") {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (mapMode === "edit") {
-      // In edit mode, clicking empty space deselects
-      if (!e.target.closest("[data-marker-id]")) {
-        setSelectedMarkerId(null);
-      }
-    }
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
   };
 
   const handleMarkerMouseDown = (e, markerId) => {
     e.stopPropagation();
     e.preventDefault();
-    if (mapMode === "edit") {
-      setSelectedMarkerId(markerId);
-      setDraggingMarkerId(markerId);
-    }
+    hasDraggedRef.current = false;
+    setSelectedMarkerId(markerId);
+    setDraggingMarkerId(markerId);
   };
 
   const handleMapMouseMove = (e) => {
-    // Dragging a marker in edit mode
-    if (draggingMarkerId && mapMode === "edit") {
+    if (draggingMarkerId) {
+      hasDraggedRef.current = true;
       const pos = getMousePercent(e);
       setMarkers(prev => prev.map(m => m.id === draggingMarkerId ? { ...m, x: pos.x, y: pos.y } : m));
       return;
     }
-    // Panning
-    if (isPanning && mapMode === "pan") {
+    if (isPanning) {
       setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
     }
-    // Tooltip position
     if (mapContainerRef.current) {
       const r = mapContainerRef.current.getBoundingClientRect();
       setTooltipPos({ x: e.clientX - r.left + 16, y: e.clientY - r.top - 10 });
@@ -251,7 +247,52 @@ export default function GateMapPage() {
     setIsPanning(false);
   };
 
-  // Wheel zoom
+  // Touch handlers - smart cursor
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const { clientX, clientY } = getClientXY(e);
+    setIsPanning(true);
+    setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+  };
+
+  const handleMarkerTouchStart = (e, markerId) => {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    e.preventDefault();
+    hasDraggedRef.current = false;
+    setSelectedMarkerId(markerId);
+    setDraggingMarkerId(markerId);
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length !== 1) return;
+    const { clientX, clientY } = getClientXY(e);
+    if (draggingMarkerId) {
+      e.preventDefault();
+      hasDraggedRef.current = true;
+      const pos = getMousePercent(e);
+      setMarkers(prev => prev.map(m => m.id === draggingMarkerId ? { ...m, x: pos.x, y: pos.y } : m));
+      return;
+    }
+    if (isPanning) {
+      e.preventDefault();
+      setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y });
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
+    if (draggingMarkerId) {
+      const marker = markers.find(m => m.id === draggingMarkerId);
+      if (marker) updateMarkerPosition(marker.id, marker.x, marker.y);
+      setDraggingMarkerId(null);
+      return;
+    }
+    setIsPanning(false);
+  };
+
+  // Wheel zoom + pinch-to-zoom
   const wheelRef = useCallback((node) => {
     if (!node) return;
     mapContainerRef.current = node;
@@ -265,7 +306,35 @@ export default function GateMapPage() {
       zoomRef.current = nz; setZoom(nz);
       setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
     };
+    // Pinch-to-zoom
+    let pinchDist = null, pinchZoom = null;
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const onTs = (e) => { if (e.touches.length === 2) { e.preventDefault(); pinchDist = dist(e.touches[0], e.touches[1]); pinchZoom = zoomRef.current; } };
+    const onTm = (e) => {
+      if (e.touches.length === 2 && pinchDist) {
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const rect = node.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        const prev = zoomRef.current;
+        const nz = Math.max(0.5, Math.min(6, pinchZoom * (d / pinchDist)));
+        const s = nz / prev;
+        zoomRef.current = nz; setZoom(nz);
+        setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      }
+    };
+    const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };
     node.addEventListener("wheel", handler, { passive: false });
+    node.addEventListener("touchstart", onTs, { passive: false });
+    node.addEventListener("touchmove", onTm, { passive: false });
+    node.addEventListener("touchend", onTe);
+    return () => {
+      node.removeEventListener("wheel", handler);
+      node.removeEventListener("touchstart", onTs);
+      node.removeEventListener("touchmove", onTm);
+      node.removeEventListener("touchend", onTe);
+    };
   }, []);
 
   const zoomTo = (factor) => {
@@ -287,7 +356,6 @@ export default function GateMapPage() {
 
   const getCursor = () => {
     if (draggingMarkerId) return "grabbing";
-    if (mapMode === "edit") return "default";
     return isPanning ? "grabbing" : "grab";
   };
 
@@ -330,7 +398,7 @@ export default function GateMapPage() {
           {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
             <div
               key={floor.id}
-              onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); setMapMode("pan"); }}
+              onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all cursor-pointer ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
               data-testid={`floor-tab-${floor.id}`}
             >
@@ -376,33 +444,11 @@ export default function GateMapPage() {
           {/* Toolbar */}
           <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
             <div className="flex items-center gap-1.5">
-              {/* Mode toggle */}
-              <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-                <button
-                  onClick={() => { setMapMode("pan"); setSelectedMarkerId(null); setDraggingMarkerId(null); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "pan" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                  data-testid="mode-pan"
-                >
-                  <Hand className="w-3.5 h-3.5" />
-                  {isAr ? "تحريك" : "Pan"}
-                </button>
-                <button
-                  onClick={() => setMapMode("edit")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${mapMode === "edit" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                  data-testid="mode-edit"
-                >
-                  <MousePointer2 className="w-3.5 h-3.5" />
-                  {isAr ? "تعديل المواقع" : "Edit Positions"}
-                </button>
+              {/* Smart cursor hint */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-700 font-medium">
+                <Crosshair className="w-3 h-3" />
+                {isAr ? "اسحب النقطة لتغيير موقعها • اسحب الخلفية للتنقل" : "Drag marker to reposition • Drag background to pan"}
               </div>
-
-              {/* Mode hint */}
-              {mapMode === "edit" && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium animate-in fade-in duration-200">
-                  <MousePointer2 className="w-3 h-3" />
-                  {isAr ? "اضغط على النقطة واسحبها للمكان الصحيح" : "Click & drag markers to reposition"}
-                </div>
-              )}
             </div>
 
             {/* Zoom controls */}
@@ -420,12 +466,16 @@ export default function GateMapPage() {
               <CardContent className="p-0">
                 <div
                   ref={wheelRef}
-                  className={`relative bg-slate-100 overflow-hidden ${mapMode === "edit" ? "ring-2 ring-blue-400/50" : ""}`}
-                  style={{ height: "600px", cursor: getCursor() }}
+                  className="relative bg-slate-100 overflow-hidden"
+                  style={{ height: "600px", cursor: getCursor(), touchAction: "none" }}
                   onMouseDown={handleMapMouseDown}
                   onMouseMove={handleMapMouseMove}
                   onMouseUp={handleMapMouseUp}
                   onMouseLeave={() => { handleMapMouseUp(); setHoveredMarker(null); }}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
                   data-testid="gate-map-canvas"
                 >
                   <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -450,15 +500,15 @@ export default function GateMapPage() {
                               const baseR = 0.7;
                               const r = isDragging ? baseR * 1.6 : (isSelected || isHovered) ? baseR * 1.3 : baseR;
                               const showLabel = isDragging || isSelected || isHovered;
-                              const isEditMode = mapMode === "edit";
 
                               return (
                                 <g
                                   key={marker.id}
                                   data-marker-id={marker.id}
                                   data-testid={`gate-marker-${marker.id}`}
-                                  style={{ cursor: isEditMode ? (isDragging ? "grabbing" : "grab") : "default" }}
+                                  style={{ cursor: isDragging ? "grabbing" : "grab" }}
                                   onMouseDown={(e) => handleMarkerMouseDown(e, marker.id)}
+                                  onTouchStart={(e) => handleMarkerTouchStart(e, marker.id)}
                                   onMouseEnter={() => { if (!draggingMarkerId) setHoveredMarker(marker); }}
                                   onMouseLeave={() => setHoveredMarker(null)}
                                 >
@@ -469,8 +519,8 @@ export default function GateMapPage() {
                                     <animate attributeName="ry" values={`${(r + 0.5) * ar};${(r + 2.5) * ar};${(r + 0.5) * ar}`} dur="2s" repeatCount="indefinite" />
                                   </ellipse>
 
-                                  {/* Selection ring - blue dashed in edit mode */}
-                                  {isSelected && isEditMode && (
+                                  {/* Selection ring - shown when selected */}
+                                  {isSelected && (
                                     <ellipse cx={marker.x} cy={marker.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8">
                                       <animate attributeName="stroke-dashoffset" values="0;4.6" dur="1s" repeatCount="indefinite" />
                                     </ellipse>
@@ -490,10 +540,9 @@ export default function GateMapPage() {
                                     style={{ filter: isDragging ? "drop-shadow(0 0 4px rgba(59,130,246,0.5))" : isSelected ? "drop-shadow(0 0 3px rgba(59,130,246,0.4))" : "none", transition: isDragging ? "none" : "all 0.15s ease" }}
                                   />
 
-                                  {/* Move icon when in edit mode and selected/hovered */}
-                                  {isEditMode && (isSelected || isHovered) && !isDragging && (
+                                  {/* Crosshair when hovered/selected */}
+                                  {(isSelected || isHovered) && !isDragging && (
                                     <g transform={`translate(${marker.x}, ${marker.y})`} style={{ pointerEvents: "none" }}>
-                                      {/* Crosshair */}
                                       <line x1="-0.25" y1="0" x2="0.25" y2="0" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                       <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                     </g>
@@ -542,8 +591,8 @@ export default function GateMapPage() {
                     <span className="text-[10px] text-slate-400">{markers.length} {isAr ? "نقطة" : "markers"}</span>
                   </div>
 
-                  {/* Tooltip (pan mode only) */}
-                  {hoveredMarker && !draggingMarkerId && mapMode === "pan" && (() => {
+                  {/* Tooltip (when hovering, not panning) */}
+                  {hoveredMarker && !draggingMarkerId && !isPanning && (() => {
                     const sc = STATUS_CONFIG[hoveredMarker.status] || STATUS_CONFIG.open;
                     const dir = DIRECTIONS_MAP[hoveredMarker.direction];
                     return (
@@ -568,14 +617,6 @@ export default function GateMapPage() {
                       </div>
                     );
                   })()}
-
-                  {/* Edit mode indicator */}
-                  {mapMode === "edit" && (
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <MousePointer2 className="w-3.5 h-3.5" />
-                      {isAr ? "وضع التعديل - اسحب النقاط" : "Edit Mode - Drag Markers"}
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -593,7 +634,7 @@ export default function GateMapPage() {
                   <div
                     key={marker.id}
                     className={`flex items-center gap-2 p-2 rounded-lg border transition-all group cursor-pointer ${isSelected ? "border-blue-400 bg-blue-50 shadow-sm" : "hover:shadow-sm"}`}
-                    onClick={() => { setSelectedMarkerId(marker.id); setMapMode("edit"); }}
+                    onClick={() => setSelectedMarkerId(marker.id)}
                     data-testid={`marker-item-${marker.id}`}
                   >
                     <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${sc.color}15` }}>

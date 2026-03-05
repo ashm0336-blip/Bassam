@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  Hand, MousePointer,
+  MousePointer,
   ZoomIn, ZoomOut, Maximize2, Undo2, Redo2, X, Check, ChevronDown,
   Palette, MapPin, Search, Shapes,
   Edit2, CircleOff, RotateCcw, ChevronRight, PenTool, Pencil,
@@ -188,11 +188,7 @@ export function MapToolbar({
       <div className="flex justify-between items-center flex-wrap gap-3 bg-slate-50 p-3 rounded-lg">
         <div className="flex items-center gap-2">
           <div className="flex border rounded-lg overflow-hidden">
-            {/* Pan */}
-            <Button variant={mapMode === "pan" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setMapMode("pan"); resetDrawingState(); }} data-testid="mode-pan-btn" title={isAr ? "تحريك" : "Pan"}>
-              <Hand className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تحريك" : "Pan"}</span>
-            </Button>
-            {/* Edit */}
+            {/* Edit/Smart mode */}
             <Button variant={mapMode === "edit" ? "default" : "ghost"} size="sm" className="rounded-none border-x" onClick={() => { setMapMode("edit"); setDrawingPoints([]); setRectStart(null); setFreehandPoints([]); }} data-testid="mode-edit-btn" title={isAr ? "تعديل" : "Edit"}>
               <MousePointer className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تعديل" : "Edit"}</span>
             </Button>
@@ -516,7 +512,7 @@ function MapInstructions({ mapMode, drawingPointsCount }) {
   const instructions = {
     draw: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", icon: Pencil, msg: isAr ? `انقر لإضافة نقاط. انقر على النقطة الأولى لإغلاق الشكل. (${drawingPointsCount} نقطة)` : `Click to add points. Click first point to close. (${drawingPointsCount})` },
     freehand: { bg: "bg-pink-50 border-pink-200", text: "text-pink-700", icon: PenTool, msg: isAr ? "انقر واسحب للرسم الحر. حرر الماوس لإنهاء الشكل." : "Click and drag to draw freehand. Release to finish." },
-    edit: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", icon: MousePointer, msg: isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. دبل كلك على نقطة لحذفها." : "Click zone to select. Drag points to edit. Double-click point to delete it." },
+    edit: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", icon: MousePointer, msg: isAr ? "انقر على منطقة لتحديدها. اسحب النقاط لتعديل الشكل. دبل كلك على نقطة لحذفها. اسحب الخلفية للتنقل." : "Click zone to select. Drag points to edit. Double-click point to delete. Drag background to pan." },
   };
   const info = instructions[mapMode];
   if (!info) return null;

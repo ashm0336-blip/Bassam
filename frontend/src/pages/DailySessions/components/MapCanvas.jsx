@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Edit2, Copy, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
@@ -100,41 +100,52 @@ export function MapCanvas({
     return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
   };
 
+  const hasPannedRef = useRef(false);
+
   const handlePointerDown = (e, isTouch = false) => {
     if (!isTouch && e.button !== 0) return;
     e.preventDefault();
+    hasPannedRef.current = false;
     const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
-    if (activeSession?.status === "completed" || mapMode === "pan") {
+    if (activeSession?.status === "completed") {
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    } else if (mapMode === "pan") {
       setIsPanning(true);
       setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     } else if (DRAG_SHAPE_MODES.includes(mapMode)) {
       setRectStart(pos); setRectEnd(pos);
     } else if (mapMode === "freehand") {
       setIsDrawingFreehand(true); setFreehandPoints([pos]);
-    } else if (mapMode === "edit" && selectedZoneId && activeSession?.status === "draft") {
-      const zone = sessionZones.find(z => z.id === selectedZoneId);
-      if (!zone?.polygon_points) return;
-      onEditStart(selectedZoneId); // capture before-state for undo
-      const rotHandle = getRotationHandle(zone.polygon_points, zoom);
-      // Use larger hit radius on touch for easier targeting
-      const touchMultiplier = isTouch ? 2.5 : 1;
-      if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
-      const hitRadius = (2 * touchMultiplier) / Math.max(zoom, 0.5);
-      const hitIndex = zone.polygon_points.findIndex(p => getDistance(pos, p) < hitRadius);
-      if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
-      const pts = zone.polygon_points;
-      const midRadius = (1.5 * touchMultiplier) / Math.max(zoom, 0.5);
-      for (let i = 0; i < pts.length; i++) {
-        const j = (i + 1) % pts.length;
-        const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
-        if (getDistance(pos, { x: mx, y: my }) < midRadius) {
-          const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
-          setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) }));
-          setDraggingPoint(j); setHoveredPoint(j); return;
+    } else if (mapMode === "edit" && activeSession?.status === "draft") {
+      if (selectedZoneId) {
+        const zone = sessionZones.find(z => z.id === selectedZoneId);
+        if (zone?.polygon_points) {
+          onEditStart(selectedZoneId);
+          const rotHandle = getRotationHandle(zone.polygon_points, zoom);
+          const touchMultiplier = isTouch ? 2.5 : 1;
+          if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
+          const hitRadius = (2 * touchMultiplier) / Math.max(zoom, 0.5);
+          const hitIndex = zone.polygon_points.findIndex(p => getDistance(pos, p) < hitRadius);
+          if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
+          const pts = zone.polygon_points;
+          const midRadius = (1.5 * touchMultiplier) / Math.max(zoom, 0.5);
+          for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
+            if (getDistance(pos, { x: mx, y: my }) < midRadius) {
+              const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
+              setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) }));
+              setDraggingPoint(j); setHoveredPoint(j); return;
+            }
+          }
+          if (isPointInPolygon(pos, zone.polygon_points)) { setIsDraggingZone(true); setDragZoneStart(pos); return; }
         }
       }
-      if (isPointInPolygon(pos, zone.polygon_points)) { setIsDraggingZone(true); setDragZoneStart(pos); }
+      // Pan fallback: nothing was hit (empty space or no zone selected)
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     }
   };
 
@@ -145,7 +156,7 @@ export function MapCanvas({
     const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
     setMousePos(pos);
-    if (isPanning && mapMode === "pan") { setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y }); return; }
+    if (isPanning) { hasPannedRef.current = true; setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y }); return; }
     if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
     if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
     if (isRotating && selectedZoneId) {
@@ -213,7 +224,7 @@ export function MapCanvas({
   };
 
   const handleClick = (e) => {
-    if (isPanning || draggingPoint !== null) return;
+    if (isPanning || draggingPoint !== null || hasPannedRef.current) return;
     if (activeSession?.status === "completed") return;
     e.preventDefault();
     const pos = getMousePercent(e);
@@ -245,7 +256,7 @@ export function MapCanvas({
 
   const cursorStyle = activeSession?.status === "completed"
     ? (isPanning ? "grabbing" : "grab")
-    : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? "default" : (isPanning ? "grabbing" : "grab"));
+    : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? (isPanning ? "grabbing" : draggingPoint !== null || isRotating || isDraggingZone ? "grabbing" : "grab") : (isPanning ? "grabbing" : "grab"));
 
   const selectedZoneData = selectedZoneId ? sessionZones.find(z => z.id === selectedZoneId) : null;
   const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
@@ -396,7 +407,7 @@ export function MapCanvas({
             />
           )}
           {/* Tooltip for non-selected zones */}
-          {hoveredZone && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
+          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
         </div>
       </CardContent>
     </Card>
