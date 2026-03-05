@@ -1,13 +1,175 @@
 import { useState, useRef } from "react";
-import { Edit2, Copy, Sparkles, Trash2 } from "lucide-react";
+import { Edit2, Copy, Sparkles, Trash2, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 import { useZoneEmployees } from "./useZoneEmployees";
 import { ZonePatternDefs } from "./ZonePatterns";
 
-function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
+// Quick color swatches for common zone colors
+const QUICK_COLORS = [
+  "#22c55e","#3b82f6","#ec4899","#f59e0b","#8b5cf6",
+  "#ef4444","#06b6d4","#f97316","#64748b","#1e293b",
+];
+
+// Border style options
+const BORDER_STYLES = [
+  { v: "solid",    dash: "none",      icon: "—" },
+  { v: "dashed",   dash: "4 2",       icon: "- -" },
+  { v: "dotted",   dash: "1 1.5",     icon: "···" },
+  { v: "dash-dot", dash: "6 2 1 2",   icon: "—·" },
+];
+
+function FloatingStyleButton({ zone, handleUpdateZoneStyle, isAr, btnClass }) {
+  const [open, setOpen] = useState(false);
+  const fillColor  = zone.fill_color  || "#22c55e";
+  const strokeColor = zone.stroke_color || "#000000";
+  const opacity    = zone.opacity     ?? 0.4;
+  const strokeW    = zone.stroke_width ?? 0.3;
+  const strokeStyle = zone.stroke_style || "dashed";
+
+  const up = (upd) => handleUpdateZoneStyle(zone.id, upd);
+
+  const getDash = (s) => {
+    if (s === "solid") return "none";
+    if (s === "dotted") return "2 3";
+    if (s === "dash-dot") return "8 3 2 3";
+    return "8 4";
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={`${btnClass} text-rose-500 hover:bg-rose-50 relative`}
+          data-testid="float-style-btn"
+          title={isAr ? "تنسيق سريع" : "Quick Style"}
+          onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        >
+          {/* Live color dot indicator */}
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white shadow-sm" style={{ backgroundColor: fillColor }} />
+          <Palette className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{isAr ? "تنسيق" : "Style"}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64 p-0 overflow-hidden shadow-2xl border-slate-200/80"
+        side="top"
+        align="center"
+        sideOffset={8}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-l from-rose-50 to-white border-b">
+          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-rose-100">
+            <Palette className="w-3.5 h-3.5 text-rose-500" />
+          </div>
+          <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "تنسيق سريع" : "Quick Style"}</span>
+          {/* Current zone color chip */}
+          <div className="mr-auto flex items-center gap-1">
+            <span className="w-4 h-4 rounded shadow-sm border border-white/60" style={{ backgroundColor: fillColor, opacity }} />
+          </div>
+        </div>
+
+        <div className="p-3 space-y-3">
+          {/* Fill Section */}
+          <div>
+            <div className="flex items-center gap-1 mb-2">
+              <div className="w-1 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="text-[10px] font-bold text-slate-600 font-cairo">{isAr ? "التعبئة" : "Fill"}</span>
+            </div>
+            {/* Quick swatches */}
+            <div className="flex items-center gap-1 mb-2 flex-wrap">
+              {QUICK_COLORS.map(c => (
+                <button key={c} onClick={() => up({ fill_color: c })}
+                  className="w-5 h-5 rounded-md border-2 transition-all hover:scale-110 flex-shrink-0"
+                  style={{ backgroundColor: c, borderColor: fillColor === c ? "#1e293b" : "transparent" }}
+                  title={c}
+                />
+              ))}
+              <input type="color" value={fillColor}
+                onChange={(e) => up({ fill_color: e.target.value })}
+                className="w-5 h-5 rounded-md cursor-pointer border border-slate-200 p-0 flex-shrink-0"
+                title={isAr ? "لون مخصص" : "Custom"} />
+            </div>
+            {/* Opacity slider */}
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-slate-400 w-12 flex-shrink-0">{isAr ? "الشفافية" : "Opacity"}</span>
+              <Slider value={[Math.round(opacity * 100)]} min={5} max={100} step={5}
+                onValueChange={([v]) => up({ opacity: v / 100 })} className="flex-1" />
+              <span className="text-[10px] font-mono text-slate-500 w-7 text-center flex-shrink-0">{Math.round(opacity * 100)}%</span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-dashed border-slate-200" />
+
+          {/* Border Section */}
+          <div>
+            <div className="flex items-center gap-1 mb-2">
+              <div className="w-1 h-3 rounded-full bg-blue-500 flex-shrink-0" />
+              <span className="text-[10px] font-bold text-slate-600 font-cairo">{isAr ? "الحدود" : "Border"}</span>
+            </div>
+            {/* Color + Width row */}
+            <div className="flex items-center gap-2 mb-2">
+              <input type="color" value={strokeColor}
+                onChange={(e) => up({ stroke_color: e.target.value })}
+                className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 p-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <Slider value={[strokeW]} min={0.1} max={3} step={0.1}
+                  onValueChange={([v]) => up({ stroke_width: v })} />
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 w-7 text-center flex-shrink-0">{strokeW.toFixed(1)}</span>
+            </div>
+            {/* Border style buttons */}
+            <div className="grid grid-cols-4 gap-1">
+              {BORDER_STYLES.map(s => (
+                <button key={s.v} onClick={() => up({ stroke_style: s.v })}
+                  className={`flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg border text-[8px] font-medium transition-all ${
+                    strokeStyle === s.v
+                      ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
+                      : "border-slate-200 hover:bg-slate-50 text-slate-400"
+                  }`}
+                  data-testid={`float-stroke-${s.v}`}
+                >
+                  <svg width="24" height="4" viewBox="0 0 24 4">
+                    <line x1="1" y1="2" x2="23" y2="2" stroke={strokeStyle === s.v ? "#3b82f6" : "#94a3b8"}
+                      strokeWidth="2.5" strokeDasharray={s.dash} />
+                  </svg>
+                  <span>{s.icon}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-dashed border-slate-200" />
+
+          {/* Live preview */}
+          <div className="rounded-lg border bg-slate-50 p-1.5">
+            <p className="text-[8px] text-slate-400 text-center mb-1">{isAr ? "معاينة" : "Preview"}</p>
+            <svg width="100%" height="36" viewBox="0 0 220 36">
+              <rect x="4" y="4" width="212" height="28" rx="4"
+                fill={fillColor} fillOpacity={opacity}
+                stroke={strokeColor}
+                strokeWidth={(strokeW) * 3}
+                strokeOpacity={zone.stroke_opacity ?? 1}
+                strokeDasharray={getDash(strokeStyle)}
+              />
+            </svg>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove, handleUpdateZoneStyle }) {
   if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
 
   const pts = zone.polygon_points;
@@ -23,7 +185,7 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
   let posY = screenY - containerRect.top - 52;
 
   // Keep within container bounds
-  posX = Math.max(100, Math.min(posX, containerRect.width - 100));
+  posX = Math.max(120, Math.min(posX, containerRect.width - 120));
   if (posY < 10) posY = (screenY - containerRect.top) + 20; // flip below if too high
 
   const btnClass = "flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all hover:scale-105 active:scale-95";
@@ -36,7 +198,7 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      <div className="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
+      <div className="bg-white/97 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
         <button onClick={onEdit} className={`${btnClass} text-blue-600 hover:bg-blue-50`} data-testid="float-edit-btn" title={isAr ? "تعديل البيانات" : "Edit Data"}>
           <Edit2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تعديل" : "Edit"}</span>
         </button>
@@ -48,6 +210,9 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
         <button onClick={onSmooth} className={`${btnClass} text-emerald-600 hover:bg-emerald-50`} data-testid="float-smooth-btn" title={isAr ? "تنعيم الزوايا" : "Smooth"}>
           <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
         </button>
+        <div className="w-px h-5 bg-slate-200" />
+        {/* Quick Style Button */}
+        <FloatingStyleButton zone={zone} handleUpdateZoneStyle={handleUpdateZoneStyle} isAr={isAr} btnClass={btnClass} />
         <div className="w-px h-5 bg-slate-200" />
         <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
           <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
@@ -404,6 +569,7 @@ export function MapCanvas({
               onCopy={handleCopyZone}
               onSmooth={handleSmoothZone}
               onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
+              handleUpdateZoneStyle={handleUpdateZoneStyle}
             />
           )}
           {/* Tooltip for non-selected zones */}
