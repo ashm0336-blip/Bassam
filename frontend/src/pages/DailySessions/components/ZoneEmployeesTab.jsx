@@ -40,6 +40,25 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
 
+  // Wheel zoom with passive:false to prevent page scroll
+  const wheelCallbackRef = useCallback((node) => {
+    if (!node) return;
+    mapContainerRef.current = node;
+    const handler = (e) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const prev = zoomRef.current;
+      const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const nz = Math.max(0.5, Math.min(5, prev * delta));
+      const s = nz / prev;
+      zoomRef.current = nz; setZoom(nz);
+      setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
+    };
+    node.addEventListener("wheel", handler, { passive: false });
+    return () => node.removeEventListener("wheel", handler);
+  }, []);
+
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
   useEffect(() => {
@@ -115,15 +134,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     return c;
   }, [employees]);
 
-  // Zoom/Pan handlers
-  const handleWheel = useCallback((e) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const nz = Math.max(0.5, Math.min(5, zoomRef.current * delta));
-    zoomRef.current = nz;
-    setZoom(nz);
-  }, []);
-
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) return;
     setIsPanning(true);
@@ -171,10 +181,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
       <div className="flex-[3] min-w-0 relative bg-slate-50">
         {mapImageUrl ? (
           <div
-            ref={mapContainerRef}
+            ref={wheelCallbackRef}
             className="relative w-full overflow-hidden"
             style={{ paddingBottom: imgRatio ? `${(1 / imgRatio) * 100}%` : "75%", cursor: isPanning ? "grabbing" : "grab" }}
-            onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -270,10 +279,12 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
             </div>
 
             {/* Legend */}
-            <div className="absolute bottom-3 left-3 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-200/60 shadow-sm">
-              <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500 opacity-60" /><span className="text-[9px] text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
-              <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500 opacity-60" /><span className="text-[9px] text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
-              <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-400 opacity-40" /><span className="text-[9px] text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 border border-slate-200/60 shadow-md">
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500/60 border border-green-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
+              <div className="w-px h-4 bg-slate-200" />
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500/60 border border-red-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
+              <div className="w-px h-4 bg-slate-200" />
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400/40 border border-slate-400/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
             </div>
 
             {/* Zoom indicator */}
@@ -300,13 +311,36 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           {/* KPI Cards */}
           <div className="grid grid-cols-3 gap-2" data-testid="employee-kpi-grid">
             {[
+              { label: isAr ? "إجمالي الموظفين" : "Total", value: employees.length, icon: Users, color: "#3b82f6" },
               { label: isAr ? "معيّنين" : "Assigned", value: assignedCount, icon: UserCheck, color: "#10b981" },
+              { label: isAr ? "غير مسكنين" : "Unassigned", value: unassignedEmployees.length, icon: UserX, color: unassignedEmployees.length > 0 ? "#f59e0b" : "#10b981" },
+            ].map((kpi, i) => {
+              const Icon = kpi.icon;
+              return (
+                <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden" data-testid={`emp-kpi-${i}`}>
+                  <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[1.5rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+                  <div className="flex items-start justify-between gap-1">
+                    <div>
+                      <p className="text-[8px] font-medium text-slate-400 leading-tight">{kpi.label}</p>
+                      <div className="flex items-baseline gap-0.5 mt-0.5">
+                        <span className="text-lg font-extrabold" style={{ color: kpi.color }}>{kpi.value}</span>
+                        {kpi.unit && <span className="text-[9px] text-slate-400">{kpi.unit}</span>}
+                      </div>
+                    </div>
+                    <Icon className="w-3.5 h-3.5 mt-0.5" style={{ color: kpi.color, opacity: 0.4 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
               { label: isAr ? "بدون تغطية" : "Uncovered", value: uncoveredZones.length, icon: AlertCircle, color: uncoveredZones.length > 0 ? "#ef4444" : "#10b981" },
               { label: isAr ? "نسبة التغطية" : "Coverage", value: `${coveragePct}`, icon: Percent, color: coveragePct >= 80 ? "#10b981" : coveragePct >= 50 ? "#f59e0b" : "#ef4444", unit: "%" },
             ].map((kpi, i) => {
               const Icon = kpi.icon;
               return (
-                <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden" data-testid={`emp-kpi-${i}`}>
+                <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden" data-testid={`emp-kpi-${i + 3}`}>
                   <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[1.5rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
                   <div className="flex items-start justify-between gap-1">
                     <div>
