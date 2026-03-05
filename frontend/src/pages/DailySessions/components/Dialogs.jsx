@@ -304,7 +304,9 @@ export function ZoneEditDialog({ open, onOpenChange, selectedZone, setSelectedZo
         <DialogFooter>
           {activeSession?.status === "draft" && (
             <Button onClick={() => {
-              handleUpdateZone(selectedZone.id, { name_ar: selectedZone.name_ar, name_en: selectedZone.name_en, zone_code: selectedZone.zone_code, daily_note: selectedZone.daily_note, area_sqm: selectedZone.area_sqm, length_m: selectedZone.length_m, width_m: selectedZone.width_m, per_person_sqm: selectedZone.per_person_sqm || 0.55, max_capacity: selectedZone.max_capacity, carpet_length: selectedZone.carpet_length, carpet_width: selectedZone.carpet_width });
+              const toNum = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+              const toInt = (v) => { const n = parseInt(v); return isNaN(n) ? null : n; };
+              handleUpdateZone(selectedZone.id, { name_ar: selectedZone.name_ar || null, name_en: selectedZone.name_en || null, zone_code: selectedZone.zone_code || null, daily_note: selectedZone.daily_note || null, area_sqm: toNum(selectedZone.area_sqm), length_m: toNum(selectedZone.length_m), width_m: toNum(selectedZone.width_m), per_person_sqm: toNum(selectedZone.per_person_sqm) || 0.55, max_capacity: toInt(selectedZone.max_capacity), carpet_length: toNum(selectedZone.carpet_length), carpet_width: toNum(selectedZone.carpet_width) });
               onOpenChange(false);
             }} data-testid="save-zone-changes"><Save className="w-4 h-4 ml-1" />{isAr ? "حفظ" : "Save"}</Button>
           )}
