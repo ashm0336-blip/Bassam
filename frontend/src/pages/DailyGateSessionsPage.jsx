@@ -404,8 +404,7 @@ export default function DailyGateSessionsPage() {
                 </div>
 
                 {/* MAP TAB - Rich map with markers, tooltips, stats */}
-                <TabsContent value="map" className="space-y-3">
-                  {/* Stats Bar */}
+                <TabsContent value="map" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                     <div className="rounded-xl border bg-gradient-to-bl from-blue-50 to-white p-3">
                       <p className="text-[10px] text-muted-foreground">{isAr ? "إجمالي" : "Total"}</p>
@@ -627,7 +626,7 @@ export default function DailyGateSessionsPage() {
                 </TabsContent>
 
                 {/* GATES TAB - Quick status toggle cards */}
-                <TabsContent value="gates" className="space-y-3">
+                <TabsContent value="gates" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <GatesTab
                     activeGates={activeGates}
                     removedGates={removedGates}
@@ -638,7 +637,7 @@ export default function DailyGateSessionsPage() {
                 </TabsContent>
 
                 {/* EMPLOYEES TAB */}
-                <TabsContent value="employees" className="space-y-3">
+                <TabsContent value="employees" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <EmployeesTab
                     activeGates={activeGates}
                     activeSession={activeSession}
@@ -648,7 +647,7 @@ export default function DailyGateSessionsPage() {
                 </TabsContent>
 
                 {/* CHANGES TAB */}
-                <TabsContent value="changes">
+                <TabsContent value="changes" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <Card><CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" />{isAr?"ملخص التغييرات":"Changes"}</CardTitle></CardHeader>
                     <CardContent>
                       {changedGates.length === 0 ? <div className="text-center py-8"><CheckCircle2 className="w-12 h-12 mx-auto text-blue-400 mb-3" /><p className="text-muted-foreground">{isAr?"لا توجد تغييرات":"No changes"}</p></div> : (
