@@ -232,7 +232,7 @@ export function ArchiveSessionSidebar({
             <p className="text-xs text-muted-foreground">{isAr ? "لا توجد جولات في هذا الشهر" : "No tours this month"}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-5 gap-x-2 gap-y-4 max-h-[calc(100vh-640px)] overflow-y-auto py-3 px-1 justify-items-center">
+          <div className="grid grid-cols-5 gap-x-2 gap-y-4 py-3 px-1 justify-items-center">
             {monthSessions.map((s, idx) => {
               const isAct = activeSession?.id === s.id;
               const d = new Date(s.date + "T00:00:00");
