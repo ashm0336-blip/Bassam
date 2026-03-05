@@ -1,7 +1,7 @@
 import {
-  CircleDot, CircleOff, Edit2, Layers,
+  CircleDot, Layers, MapPin, Maximize2, Users, Activity, AlertTriangle,
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Minus, PanelLeftClose, PanelLeftOpen,
+  Minus, PanelLeftClose,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDateShort } from "../utils";
@@ -44,7 +44,7 @@ function ZoneStyleSwatch({ zone, fallbackColor }) {
   );
 }
 
-export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZones, collapsed, onToggle }) {
+export function MapStatsPanel({ sessionStats, densityStats, changedZones, ZONE_TYPES, activeZones, collapsed, onToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
@@ -87,13 +87,15 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
         </div>
         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-        {/* KPI Grid - 2x2 */}
+        {/* KPI Grid - 3x2 */}
         <div className="grid grid-cols-2 gap-2.5" data-testid="live-kpi-grid">
           {[
-            { label: isAr ? "نشطة" : "Active", value: sessionStats.totalActive, icon: CircleDot, color: "#10b981", bg: "#ecfdf5", delta: sessionStats.hasPrevious ? sessionStats.totalActive - sessionStats.prevTotalActive : null },
-            { label: isAr ? "مزالة" : "Removed", value: sessionStats.totalRemoved, icon: CircleOff, color: "#ef4444", bg: "#fef2f2", delta: null },
-            { label: isAr ? "تغييرات" : "Changes", value: changedZones.length, icon: Edit2, color: "#f59e0b", bg: "#fffbeb", delta: null },
-            { label: isAr ? "فئات" : "Categories", value: sessionStats.uniqueCategories, icon: Layers, color: "#3b82f6", bg: "#eff6ff", sub: `/${ZONE_TYPES.length}` },
+            { label: isAr ? "إجمالي المواقع" : "Total Zones", value: sessionStats.totalActive, icon: MapPin, color: "#10b981", bg: "#ecfdf5" },
+            { label: isAr ? "إجمالي الفئات" : "Categories", value: sessionStats.uniqueCategories, icon: Layers, color: "#3b82f6", bg: "#eff6ff", sub: `/${ZONE_TYPES.length}` },
+            { label: isAr ? "المساحة الإجمالية" : "Total Area", value: sessionStats.totalArea > 0 ? sessionStats.totalArea.toLocaleString() : "0", icon: Maximize2, color: "#8b5cf6", bg: "#f5f3ff", unit: isAr ? "م²" : "m²" },
+            { label: isAr ? "متوسط المصلين" : "Avg. Worshippers", value: sessionStats.avgWorshippers, icon: Users, color: "#0ea5e9", bg: "#f0f9ff", unit: isAr ? "مصلي" : "" },
+            { label: isAr ? "نسبة الإشغال" : "Occupancy", value: densityStats?.overallPct ?? 0, icon: Activity, color: (densityStats?.overallPct ?? 0) > 80 ? "#ef4444" : (densityStats?.overallPct ?? 0) > 50 ? "#f59e0b" : "#10b981", bg: (densityStats?.overallPct ?? 0) > 80 ? "#fef2f2" : (densityStats?.overallPct ?? 0) > 50 ? "#fffbeb" : "#ecfdf5", unit: "%" },
+            { label: isAr ? "مناطق حرجة" : "Critical Zones", value: densityStats?.criticalCount ?? 0, icon: AlertTriangle, color: (densityStats?.criticalCount ?? 0) > 0 ? "#ef4444" : "#10b981", bg: (densityStats?.criticalCount ?? 0) > 0 ? "#fef2f2" : "#ecfdf5" },
           ].map((kpi, i) => {
             const Icon = kpi.icon;
             return (
@@ -101,17 +103,12 @@ export function MapStatsPanel({ sessionStats, changedZones, ZONE_TYPES, activeZo
                 <div className="absolute top-0 right-0 w-14 h-14 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
                 <div className="flex items-start justify-between gap-1 relative">
                   <div>
-                    <p className="text-[11px] font-medium text-slate-400">{kpi.label}</p>
-                    <div className="flex items-baseline gap-0.5 mt-1">
-                      <span className="text-3xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                    <p className="text-[10px] font-medium text-slate-400 leading-tight">{kpi.label}</p>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
                       {kpi.sub && <span className="text-[11px] text-slate-300 font-medium">{kpi.sub}</span>}
+                      {kpi.unit && <span className="text-[10px] text-slate-400 font-medium">{kpi.unit}</span>}
                     </div>
-                    {kpi.delta !== null && kpi.delta !== undefined && kpi.delta !== 0 && (
-                      <div className={`flex items-center gap-0.5 mt-1 text-[10px] font-semibold ${kpi.delta > 0 ? "text-emerald-600" : "text-red-500"}`}>
-                        {kpi.delta > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                        {kpi.delta > 0 ? "+" : ""}{kpi.delta}
-                      </div>
-                    )}
                   </div>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Icon className="w-5 h-5" style={{ color: kpi.color, opacity: 0.5 }} />

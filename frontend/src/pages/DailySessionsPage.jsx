@@ -505,7 +505,15 @@ export default function DailySessionsPage() {
       prevActive.forEach(z => { prevCatCounts[z.zone_type] = (prevCatCounts[z.zone_type] || 0) + 1; });
     }
     const activeCats = ZONE_TYPES.filter(t => catCounts[t.value] > 0);
-    return { totalActive: active.length, totalRemoved: removed.length, totalAll: activeSession.zones.length, uniqueCategories: activeCats.length, catCounts, prevSession, prevCatCounts, prevTotalActive, hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0, activeCats };
+    // Total area
+    const totalArea = active.reduce((sum, z) => sum + (z.area_sqm || 0), 0);
+    // Average worshippers (average of max prayer count per zone across all prayers)
+    const avgWorshippers = active.length > 0 ? Math.round(active.reduce((sum, z) => {
+      const pc = z.prayer_counts || {};
+      const vals = Object.values(pc).filter(v => typeof v === 'number' && v > 0);
+      return sum + (vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+    }, 0) / active.length) : 0;
+    return { totalActive: active.length, totalRemoved: removed.length, totalAll: activeSession.zones.length, uniqueCategories: activeCats.length, catCounts, prevSession, prevCatCounts, prevTotalActive, hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0, activeCats, totalArea, avgWorshippers };
   }, [activeSession, sessions, ZONE_TYPES]);
 
   const densityStats = useMemo(() => {
@@ -719,6 +727,7 @@ export default function DailySessionsPage() {
                     </div>
                     <MapStatsPanel
                       sessionStats={sessionStats}
+                      densityStats={densityStats}
                       changedZones={changedZones}
                       ZONE_TYPES={ZONE_TYPES}
                       activeZones={activeZones}
