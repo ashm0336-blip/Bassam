@@ -1,11 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axios from "axios";
 import {
-  Users, Search, UserCheck, UserX, MapPin, Plus, X, AlertCircle, ShieldCheck, Percent
+  Users, Search, UserCheck, UserX, MapPin, Plus, X, AlertCircle, Percent,
+  ZoomIn, ZoomOut, Maximize2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { normalizeImageUrl } from "../utils";
@@ -27,6 +30,15 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const [searchQuery, setSearchQuery] = useState("");
   const [activeShift, setActiveShift] = useState("all");
   const [hoveredZone, setHoveredZone] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Zoom/Pan state
+  const [zoom, setZoom] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  const mapContainerRef = useRef(null);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
@@ -78,7 +90,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   }, [employees, assignedLocations]);
 
   const coveredZones = activeZones.filter(z => (zoneEmployeeMap[z.zone_code] || []).length > 0);
-  const uncoveredZones = activeZones.filter(z => (zoneEmployeeMap[z.zone_code] || []).length === 0);
+  const uncoveredZones = activeZones.filter(z => !z.is_removed && z.zone_type !== "service" && (zoneEmployeeMap[z.zone_code] || []).length === 0);
   const coveragePct = activeZones.length > 0 ? Math.round((coveredZones.length / activeZones.length) * 100) : 0;
 
   const handleAssign = async (empId, zoneCode) => {
@@ -103,6 +115,33 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     return c;
   }, [employees]);
 
+  // Zoom/Pan handlers
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const nz = Math.max(0.5, Math.min(5, zoomRef.current * delta));
+    zoomRef.current = nz;
+    setZoom(nz);
+  }, []);
+
+  const handleMouseDown = useCallback((e) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+  }, [panOffset]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (mapContainerRef.current) {
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    }
+    if (!isPanning) return;
+    setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => setIsPanning(false), []);
+  const resetView = () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; };
+
   if (loading) {
     return <div className="flex items-center justify-center py-12"><div className="w-8 h-8 rounded-lg bg-emerald-100 animate-pulse flex items-center justify-center"><Users className="w-4 h-4 text-emerald-600" /></div></div>;
   }
@@ -119,8 +158,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
   const getZoneCoverageColor = (zone) => {
     const emps = zoneEmployeeMap[zone.zone_code] || [];
-    const isService = zone.zone_type === "service";
-    if (isService) return { fill: "#94a3b8", opacity: 0.15 };
+    if (zone.zone_type === "service") return { fill: "#94a3b8", opacity: 0.15 };
     if (emps.length > 0) return { fill: "#22c55e", opacity: 0.35 };
     return { fill: "#ef4444", opacity: 0.3 };
   };
@@ -132,11 +170,21 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
       {/* LEFT: Coverage Map (60%) */}
       <div className="flex-[3] min-w-0 relative bg-slate-50">
         {mapImageUrl ? (
-          <div className="relative w-full" style={{ paddingBottom: imgRatio ? `${(1 / imgRatio) * 100}%` : "75%" }}>
+          <div
+            ref={mapContainerRef}
+            className="relative w-full overflow-hidden"
+            style={{ paddingBottom: imgRatio ? `${(1 / imgRatio) * 100}%` : "75%", cursor: isPanning ? "grabbing" : "grab" }}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => { handleMouseUp(); setHoveredZone(null); }}
+          >
             <svg
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
               className="absolute inset-0 w-full h-full"
+              style={{ transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`, transformOrigin: "center center", transition: isPanning ? "none" : "transform 0.1s ease-out" }}
               data-testid="coverage-map"
             >
               <image href={mapImageUrl} x="0" y="0" width="100" height="100" preserveAspectRatio="none" />
@@ -150,8 +198,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                 return (
                   <g key={zone.id}
                     onMouseEnter={() => setHoveredZone(zone.id)}
-                    onMouseLeave={() => setHoveredZone(null)}
                     className="cursor-pointer"
+                    style={{ pointerEvents: "all" }}
                   >
                     <polygon
                       points={pts}
@@ -164,53 +212,76 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                     />
                     {emps.length > 0 && (
                       <>
-                        <circle cx={cx} cy={cy} r="2.2" fill="#fff" fillOpacity="0.9" />
-                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.8" fontWeight="800" fill="#16a34a">{emps.length}</text>
+                        <circle cx={cx} cy={cy} r="2.2" fill="#fff" fillOpacity="0.9" style={{ pointerEvents: "none" }} />
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.8" fontWeight="800" fill="#16a34a" style={{ pointerEvents: "none" }}>{emps.length}</text>
                       </>
                     )}
                     {emps.length === 0 && zone.zone_type !== "service" && (
                       <>
-                        <circle cx={cx} cy={cy} r="1.5" fill="#ef4444" fillOpacity="0.8" />
-                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.2" fontWeight="800" fill="#fff">!</text>
+                        <circle cx={cx} cy={cy} r="1.5" fill="#ef4444" fillOpacity="0.8" style={{ pointerEvents: "none" }} />
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.2" fontWeight="800" fill="#fff" style={{ pointerEvents: "none" }}>!</text>
                       </>
                     )}
                   </g>
                 );
               })}
             </svg>
-            {/* Tooltip */}
+
+            {/* Floating tooltip near mouse */}
             {hoveredZone && (() => {
               const zone = activeZones.find(z => z.id === hoveredZone);
               if (!zone) return null;
               const emps = zoneEmployeeMap[zone.zone_code] || [];
               return (
-                <div className="absolute top-3 left-3 z-20 bg-slate-900/95 text-white rounded-xl px-3 py-2.5 shadow-xl backdrop-blur-sm max-w-[200px]" data-testid="coverage-tooltip">
-                  <p className="text-[11px] font-bold">{zone.zone_code}</p>
-                  <p className="text-[9px] text-slate-300 mt-0.5">{isAr ? zone.name_ar : zone.name_en}</p>
-                  {emps.length > 0 ? (
-                    <div className="mt-1.5 pt-1.5 border-t border-white/10 space-y-1">
-                      {emps.map(e => {
-                        const shift = SHIFTS.find(s => s.value === e.shift);
-                        return (
-                          <div key={e.id} className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift?.color || "#94a3b8" }} />
-                            <span className="text-[9px]">{e.name}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-[9px] text-red-300 mt-1">{isAr ? "بدون موظف" : "No staff"}</p>
-                  )}
+                <div
+                  className="absolute z-30 pointer-events-none"
+                  style={{ left: mousePos.x + 12, top: mousePos.y - 10, transform: "translateY(-100%)" }}
+                  data-testid="coverage-tooltip"
+                >
+                  <div className="bg-slate-900/95 text-white rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm max-w-[180px]">
+                    <p className="text-[11px] font-bold">{zone.zone_code}</p>
+                    <p className="text-[9px] text-slate-300 mt-0.5">{isAr ? zone.name_ar : zone.name_en}</p>
+                    {emps.length > 0 ? (
+                      <div className="mt-1.5 pt-1.5 border-t border-white/10 space-y-1">
+                        {emps.map(e => {
+                          const shift = SHIFTS.find(s => s.value === e.shift);
+                          return (
+                            <div key={e.id} className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift?.color || "#94a3b8" }} />
+                              <span className="text-[9px]">{e.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[9px] text-red-300 mt-1">{zone.zone_type === "service" ? (isAr ? "منطقة خدمات" : "Service zone") : (isAr ? "بدون موظف" : "No staff")}</p>
+                    )}
+                  </div>
+                  <div className="w-2 h-2 bg-slate-900/95 rotate-45 mx-4 -mt-1" />
                 </div>
               );
             })()}
+
+            {/* Zoom controls */}
+            <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
+              <button onClick={() => { zoomRef.current = Math.min(5, zoom * 1.3); setZoom(zoomRef.current); }} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-zoom-in"><ZoomIn className="w-3.5 h-3.5 text-slate-600" /></button>
+              <button onClick={() => { zoomRef.current = Math.max(0.5, zoom * 0.7); setZoom(zoomRef.current); }} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-zoom-out"><ZoomOut className="w-3.5 h-3.5 text-slate-600" /></button>
+              <button onClick={resetView} className="w-7 h-7 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all" data-testid="emp-map-reset"><Maximize2 className="w-3.5 h-3.5 text-slate-600" /></button>
+            </div>
+
             {/* Legend */}
             <div className="absolute bottom-3 left-3 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-200/60 shadow-sm">
               <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500 opacity-60" /><span className="text-[9px] text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
               <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500 opacity-60" /><span className="text-[9px] text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
               <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-400 opacity-40" /><span className="text-[9px] text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
             </div>
+
+            {/* Zoom indicator */}
+            {zoom !== 1 && (
+              <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-slate-200/60 shadow-sm">
+                <span className="text-[10px] font-medium text-slate-600">{Math.round(zoom * 100)}%</span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">{isAr ? "لا توجد خريطة" : "No map"}</div>
@@ -226,7 +297,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           </div>
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-          {/* KPI Cards - 3 columns */}
+          {/* KPI Cards */}
           <div className="grid grid-cols-3 gap-2" data-testid="employee-kpi-grid">
             {[
               { label: isAr ? "معيّنين" : "Assigned", value: assignedCount, icon: UserCheck, color: "#10b981" },
@@ -272,17 +343,16 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-          {/* Uncovered Alert */}
+          {/* Uncovered Alert - scrollable */}
           {uncoveredZones.length > 0 && (
             <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl">
               <p className="text-[10px] font-semibold text-red-700 flex items-center gap-1 mb-1.5">
                 <AlertCircle className="w-3.5 h-3.5" />{isAr ? `${uncoveredZones.length} منطقة بدون تغطية` : `${uncoveredZones.length} uncovered`}
               </p>
-              <div className="flex flex-wrap gap-1">
-                {uncoveredZones.slice(0, 8).map(z => (
+              <div className="flex flex-wrap gap-1 max-h-[60px] overflow-y-auto">
+                {uncoveredZones.map(z => (
                   <span key={z.id} className="text-[9px] px-1.5 py-0.5 bg-white rounded-full border border-red-200 text-red-600 font-medium">{z.zone_code}</span>
                 ))}
-                {uncoveredZones.length > 8 && <span className="text-[9px] text-red-400 self-center">+{uncoveredZones.length - 8}</span>}
               </div>
             </div>
           )}
@@ -293,7 +363,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
               <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1.5 mb-2">
                 <UserX className="w-3.5 h-3.5" />{isAr ? "غير معيّنين" : "Unassigned"}<Badge variant="secondary" className="text-[9px] px-1">{unassignedEmployees.length}</Badge>
               </p>
-              <div className="space-y-1 max-h-[140px] overflow-y-auto">
+              <div className="space-y-1 max-h-[120px] overflow-y-auto">
                 {unassignedEmployees.map(emp => {
                   const shift = SHIFTS.find(s => s.value === emp.shift);
                   return (
@@ -330,63 +400,81 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-          {/* Assigned employees by zone - compact list */}
+          {/* Distribution - Card Grid with Popover */}
           <div>
-            <p className="text-[10px] font-semibold text-slate-600 flex items-center gap-1.5 mb-2">
-              <MapPin className="w-3.5 h-3.5 text-emerald-600" />{isAr ? "التوزيع على المناطق" : "Distribution"}
-            </p>
-            <div className="space-y-1 max-h-[300px] overflow-y-auto pr-0.5">
+            <div className="text-center mb-3">
+              <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "التوزيع على المناطق" : "Zone Distribution"}</p>
+              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+            </div>
+            <div className="grid grid-cols-5 gap-1.5 max-h-[300px] overflow-y-auto pr-0.5">
               {activeZones.filter(z => !z.is_removed).map(zone => {
                 const emps = zoneEmployeeMap[zone.zone_code] || [];
                 const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
-                const isHovered = hoveredZone === zone.id;
+                const hasCoverage = emps.length > 0;
+                const isService = zone.zone_type === "service";
                 return (
-                  <div
-                    key={zone.id}
-                    className={`rounded-lg border p-2 transition-all ${isHovered ? "border-emerald-300 bg-emerald-50/50 shadow-sm" : emps.length === 0 ? "border-red-100 bg-red-50/30" : "bg-white"}`}
-                    onMouseEnter={() => setHoveredZone(zone.id)}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    data-testid={`zone-staff-${zone.id}`}
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
-                        <span className="text-[10px] font-semibold truncate">{zone.zone_code}</span>
+                  <Popover key={zone.id}>
+                    <PopoverTrigger asChild>
+                      <button
+                        className={`relative flex flex-col items-center justify-center rounded-lg border p-1.5 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md
+                          ${hasCoverage ? "bg-emerald-50 border-emerald-200 hover:border-emerald-400" :
+                            isService ? "bg-slate-50 border-slate-200 hover:border-slate-400" :
+                            "bg-red-50 border-red-200 hover:border-red-400"}`}
+                        onMouseEnter={() => setHoveredZone(zone.id)}
+                        onMouseLeave={() => setHoveredZone(null)}
+                        data-testid={`zone-card-${zone.id}`}
+                      >
+                        <span className="w-3 h-3 rounded-sm mb-0.5" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
+                        <span className="text-[7px] font-bold text-slate-600 leading-tight truncate w-full text-center">{zone.zone_code}</span>
+                        <Badge variant={hasCoverage ? "secondary" : isService ? "outline" : "destructive"} className="text-[7px] px-1 h-3.5 mt-0.5">
+                          {hasCoverage ? emps.length : isService ? "-" : "0"}
+                        </Badge>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-3" side="top" align="center">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-sm" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
+                          <div>
+                            <p className="text-xs font-bold">{zone.zone_code}</p>
+                            <p className="text-[10px] text-muted-foreground">{isAr ? zone.name_ar : zone.name_en}</p>
+                          </div>
+                        </div>
+                        {emps.length > 0 && (
+                          <div className="space-y-1">
+                            {emps.map(emp => {
+                              const shift = SHIFTS.find(s => s.value === emp.shift);
+                              return (
+                                <div key={emp.id} className="flex items-center justify-between px-2 py-1 rounded-lg bg-slate-50 group/emp">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: shift?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>
+                                    <div>
+                                      <span className="text-[10px] font-medium">{emp.name}</span>
+                                      {shift && <p className="text-[8px] text-slate-400">{isAr ? shift.label_ar : shift.label_en}</p>}
+                                    </div>
+                                  </div>
+                                  {activeSession?.status === "draft" && (
+                                    <button onClick={() => handleUnassign(emp.id)} className="opacity-0 group-hover/emp:opacity-100 w-4 h-4 rounded bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-all">
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {activeSession?.status === "draft" && (
+                          <Select onValueChange={(empId) => handleAssign(empId, zone.zone_code)}>
+                            <SelectTrigger className="h-7 w-full text-[10px] border-dashed"><Plus className="w-3 h-3 ml-0.5 text-emerald-500" /><SelectValue placeholder={isAr ? "إضافة موظف" : "Add staff"} /></SelectTrigger>
+                            <SelectContent>
+                              {unassignedEmployees.map(emp => <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>)}
+                              {unassignedEmployees.length === 0 && <div className="text-[10px] text-muted-foreground p-2 text-center">{isAr ? "لا يوجد متاحين" : "None"}</div>}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
-                      <Badge variant={emps.length > 0 ? "secondary" : "destructive"} className="text-[8px] px-1 h-4">
-                        <Users className="w-2.5 h-2.5 ml-0.5" />{emps.length}
-                      </Badge>
-                    </div>
-                    {emps.length > 0 && (
-                      <div className="mt-1.5 space-y-0.5">
-                        {emps.map(emp => {
-                          const shift = SHIFTS.find(s => s.value === emp.shift);
-                          return (
-                            <div key={emp.id} className="flex items-center justify-between group/emp">
-                              <div className="flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: shift?.color || "#94a3b8" }} />
-                                <span className="text-[9px] text-slate-600">{emp.name}</span>
-                              </div>
-                              {activeSession?.status === "draft" && (
-                                <button onClick={() => handleUnassign(emp.id)} className="opacity-0 group-hover/emp:opacity-100 w-3.5 h-3.5 rounded bg-red-100 text-red-500 flex items-center justify-center transition-all hover:bg-red-200">
-                                  <X className="w-2.5 h-2.5" />
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {emps.length === 0 && activeSession?.status === "draft" && (
-                      <Select onValueChange={(empId) => handleAssign(empId, zone.zone_code)}>
-                        <SelectTrigger className="h-5 w-full text-[9px] border-dashed mt-1 px-1.5"><Plus className="w-2.5 h-2.5 ml-0.5 text-emerald-500" /><SelectValue placeholder={isAr ? "إضافة موظف" : "Add staff"} /></SelectTrigger>
-                        <SelectContent>
-                          {unassignedEmployees.map(emp => <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>)}
-                          {unassignedEmployees.length === 0 && <div className="text-[10px] text-muted-foreground p-2 text-center">{isAr ? "لا يوجد متاحين" : "None"}</div>}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
+                    </PopoverContent>
+                  </Popover>
                 );
               })}
             </div>
