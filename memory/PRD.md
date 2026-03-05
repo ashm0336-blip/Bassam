@@ -34,6 +34,7 @@
 - **Professional Iconography (March 2026)**: Standardized KPI cards with larger icons, transparent backgrounds, and color-matched styling across the entire app
 - **Circular Session Cards (March 2026)**: Redesigned session lists in both Gates and Prayer Areas Daily Logs from vertical cards to circular professional cards arranged 5 per row, with color-coded borders, hover tooltips, staggered entrance animations, and active state glow effects
 - **Professional Daily Log Tabs (March 2026)**: Applied the same card-style tab design from Department Settings to Daily Log tabs - Gates (blue theme, 4 tabs) and Prayer Areas (emerald theme, 3 tabs) with icons in colored boxes, count badges, and accent underlines
+- **New Prayer Area KPIs (March 2026)**: Replaced old stats (نشطة/مزالة/تغييرات/فئات) with 6 new professional KPIs: إجمالي المواقع, إجمالي الفئات, المساحة الإجمالية, متوسط المصلين, نسبة الإشغال (dynamic color), مناطق حرجة (dynamic color)
 
 ## Planned Tasks (Awaiting User Direction)
 
