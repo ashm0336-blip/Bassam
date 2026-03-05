@@ -350,12 +350,58 @@ export default function DailyGateSessionsPage() {
 
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="map" data-testid="tab-map"><DoorOpen className="w-4 h-4 ml-1" />{isAr ? "الخريطة" : "Map"}</TabsTrigger>
-                  <TabsTrigger value="gates" data-testid="tab-gates"><Tag className="w-4 h-4 ml-1" />{isAr ? "الأبواب" : "Gates"}<Badge variant="secondary" className="mr-1 text-[10px] px-1.5">{activeGates.length}</Badge></TabsTrigger>
-                  <TabsTrigger value="employees" data-testid="tab-employees"><Users className="w-4 h-4 ml-1" />{isAr ? "الموظفين" : "Staff"}</TabsTrigger>
-                  <TabsTrigger value="changes" data-testid="tab-changes"><FileText className="w-4 h-4 ml-1" />{isAr ? "التغييرات" : "Changes"}{changedGates.length > 0 && <Badge variant="destructive" className="mr-1 text-[10px] px-1.5">{changedGates.length}</Badge>}</TabsTrigger>
-                </TabsList>
+                {/* Professional Tab Bar */}
+                <div className="rounded-2xl p-2 mb-4" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }} data-testid="daily-tabs-bar">
+                  <div className="flex items-center justify-center gap-2">
+                    {[
+                      { id: 'map', label: isAr ? 'الخريطة' : 'Map', icon: DoorOpen, count: null },
+                      { id: 'gates', label: isAr ? 'الأبواب' : 'Gates', icon: Tag, count: activeGates.length },
+                      { id: 'employees', label: isAr ? 'الموظفين' : 'Staff', icon: Users, count: null },
+                      { id: 'changes', label: isAr ? 'التغييرات' : 'Changes', icon: FileText, count: changedGates.length || null },
+                    ].map(tab => {
+                      const isActive = activeTab === tab.id;
+                      const TabIcon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          data-testid={`tab-${tab.id}`}
+                          className={`relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-xl transition-all duration-300 min-w-[90px]
+                            ${isActive
+                              ? 'bg-white shadow-md border-2 scale-[1.02]'
+                              : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'
+                            }`}
+                          style={isActive ? { borderColor: '#2563eb' } : {}}
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
+                            style={isActive ? { backgroundColor: '#eff6ff', color: '#2563eb' } : { backgroundColor: '#f3f4f6', color: '#6b7280' }}
+                          >
+                            <TabIcon className="w-5 h-5" />
+                          </div>
+                          <span
+                            className={`text-xs font-medium transition-colors duration-300 ${isActive ? 'font-bold' : 'text-gray-500'}`}
+                            style={isActive ? { color: '#2563eb' } : {}}
+                          >
+                            {tab.label}
+                          </span>
+                          {tab.count !== null && tab.count > 0 && (
+                            <span
+                              className={`absolute -top-1 -left-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+                              style={{ backgroundColor: tab.id === 'changes' ? '#ef4444' : (isActive ? '#2563eb' : '#9ca3af') }}
+                            >
+                              {tab.count}
+                            </span>
+                          )}
+                          {isActive && (
+                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: '#2563eb' }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* MAP TAB - Rich map with markers, tooltips, stats */}
                 <TabsContent value="map" className="space-y-3">
