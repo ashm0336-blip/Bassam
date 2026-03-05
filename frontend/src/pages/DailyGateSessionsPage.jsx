@@ -21,7 +21,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { GatesTab } from "./DailyGateSessions/GatesTab";
 import { EmployeesTab } from "./DailyGateSessions/EmployeesTab";
-import { ArchiveSidebar } from "./DailyGateSessions/ArchiveSidebar";
+import { ArchiveSidebar } from "@/components/shared/ArchiveSidebar";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -356,11 +356,10 @@ export default function DailyGateSessionsPage() {
             sessions={sessions}
             activeSession={activeSession}
             isAr={isAr}
-            today={today}
+            theme="blue"
             onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
             onDeleteSession={handleDeleteSession}
-            onNewSession={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
-            onCalendarClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
+            onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
           />
         </div>
 

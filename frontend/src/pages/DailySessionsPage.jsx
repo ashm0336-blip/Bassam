@@ -19,7 +19,7 @@ import {
 } from "./DailySessions/utils";
 
 import { SessionSidebar } from "./DailySessions/components/SessionSidebar";
-import { ArchiveSessionSidebar } from "./DailySessions/components/ArchiveSessionSidebar";
+import { ArchiveSidebar } from "@/components/shared/ArchiveSidebar";
 import { SessionHeader } from "./DailySessions/components/SessionHeader";
 import { MapToolbar } from "./DailySessions/components/MapToolbar";
 import { MapCanvas } from "./DailySessions/components/MapCanvas";
@@ -615,11 +615,14 @@ export default function DailySessionsPage() {
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        <ArchiveSessionSidebar
-          sessions={sessions} activeSession={activeSession} setActiveSession={setActiveSession}
-          setZoom={setZoom} setPanOffset={setPanOffset} zoomRef={zoomRef}
-          setNewSessionDate={setNewSessionDate} setCloneSource={setCloneSource} setShowNewSessionDialog={setShowNewSessionDialog}
-          handleCompare={handleCompare} handleDeleteSession={handleDeleteSession}
+        <ArchiveSidebar
+          sessions={sessions} activeSession={activeSession} isAr={isAr}
+          theme="emerald" showCompare showNotes
+          className="lg:col-span-1"
+          onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; }}
+          onDeleteSession={handleDeleteSession}
+          onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
+          onCompare={handleCompare}
         />
 
         <div className="lg:col-span-3">

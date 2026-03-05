@@ -34,11 +34,10 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Pinch-to-Zoom Support (Mar 5, 2026)
-- Added pinch-to-zoom (2-finger zoom) to all 4 map components
-- Zoom centers between the two fingers (like Google Maps behavior)
-- Clean separation: 1-finger = pan/drag, 2-fingers = pinch zoom
-- Files modified: DailySessionsPage.jsx, DensityTab.jsx, ZoneEmployeesTab.jsx, DailyGateSessionsPage.jsx, MapCanvas.jsx
+### Archive Component Merge (Mar 5, 2026)
+- Merged `ArchiveSessionSidebar.jsx` and `ArchiveSidebar.jsx` into single reusable `ArchiveSidebar` at `/app/frontend/src/components/shared/ArchiveSidebar.jsx`
+- Supports theme prop (blue/emerald), optional compare button, notes display
+- Deleted old duplicate files, updated imports in DailySessionsPage.jsx and DailyGateSessionsPage.jsx
 
 ## Prioritized Backlog
 
