@@ -34,7 +34,15 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Floating Toolbar - Pattern Section (Mar 5, 2026)
+### Zone Categories as Source of Truth (Mar 5, 2026)
+- Categories define ALL zone style: color + fill_type + pattern + stroke (color/width/style/opacity)
+- Backend propagates category update to ALL map_sessions zones + map_zones of that type
+- Removed manual styling: FloatingToolbar now 4 buttons only (edit/copy/smooth/remove), MapToolbar Style dropdown removed
+- Auto-apply: selecting zone type in dialog → full category style applied (color+pattern+border)
+- Dropdown shows category icon+color chip for quick visual identification
+- ZoneCategoryManager dialog: added full Border section (color/width/opacity/style)
+
+
 - Added pattern toggle section to FloatingStyleButton Popover (12 pattern types + fg/bg colors + live preview with pattern)
 - Fixed React portal click-bubbling bug that caused zone deselection when clicking inside Popover
 
