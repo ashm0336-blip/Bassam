@@ -9,24 +9,28 @@ import { ZonePatternDefs } from "./ZonePatterns";
 
 // Quick color swatches for common zone colors
 
-function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
-  if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
+function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isAr, onEdit, onCopy, onSmooth, onRemove }) {
+  if (!zone?.polygon_points?.length || !mapContainerRef.current) return null;
 
   const pts = zone.polygon_points;
   const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
   const minY = Math.min(...pts.map(p => p.y));
 
-  const ctm = svgRef.current.getScreenCTM();
-  if (!ctm) return null;
   const containerRect = mapContainerRef.current.getBoundingClientRect();
-  const screenX = cx * ctm.a + ctm.e;
-  const screenY = minY * ctm.d + ctm.f;
-  let posX = screenX - containerRect.left;
-  let posY = screenY - containerRect.top - 52;
+  const cw = containerRect.width, ch = containerRect.height;
+  let imgLeft = 0, imgTop = 0, imgW = cw, imgH = ch;
+  if (imgRatio) {
+    if (cw / ch > imgRatio) { imgW = ch * imgRatio; imgH = ch; imgLeft = (cw - imgW) / 2; }
+    else { imgW = cw; imgH = cw / imgRatio; imgTop = (ch - imgH) / 2; }
+  }
+  // SVG coords (0-100) → container screen position
+  const imgX = (cx / 100) * imgW + imgLeft;
+  const imgY = (minY / 100) * imgH + imgTop;
+  let posX = imgX * zoom + panOffset.x;
+  let posY = imgY * zoom + panOffset.y - 52;
 
-  // Keep within container bounds
   posX = Math.max(100, Math.min(posX, containerRect.width - 100));
-  if (posY < 10) posY = (screenY - containerRect.top) + 20;
+  if (posY < 10) posY = imgY * zoom + panOffset.y + 20;
 
   const btnClass = "flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all hover:scale-105 active:scale-95";
 
@@ -93,14 +97,33 @@ export function MapCanvas({
   };
 
   const getMousePercent = (e) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    const ctm = svgRef.current.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
+    if (!mapContainerRef.current) return { x: 0, y: 0 };
     const { clientX, clientY } = getClientXY(e);
-    const pt = svgRef.current.createSVGPoint();
-    pt.x = clientX; pt.y = clientY;
-    const t = pt.matrixTransform(ctm.inverse());
-    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+    const rect = mapContainerRef.current.getBoundingClientRect();
+    // Position relative to the map container (CSS pixels, DPR-independent)
+    const lx = clientX - rect.left;
+    const ly = clientY - rect.top;
+    // Undo the CSS transform: translate(panOffset.x, panOffset.y) scale(zoom) with transformOrigin "0 0"
+    const cx = (lx - panOffset.x) / zoom;
+    const cy = (ly - panOffset.y) / zoom;
+    // Dimensions of the container at zoom=1 (the transform uses the un-zoomed size)
+    const cw = rect.width;
+    const ch = rect.height;
+    // Calculate the image container offset within the flex-centered wrapper
+    let imgLeft = 0, imgTop = 0, imgW = cw, imgH = ch;
+    if (imgRatio) {
+      if (cw / ch > imgRatio) {
+        imgW = ch * imgRatio; imgH = ch;
+        imgLeft = (cw - imgW) / 2;
+      } else {
+        imgW = cw; imgH = cw / imgRatio;
+        imgTop = (ch - imgH) / 2;
+      }
+    }
+    // Convert to SVG percentage coordinates (viewBox 0 0 100 100)
+    const svgX = ((cx - imgLeft) / imgW) * 100;
+    const svgY = ((cy - imgTop) / imgH) * 100;
+    return { x: Math.max(0, Math.min(100, svgX)), y: Math.max(0, Math.min(100, svgY)) };
   };
 
   const hasPannedRef = useRef(false);
@@ -444,8 +467,10 @@ export function MapCanvas({
           {showFloatingToolbar && (
             <FloatingToolbar
               zone={selectedZoneData}
-              svgRef={svgRef}
               mapContainerRef={mapContainerRef}
+              zoom={zoom}
+              panOffset={panOffset}
+              imgRatio={imgRatio}
               isAr={isAr}
               onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
               onCopy={handleCopyZone}

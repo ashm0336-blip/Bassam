@@ -196,14 +196,28 @@ export default function GateMapPage() {
   };
 
   const getMousePercent = (e) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    const ctm = svgRef.current.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
+    if (!mapContainerRef.current) return { x: 0, y: 0 };
     const { clientX, clientY } = getClientXY(e);
-    const pt = svgRef.current.createSVGPoint();
-    pt.x = clientX; pt.y = clientY;
-    const t = pt.matrixTransform(ctm.inverse());
-    return { x: Math.max(0, Math.min(100, t.x)), y: Math.max(0, Math.min(100, t.y)) };
+    const rect = mapContainerRef.current.getBoundingClientRect();
+    const lx = clientX - rect.left;
+    const ly = clientY - rect.top;
+    const cx = (lx - panOffset.x) / zoom;
+    const cy = (ly - panOffset.y) / zoom;
+    const cw = rect.width;
+    const ch = rect.height;
+    let imgLeft = 0, imgTop = 0, imgW = cw, imgH = ch;
+    if (imgRatio) {
+      if (cw / ch > imgRatio) {
+        imgW = ch * imgRatio; imgH = ch;
+        imgLeft = (cw - imgW) / 2;
+      } else {
+        imgW = cw; imgH = cw / imgRatio;
+        imgTop = (ch - imgH) / 2;
+      }
+    }
+    const svgX = ((cx - imgLeft) / imgW) * 100;
+    const svgY = ((cy - imgTop) / imgH) * 100;
+    return { x: Math.max(0, Math.min(100, svgX)), y: Math.max(0, Math.min(100, svgY)) };
   };
 
   // Smart cursor: background = pan, marker = drag
