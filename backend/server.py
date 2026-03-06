@@ -52,7 +52,10 @@ async def serve_frontend_with_settings(request: Request):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Frontend not found")
     html_content = frontend_path.read_text()
-    settings = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    try:
+        settings = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    except Exception:
+        settings = None
     if not settings:
         settings = {
             "primary_color": "#047857",
@@ -106,27 +109,37 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db_client():
-    """Create default admin user if no users exist (first-time deployment)"""
+    """Create default admin user if no users exist - with retry for Atlas MongoDB"""
+    import asyncio
     from auth import hash_password
     import uuid
     from datetime import datetime, timezone
 
-    count = await db.users.count_documents({})
-    if count == 0:
-        admin_user = {
-            "id": str(uuid.uuid4()),
-            "email": "admin@crowd.sa",
-            "password": hash_password("admin123"),
-            "name": "مسؤول النظام",
-            "role": "system_admin",
-            "department": None,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(admin_user)
-        logger.info("✅ Default admin user created: admin@crowd.sa")
-    else:
-        logger.info(f"✅ Database connected — {count} user(s) found")
+    for attempt in range(5):
+        try:
+            count = await db.users.count_documents({})
+            if count == 0:
+                admin_doc = {
+                    "id": str(uuid.uuid4()),
+                    "email": "admin@crowd.sa",
+                    "password": hash_password("admin123"),
+                    "name": "مسؤول النظام",
+                    "role": "system_admin",
+                    "department": None,
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.users.insert_one({**admin_doc})
+                logger.info("✅ Default admin user created: admin@crowd.sa")
+            else:
+                logger.info(f"✅ Database connected — {count} user(s) found")
+            break
+        except Exception as e:
+            logger.warning(f"⚠️ Startup DB attempt {attempt + 1}/5 failed: {e}")
+            if attempt < 4:
+                await asyncio.sleep(3)
+            else:
+                logger.error("❌ Database unavailable at startup — app will still serve requests")
 
 
 @app.on_event("shutdown")
