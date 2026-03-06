@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Edit2, Copy, Sparkles, Trash2 } from "lucide-react";
+import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
@@ -389,6 +389,14 @@ export function MapCanvas({
           onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
           onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}
           onClick={handleClick}>
+
+          {/* Zoom controls overlay - top left, matching density/employees style */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm" onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <button onClick={() => { if (!mapContainerRef.current) return; const r = mapContainerRef.current.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.3, Math.min(20, p*0.8)); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({x: cx-s*(cx-o.x), y: cy-s*(cy-o.y)})); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-out-btn"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
+            <span className="text-xs w-10 text-center font-mono">{Math.round(zoom * 100)}%</span>
+            <button onClick={() => { if (!mapContainerRef.current) return; const r = mapContainerRef.current.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.3, Math.min(20, p*1.25)); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({x: cx-s*(cx-o.x), y: cy-s*(cy-o.y)})); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-in-btn"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
+            <button onClick={() => { zoomRef.current = 1; setZoom(1); setPanOffset({ x: 0, y: 0 }); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-reset-btn"><Maximize2 className="w-4 h-4 text-slate-600" /></button>
+          </div>
           <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {(() => {
               const ce = mapContainerRef.current;
