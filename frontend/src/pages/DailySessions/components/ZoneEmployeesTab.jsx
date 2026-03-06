@@ -434,44 +434,29 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           </div>
 
           {/* ─── Shift Cards ─────────────────────────── */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{isAr ? "الورديات" : "Shifts"}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {/* All shifts card */}
-              <button onClick={() => setActiveShift("all")}
-                className={`flex flex-col gap-1.5 p-2.5 rounded-xl border-2 transition-all text-right ${activeShift === "all" ? "border-emerald-400 bg-emerald-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                data-testid="shift-all-card">
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xs font-extrabold text-emerald-600">{employees.length}</span>
-                  <span className="text-[10px] font-bold text-slate-600">{isAr ? "الكل" : "All"}</span>
-                </div>
-                <div className="flex gap-0.5 flex-wrap justify-end">
-                  {employees.slice(0, 8).map(emp => {
-                    const s = SHIFTS.find(sh => sh.value === emp.shift);
-                    return <div key={emp.id} className="w-4 h-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>;
-                  })}
-                  {employees.length > 8 && <span className="text-[7px] text-slate-400 self-center">+{employees.length - 8}</span>}
-                  {employees.length === 0 && <span className="text-[9px] text-slate-300">{isAr ? "لا يوجد" : "Empty"}</span>}
-                </div>
-              </button>
+          <div>
+            <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide mb-1">{isAr ? "الموظفين حسب الورديات" : "Staff by Shift"}</p>
+            <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mb-2.5" />
+            <div className="grid grid-cols-4 gap-1.5">
               {SHIFTS.map(s => {
                 const shiftEmps = employees.filter(e => e.shift === s.value);
                 const isActive = activeShift === s.value;
                 return (
                   <button key={s.value} onClick={() => setActiveShift(isActive ? "all" : s.value)}
-                    className="flex flex-col gap-1.5 p-2.5 rounded-xl border-2 transition-all text-right"
-                    style={{ borderColor: isActive ? s.color : "#e2e8f0", backgroundColor: isActive ? s.color + "12" : "#fff" }}
+                    className="flex flex-col gap-1 p-2 rounded-xl border-2 transition-all text-right"
+                    style={{ borderColor: isActive ? s.color : "#e2e8f0", backgroundColor: isActive ? s.color + "15" : "#fafafa" }}
                     data-testid={`shift-card-${s.value}`}>
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-extrabold" style={{ color: s.color }}>{shiftEmps.length}</span>
-                      <span className="text-[10px] font-bold" style={{ color: isActive ? s.color : "#475569" }}>{isAr ? s.label_ar : s.label_en}</span>
+                      <span className="text-sm font-extrabold font-mono" style={{ color: s.color }}>{shiftEmps.length}</span>
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
                     </div>
-                    <div className="flex gap-0.5 flex-wrap justify-end">
-                      {shiftEmps.slice(0, 6).map(emp => (
-                        <div key={emp.id} className="w-4 h-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.color }}>{emp.name.charAt(0)}</div>
+                    <p className="text-[9px] font-semibold text-slate-500 leading-tight">{isAr ? s.label_ar.replace("الوردية ", "") : s.label_en}</p>
+                    <div className="flex gap-0.5 flex-wrap justify-end mt-0.5">
+                      {shiftEmps.slice(0, 4).map(emp => (
+                        <div key={emp.id} className="w-3.5 h-3.5 rounded-full text-[6px] font-bold text-white flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.color }}>{emp.name.charAt(0)}</div>
                       ))}
-                      {shiftEmps.length === 0 && <span className="text-[9px] text-slate-300">{isAr ? "لا يوجد" : "Empty"}</span>}
-                      {shiftEmps.length > 6 && <span className="text-[7px] self-center" style={{ color: s.color }}>+{shiftEmps.length - 6}</span>}
+                      {shiftEmps.length === 0 && <span className="text-[8px] text-slate-300">—</span>}
+                      {shiftEmps.length > 4 && <span className="text-[7px] self-center font-bold" style={{ color: s.color }}>+{shiftEmps.length - 4}</span>}
                     </div>
                   </button>
                 );
