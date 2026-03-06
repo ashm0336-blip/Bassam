@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import {
   Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, Activity,
-  CalendarRange, Users, BarChart3,
+  CalendarRange, Users, BarChart3, PanelLeftClose,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,8 @@ export default function DailySessionsPage() {
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [statsCollapsed, setStatsCollapsed] = useState(false);
+  const [densityPanelCollapsed, setDensityPanelCollapsed] = useState(false);
+  const [employeesPanelCollapsed, setEmployeesPanelCollapsed] = useState(false);
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -802,15 +804,12 @@ export default function DailySessionsPage() {
 
                 <TabsContent value="density" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
-                    {statsCollapsed && (
-                      <button
-                        onClick={() => setStatsCollapsed(false)}
+                    {densityPanelCollapsed && (
+                      <button onClick={() => setDensityPanelCollapsed(false)}
                         className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
-                        data-testid="density-stats-show"
-                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
-                      >
+                        data-testid="density-panel-show">
                         <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "ملخص الكثافة" : "Density"}</span>
                       </button>
                     )}
                     <div className="flex-1 min-w-0">
@@ -822,43 +821,121 @@ export default function DailySessionsPage() {
                         imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
                       />
                     </div>
-                    <MapStatsPanel
-                      sessionStats={sessionStats}
-                      densityStats={densityStats}
-                      changedZones={changedZones}
-                      ZONE_TYPES={ZONE_TYPES}
-                      activeZones={activeZones}
-                      collapsed={statsCollapsed}
-                      onToggle={() => setStatsCollapsed(prev => !prev)}
-                    />
+                    {!densityPanelCollapsed && (
+                      <div className="relative w-[220px] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto" data-testid="density-side-panel">
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "ملخص الكثافة" : "Density Summary"}</p>
+                            <button onClick={() => setDensityPanelCollapsed(true)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+                              data-testid="density-panel-close">
+                              <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+                            </button>
+                          </div>
+                          <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
+                          {densityStats ? (
+                            <div className="space-y-3">
+                              <div className="rounded-xl p-3 text-center" style={{ backgroundColor: densityStats.overallLevel?.bg || '#f0fdf4' }}>
+                                <p className="text-2xl font-bold font-mono" style={{ color: densityStats.overallLevel?.color || '#16a34a' }}>{densityStats.overallPct}%</p>
+                                <p className="text-[10px] font-semibold mt-0.5" style={{ color: densityStats.overallLevel?.color || '#16a34a' }}>{isAr ? "الإشغال الكلي" : "Overall"}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {[
+                                  { label: isAr ? "حرج" : "Critical", count: densityStats.criticalCount, color: "#ef4444", bg: "#fef2f2" },
+                                  { label: isAr ? "عالٍ" : "High", count: densityStats.highCount, color: "#f97316", bg: "#fff7ed" },
+                                  { label: isAr ? "متوسط" : "Medium", count: densityStats.mediumCount, color: "#eab308", bg: "#fefce8" },
+                                  { label: isAr ? "آمن" : "Safe", count: densityStats.safeCount, color: "#22c55e", bg: "#f0fdf4" },
+                                ].map(item => (
+                                  <div key={item.label} className="rounded-lg p-2 text-center" style={{ backgroundColor: item.bg }}>
+                                    <p className="text-lg font-bold font-mono" style={{ color: item.color }}>{item.count}</p>
+                                    <p className="text-[9px] font-semibold" style={{ color: item.color }}>{item.label}</p>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="rounded-lg p-2 bg-slate-50 border border-slate-100 space-y-1.5">
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-slate-500">{isAr ? "الطاقة الكلية" : "Capacity"}</span>
+                                  <span className="font-bold text-slate-700">{densityStats.totalCapacity.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-slate-500">{isAr ? "الحاليون" : "Current"}</span>
+                                  <span className="font-bold text-slate-700">{densityStats.totalCurrent.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-slate-500">{isAr ? "المناطق" : "Zones"}</span>
+                                  <span className="font-bold text-slate-700">{densityStats.totalZones}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-slate-400 text-center py-4">{isAr ? "لا توجد بيانات" : "No data"}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="employees" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
-                    {statsCollapsed && (
-                      <button
-                        onClick={() => setStatsCollapsed(false)}
+                    {employeesPanelCollapsed && (
+                      <button onClick={() => setEmployeesPanelCollapsed(false)}
                         className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
-                        data-testid="employees-stats-show"
-                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
-                      >
-                        <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                        data-testid="employees-panel-show">
+                        <Users className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "ملخص الموظفين" : "Staff"}</span>
                       </button>
                     )}
                     <div className="flex-1 min-w-0">
                       <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio} />
                     </div>
-                    <MapStatsPanel
-                      sessionStats={sessionStats}
-                      densityStats={densityStats}
-                      changedZones={changedZones}
-                      ZONE_TYPES={ZONE_TYPES}
-                      activeZones={activeZones}
-                      collapsed={statsCollapsed}
-                      onToggle={() => setStatsCollapsed(prev => !prev)}
-                    />
+                    {!employeesPanelCollapsed && (() => {
+                      const zonesWithStaff = activeZones.filter(z => z.employee_ids?.length > 0).length;
+                      const zonesNoStaff = activeZones.length - zonesWithStaff;
+                      const totalStaff = activeSession?.employees?.length || 0;
+                      const assignedStaff = activeZones.reduce((s, z) => s + (z.employee_ids?.length || 0), 0);
+                      return (
+                        <div className="relative w-[220px] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto" data-testid="employees-side-panel">
+                          <div className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "ملخص الموظفين" : "Staff Summary"}</p>
+                              <button onClick={() => setEmployeesPanelCollapsed(true)}
+                                className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+                                data-testid="employees-panel-close">
+                                <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+                              </button>
+                            </div>
+                            <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
+                            <div className="space-y-3">
+                              <div className="rounded-xl p-3 text-center bg-emerald-50">
+                                <p className="text-2xl font-bold font-mono text-emerald-700">{assignedStaff}</p>
+                                <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{isAr ? "موظف مُسنَد" : "Assigned Staff"}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="rounded-lg p-2 text-center bg-emerald-50">
+                                  <p className="text-lg font-bold font-mono text-emerald-700">{zonesWithStaff}</p>
+                                  <p className="text-[9px] font-semibold text-emerald-600">{isAr ? "مغطاة" : "Covered"}</p>
+                                </div>
+                                <div className="rounded-lg p-2 text-center bg-amber-50">
+                                  <p className="text-lg font-bold font-mono text-amber-700">{zonesNoStaff}</p>
+                                  <p className="text-[9px] font-semibold text-amber-600">{isAr ? "بلا موظف" : "No Staff"}</p>
+                                </div>
+                              </div>
+                              <div className="rounded-lg p-2 bg-slate-50 border border-slate-100 space-y-1.5">
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-slate-500">{isAr ? "إجمالي المناطق" : "Total Zones"}</span>
+                                  <span className="font-bold text-slate-700">{activeZones.length}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-slate-500">{isAr ? "نسبة التغطية" : "Coverage"}</span>
+                                  <span className="font-bold text-slate-700">{activeZones.length > 0 ? Math.round((zonesWithStaff / activeZones.length) * 100) : 0}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </TabsContent>
               </Tabs>
