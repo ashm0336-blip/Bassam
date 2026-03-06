@@ -41,6 +41,7 @@ function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isA
       data-testid="floating-toolbar"
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="bg-white/97 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
@@ -128,9 +129,10 @@ export function MapCanvas({
 
   const hasPannedRef = useRef(false);
   const touchStartPixelRef = useRef({ x: 0, y: 0 });
-  // Double-tap detection & click suppression after touch
+  // Double-tap detection & click/dblclick suppression after touch
   const lastTapRef = useRef({ time: 0, zoneId: null });
   const skipNextClickRef = useRef(false);
+  const skipNextDblClickRef = useRef(false);
   // Synchronous mirrors of parent state for touch event handlers (avoids stale closure on tablet)
   const interactionRef = useRef({
     draggingPoint: null,
@@ -318,6 +320,7 @@ export function MapCanvas({
           setMapMode("edit");
           setSelectedZoneId(tappedZone.id);
           setHoveredZone(null);
+          skipNextDblClickRef.current = true; // prevent dblclick event from opening dialog
         } else if (tappedZone) {
           // Single tap → show tooltip (sticky on touch)
           if (mapContainerRef.current) {
@@ -410,6 +413,7 @@ export function MapCanvas({
                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
                           onMouseLeave={() => setHoveredZone(null)}
                           onDoubleClick={(e) => {
+                            if (skipNextDblClickRef.current) { skipNextDblClickRef.current = false; return; }
                             if (activeSession?.status !== "draft") return;
                             e.stopPropagation();
                             if (mapMode === "pan") {
