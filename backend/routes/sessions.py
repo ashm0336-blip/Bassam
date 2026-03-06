@@ -16,10 +16,19 @@ router = APIRouter()
 
 # ============= Daily Map Sessions =============
 @router.get("/map-sessions")
-async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60):
+async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60, parent_session_id: Optional[str] = None, session_type: Optional[str] = None):
     query = {}
     if floor_id:
         query["floor_id"] = floor_id
+    if parent_session_id:
+        query["parent_session_id"] = parent_session_id
+    if session_type:
+        query["session_type"] = session_type
+    else:
+        # Default: only return daily sessions unless filtering by parent
+        if not parent_session_id:
+            query["session_type"] = {"$in": ["daily", None]}
+            query["$or"] = [{"session_type": "daily"}, {"session_type": {"$exists": False}}, {"prayer": {"$exists": False}}]
     sessions = await db.map_sessions.find(query, {"_id": 0}).sort("date", -1).to_list(limit)
     return sessions
 
@@ -62,9 +71,17 @@ def _clone_zones_from_source(source_zones):
 
 @router.post("/admin/map-sessions")
 async def create_map_session(data: MapSessionCreate, admin: dict = Depends(require_admin)):
-    existing = await db.map_sessions.find_one({"date": data.date, "floor_id": data.floor_id}, {"_id": 0})
-    if existing:
-        raise HTTPException(status_code=400, detail="توجد جلسة بالفعل لهذا التاريخ والطابق")
+    # For prayer sessions: check uniqueness by date + floor + prayer
+    if data.session_type == "prayer" and data.prayer:
+        existing = await db.map_sessions.find_one({"date": data.date, "floor_id": data.floor_id, "prayer": data.prayer}, {"_id": 0})
+        if existing:
+            raise HTTPException(status_code=400, detail=f"توجد جلسة {data.prayer} بالفعل لهذا اليوم")
+    else:
+        # Daily session: check uniqueness by date + floor (no prayer field)
+        existing = await db.map_sessions.find_one({"date": data.date, "floor_id": data.floor_id, "session_type": {"$in": ["daily", None]}, "$or": [{"prayer": None}, {"prayer": {"$exists": False}}]}, {"_id": 0})
+        if existing:
+            raise HTTPException(status_code=400, detail="توجد جلسة بالفعل لهذا التاريخ والطابق")
+
     floor = await db.map_floors.find_one({"id": data.floor_id}, {"_id": 0})
     if not floor:
         raise HTTPException(status_code=404, detail="الطابق غير موجود")
@@ -72,19 +89,35 @@ async def create_map_session(data: MapSessionCreate, admin: dict = Depends(requi
     zones_snapshot = []
     changes_summary = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0}
 
-    if data.clone_from == "empty":
+    # For prayer sessions: clone from parent daily session by default
+    clone_source_id = data.clone_from
+    if data.session_type == "prayer" and not clone_source_id and data.parent_session_id:
+        # Try to clone from the previous prayer session, or from parent daily session
+        PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha", "taraweeh"]
+        if data.prayer in PRAYER_ORDER:
+            idx = PRAYER_ORDER.index(data.prayer)
+            # Try previous prayers in order
+            for prev_prayer in reversed(PRAYER_ORDER[:idx]):
+                prev_prayer_session = await db.map_sessions.find_one({"parent_session_id": data.parent_session_id, "prayer": prev_prayer}, {"_id": 0})
+                if prev_prayer_session:
+                    clone_source_id = prev_prayer_session["id"]
+                    break
+            if not clone_source_id:
+                clone_source_id = data.parent_session_id  # clone from daily session
+
+    if clone_source_id == "empty":
         pass
-    elif data.clone_from == "master":
+    elif clone_source_id == "master":
         master_zones = await db.map_zones.find({"floor_id": data.floor_id, "is_active": True}, {"_id": 0}).to_list(500)
         zones_snapshot = _clone_zones_from_source(master_zones)
         changes_summary["unchanged"] = len(zones_snapshot)
-    elif data.clone_from:
-        prev_session = await db.map_sessions.find_one({"id": data.clone_from}, {"_id": 0})
+    elif clone_source_id:
+        prev_session = await db.map_sessions.find_one({"id": clone_source_id}, {"_id": 0})
         if prev_session and prev_session.get("zones"):
             zones_snapshot = _clone_zones_from_source(prev_session["zones"])
             changes_summary["unchanged"] = len(zones_snapshot)
     else:
-        prev = await db.map_sessions.find_one({"floor_id": data.floor_id, "date": {"$lt": data.date}}, {"_id": 0}, sort=[("date", -1)])
+        prev = await db.map_sessions.find_one({"floor_id": data.floor_id, "date": {"$lt": data.date}, "session_type": {"$in": ["daily", None]}}, {"_id": 0}, sort=[("date", -1)])
         if prev and prev.get("zones"):
             zones_snapshot = _clone_zones_from_source(prev["zones"])
             changes_summary["unchanged"] = len(zones_snapshot)
@@ -93,10 +126,16 @@ async def create_map_session(data: MapSessionCreate, admin: dict = Depends(requi
             zones_snapshot = _clone_zones_from_source(master_zones)
             changes_summary["unchanged"] = len(zones_snapshot)
 
-    session = MapSession(date=data.date, floor_id=data.floor_id, floor_name=floor.get("name_ar", ""), status="draft", created_by=admin.get("name", ""), zones=zones_snapshot, changes_summary=changes_summary)
+    session = MapSession(
+        date=data.date, floor_id=data.floor_id, floor_name=floor.get("name_ar", ""),
+        status="draft", created_by=admin.get("name", ""),
+        session_type=data.session_type, prayer=data.prayer, parent_session_id=data.parent_session_id,
+        zones=zones_snapshot, changes_summary=changes_summary
+    )
     doc = session.model_dump()
     await db.map_sessions.insert_one(doc)
-    await log_activity("إنشاء جلسة خريطة يومية", admin, session.id, f"تاريخ: {data.date}")
+    label = f"صلاة {data.prayer}" if data.prayer else f"تاريخ: {data.date}"
+    await log_activity("إنشاء جلسة خريطة", admin, session.id, label)
     result = doc.copy()
     result.pop("_id", None)
     return result

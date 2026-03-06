@@ -41,6 +41,8 @@ export default function DailySessionsPage() {
   const [selectedFloor, setSelectedFloor] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
+  const [activeDailySession, setActiveDailySession] = useState(null); // the parent daily session
+  const [prayerSessions, setPrayerSessions] = useState({}); // prayer key → session
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ZONE_TYPES, setZoneTypes] = useState(ZONE_TYPES_FALLBACK);
@@ -204,6 +206,64 @@ export default function DailySessionsPage() {
       setSessions(res.data);
     } catch (e) { console.error(e); }
   }, [selectedFloor]);
+
+  // Fetch prayer sub-sessions for a daily session
+  const fetchPrayerSessions = useCallback(async (parentSessionId) => {
+    try {
+      const res = await axios.get(`${API}/map-sessions?parent_session_id=${parentSessionId}`);
+      const map = {};
+      res.data.forEach(s => { if (s.prayer) map[s.prayer] = s; });
+      setPrayerSessions(map);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  // Start a prayer session (create or load existing)
+  const handleSelectPrayer = useCallback(async (prayerKey) => {
+    if (!activeDailySession) return;
+    setActivePrayer(prayerKey);
+
+    const existing = prayerSessions[prayerKey];
+    if (existing) {
+      // Load existing prayer session
+      try {
+        const res = await axios.get(`${API}/map-sessions/${existing.id}`, getAuthHeaders());
+        setActiveSession(res.data);
+        setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
+      } catch { setActiveSession(existing); }
+    }
+    // If no prayer session yet, stay on daily session but highlight the prayer
+  }, [activeDailySession, prayerSessions]);
+
+  // Start/create a new prayer session
+  const handleStartPrayerSession = useCallback(async (prayerKey) => {
+    if (!activeDailySession || !selectedFloor) return;
+    setSaving(true);
+    try {
+      const res = await axios.post(`${API}/admin/map-sessions`, {
+        date: activeDailySession.date,
+        floor_id: selectedFloor.id,
+        session_type: "prayer",
+        prayer: prayerKey,
+        parent_session_id: activeDailySession.id,
+      }, getAuthHeaders());
+      const newSession = res.data;
+      setPrayerSessions(prev => ({ ...prev, [prayerKey]: newSession }));
+      setActiveSession(newSession);
+      setActivePrayer(prayerKey);
+      setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
+      toast.success(isAr ? `تم بدء جولة ${prayerKey === 'fajr' ? 'الفجر' : prayerKey}` : `Started ${prayerKey} session`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || (isAr ? "تعذر إنشاء الجلسة" : "Error"));
+    } finally { setSaving(false); }
+  }, [activeDailySession, selectedFloor, isAr]);
+
+  // Return to daily session view
+  const handleBackToDaily = useCallback(() => {
+    if (activeDailySession) {
+      setActiveSession(activeDailySession);
+      setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
+    }
+  }, [activeDailySession]);
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { axios.get(`${API}/zone-categories`).then(res => { if (res.data?.length > 0) setZoneTypes(res.data); }).catch(() => {}); }, []);
@@ -641,16 +701,24 @@ export default function DailySessionsPage() {
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         <ArchiveSidebar
-          sessions={sessions} activeSession={activeSession} isAr={isAr}
+          sessions={sessions} activeSession={activeDailySession || activeSession} isAr={isAr}
           theme="emerald" showCompare showNotes
           className="lg:col-span-1"
           onSelectSession={async (s) => {
             setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
-            // Always fetch fresh session data to reflect any category style changes
             try {
               const res = await axios.get(`${API}/map-sessions/${s.id}`, getAuthHeaders());
-              setActiveSession(res.data);
-            } catch { setActiveSession(s); }
+              const dailySession = res.data;
+              setActiveDailySession(dailySession);
+              setActiveSession(dailySession);
+              setPrayerSessions({});
+              fetchPrayerSessions(dailySession.id);
+            } catch {
+              setActiveDailySession(s);
+              setActiveSession(s);
+              setPrayerSessions({});
+              fetchPrayerSessions(s.id);
+            }
           }}
           onDeleteSession={handleDeleteSession}
           onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
@@ -724,16 +792,67 @@ export default function DailySessionsPage() {
                 </div>
 
                 <TabsContent value="map" tabIndex={-1} className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out', minHeight: 'min(760px, calc(100vh - 220px))' }}>
-                  {/* Prayer Time Selector - same as density tab */}
-                  <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl" data-testid="map-prayer-time-selector">
-                    {PRAYER_TIMES.map(pt => (
-                      <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`map-prayer-btn-${pt.key}`}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-cairo font-semibold transition-all ${activePrayer === pt.key ? "bg-white shadow-md text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:text-slate-700 hover:bg-white/50"}`}>
-                        <span className="text-base">{pt.icon}</span>
-                        <span className="hidden sm:inline">{isAr ? pt.label_ar : pt.label_en}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* Prayer Sessions Bar */}
+                  {activeDailySession && (
+                    <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-l from-slate-50 to-white p-3" data-testid="prayer-sessions-bar">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                          {activeSession?.session_type === "prayer" && (
+                            <button onClick={handleBackToDaily}
+                              className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-800 font-semibold transition-colors"
+                              data-testid="back-to-daily-btn">
+                              <ChevronRight className="w-3.5 h-3.5" />
+                              {isAr ? "الجولة اليومية" : "Daily Tour"}
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-cairo font-bold text-slate-500">{isAr ? "جولات الصلوات" : "Prayer Rounds"}</p>
+                      </div>
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {PRAYER_TIMES.map(pt => {
+                          const ps = prayerSessions[pt.key];
+                          const isActivePrayer = activeSession?.prayer === pt.key;
+                          const status = ps?.status;
+                          return (
+                            <div key={pt.key} className="relative flex flex-col">
+                              <button
+                                onClick={() => ps ? handleSelectPrayer(pt.key) : null}
+                                data-testid={`prayer-session-${pt.key}`}
+                                className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all
+                                  ${isActivePrayer ? 'border-emerald-500 bg-emerald-50 shadow-sm scale-[1.03]' :
+                                    ps ? 'border-slate-200 bg-white hover:border-emerald-300 cursor-pointer hover:shadow-sm' :
+                                    'border-dashed border-slate-200 bg-slate-50/50 cursor-default'}`}
+                              >
+                                <span className="text-lg leading-none">{pt.icon}</span>
+                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : 'text-slate-500'}`}>
+                                  {isAr ? pt.label_ar : pt.label_en}
+                                </span>
+                                <span className="text-[8px] leading-none">
+                                  {status === 'completed' ? '✅' : status === 'draft' ? '🔵' : '○'}
+                                </span>
+                              </button>
+                              {!ps && (
+                                <button
+                                  onClick={() => handleStartPrayerSession(pt.key)}
+                                  disabled={saving}
+                                  data-testid={`start-prayer-session-${pt.key}`}
+                                  className="mt-1 w-full text-[8px] py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50"
+                                >
+                                  {isAr ? "بدء" : "Start"}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Legend */}
+                      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
+                        <span className="text-[9px] text-slate-400 flex items-center gap-1">✅ {isAr ? "مكتملة" : "Done"}</span>
+                        <span className="text-[9px] text-slate-400 flex items-center gap-1">🔵 {isAr ? "مسودة" : "Draft"}</span>
+                        <span className="text-[9px] text-slate-400 flex items-center gap-1">○ {isAr ? "لم تبدأ" : "Not started"}</span>
+                      </div>
+                    </div>
+                  )}
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}

@@ -16,7 +16,7 @@ Arabic (العربية)
 ### Core Features
 - Gates Management (Daily Log + Department Settings)
 - Prayer Area Management (Daily Log + Department Settings)
-- Interactive maps with pan/zoom (useZoomPan hook)
+- Interactive maps with pan/zoom
 - Real-time statistical dashboards
 - Smart archiving system with circular session grid
 - Monthly employee scheduling
@@ -25,94 +25,87 @@ Arabic (العربية)
 - Density management with heatmap visualization
 - Employee assignment with coverage map
 - Undo/Redo system for map edits
+- Categories as single source of truth for zone styling
 
-### Recent Fixes (Feb 2026)
-- Professional tab restyling for both modules
-- Circular session list redesign
-- Prayer Area Stats Panel with 6 KPIs
-- Employees Tab 60/40 split-screen overhaul
-- Map pan/zoom consistency fix
-- Save prayer area bug fix (empty strings → null)
+### Prayer Sessions Feature (Mar 6, 2026)
+- Each daily session can have 6 prayer sub-sessions (Fajr, Dhuhr, Asr, Maghrib, Isha, Taraweeh)
+- Backend: MapSession model extended with `prayer`, `parent_session_id`, `session_type` fields
+- Prayer sessions cloned from parent daily session (or previous prayer)
+- Prayer sessions bar in map tab showing status (✅ completed, 🔵 draft, ○ not started)
+- Click prayer to load its session; all 3 tabs (map, density, employees) update automatically
+- "Back to daily" button when in prayer session view
+- Unique constraint: date + floor + prayer combination
 
-### Bug Fixes - Tooltip & Category Propagation (Mar 6, 2026)
-- Fixed tooltip disappearing: condition changed from `mapMode !== "edit"` to `hoveredZone.id !== selectedZoneId`
-- Fixed null pattern fields not clearing: NULLABLE_FIELDS in settings.py allows explicit null for pattern fields
-- Fixed stale session data: onSelectSession now always fetches fresh data from API
-- Category color propagation verified working end-to-end
+### Dual Hijri/Gregorian Calendar (Mar 6, 2026)
+- Calendar header shows both Gregorian and Hijri months
+- Each calendar day cell shows Gregorian (large) + Hijri (small)
+- Toggle button م ↔ هـ to switch primary/secondary
+- Ramadan days have golden ☽ indicator
+- New Hijri month first day indicated with short name
+- Friday cells have green tint, Ramadan days have amber tint
+- Session circles show Hijri day number
+- Session header shows full Hijri date as amber badge
 
+### Prayer Time Context in Map (Mar 6, 2026)
+- Prayer time selector bar above map canvas
+- Zone overlays show density color per selected prayer
+- Zone tooltip shows prayer-specific occupancy (count/capacity + progress bar)
+- Shared `activePrayer` state between all 3 tabs
 
-- Categories define ALL zone style: color + fill_type + pattern + stroke (color/width/style/opacity)
-- Backend propagates category update to ALL map_sessions zones + map_zones of that type
-- Removed manual styling: FloatingToolbar now 4 buttons only (edit/copy/smooth/remove), MapToolbar Style dropdown removed
-- Auto-apply: selecting zone type in dialog → full category style applied (color+pattern+border)
-- Dropdown shows category icon+color chip for quick visual identification
-- ZoneCategoryManager dialog: added full Border section (color/width/opacity/style)
+### Tablet/Touch Improvements (Mar 6, 2026)
+- Fixed coordinate calculation: replaced `getScreenCTM()` with manual calculation
+- Fixed touch events: `interactionRef` for synchronous state in event handlers
+- Single tap = tooltip, Double tap = enter edit mode (tablet)
+- Panel handle slides with panel (not floating button)
+- Panel state persists when switching tabs (lifted to parent)
+- No layout shift when switching tabs (tabIndex=-1 + minHeight)
 
+### UI Improvements (Mar 6, 2026)
+- "السجل اليومي للمصليات" renamed from "خرائط"
+- Tab renamed: "المصليات" (was "الخريطة")
+- Tab order: الموظفين - الكثافات - المصليات
+- Zoom controls moved inside map canvas as overlay (consistent across all 3 tabs)
+- "أشكال" renamed to "إضافة موقع"
+- Prayer sessions bar with professional card layout
+- Collapsible side panels with fixed handle at panel edge (CSS transform, no layout shift)
+- DensityTab image size: fixed using ResizeObserver for accurate container dimensions
+- ZoneEmployeesTab: same ResizeObserver fix
+- Container heights: `height: min(680px, calc(100vh - 260px))` with `absolute inset-0`
 
-- Added pattern toggle section to FloatingStyleButton Popover (12 pattern types + fg/bg colors + live preview with pattern)
-- Fixed React portal click-bubbling bug that caused zone deselection when clicking inside Popover
+### Shift Cards in Employees Tab (Mar 6, 2026)
+- 4 shift cards in one row (الأولى-الثانية-الثالثة-الرابعة)
+- Each card shows: employee count + color dot + shift name + mini avatars
+- Click to filter employee list
+- "الموظفين حسب الورديات" section header
 
-### Zone Categories Tab Migration (Mar 5, 2026)
-- Moved ZoneCategoryManager from AdminPage (لوحة الأدمن) to DepartmentSettings plazas only
-- Tab appears after "المواقع" tab with live count badge (e.g. 15)
-- AdminPage now has 8 tabs (down from 9)
-- Plazas DepartmentSettings now has 5 tabs: الموظفين / الخرائط / الورديات / المواقع / الفئات
+### Zone Distribution (Mar 6, 2026)
+- Removed separate "مواقع بدون تغطية" section
+- Zones without coverage shown first + red badge indicator
+- Count badge in distribution header
 
+## Key API Endpoints
+- `POST /api/admin/map-sessions` - supports `session_type`, `prayer`, `parent_session_id`
+- `GET /api/map-sessions?parent_session_id=X` - get prayer sub-sessions
+- `GET /api/map-sessions?floor_id=X` - daily sessions only (excludes prayer sessions by default)
+- `PUT /api/zone-categories/{id}` - propagates to all zones
+- `POST /api/auth/setup` - one-time admin setup
 
-- Complete redesign with SVG polygon ZonePreview per card, pattern support per category
-- Backend models extended: fill_type, pattern_type, pattern_fg_color, pattern_bg_color
-- Stats row: total/pattern/active counts
-- Add/Edit dialog: live zone preview, color swatches, pattern picker with 12 types
-- Pattern badge indicator on category cards that have pattern enabled
-
-
-- Added **تنسيق سريع** (Quick Style) button to the floating toolbar on prayer area maps
-- Button position: between Smooth (تنعيم) and Remove (إزالة)
-- Opening a compact Popover with: 10 quick color swatches, fill color picker + opacity slider, border color + width slider, 4 border style buttons (solid/dashed/dotted/dash-dot), live SVG preview
-- Live color dot indicator on the button showing the zone's current fill color
-- Implemented as `FloatingStyleButton` sub-component with internal useState for Popover control
-
-
-- **Removed Pan/Edit mode toggle buttons** from all 3 map interfaces (DailyGateSessionsPage, GateMapPage, DailySessionsPage)
-- **Smart cursor behavior:** drag on gate/marker = reposition; drag on background = pan map; 2 fingers = pinch-to-zoom
-- Added `hasPannedRef` to prevent accidental zone deselection after panning in edit mode
-- Added `hasDraggedRef` to prevent gate dialog from opening after dragging in DailyGateSessionsPage
-- Added full **touch support** to `GateMapPage.jsx` (was missing): touch drag, touch pan, pinch-to-zoom
-- Updated MapCanvas pan fallback in edit mode, default mode changed to "edit"
-- Updated MapToolbar: removed Pan button, kept Edit button only
-- Professional green hint badge replaces mode toggle: "اسحب الباب لتغيير موقعه • اسحب الخلفية للتنقل"
-
-- Merged `ArchiveSessionSidebar.jsx` and `ArchiveSidebar.jsx` into single reusable `ArchiveSidebar` at `/app/frontend/src/components/shared/ArchiveSidebar.jsx`
-- Supports theme prop (blue/emerald), optional compare button, notes display
-- Deleted old duplicate files, updated imports in DailySessionsPage.jsx and DailyGateSessionsPage.jsx
-
-## Prioritized Backlog
-
-### P0
-- **Gate Management at Scale:** Compact Table View + Grouped by Plaza view for 200+ gates
-
-### P1
-- Advanced Role Hierarchy (5-level RBAC)
-- Live Haram Map (unified real-time 3D/heatmap)
-- Smart Alert System (multi-level with escalations)
-- Tour Mode for Gates (mobile flashcard UI)
-
-### P2
-- Rotate Rests feature (auto-rotation for scheduling)
-- Field Supervisor Mobile Mode
-- Merge duplicate archive components (ArchiveSidebar.jsx + ArchiveSessionSidebar.jsx)
-
-### Blocked
-- Automatic Area Calculation (pending user-provided map with scale)
-
-## Key Files
-- `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx`
-- `/app/frontend/src/pages/DailySessions/components/DensityTab.jsx`
-- `/app/frontend/src/pages/DailySessions/components/ZoneEmployeesTab.jsx`
-- `/app/frontend/src/pages/DailyGateSessionsPage.jsx`
-- `/app/frontend/src/pages/DailySessionsPage.jsx`
-- `/app/frontend/src/hooks/useZoomPan.js`
-- `/app/backend/server.py`
+## Key DB Schema
+- `map_sessions.session_type`: "daily" | "prayer"
+- `map_sessions.prayer`: null | "fajr" | "dhuhr" | "asr" | "maghrib" | "isha" | "taraweeh"
+- `map_sessions.parent_session_id`: null | ID of parent daily session
+- `zones.prayer_counts`: {fajr: 0, dhuhr: 0, ...} per-prayer occupancy counts
 
 ## Credentials
-- System Admin: admin@crowd.sa / admin123
+- Admin: admin@crowd.sa / admin123
+
+## Upcoming Tasks (Backlog)
+- P0: Complete prayer sessions workflow (delete prayer session, complete prayer session button)
+- P1: Professional Gate Management View - Compact Table + Grouped by Plaza (200+ gates)
+- P1: Advanced Role Hierarchy (5-level RBAC)
+- P1: Live Haram Map (unified real-time heatmap)
+- P1: Smart Alert System with escalations
+- P1: Tour Mode for Gates (mobile flashcard UI)
+- P2: Rotate Rests feature for monthly scheduling
+- P2: Field Supervisor Mobile Mode
+- Blocked: Automatic Area Calculation (needs map with scale)

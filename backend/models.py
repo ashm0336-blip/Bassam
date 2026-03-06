@@ -733,6 +733,9 @@ class MapSession(BaseModel):
     floor_id: str
     floor_name: str = ""
     status: str = "draft"
+    session_type: str = "daily"  # "daily" or "prayer"
+    prayer: Optional[str] = None  # fajr, dhuhr, asr, maghrib, isha, taraweeh
+    parent_session_id: Optional[str] = None  # parent daily session id
     supervisor_notes: Optional[str] = None
     created_by: Optional[str] = None
     zones: List[SessionZone] = []
@@ -744,6 +747,9 @@ class MapSessionCreate(BaseModel):
     date: str
     floor_id: str
     clone_from: Optional[str] = None
+    session_type: str = "daily"
+    prayer: Optional[str] = None
+    parent_session_id: Optional[str] = None
 
 class MapSessionUpdate(BaseModel):
     status: Optional[str] = None
