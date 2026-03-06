@@ -69,7 +69,7 @@ function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isA
 
 export function MapCanvas({
   selectedFloor, activeSession, sessionZones, activeZones, removedZones,
-  mapMode, zoom, panOffset, setPanOffset, zoomRef, svgRef, mapContainerRef,
+  mapMode, zoom, setZoom, panOffset, setPanOffset, zoomRef, svgRef, mapContainerRef,
   drawingPoints, setDrawingPoints, selectedZoneId, setSelectedZoneId,
   draggingPoint, setDraggingPoint, hoveredPoint, setHoveredPoint,
   mousePos, setMousePos, nearStart, setNearStart,

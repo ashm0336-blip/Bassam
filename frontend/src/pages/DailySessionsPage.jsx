@@ -761,7 +761,7 @@ export default function DailySessionsPage() {
                       <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
                     sessionZones={sessionZones} activeZones={activeZones} removedZones={removedZones}
-                    mapMode={mapMode} zoom={zoom} panOffset={panOffset} setPanOffset={setPanOffset}
+                    mapMode={mapMode} zoom={zoom} setZoom={setZoom} panOffset={panOffset} setPanOffset={setPanOffset}
                     zoomRef={zoomRef} svgRef={svgRef} mapContainerRef={mapContainerRef}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
                     selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId}
