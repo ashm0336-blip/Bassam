@@ -495,7 +495,7 @@ export default function GateMapPage() {
                   onTouchCancel={handleTouchEnd}
                   data-testid="gate-map-canvas"
                 >
-                  <div style={{ transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", willChange: "transform" }}>
+                  <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {(() => {
                       const ce = mapContainerRef.current;
                       let ws = { position: "relative", width: "100%", height: "100%" };
@@ -506,7 +506,7 @@ export default function GateMapPage() {
                       }
                       return (
                         <div style={ws}>
-                          <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", transform: "translateZ(0)" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />
+                          <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />
                           <svg ref={svgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                             {markers.map(marker => {
                               const sc = STATUS_CONFIG[marker.status] || STATUS_CONFIG.open;

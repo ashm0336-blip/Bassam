@@ -523,14 +523,14 @@ export default function DailyGateSessionsPage() {
                   {selectedFloor?.image_url ? (
                     <Card className="overflow-hidden"><CardContent className="p-0">
                       <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: draggingGateId ? "grabbing" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
-                        <div style={{ transform: `translate3d(${panOffset.x}px,${panOffset.y}px,0) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", willChange: "transform" }}>
+                        <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
                             let ws = { position: "relative", width: "100%", height: "100%" };
                             if (imgRatio && ce) { const cw=ce.clientWidth, ch=ce.clientHeight; if (cw/ch > imgRatio) ws = { position:"relative", height:"100%", width: ch*imgRatio }; else ws = { position:"relative", width:"100%", height: cw/imgRatio }; }
                             return (
                               <div style={ws}>
-                                <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block", transform: "translateZ(0)" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
+                                <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
                                 <svg ref={svgRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                                   {activeGates.map(gate => {
                                     const isOpen = gate.status === "open";
