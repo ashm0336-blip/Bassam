@@ -61,6 +61,7 @@ export default function DailySessionsPage() {
   const [statsCollapsed, setStatsCollapsed] = useState(false);
   const [densityPanelCollapsed, setDensityPanelCollapsed] = useState(false);
   const [employeesPanelCollapsed, setEmployeesPanelCollapsed] = useState(false);
+  const [bypassConfirm, setBypassConfirm] = useState(null); // prayer key awaiting bypass confirmation
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -799,7 +800,8 @@ export default function DailySessionsPage() {
                   {/* Prayer Sessions Bar */}
                   {activeDailySession && (
                     <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-l from-slate-50 to-white p-3" data-testid="prayer-sessions-bar">
-                      <div className="flex items-center justify-between mb-2.5">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           {activeSession?.session_type === "prayer" && (
                             <button onClick={handleBackToDaily}
@@ -810,50 +812,128 @@ export default function DailySessionsPage() {
                             </button>
                           )}
                         </div>
-                        <p className="text-[11px] font-cairo font-bold text-slate-500">{isAr ? "جولات الصلوات" : "Prayer Rounds"}</p>
+                        <div className="flex items-center gap-2">
+                          {/* Day completion progress */}
+                          {(() => {
+                            const completed = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'completed').length;
+                            const started = Object.keys(prayerSessions).length;
+                            return started > 0 && (
+                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                {completed}/{PRAYER_TIMES.length} {isAr ? "مكتملة" : "done"}
+                              </span>
+                            );
+                          })()}
+                          <p className="text-[11px] font-cairo font-bold text-slate-500">{isAr ? "جولات الصلوات" : "Prayer Rounds"}</p>
+                        </div>
                       </div>
+
+                      {/* Prayer Cards */}
                       <div className="grid grid-cols-6 gap-1.5">
-                        {PRAYER_TIMES.map(pt => {
+                        {PRAYER_TIMES.map((pt, idx) => {
                           const ps = prayerSessions[pt.key];
                           const isActivePrayer = activeSession?.prayer === pt.key;
                           const status = ps?.status;
+
+                          // Determine ordering state
+                          const prevPrayerKey = idx > 0 ? PRAYER_TIMES[idx - 1].key : null;
+                          const prevSession = prevPrayerKey ? prayerSessions[prevPrayerKey] : null;
+                          const prevCompleted = !prevPrayerKey || prevSession?.status === 'completed';
+                          const prevIsDraft = prevPrayerKey && prevSession && prevSession.status !== 'completed';
+                          const prevNotStarted = prevPrayerKey && !prevSession;
+                          const canStartFreely = !ps && prevCompleted;
+                          const needsBypass = !ps && (prevIsDraft || prevNotStarted);
+                          const awaitingBypass = bypassConfirm === pt.key;
+
+                          // Card border/bg based on state
+                          let cardClass = 'border-dashed border-slate-200 bg-slate-50/50';
+                          if (isActivePrayer) cardClass = 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.03]';
+                          else if (status === 'completed') cardClass = 'border-emerald-300 bg-emerald-50/60 cursor-pointer hover:shadow-sm';
+                          else if (status === 'draft') cardClass = 'border-blue-300 bg-blue-50/60 cursor-pointer hover:shadow-sm';
+
                           return (
-                            <div key={pt.key} className="relative flex flex-col">
+                            <div key={pt.key} className="relative flex flex-col gap-1">
+                              {/* Main card */}
                               <button
                                 onClick={() => ps ? handleSelectPrayer(pt.key) : null}
                                 data-testid={`prayer-session-${pt.key}`}
-                                className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all
-                                  ${isActivePrayer ? 'border-emerald-500 bg-emerald-50 shadow-sm scale-[1.03]' :
-                                    ps ? 'border-slate-200 bg-white hover:border-emerald-300 cursor-pointer hover:shadow-sm' :
-                                    'border-dashed border-slate-200 bg-slate-50/50 cursor-default'}`}
+                                className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all ${cardClass}`}
                               >
                                 <span className="text-lg leading-none">{pt.icon}</span>
-                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : 'text-slate-500'}`}>
+                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : status ? 'text-slate-600' : 'text-slate-400'}`}>
                                   {isAr ? pt.label_ar : pt.label_en}
                                 </span>
                                 <span className="text-[8px] leading-none">
                                   {status === 'completed' ? '✅' : status === 'draft' ? '🔵' : '○'}
                                 </span>
                               </button>
-                              {!ps && (
+
+                              {/* Start button - FREE (previous completed) */}
+                              {canStartFreely && (
                                 <button
                                   onClick={() => handleStartPrayerSession(pt.key)}
                                   disabled={saving}
                                   data-testid={`start-prayer-session-${pt.key}`}
-                                  className="mt-1 w-full text-[8px] py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50"
+                                  className="w-full text-[8px] py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-50"
                                 >
-                                  {isAr ? "بدء" : "Start"}
+                                  {isAr ? "▶ بدء" : "▶ Start"}
                                 </button>
+                              )}
+
+                              {/* Needs bypass - previous not completed */}
+                              {needsBypass && !awaitingBypass && (
+                                <button
+                                  onClick={() => setBypassConfirm(pt.key)}
+                                  data-testid={`bypass-prayer-${pt.key}`}
+                                  className="w-full text-[8px] py-1.5 rounded-lg border-2 border-dashed border-amber-400 text-amber-600 font-bold hover:bg-amber-50 transition-all"
+                                  title={isAr ? `${prevPrayerKey ? PRAYER_TIMES.find(p=>p.key===prevPrayerKey)?.label_ar : ''} لم تُكتمل بعد` : 'Previous not done'}
+                                >
+                                  ⚠️ {isAr ? "تجاوز" : "Bypass"}
+                                </button>
+                              )}
+
+                              {/* Bypass confirmation inline */}
+                              {awaitingBypass && (
+                                <div className="absolute -bottom-24 right-0 left-0 z-40 bg-white rounded-xl border-2 border-amber-400 shadow-xl p-2.5" style={{ minWidth: '160px' }}>
+                                  <p className="text-[9px] font-cairo font-bold text-amber-700 mb-1.5 leading-snug">
+                                    {isAr
+                                      ? `${PRAYER_TIMES.find(p=>p.key===prevPrayerKey)?.label_ar} لم تُكتمل — ستُنسخ آخر تعديلاتها`
+                                      : `Previous prayer not done — will clone its latest state`}
+                                  </p>
+                                  <div className="flex gap-1.5">
+                                    <button
+                                      onClick={() => { setBypassConfirm(null); handleStartPrayerSession(pt.key); }}
+                                      className="flex-1 text-[8px] py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors"
+                                    >
+                                      {isAr ? "متابعة" : "Continue"}
+                                    </button>
+                                    <button
+                                      onClick={() => setBypassConfirm(null)}
+                                      className="flex-1 text-[8px] py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold transition-colors"
+                                    >
+                                      {isAr ? "إلغاء" : "Cancel"}
+                                    </button>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           );
                         })}
                       </div>
-                      {/* Legend */}
-                      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
-                        <span className="text-[9px] text-slate-400 flex items-center gap-1">✅ {isAr ? "مكتملة" : "Done"}</span>
-                        <span className="text-[9px] text-slate-400 flex items-center gap-1">🔵 {isAr ? "مسودة" : "Draft"}</span>
-                        <span className="text-[9px] text-slate-400 flex items-center gap-1">○ {isAr ? "لم تبدأ" : "Not started"}</span>
+
+                      {/* Legend + progress bar */}
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[9px] text-slate-400 flex items-center gap-1">✅ {isAr ? "مكتملة" : "Done"}</span>
+                          <span className="text-[9px] text-slate-400 flex items-center gap-1">🔵 {isAr ? "مسودة" : "Draft"}</span>
+                          <span className="text-[9px] text-slate-400 flex items-center gap-1">⚠️ {isAr ? "يحتاج تجاوز" : "Needs bypass"}</span>
+                        </div>
+                        {/* Progress dots */}
+                        <div className="flex items-center gap-1">
+                          {PRAYER_TIMES.map(pt => {
+                            const s = prayerSessions[pt.key]?.status;
+                            return <span key={pt.key} className={`w-2 h-2 rounded-full transition-all ${s === 'completed' ? 'bg-emerald-500' : s === 'draft' ? 'bg-blue-400' : 'bg-slate-200'}`} />;
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
