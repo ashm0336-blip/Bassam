@@ -38,7 +38,13 @@ Arabic (العربية)
 - Added pattern toggle section to FloatingStyleButton Popover (12 pattern types + fg/bg colors + live preview with pattern)
 - Fixed React portal click-bubbling bug that caused zone deselection when clicking inside Popover
 
-### Zone Category Manager Rebuild (Mar 5, 2026)
+### Zone Categories Tab Migration (Mar 5, 2026)
+- Moved ZoneCategoryManager from AdminPage (لوحة الأدمن) to DepartmentSettings plazas only
+- Tab appears after "المواقع" tab with live count badge (e.g. 15)
+- AdminPage now has 8 tabs (down from 9)
+- Plazas DepartmentSettings now has 5 tabs: الموظفين / الخرائط / الورديات / المواقع / الفئات
+
+
 - Complete redesign with SVG polygon ZonePreview per card, pattern support per category
 - Backend models extended: fill_type, pattern_type, pattern_fg_color, pattern_bg_color
 - Stats row: total/pattern/active counts
