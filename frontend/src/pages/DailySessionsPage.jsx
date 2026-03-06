@@ -347,6 +347,10 @@ export default function DailySessionsPage() {
       const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}`, updateData, getAuthHeaders());
       setActiveSession(res.data);
       if (updateData.status) { setMapMode("edit"); setSelectedZoneId(null); setDrawingPoints([]); }
+      // If this is a prayer session, refresh prayer sessions bar to reflect new status
+      if (activeSession.session_type === "prayer" && activeSession.prayer && activeDailySession) {
+        setPrayerSessions(prev => ({ ...prev, [activeSession.prayer]: res.data }));
+      }
       fetchSessions();
       toast.success(isAr ? "تم الحفظ" : "Saved");
     } catch (e) { toast.error(isAr ? "تعذر الحفظ" : "Save failed"); }
