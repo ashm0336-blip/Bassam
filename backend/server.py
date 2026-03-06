@@ -104,6 +104,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
+@app.on_event("startup")
+async def startup_db_client():
+    """Create default admin user if no users exist (first-time deployment)"""
+    from auth import hash_password
+    import uuid
+    from datetime import datetime, timezone
+
+    count = await db.users.count_documents({})
+    if count == 0:
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "email": "admin@crowd.sa",
+            "password": hash_password("admin123"),
+            "name": "مسؤول النظام",
+            "role": "system_admin",
+            "department": None,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(admin_user)
+        logger.info("✅ Default admin user created: admin@crowd.sa")
+    else:
+        logger.info(f"✅ Database connected — {count} user(s) found")
+
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
