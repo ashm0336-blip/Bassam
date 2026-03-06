@@ -57,8 +57,6 @@ export default function DailySessionsPage() {
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [statsCollapsed, setStatsCollapsed] = useState(false);
-  const [densityPanelCollapsed, setDensityPanelCollapsed] = useState(false);
-  const [employeesPanelCollapsed, setEmployeesPanelCollapsed] = useState(false);
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Activity, Users, ShieldAlert, Flame, Gauge, AlertCircle, RefreshCw, SaveAll,
-  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search,
+  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, PanelLeftClose,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export function DensityTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
   const [sortBy, setSortBy] = useState("density-desc");
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Filter & sort zones
   const filteredZones = useMemo(() => {
@@ -75,7 +76,16 @@ export function DensityTab({
       )}
 
       {/* Main Layout: Heatmap (60%) + Panel (40%) */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }}>
+      <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
+        {/* Show button when panel is collapsed */}
+        {panelCollapsed && (
+          <button onClick={() => setPanelCollapsed(false)}
+            className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
+            data-testid="density-panel-show-btn">
+            <PanelLeftClose className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "لوحة الكثافة" : "Panel"}</span>
+          </button>
+        )}
         {/* Heatmap */}
         <div className="flex-1 min-w-0">
           {selectedFloor?.image_url ? (
@@ -90,13 +100,21 @@ export function DensityTab({
         </div>
 
         {/* Side Panel */}
-        <div className="w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto flex flex-col" data-testid="density-side-panel">
+        <div className={`w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto flex flex-col transition-all duration-300 ${panelCollapsed ? "hidden" : ""}`} data-testid="density-side-panel">
           <div className="p-4 space-y-3 flex-1">
             {/* Panel Title */}
-            <div className="text-center">
+            <div className="flex items-center justify-between">
+              <div className="flex-1" />
               <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "لوحة الكثافات" : "Density Panel"}</p>
-              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+              <div className="flex-1 flex justify-end">
+                <button onClick={() => setPanelCollapsed(true)}
+                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+                  data-testid="density-panel-close-btn">
+                  <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
             </div>
+            <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
             {/* KPIs - Row 1: 3 cards */}
             <div className="grid grid-cols-3 gap-2" data-testid="density-kpi-grid">

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axios from "axios";
 import {
   Users, Search, UserCheck, UserX, MapPin, Plus, X, AlertCircle, Percent,
-  ZoomIn, ZoomOut, Maximize2
+  ZoomIn, ZoomOut, Maximize2, PanelLeftClose
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const [activeShift, setActiveShift] = useState("all");
   const [hoveredZone, setHoveredZone] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Zoom/Pan state
   const [zoom, setZoom] = useState(1);
@@ -204,7 +205,16 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const mapImageUrl = selectedFloor?.image_url ? normalizeImageUrl(selectedFloor.image_url) : null;
 
   return (
-    <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
+    <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
+      {/* Show button when panel is collapsed */}
+      {panelCollapsed && (
+        <button onClick={() => setPanelCollapsed(false)}
+          className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
+          data-testid="employees-panel-show-btn">
+          <PanelLeftClose className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "إدارة الموظفين" : "Staff Panel"}</span>
+        </button>
+      )}
       {/* LEFT: Coverage Map (60%) */}
       <div className="flex-[3] min-w-0 relative bg-slate-50 flex flex-col">
         {mapImageUrl ? (
@@ -354,11 +364,19 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
       </div>
 
       {/* RIGHT: Control Panel (40%) */}
-      <div className="w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden" data-testid="employees-panel">
+      <div className={`w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden transition-all duration-300 ${panelCollapsed ? "hidden" : ""}`} data-testid="employees-panel">
         <div className="p-4 space-y-4">
           {/* Panel Header */}
-          <div className="text-center">
+          <div className="flex items-center justify-between">
+            <div className="flex-1" />
             <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "إدارة الموظفين" : "Staff Management"}</p>
+            <div className="flex-1 flex justify-end">
+              <button onClick={() => setPanelCollapsed(true)}
+                className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
+                data-testid="employees-panel-close-btn">
+                <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
           </div>
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
