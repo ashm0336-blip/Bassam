@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Activity, Users, ShieldAlert, Flame, Gauge, AlertCircle, RefreshCw, SaveAll,
-  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, PanelLeftClose,
+  MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,15 +77,20 @@ export function DensityTab({
 
       {/* Main Layout: Heatmap fills full space, Panel floats on top (no layout shift) */}
       <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
-        {/* Show button when panel is collapsed */}
-        {panelCollapsed && (
-          <button onClick={() => setPanelCollapsed(false)}
-            className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
-            data-testid="density-panel-show-btn">
-            <PanelLeftClose className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "لوحة الكثافة" : "Panel"}</span>
+        {/* Fixed handle - always at panel edge, never moves far */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
+          style={{ right: panelCollapsed ? 0 : '40%' }}
+        >
+          <button
+            onClick={() => setPanelCollapsed(p => !p)}
+            className="flex items-center justify-center w-5 h-14 bg-emerald-600 hover:bg-emerald-700 rounded-r-none rounded-l-lg shadow-lg transition-colors"
+            data-testid="density-panel-handle"
+            title={isAr ? (panelCollapsed ? "إظهار اللوحة" : "إخفاء اللوحة") : (panelCollapsed ? "Show Panel" : "Hide Panel")}
+          >
+            <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: panelCollapsed ? 'rotate(180deg)' : '' }} />
           </button>
-        )}
+        </div>
         {/* Heatmap: always full width, never changes size */}
         <div className="w-full h-full">
           {selectedFloor?.image_url ? (
@@ -107,16 +112,8 @@ export function DensityTab({
         >
           <div className="p-4 space-y-3 flex-1">
             {/* Panel Title */}
-            <div className="flex items-center justify-between">
-              <div className="flex-1" />
+            <div className="text-center">
               <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "لوحة الكثافات" : "Density Panel"}</p>
-              <div className="flex-1 flex justify-end">
-                <button onClick={() => setPanelCollapsed(true)}
-                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
-                  data-testid="density-panel-close-btn">
-                  <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-              </div>
             </div>
             <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 

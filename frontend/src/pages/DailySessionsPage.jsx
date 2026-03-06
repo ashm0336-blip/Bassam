@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import {
   Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, Activity,
-  CalendarRange, Users, BarChart3, PanelLeftClose,
+  CalendarRange, Users, BarChart3, PanelLeftClose, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -740,17 +740,20 @@ export default function DailySessionsPage() {
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
                   <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
-                    {statsCollapsed && (
+                    {/* Fixed handle - always at panel edge */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
+                      style={{ right: statsCollapsed ? 0 : '40%' }}
+                    >
                       <button
-                        onClick={() => setStatsCollapsed(false)}
-                        className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
-                        data-testid="stats-panel-show"
-                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
+                        onClick={() => setStatsCollapsed(p => !p)}
+                        className="flex items-center justify-center w-5 h-14 bg-emerald-600 hover:bg-emerald-700 rounded-r-none rounded-l-lg shadow-lg transition-colors"
+                        data-testid="stats-panel-handle"
+                        title={isAr ? (statsCollapsed ? "إظهار الإحصائيات" : "إخفاء الإحصائيات") : (statsCollapsed ? "Show Stats" : "Hide Stats")}
                       >
-                        <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                        <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: statsCollapsed ? 'rotate(180deg)' : '' }} />
                       </button>
-                    )}
+                    </div>
                     {/* Map canvas: always full width, no layout shift */}
                     <div className="w-full h-full">
                       <MapCanvas

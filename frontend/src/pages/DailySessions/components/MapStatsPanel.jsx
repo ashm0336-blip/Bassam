@@ -1,7 +1,7 @@
 import {
   Layers, MapPin, Maximize2, Users, ShieldCheck, AlertTriangle,
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Minus, PanelLeftClose,
+  Minus,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatDateShort } from "../utils";
@@ -50,21 +50,6 @@ export function MapStatsPanel({ sessionStats, densityStats, changedZones, ZONE_T
 
   if (!sessionStats) return null;
 
-  const ToggleBtn = (
-    <button
-      onClick={onToggle}
-      className="absolute top-3 left-3 z-10 w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:shadow transition-all"
-      data-testid="stats-panel-toggle"
-      title={isAr ? "إخفاء الإحصائيات" : "Hide Stats"}
-    >
-      <PanelLeftClose className="w-4 h-4 text-slate-400" />
-    </button>
-  );
-
-  if (collapsed) {
-    return null;
-  }
-
   return (
     <div
       className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden shadow-xl"
@@ -72,21 +57,9 @@ export function MapStatsPanel({ sessionStats, densityStats, changedZones, ZONE_T
       data-testid="map-stats-panel"
     >
       <div className="p-4 space-y-4">
-
-        {/* Panel Header with close button */}
-        <div className="flex items-center justify-between">
-          <div className="flex-1" />
+        {/* Panel Header */}
+        <div className="text-center">
           <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "الإحصائيات" : "Statistics"}</p>
-          <div className="flex-1 flex justify-end">
-            <button
-              onClick={onToggle}
-              className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-100 transition-all"
-              data-testid="stats-panel-close"
-              title={isAr ? "إخفاء" : "Hide"}
-            >
-              <PanelLeftClose className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-          </div>
         </div>
         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
