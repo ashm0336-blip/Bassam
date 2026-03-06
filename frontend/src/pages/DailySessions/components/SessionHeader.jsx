@@ -21,7 +21,19 @@ export function SessionHeader({ activeSession, activeZones, handleUpdateSession,
             <h2 className="font-cairo font-bold text-lg" data-testid="session-date-title">
               {isAr ? "جولة " : "Tour "}{formatDate(activeSession.date)}
             </h2>
-            <div className="flex items-center gap-3 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {/* Hijri date */}
+              <span className="text-[11px] text-amber-700 font-cairo font-medium bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 flex items-center gap-1">
+                <span>☽</span>
+                <span>{(() => {
+                  try {
+                    const d = new Date(activeSession.date + "T00:00:00");
+                    return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+                  } catch { return ''; }
+                })()}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-1">
               <Badge className={`text-xs ${activeSession.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`} data-testid="session-status-badge">
                 {activeSession.status === "completed" ? (isAr ? "مكتملة" : "Completed") : (isAr ? "مسودة" : "Draft")}
               </Badge>

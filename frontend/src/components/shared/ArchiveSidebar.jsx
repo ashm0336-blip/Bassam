@@ -356,6 +356,10 @@ export function ArchiveSidebar({
                     <span className={`text-[7px] mt-0.5 font-semibold ${isAct ? 'text-white/80' : isCompleted ? t.text400 : 'text-amber-400'}`}>
                       {dayName}
                     </span>
+                    {/* Hijri day */}
+                    <span className={`text-[6px] leading-none font-bold ${isAct ? 'text-white/60' : 'text-amber-500/70'}`}>
+                      {getHijriDay(d)}
+                    </span>
                     {isCompleted && !isAct && (
                       <span className={`absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ${t.dot} border-[2px] border-white flex items-center justify-center shadow-sm`}>
                         <CheckCircle2 className="w-2.5 h-2.5 text-white" />
