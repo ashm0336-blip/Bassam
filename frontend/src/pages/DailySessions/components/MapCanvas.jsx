@@ -105,6 +105,15 @@ export function MapCanvas({
 
   const hasPannedRef = useRef(false);
   const touchStartPixelRef = useRef({ x: 0, y: 0 });
+  // Synchronous mirrors of parent state for touch event handlers (avoids stale closure on tablet)
+  const interactionRef = useRef({
+    draggingPoint: null,
+    isRotating: false,
+    isDraggingZone: false,
+    dragZoneStart: null,
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+  });
 
   const handlePointerDown = (e, isTouch = false) => {
     if (!isTouch && e.button !== 0) return;
@@ -114,9 +123,13 @@ export function MapCanvas({
     if (isTouch) touchStartPixelRef.current = { x: clientX, y: clientY };
     const pos = getMousePercent(e);
     if (activeSession?.status === "completed") {
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
       setIsPanning(true);
       setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     } else if (mapMode === "pan") {
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
       setIsPanning(true);
       setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     } else if (DRAG_SHAPE_MODES.includes(mapMode)) {
@@ -130,10 +143,18 @@ export function MapCanvas({
           onEditStart(selectedZoneId);
           const rotHandle = getRotationHandle(zone.polygon_points, zoom);
           const touchMultiplier = isTouch ? 2.5 : 1;
-          if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) { setIsRotating(true); return; }
+          if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) {
+            interactionRef.current.isRotating = true;
+            setIsRotating(true);
+            return;
+          }
           const hitRadius = (2 * touchMultiplier) / Math.max(zoom, 0.5);
           const hitIndex = zone.polygon_points.findIndex(p => getDistance(pos, p) < hitRadius);
-          if (hitIndex !== -1) { setDraggingPoint(hitIndex); setHoveredPoint(hitIndex); return; }
+          if (hitIndex !== -1) {
+            interactionRef.current.draggingPoint = hitIndex;
+            setDraggingPoint(hitIndex); setHoveredPoint(hitIndex);
+            return;
+          }
           const pts = zone.polygon_points;
           const midRadius = (1.5 * touchMultiplier) / Math.max(zoom, 0.5);
           for (let i = 0; i < pts.length; i++) {
@@ -142,13 +163,22 @@ export function MapCanvas({
             if (getDistance(pos, { x: mx, y: my }) < midRadius) {
               const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
               setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) }));
-              setDraggingPoint(j); setHoveredPoint(j); return;
+              interactionRef.current.draggingPoint = j;
+              setDraggingPoint(j); setHoveredPoint(j);
+              return;
             }
           }
-          if (isPointInPolygon(pos, zone.polygon_points)) { setIsDraggingZone(true); setDragZoneStart(pos); return; }
+          if (isPointInPolygon(pos, zone.polygon_points)) {
+            interactionRef.current.isDraggingZone = true;
+            interactionRef.current.dragZoneStart = pos;
+            setIsDraggingZone(true); setDragZoneStart(pos);
+            return;
+          }
         }
       }
       // Pan fallback: nothing was hit (empty space or no zone selected)
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
       setIsPanning(true);
       setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     }
@@ -161,17 +191,19 @@ export function MapCanvas({
     const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
     setMousePos(pos);
-    if (isPanning) {
+    // Use interactionRef for synchronous state access (avoids stale closure on tablet)
+    const iRef = interactionRef.current;
+    if (iRef.isPanning) {
       // Only mark as panned if finger moved more than 10px (prevents false positives on tablet taps)
       if (Math.hypot(clientX - touchStartPixelRef.current.x, clientY - touchStartPixelRef.current.y) > 10) {
         hasPannedRef.current = true;
       }
-      setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y });
+      setPanOffset({ x: clientX - iRef.panStart.x, y: clientY - iRef.panStart.y });
       return;
     }
     if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
     if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
-    if (isRotating && selectedZoneId) {
+    if (iRef.isRotating && selectedZoneId) {
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (zone?.polygon_points) {
         const center = { x: zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length, y: zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length };
@@ -182,20 +214,21 @@ export function MapCanvas({
       }
       return;
     }
-    if (isDraggingZone && selectedZoneId && dragZoneStart) {
-      const dx = pos.x - dragZoneStart.x, dy = pos.y - dragZoneStart.y;
+    if (iRef.isDraggingZone && selectedZoneId && iRef.dragZoneStart) {
+      const dx = pos.x - iRef.dragZoneStart.x, dy = pos.y - iRef.dragZoneStart.y;
       const zone = sessionZones.find(z => z.id === selectedZoneId);
       if (zone?.polygon_points) {
         const newPts = zone.polygon_points.map(p => ({ x: p.x + dx, y: p.y + dy }));
         setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPts } : z) }));
+        iRef.dragZoneStart = pos;
         setDragZoneStart(pos);
       }
       return;
     }
-    if (draggingPoint !== null && selectedZoneId) {
+    if (iRef.draggingPoint !== null && selectedZoneId) {
       setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => {
         if (z.id !== selectedZoneId) return z;
-        const newPts = [...z.polygon_points]; newPts[draggingPoint] = { x: pos.x, y: pos.y };
+        const newPts = [...z.polygon_points]; newPts[iRef.draggingPoint] = { x: pos.x, y: pos.y };
         return { ...z, polygon_points: newPts };
       })}));
       return;
@@ -207,7 +240,7 @@ export function MapCanvas({
       setHoveredPoint(hit !== -1 ? hit : null);
     }
     if (mapMode === "draw" && drawingPoints.length >= 3) setNearStart(getDistance(pos, drawingPoints[0]) < 1.2);
-    if (mapMode !== "draw" && draggingPoint === null && !isPanning && !isRotating && !isDraggingZone) {
+    if (mapMode !== "draw" && iRef.draggingPoint === null && !iRef.isPanning && !iRef.isRotating && !iRef.isDraggingZone) {
       if (mapContainerRef.current) {
         const rect = mapContainerRef.current.getBoundingClientRect();
         setTooltipPos({ x: clientX - rect.left + 16, y: clientY - rect.top - 10 });
@@ -226,10 +259,14 @@ export function MapCanvas({
     handlePointerMove(e);
   };
 
-  const handleMouseUp = () => onMapMouseUp();
+  const handleMouseUp = () => {
+    interactionRef.current = { draggingPoint: null, isRotating: false, isDraggingZone: false, dragZoneStart: null, isPanning: false, panStart: { x: 0, y: 0 } };
+    onMapMouseUp();
+  };
   const handleTouchEnd = (e) => {
     // Do NOT call e.preventDefault() here - it prevents click events from firing on tablet
     // Scrolling is already prevented by touch-action:none CSS on the container
+    interactionRef.current = { draggingPoint: null, isRotating: false, isDraggingZone: false, dragZoneStart: null, isPanning: false, panStart: { x: 0, y: 0 } };
     onMapMouseUp();
   };
 
