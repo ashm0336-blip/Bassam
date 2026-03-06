@@ -410,7 +410,7 @@ export function MapCanvas({
             />
           )}
           {/* Tooltip for non-selected zones */}
-          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && mapMode !== "edit" && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
+          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
         </div>
       </CardContent>
     </Card>

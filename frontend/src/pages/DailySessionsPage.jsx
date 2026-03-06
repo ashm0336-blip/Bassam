@@ -639,7 +639,14 @@ export default function DailySessionsPage() {
           sessions={sessions} activeSession={activeSession} isAr={isAr}
           theme="emerald" showCompare showNotes
           className="lg:col-span-1"
-          onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; }}
+          onSelectSession={async (s) => {
+            setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
+            // Always fetch fresh session data to reflect any category style changes
+            try {
+              const res = await axios.get(`${API}/map-sessions/${s.id}`, getAuthHeaders());
+              setActiveSession(res.data);
+            } catch { setActiveSession(s); }
+          }}
           onDeleteSession={handleDeleteSession}
           onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
           onCompare={handleCompare}

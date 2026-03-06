@@ -218,7 +218,7 @@ export default function ZoneCategoryManager() {
       }
       if (editing) {
         await axios.put(`${API}/admin/zone-categories/${editing.id}`, payload, getAuthHeaders());
-        toast.success(isAr ? "تم تحديث الفئة" : "Category updated");
+        toast.success(isAr ? "✅ تم تطبيق التغييرات على جميع المناطق — أعد فتح الجلسة من التقويم لرؤية التحديث" : "✅ Changes applied to all zones — reopen session from calendar to see updates", { duration: 5000 });
       } else {
         await axios.post(`${API}/admin/zone-categories`, payload, getAuthHeaders());
         toast.success(isAr ? "تم إضافة الفئة" : "Category added");

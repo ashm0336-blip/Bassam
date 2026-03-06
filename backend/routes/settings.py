@@ -307,7 +307,16 @@ async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dic
     existing = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الفئة غير موجودة")
-    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+
+    # Allow explicit null for pattern fields (clearing them when switching solid↔pattern)
+    NULLABLE_FIELDS = {"pattern_type", "pattern_fg_color", "pattern_bg_color"}
+    update_data = {}
+    for k, v in data.model_dump().items():
+        if v is not None:
+            update_data[k] = v
+        elif k in NULLABLE_FIELDS:
+            update_data[k] = None  # Explicitly clear pattern fields
+
     if update_data:
         await db.zone_categories.update_one({"id": cat_id}, {"$set": update_data})
     updated = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
