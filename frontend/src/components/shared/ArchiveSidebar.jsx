@@ -11,6 +11,25 @@ const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو
 const AR_WEEKDAYS = ["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"];
 const EN_WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
+// ─── Hijri Helpers ───────────────────────────────────────────
+const getHijriDay = (date) => {
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric' }).format(date); } catch { return ''; }
+};
+const getHijriMonthFull = (date) => {
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { month: 'long' }).format(date); } catch { return ''; }
+};
+const getHijriMonthShort = (date) => {
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { month: 'short' }).format(date).slice(0, 4); } catch { return ''; }
+};
+const getHijriYear = (date) => {
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { year: 'numeric' }).format(date); } catch { return ''; }
+};
+const getHijriDayNum = (date) => {
+  try { return parseInt(new Intl.DateTimeFormat('en-u-ca-islamic', { day: 'numeric' }).format(date), 10); } catch { return 0; }
+};
+const RAMADAN = 'رمضان';
+const HOLY_MONTHS = ['رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
+
 const formatDateShort = (ds) => {
   try { return new Date(ds + "T00:00:00").toLocaleDateString("ar-SA", { month: "short", day: "numeric" }); } catch { return ds; }
 };
@@ -34,6 +53,7 @@ export function ArchiveSidebar({
   const [selectedYear, setSelectedYear] = useState(nowDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(nowDate.getMonth());
   const [viewMode, setViewMode] = useState("calendar");
+  const [hijriPrimary, setHijriPrimary] = useState(false);
 
   const sessionsByMonth = useMemo(() => {
     const map = {};
@@ -167,18 +187,54 @@ export function ArchiveSidebar({
             </button>
             <span className="text-[10px] text-slate-400">{selectedYear}</span>
           </div>
-          <div className="flex items-center justify-between mb-3">
+          {/* Calendar Header */}
+          <div className="flex items-center justify-between mb-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
               if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
               else setSelectedMonth(m => m + 1);
             }}><ChevronRight className="w-4 h-4" /></Button>
-            <span className="font-cairo font-semibold text-sm">
-              {isAr ? AR_MONTHS[selectedMonth] : new Date(selectedYear, selectedMonth).toLocaleDateString("en", { month: "long" })} {selectedYear}
-            </span>
+
+            <div className="flex flex-col items-center gap-0.5 flex-1 mx-1">
+              {/* Gregorian month */}
+              <span className={`font-cairo font-bold text-sm leading-tight ${hijriPrimary ? "text-slate-400 text-xs" : "text-slate-800"}`}>
+                {isAr ? AR_MONTHS[selectedMonth] : new Date(selectedYear, selectedMonth).toLocaleDateString("en", { month: "long" })} {selectedYear}
+              </span>
+              {/* Hijri month(s) */}
+              {(() => {
+                const firstDay = new Date(selectedYear, selectedMonth, 1);
+                const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+                const hFirst = getHijriMonthFull(firstDay);
+                const hLast = getHijriMonthFull(lastDay);
+                const hYear = getHijriYear(firstDay);
+                const isRamadanMonth = hFirst === RAMADAN || hLast === RAMADAN;
+                const monthStr = hFirst === hLast ? hFirst : `${hFirst} / ${hLast}`;
+                return (
+                  <span className={`font-cairo leading-tight flex items-center gap-1 ${hijriPrimary ? "font-bold text-sm text-slate-800" : "text-[10px] text-slate-400"}`}>
+                    {isRamadanMonth && <span className="text-amber-500">☽</span>}
+                    <span style={isRamadanMonth ? { color: '#b45309' } : {}}>{monthStr}</span>
+                    <span className={hijriPrimary ? "text-slate-400 text-xs" : "text-slate-300 text-[9px]"}>{hYear.replace('هـ','').trim()} هـ</span>
+                  </span>
+                );
+              })()}
+            </div>
+
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
               if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
               else setSelectedMonth(m => m - 1);
             }}><ChevronLeft className="w-4 h-4" /></Button>
+          </div>
+
+          {/* Toggle م ↔ هـ */}
+          <div className="flex justify-center mb-2">
+            <button
+              onClick={() => setHijriPrimary(p => !p)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold transition-all ${hijriPrimary ? 'bg-amber-50 border-amber-300 text-amber-700' : `${t.bg50} ${t.border} ${t.text700}`}`}
+              title={hijriPrimary ? "التبديل للميلادي" : "التبديل للهجري"}
+            >
+              <span className={hijriPrimary ? "opacity-40" : "font-extrabold"}>م</span>
+              <span className="text-slate-300">↔</span>
+              <span className={hijriPrimary ? "font-extrabold" : "opacity-40"}>هـ</span>
+            </button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 mb-1">
             {AR_WEEKDAYS.map((d, i) => (
@@ -194,19 +250,54 @@ export function ArchiveSidebar({
               const s = sessionDatesMap[ds];
               const isToday = ds === today;
               const isActive = activeSession?.date === ds;
+              const date = new Date(selectedYear, selectedMonth, day);
+              const isFriday = date.getDay() === 5;
+              const hDay = getHijriDay(date);
+              const hDayNum = getHijriDayNum(date);
+              const hMonthFull = getHijriMonthFull(date);
+              const hMonthShort = getHijriMonthShort(date);
+              const isNewHijriMonth = hDayNum === 1;
+              const isRamadanDay = hMonthFull === RAMADAN;
+              const isHolyDay = HOLY_MONTHS.includes(hMonthFull) && hDayNum === 1;
+
+              const cellBg = isActive ? '' :
+                isRamadanDay && !isToday ? 'bg-amber-50/60' :
+                isFriday && !isToday ? 'bg-green-50/40' : '';
+
               return (
                 <button
                   key={day}
                   onClick={() => handleCalDayClick(day)}
                   data-testid={`calendar-day-${day}`}
-                  className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-xs transition-all ${
-                    isActive ? `${t.calActive} text-white font-bold shadow-md shadow-${theme}-200` :
+                  className={`relative flex flex-col items-center justify-center rounded-lg py-1 transition-all ${cellBg}
+                    ${isActive ? `${t.calActive} text-white font-bold shadow-md` :
                     isToday ? "bg-slate-100 font-semibold ring-1 ring-slate-300" :
-                    "hover:bg-slate-50"
-                  } ${s && !isActive ? "font-medium" : ""}`}
+                    "hover:bg-slate-50"}
+                    ${s && !isActive ? "font-medium" : ""}`}
                 >
-                  <span>{day}</span>
-                  {s && <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isActive ? "bg-white" : s.status === "completed" ? t.dot : "bg-amber-400"}`} />}
+                  {/* New Hijri month indicator */}
+                  {isNewHijriMonth && !isActive && (
+                    <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[5px] leading-none font-bold text-amber-500 whitespace-nowrap">{hMonthShort}</span>
+                  )}
+
+                  {/* Primary date */}
+                  <span className={`leading-none font-bold ${isActive ? "text-white text-[11px]" : "text-[11px] text-slate-700"}`}>
+                    {hijriPrimary ? hDay : day}
+                  </span>
+
+                  {/* Secondary date */}
+                  <span className={`leading-none mt-0.5 ${isActive ? "text-white/70 text-[7px]" : isRamadanDay ? "text-amber-500 text-[7px] font-semibold" : "text-[7px] text-slate-350"}`}
+                    style={{ color: isActive ? undefined : isRamadanDay ? '#b45309' : isFriday ? '#16a34a' : '#94a3b8' }}>
+                    {hijriPrimary ? day : hDay}
+                  </span>
+
+                  {/* Session dot */}
+                  {s && <span className={`w-1 h-1 rounded-full mt-0.5 ${isActive ? "bg-white" : s.status === "completed" ? t.dot : "bg-amber-400"}`} />}
+
+                  {/* Holy day glow */}
+                  {isHolyDay && !isActive && (
+                    <span className="absolute inset-0 rounded-lg ring-1 ring-amber-300 pointer-events-none" />
+                  )}
                 </button>
               );
             })}
