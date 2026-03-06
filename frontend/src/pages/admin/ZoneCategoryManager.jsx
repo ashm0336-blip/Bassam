@@ -55,9 +55,15 @@ function ZonePreview({ cat, size = 120 }) {
         points={points}
         fill={fillType === "pattern" && patternType ? `url(#${patternId})` : color}
         fillOpacity={fillType === "pattern" ? 0.9 : 0.45}
-        stroke={color}
-        strokeWidth="2.5"
-        strokeOpacity="0.9"
+        stroke={cat.stroke_color || color}
+        strokeWidth={Math.max((cat.stroke_width || 0.3) * 8, 1.5)}
+        strokeOpacity={cat.stroke_opacity ?? 0.9}
+        strokeDasharray={
+          (cat.stroke_style || "dashed") === "solid" ? "none"
+          : (cat.stroke_style || "dashed") === "dotted" ? "3 4"
+          : (cat.stroke_style || "dashed") === "dash-dot" ? "10 4 2 4"
+          : "8 4"
+        }
       />
       {/* Icon label */}
       <circle cx="50" cy="50" r="14" fill={color} fillOpacity="0.9" />
@@ -183,7 +189,8 @@ export default function ZoneCategoryManager() {
 
   const emptyForm = {
     value: "", label_ar: "", label_en: "", color: "#22c55e", icon: "M", order: 0,
-    fill_type: "solid", pattern_type: null, pattern_fg_color: "#000000", pattern_bg_color: "#ffffff"
+    fill_type: "solid", pattern_type: null, pattern_fg_color: "#000000", pattern_bg_color: "#ffffff",
+    stroke_color: "#000000", stroke_width: 0.3, stroke_style: "dashed", stroke_opacity: 1.0
   };
   const [form, setForm] = useState(emptyForm);
 
@@ -250,6 +257,10 @@ export default function ZoneCategoryManager() {
       pattern_type: cat.pattern_type || null,
       pattern_fg_color: cat.pattern_fg_color || "#000000",
       pattern_bg_color: cat.pattern_bg_color || "#ffffff",
+      stroke_color: cat.stroke_color || "#000000",
+      stroke_width: cat.stroke_width ?? 0.3,
+      stroke_style: cat.stroke_style || "dashed",
+      stroke_opacity: cat.stroke_opacity ?? 1.0,
     });
     setShowPatternSection(cat.fill_type === "pattern");
     setShowDialog(true);
@@ -473,12 +484,62 @@ export default function ZoneCategoryManager() {
                 </div>
               )}
             </div>
+
+            {/* ── Border Section ─────────────── */}
+            <div className="rounded-xl border p-3 space-y-2.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-4 rounded-full bg-blue-500" />
+                <span className="text-xs font-bold text-slate-700 font-cairo">{isAr ? "الإطار" : "Border"}</span>
+              </div>
+              {/* Color + Width */}
+              <div className="flex items-center gap-2">
+                <input type="color" value={form.stroke_color || "#000000"}
+                  onChange={(e) => setF({ stroke_color: e.target.value })}
+                  className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 p-0.5 flex-shrink-0"
+                  data-testid="cat-stroke-color" />
+                <div className="flex-1">
+                  <Label className="text-[9px] text-slate-400 mb-1 block">{isAr ? "السماكة" : "Width"} {(form.stroke_width ?? 0.3).toFixed(1)}</Label>
+                  <Slider value={[form.stroke_width ?? 0.3]} min={0.1} max={3} step={0.1}
+                    onValueChange={([v]) => setF({ stroke_width: v })} />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-[9px] text-slate-400 mb-1 block">{isAr ? "الشفافية" : "Opacity"} {Math.round((form.stroke_opacity ?? 1) * 100)}%</Label>
+                  <Slider value={[Math.round((form.stroke_opacity ?? 1) * 100)]} min={0} max={100} step={10}
+                    onValueChange={([v]) => setF({ stroke_opacity: v / 100 })} />
+                </div>
+              </div>
+              {/* Border style */}
+              <div className="grid grid-cols-4 gap-1">
+                {[
+                  { v: "solid",    dash: "none",      label_ar: "متصل",    label_en: "Solid" },
+                  { v: "dashed",   dash: "6 3",       label_ar: "متقطع",   label_en: "Dashed" },
+                  { v: "dotted",   dash: "1 2",       label_ar: "نقطي",    label_en: "Dotted" },
+                  { v: "dash-dot", dash: "6 2 1 2",   label_ar: "شرطة-نقطة", label_en: "Dash·Dot" },
+                ].map(s => (
+                  <button key={s.v} onClick={() => setF({ stroke_style: s.v })}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-1 rounded-lg border text-[9px] font-medium transition-all ${
+                      (form.stroke_style || "dashed") === s.v
+                        ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
+                        : "border-slate-200 hover:bg-slate-50 text-slate-400"
+                    }`}
+                    data-testid={`cat-stroke-${s.v}`}
+                  >
+                    <svg width="28" height="4" viewBox="0 0 28 4">
+                      <line x1="1" y1="2" x2="27" y2="2"
+                        stroke={(form.stroke_style || "dashed") === s.v ? "#3b82f6" : "#94a3b8"}
+                        strokeWidth="2.5" strokeDasharray={s.dash} />
+                    </svg>
+                    <span>{isAr ? s.label_ar : s.label_en}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="gap-2">
             <Button onClick={handleSave} disabled={saving || !form.value || !form.label_ar} className="bg-emerald-600 hover:bg-emerald-700" data-testid="save-category-btn">
               {saving ? <RefreshCw className="w-4 h-4 ml-1 animate-spin" /> : <Save className="w-4 h-4 ml-1" />}
-              {isAr ? "حفظ الفئة" : "Save Category"}
+              {isAr ? "حفظ الفئة وتطبيق التغييرات" : "Save & Apply to All Zones"}
             </Button>
             <Button variant="outline" onClick={() => setShowDialog(false)}>{isAr ? "إلغاء" : "Cancel"}</Button>
           </DialogFooter>

@@ -62,11 +62,31 @@ function ZoneFormFields({ zone, setZone, ZONE_TYPES, isAr, onCategoryChange }) {
         <Label className="text-sm font-medium">{isAr ? "الفئة" : "Category"}</Label>
         <Select value={zone.zone_type || "men_prayer"} onValueChange={(v) => {
           const typeInfo = ZONE_TYPES.find(t => t.value === v);
-          setZone(p => ({ ...p, zone_type: v, fill_color: typeInfo?.color || "#22c55e" }));
+          setZone(p => ({
+            ...p,
+            zone_type: v,
+            fill_color: typeInfo?.color || "#22c55e",
+            fill_type: typeInfo?.fill_type || "solid",
+            pattern_type: typeInfo?.pattern_type || null,
+            pattern_fg_color: typeInfo?.pattern_fg_color || null,
+            pattern_bg_color: typeInfo?.pattern_bg_color || null,
+            stroke_color: typeInfo?.stroke_color || "#000000",
+            stroke_width: typeInfo?.stroke_width ?? 0.3,
+            stroke_style: typeInfo?.stroke_style || "dashed",
+            stroke_opacity: typeInfo?.stroke_opacity ?? 1.0,
+          }));
           if (onCategoryChange) onCategoryChange(v);
         }}>
           <SelectTrigger className="mt-1" data-testid="zone-form-category"><SelectValue /></SelectTrigger>
-          <SelectContent>{ZONE_TYPES.map(t => <SelectItem key={t.value} value={t.value}><div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: t.color }} />{isAr ? t.label_ar : t.label_en}</div></SelectItem>)}</SelectContent>
+          <SelectContent>{ZONE_TYPES.map(t => (
+            <SelectItem key={t.value} value={t.value}>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-sm flex-shrink-0 flex items-center justify-center text-[8px] font-bold text-white"
+                  style={{ backgroundColor: t.color }}>{t.icon}</div>
+                <span>{isAr ? t.label_ar : t.label_en}</span>
+              </div>
+            </SelectItem>
+          ))}</SelectContent>
         </Select>
       </div>
 

@@ -318,6 +318,10 @@ class ZoneCategory(BaseModel):
     pattern_type: Optional[str] = None
     pattern_fg_color: Optional[str] = None
     pattern_bg_color: Optional[str] = None
+    stroke_color: str = "#000000"
+    stroke_width: float = 0.3
+    stroke_style: str = "dashed"
+    stroke_opacity: float = 1.0
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class ZoneCategoryCreate(BaseModel):
@@ -331,6 +335,10 @@ class ZoneCategoryCreate(BaseModel):
     pattern_type: Optional[str] = None
     pattern_fg_color: Optional[str] = None
     pattern_bg_color: Optional[str] = None
+    stroke_color: str = "#000000"
+    stroke_width: float = 0.3
+    stroke_style: str = "dashed"
+    stroke_opacity: float = 1.0
 
 class ZoneCategoryUpdate(BaseModel):
     value: Optional[str] = None
@@ -344,6 +352,10 @@ class ZoneCategoryUpdate(BaseModel):
     pattern_type: Optional[str] = None
     pattern_fg_color: Optional[str] = None
     pattern_bg_color: Optional[str] = None
+    stroke_color: Optional[str] = None
+    stroke_width: Optional[float] = None
+    stroke_style: Optional[str] = None
+    stroke_opacity: Optional[float] = None
 
 # ============= Settings Models =============
 class LoginPageSettings(BaseModel):

@@ -1,0 +1,69 @@
+{
+  "summary": "Frontend testing of: (1) FloatingStyleButton removal from FloatingToolbar in /daily-sessions map - verified 4 buttons only (edit/copy/smooth/remove). (2) style-dropdown-btn removal from MapToolbar. (3) ZoneCategoryManager border section in /haram-map?tab=settings categories dialog - verified all 5 new data-testids (cat-stroke-color, cat-stroke-solid, cat-stroke-dashed, cat-stroke-dotted, cat-stroke-dash-dot). All 6 test points PASSED.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "floating_toolbar_style_btn_removed": {
+      "result": "PASS",
+      "float_style_btn_exists": false,
+      "float_edit_btn": true,
+      "float_copy_btn": true,
+      "float_smooth_btn": true,
+      "float_remove_btn": true,
+      "total_buttons": 4,
+      "note": "Clicked zone at map coords, floating toolbar appeared with exactly 4 buttons"
+    },
+    "map_toolbar_style_dropdown_removed": {
+      "result": "PASS",
+      "style_dropdown_btn_exists": false,
+      "note": "MapToolbar verified - no style-dropdown-btn present"
+    },
+    "categories_page_settings": {
+      "result": "PASS",
+      "url": "/haram-map?tab=settings",
+      "zone_category_manager_found": true,
+      "categories_tab_clicked": true,
+      "add_category_dialog_opens": true,
+      "edit_category_dialog_opens": true
+    },
+    "category_dialog_border_section": {
+      "result": "PASS",
+      "cat_stroke_color": true,
+      "cat_stroke_solid": true,
+      "cat_stroke_dashed": true,
+      "cat_stroke_dotted": true,
+      "cat_stroke_dash_dot": true,
+      "note": "Both add and edit dialogs show the الإطار (Border) section with color picker, width/opacity sliders, and 4 style buttons"
+    },
+    "js_errors": {
+      "critical_errors": 0,
+      "resource_404_errors": 2,
+      "radix_aria_warnings": 2,
+      "note": "2 x 404 resource-load errors (pre-existing, not related to feature), 2 x Radix DialogContent aria-describedby warnings (minor accessibility)"
+    }
+  },
+  "test_report_links": ["/app/test_reports/iteration_46.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FloatingToolbar in MapCanvas.jsx: correctly has 4 buttons only (edit/copy/smooth/remove). onClick stopPropagation still present from iteration_44 fix.",
+    "MapToolbar.jsx: no style-related dropdown - clean toolbar with edit mode, shapes, zones, zoom, undo/redo.",
+    "ZoneCategoryManager.jsx: Border section (الإطار) at line 488-536 has all required elements: cat-stroke-color color input, Slider for width, Slider for opacity, 4 style buttons with correct data-testids.",
+    "Minor: Radix DialogContent missing aria-describedby attribute - accessibility warning only, not functional issue."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only)",
+    "frontend": "100% (6/6 test points passed)"
+  },
+  "seed_data_creation": "Used existing 15 zone categories and جولة الأربعاء 4 مارس 2026 session",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 3 feature areas verified: (1) FloatingToolbar has exactly 4 buttons (no float-style-btn). (2) MapToolbar has no style-dropdown-btn. (3) Category dialog at /haram-map?tab=settings → الفئات tab has border section with cat-stroke-color, cat-stroke-solid, cat-stroke-dashed, cat-stroke-dotted, cat-stroke-dash-dot. ZonePreview polygon in dialog shows stroke style live. 15 categories loaded correctly."
+}

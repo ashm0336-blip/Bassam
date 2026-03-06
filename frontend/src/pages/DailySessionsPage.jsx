@@ -316,7 +316,18 @@ export default function DailySessionsPage() {
 
   const handleCategoryChange = async (zoneId, newType) => {
     const typeInfo = ZONE_TYPES.find(t => t.value === newType);
-    await handleUpdateZone(zoneId, { zone_type: newType, fill_color: typeInfo?.color || "#22c55e" });
+    await handleUpdateZone(zoneId, {
+      zone_type: newType,
+      fill_color: typeInfo?.color || "#22c55e",
+      fill_type: typeInfo?.fill_type || "solid",
+      pattern_type: typeInfo?.pattern_type || null,
+      pattern_fg_color: typeInfo?.pattern_fg_color || null,
+      pattern_bg_color: typeInfo?.pattern_bg_color || null,
+      stroke_color: typeInfo?.stroke_color || "#000000",
+      stroke_width: typeInfo?.stroke_width ?? 0.3,
+      stroke_style: typeInfo?.stroke_style || "dashed",
+      stroke_opacity: typeInfo?.stroke_opacity ?? 1.0,
+    });
   };
 
   const handleToggleRemove = async (zoneId, currentlyRemoved) => {
@@ -391,7 +402,16 @@ export default function DailySessionsPage() {
         name_ar: newZoneForm.name_ar || (isAr ? typeInfo?.label_ar : typeInfo?.label_en) || "منطقة جديدة",
         name_en: newZoneForm.name_en || typeInfo?.label_en || "New Zone",
         zone_type: newZoneForm.zone_type, polygon_points: drawingPoints,
-        fill_color: typeInfo?.color || newZoneForm.fill_color, stroke_color: "#000000", stroke_style: "dashed",
+        fill_color: typeInfo?.color || newZoneForm.fill_color,
+        fill_type: typeInfo?.fill_type || "solid",
+        pattern_type: typeInfo?.pattern_type || null,
+        pattern_fg_color: typeInfo?.pattern_fg_color || null,
+        pattern_bg_color: typeInfo?.pattern_bg_color || null,
+        stroke_color: typeInfo?.stroke_color || "#000000",
+        stroke_width: typeInfo?.stroke_width ?? 0.3,
+        stroke_style: typeInfo?.stroke_style || "dashed",
+        stroke_opacity: typeInfo?.stroke_opacity ?? 1.0,
+        opacity: 0.4,
         area_sqm: newZoneForm.area_sqm || 0, per_person_sqm: newZoneForm.per_person_sqm || 0.8, max_capacity: newZoneForm.max_capacity || 0,
         length_m: newZoneForm.length_m || 0, width_m: newZoneForm.width_m || 0,
         carpet_length: newZoneForm.carpet_length || 1.2, carpet_width: newZoneForm.carpet_width || 0.7,

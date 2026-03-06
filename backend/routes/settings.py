@@ -311,6 +311,34 @@ async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dic
     if update_data:
         await db.zone_categories.update_one({"id": cat_id}, {"$set": update_data})
     updated = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
+
+    # Propagate style to all map_sessions zones with this zone_type
+    if updated:
+        zone_style = {
+            "fill_color": updated.get("color", "#22c55e"),
+            "fill_type": updated.get("fill_type", "solid"),
+            "pattern_type": updated.get("pattern_type"),
+            "pattern_fg_color": updated.get("pattern_fg_color"),
+            "pattern_bg_color": updated.get("pattern_bg_color"),
+            "stroke_color": updated.get("stroke_color", "#000000"),
+            "stroke_width": updated.get("stroke_width", 0.3),
+            "stroke_style": updated.get("stroke_style", "dashed"),
+            "stroke_opacity": updated.get("stroke_opacity", 1.0),
+            "opacity": 0.4,
+        }
+        cat_value = updated["value"]
+        # Update map_sessions zones array
+        await db.map_sessions.update_many(
+            {"zones.zone_type": cat_value},
+            {"$set": {f"zones.$[elem].{k}": v for k, v in zone_style.items()}},
+            array_filters=[{"elem.zone_type": cat_value}]
+        )
+        # Update map_zones (master zones)
+        await db.map_zones.update_many(
+            {"zone_type": cat_value},
+            {"$set": {k: v for k, v in zone_style.items()}}
+        )
+
     return updated
 
 

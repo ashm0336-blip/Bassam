@@ -2,18 +2,15 @@ import { useState, useMemo } from "react";
 import {
   MousePointer,
   ZoomIn, ZoomOut, Maximize2, Undo2, Redo2, X, Check, ChevronDown,
-  Palette, MapPin, Search, Shapes,
+  MapPin, Search, Shapes,
   Edit2, CircleOff, RotateCcw, ChevronRight, PenTool, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS, SHAPE_LIBRARY, DRAG_SHAPE_MODES, PATTERN_TYPES } from "../constants";
-import { PatternPreviewSvg } from "./ZonePatterns";
+import { CHANGE_LABELS, SHAPE_LIBRARY, DRAG_SHAPE_MODES } from "../constants";
 
 export function ZoomControls({ zoom, zoomRef, setZoom, setPanOffset, containerRef }) {
   const zoomBy = (factor) => {
@@ -163,7 +160,7 @@ export function MapToolbar({
   activeSession, mapMode, setMapMode, drawingPoints, setDrawingPoints,
   selectedZoneId, setSelectedZoneId, setRectStart, setFreehandPoints,
   sessionZones, zoom, zoomRef, setZoom, setPanOffset, mapContainerRef,
-  handleUpdateZoneStyle, setShowNewZoneDialog,
+  setShowNewZoneDialog,
   activeZones, removedZones, setSelectedZone, setShowZoneDialog,
   handleToggleRemove, ZONE_TYPES,
   undoDrawing, redoDrawing, clearDrawing, undoStack, redoStack,
@@ -228,246 +225,6 @@ export function MapToolbar({
                 </div>
               </PopoverContent>
             </Popover>
-            {/* Style Dropdown - Enhanced Format Panel */}
-            {selectedZoneId && (() => {
-              const styleZone = sessionZones.find(z => z.id === selectedZoneId);
-              if (!styleZone) return null;
-              const fillType = styleZone.fill_type || "solid";
-              const patternType = styleZone.pattern_type || "diagonal-right";
-              const patternFg = styleZone.pattern_fg_color || "#000000";
-              const patternBg = styleZone.pattern_bg_color || "#ffffff";
-              return (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="rounded-none border-x" data-testid="style-dropdown-btn">
-                      <Palette className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "تنسيق" : "Style"}</span><ChevronDown className="w-3 h-3 mr-1" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[320px] p-0 max-h-[520px] overflow-y-auto" align="start" data-testid="style-panel">
-                    {/* Header */}
-                    <div className="sticky top-0 z-10 bg-white border-b px-3 py-2 flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-emerald-600" />
-                      <h4 className="font-cairo font-bold text-sm">{isAr ? "تنسيق الشكل" : "Format Shape"}</h4>
-                    </div>
-
-                    {/* Fill Section */}
-                    <div className="px-3 pt-3 pb-2">
-                      <div className="flex items-center gap-1.5 mb-2.5">
-                        <div className="w-1 h-4 rounded-full bg-emerald-500" />
-                        <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "التعبئة" : "Fill"}</span>
-                      </div>
-
-                      {/* Fill Type Toggle */}
-                      <div className="flex rounded-lg border overflow-hidden mb-3" data-testid="fill-type-toggle">
-                        {[
-                          { value: "solid", label: isAr ? "لون صلب" : "Solid" },
-                          { value: "pattern", label: isAr ? "نقش" : "Pattern" },
-                        ].map(ft => (
-                          <button key={ft.value}
-                            onClick={() => handleUpdateZoneStyle(styleZone.id, { fill_type: ft.value })}
-                            className={`flex-1 px-3 py-1.5 text-[11px] font-semibold font-cairo transition-all ${
-                              fillType === ft.value
-                                ? "bg-emerald-600 text-white shadow-inner"
-                                : "bg-white text-slate-500 hover:bg-slate-50"
-                            }`}
-                            data-testid={`fill-type-${ft.value}`}
-                          >{ft.label}</button>
-                        ))}
-                      </div>
-
-                      {/* Solid Fill Options */}
-                      {fillType === "solid" && (
-                        <div className="space-y-2.5">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <Label className="text-[10px] text-slate-500">{isAr ? "اللون" : "Color"}</Label>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <input type="color" value={styleZone.fill_color || "#22c55e"} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { fill_color: e.target.value })} className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 p-0.5" data-testid="toolbar-fill-color" />
-                                <span className="text-[10px] text-muted-foreground font-mono">{styleZone.fill_color}</span>
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <Label className="text-[10px] text-slate-500">{isAr ? "الشفافية" : "Opacity"}</Label>
-                              <div className="flex items-center gap-1.5 mt-2">
-                                <Slider value={[Math.round((styleZone.opacity ?? 0.4) * 100)]} min={5} max={100} step={5} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { opacity: v / 100 })} className="flex-1" data-testid="fill-opacity-slider" />
-                                <span className="text-[10px] w-8 text-center font-mono text-slate-500">{Math.round((styleZone.opacity ?? 0.4) * 100)}%</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Pattern Fill Options */}
-                      {fillType === "pattern" && (
-                        <div className="space-y-2.5">
-                          {/* Pattern Grid */}
-                          <div>
-                            <Label className="text-[10px] text-slate-500 mb-1 block">{isAr ? "نمط النقش" : "Pattern"}</Label>
-                            <div className="grid grid-cols-6 gap-1 p-1.5 bg-slate-50 rounded-lg border" data-testid="pattern-grid">
-                              {PATTERN_TYPES.map(pt => (
-                                <PatternPreviewSvg
-                                  key={pt.value}
-                                  patternType={pt.value}
-                                  fgColor={patternFg}
-                                  bgColor={patternBg}
-                                  size={32}
-                                  selected={patternType === pt.value}
-                                  onClick={() => handleUpdateZoneStyle(styleZone.id, { pattern_type: pt.value })}
-                                  label={isAr ? pt.label_ar : pt.label_en}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          {/* Pattern Colors */}
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label className="text-[10px] text-slate-500">{isAr ? "لون النقش" : "Foreground"}</Label>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <input type="color" value={patternFg} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { pattern_fg_color: e.target.value })} className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 p-0.5" data-testid="pattern-fg-color" />
-                                <span className="text-[9px] text-muted-foreground font-mono">{patternFg}</span>
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-[10px] text-slate-500">{isAr ? "لون الخلفية" : "Background"}</Label>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <input type="color" value={patternBg} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { pattern_bg_color: e.target.value })} className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 p-0.5" data-testid="pattern-bg-color" />
-                                <span className="text-[9px] text-muted-foreground font-mono">{patternBg}</span>
-                              </div>
-                            </div>
-                          </div>
-                          {/* Pattern opacity */}
-                          <div>
-                            <Label className="text-[10px] text-slate-500">{isAr ? "الشفافية" : "Opacity"}</Label>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <Slider value={[Math.round((styleZone.opacity ?? 0.4) * 100)]} min={5} max={100} step={5} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { opacity: v / 100 })} className="flex-1" data-testid="pattern-opacity-slider" />
-                              <span className="text-[10px] w-8 text-center font-mono text-slate-500">{Math.round((styleZone.opacity ?? 0.4) * 100)}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-dashed mx-3" />
-
-                    {/* Border Section */}
-                    <div className="px-3 pt-2 pb-2">
-                      <div className="flex items-center gap-1.5 mb-2.5">
-                        <div className="w-1 h-4 rounded-full bg-blue-500" />
-                        <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "الحدود" : "Border"}</span>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <Label className="text-[10px] text-slate-500">{isAr ? "اللون" : "Color"}</Label>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <input type="color" value={styleZone.stroke_color || "#000000"} onChange={(e) => handleUpdateZoneStyle(styleZone.id, { stroke_color: e.target.value })} className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 p-0.5" data-testid="toolbar-stroke-color" />
-                              <span className="text-[10px] text-muted-foreground font-mono">{styleZone.stroke_color || "#000"}</span>
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <Label className="text-[10px] text-slate-500">{isAr ? "السمك" : "Width"}</Label>
-                            <div className="flex items-center gap-1.5 mt-2">
-                              <Slider value={[styleZone.stroke_width ?? 0.3]} min={0.1} max={3} step={0.1} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { stroke_width: v })} className="flex-1" data-testid="stroke-width-slider" />
-                              <span className="text-[10px] w-7 text-center font-mono text-slate-500">{(styleZone.stroke_width ?? 0.3).toFixed(1)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Stroke Opacity */}
-                        <div>
-                          <Label className="text-[10px] text-slate-500">{isAr ? "شفافية الحدود" : "Border Opacity"}</Label>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <Slider value={[Math.round((styleZone.stroke_opacity ?? 1) * 100)]} min={0} max={100} step={5} onValueChange={([v]) => handleUpdateZoneStyle(styleZone.id, { stroke_opacity: v / 100 })} className="flex-1" data-testid="stroke-opacity-slider" />
-                            <span className="text-[10px] w-8 text-center font-mono text-slate-500">{Math.round((styleZone.stroke_opacity ?? 1) * 100)}%</span>
-                          </div>
-                        </div>
-                        {/* Border Style */}
-                        <div>
-                          <Label className="text-[10px] text-slate-500">{isAr ? "نوع الحدود" : "Border Style"}</Label>
-                          <div className="flex items-center gap-1 mt-1.5" data-testid="stroke-style-options">
-                            {[
-                              { value: "solid", label: isAr ? "متصل" : "Solid", dash: "none" },
-                              { value: "dashed", label: isAr ? "مقطع" : "Dashed", dash: "4 2" },
-                              { value: "dotted", label: isAr ? "نقطي" : "Dotted", dash: "1 1.5" },
-                              { value: "dash-dot", label: isAr ? "شرطة-نقطة" : "Dash-Dot", dash: "6 2 1 2" },
-                            ].map(s => (
-                              <button key={s.value}
-                                onClick={() => handleUpdateZoneStyle(styleZone.id, { stroke_style: s.value })}
-                                className={`flex-1 flex flex-col items-center gap-1 p-1.5 rounded-lg border text-[9px] transition-all ${
-                                  (styleZone.stroke_style || "dashed") === s.value
-                                    ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
-                                    : "border-slate-200 hover:bg-slate-50 text-slate-500"
-                                }`}
-                                data-testid={`stroke-style-${s.value}`}
-                              >
-                                <svg width="28" height="4" viewBox="0 0 28 4">
-                                  <line x1="1" y1="2" x2="27" y2="2" stroke={styleZone.stroke_color || "#000"} strokeWidth="2" strokeDasharray={s.dash} />
-                                </svg>
-                                <span>{s.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-dashed mx-3" />
-
-                    {/* Live Preview */}
-                    <div className="px-3 pt-2 pb-3">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <div className="w-1 h-4 rounded-full bg-violet-500" />
-                        <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "معاينة" : "Preview"}</span>
-                      </div>
-                      <div className="flex items-center justify-center p-3 bg-slate-50 rounded-lg border" data-testid="style-preview">
-                        <svg width="140" height="60" viewBox="0 0 140 60">
-                          {fillType === "pattern" && (
-                            <defs>
-                              <pattern id="preview-current-pattern" patternUnits="userSpaceOnUse" width="6" height="6">
-                                <rect width="6" height="6" fill={patternBg} />
-                                {(() => {
-                                  const s = 6, h = 3, sw = s * 0.06;
-                                  switch(patternType) {
-                                    case "diagonal-right": return <><line x1="0" y1={s} x2={s} y2="0" stroke={patternFg} strokeWidth={sw} /><line x1={-h} y1={h} x2={h} y2={-h} stroke={patternFg} strokeWidth={sw} /><line x1={h} y1={s+h} x2={s+h} y2={h} stroke={patternFg} strokeWidth={sw} /></>;
-                                    case "diagonal-left": return <><line x1="0" y1="0" x2={s} y2={s} stroke={patternFg} strokeWidth={sw} /><line x1={-h} y1={h} x2={h} y2={s+h} stroke={patternFg} strokeWidth={sw} /><line x1={h} y1={-h} x2={s+h} y2={h} stroke={patternFg} strokeWidth={sw} /></>;
-                                    case "diagonal-cross": return <><line x1="0" y1={s} x2={s} y2="0" stroke={patternFg} strokeWidth={sw*0.7} /><line x1="0" y1="0" x2={s} y2={s} stroke={patternFg} strokeWidth={sw*0.7} /></>;
-                                    case "horizontal": return <line x1="0" y1={h} x2={s} y2={h} stroke={patternFg} strokeWidth={sw} />;
-                                    case "vertical": return <line x1={h} y1="0" x2={h} y2={s} stroke={patternFg} strokeWidth={sw} />;
-                                    case "grid": return <><line x1={h} y1="0" x2={h} y2={s} stroke={patternFg} strokeWidth={sw*0.7} /><line x1="0" y1={h} x2={s} y2={h} stroke={patternFg} strokeWidth={sw*0.7} /></>;
-                                    case "dots-small": return <circle cx={h} cy={h} r={s*0.12} fill={patternFg} />;
-                                    case "dots-large": return <circle cx={h} cy={h} r={s*0.22} fill={patternFg} />;
-                                    case "dense": return <><line x1="0" y1={s*0.25} x2={s} y2={s*0.25} stroke={patternFg} strokeWidth={sw*0.8} /><line x1="0" y1={s*0.5} x2={s} y2={s*0.5} stroke={patternFg} strokeWidth={sw*0.8} /><line x1="0" y1={s*0.75} x2={s} y2={s*0.75} stroke={patternFg} strokeWidth={sw*0.8} /><line x1={s*0.25} y1="0" x2={s*0.25} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /><line x1={s*0.75} y1="0" x2={s*0.75} y2={s} stroke={patternFg} strokeWidth={sw*0.5} /></>;
-                                    case "light-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.05} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.05} fill={patternFg} /></>;
-                                    case "medium-fill": return <><circle cx={s*0.25} cy={s*0.25} r={s*0.08} fill={patternFg} /><circle cx={s*0.75} cy={s*0.75} r={s*0.08} fill={patternFg} /><circle cx={s*0.75} cy={s*0.25} r={s*0.05} fill={patternFg} /><circle cx={s*0.25} cy={s*0.75} r={s*0.05} fill={patternFg} /></>;
-                                    case "diamonds": return <path d={`M${h} ${s*0.1} L${s*0.9} ${h} L${h} ${s*0.9} L${s*0.1} ${h} Z`} fill="none" stroke={patternFg} strokeWidth={sw*0.7} />;
-                                    default: return null;
-                                  }
-                                })()}
-                              </pattern>
-                            </defs>
-                          )}
-                          <rect x="5" y="5" width="130" height="50" rx="4"
-                            fill={fillType === "pattern" ? "url(#preview-current-pattern)" : styleZone.fill_color}
-                            fillOpacity={styleZone.opacity ?? 0.4}
-                            stroke={styleZone.stroke_color || "#000"}
-                            strokeWidth={(styleZone.stroke_width ?? 0.3) * 3}
-                            strokeOpacity={styleZone.stroke_opacity ?? 1}
-                            strokeDasharray={
-                              (styleZone.stroke_style || "dashed") === "solid" ? "none"
-                              : (styleZone.stroke_style || "dashed") === "dotted" ? "2 3"
-                              : (styleZone.stroke_style || "dashed") === "dash-dot" ? "8 3 2 3"
-                              : "8 4"
-                            }
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              );
-            })()}
             {/* Zones */}
             <ZonesDropdown activeZones={activeZones} removedZones={removedZones} selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId} setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog} handleToggleRemove={handleToggleRemove} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} />
           </div>

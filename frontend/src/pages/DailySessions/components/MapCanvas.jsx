@@ -1,232 +1,15 @@
 import { useState, useRef } from "react";
-import { Edit2, Copy, Sparkles, Trash2, Palette, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit2, Copy, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES, PATTERN_TYPES } from "../constants";
+import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 import { useZoneEmployees } from "./useZoneEmployees";
-import { ZonePatternDefs, PatternPreviewSvg, getPatternContent } from "./ZonePatterns";
+import { ZonePatternDefs } from "./ZonePatterns";
 
 // Quick color swatches for common zone colors
-const QUICK_COLORS = [
-  "#22c55e","#3b82f6","#ec4899","#f59e0b","#8b5cf6",
-  "#ef4444","#06b6d4","#f97316","#64748b","#1e293b",
-];
 
-// Border style options
-const BORDER_STYLES = [
-  { v: "solid",    dash: "none",      icon: "—" },
-  { v: "dashed",   dash: "4 2",       icon: "- -" },
-  { v: "dotted",   dash: "1 1.5",     icon: "···" },
-  { v: "dash-dot", dash: "6 2 1 2",   icon: "—·" },
-];
-
-function FloatingStyleButton({ zone, handleUpdateZoneStyle, isAr, btnClass }) {
-  const [open, setOpen] = useState(false);
-  const [showPattern, setShowPattern] = useState(false);
-  const fillColor   = zone.fill_color   || "#22c55e";
-  const strokeColor = zone.stroke_color || "#000000";
-  const opacity     = zone.opacity      ?? 0.4;
-  const strokeW     = zone.stroke_width ?? 0.3;
-  const strokeStyle = zone.stroke_style || "dashed";
-  const fillType    = zone.fill_type    || "solid";
-  const patternType = zone.pattern_type;
-  const patternFg   = zone.pattern_fg_color || "#000000";
-  const patternBg   = zone.pattern_bg_color || "#ffffff";
-  const hasPattern  = fillType === "pattern" && patternType;
-
-  const up = (upd) => handleUpdateZoneStyle(zone.id, upd);
-
-  const getDash = (s) => {
-    if (s === "solid") return "none";
-    if (s === "dotted") return "2 3";
-    if (s === "dash-dot") return "8 3 2 3";
-    return "8 4";
-  };
-
-  // Live preview fill
-  const previewPatternId = `float-preview-${zone.id}`;
-  const tileSize = 8;
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          className={`${btnClass} text-rose-500 hover:bg-rose-50 relative`}
-          data-testid="float-style-btn"
-          title={isAr ? "تنسيق سريع" : "Quick Style"}
-          onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        >
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white shadow-sm" style={{ backgroundColor: fillColor }} />
-          <Palette className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{isAr ? "تنسيق" : "Style"}</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-72 p-0 overflow-hidden shadow-2xl border-slate-200/80"
-        side="top" align="center" sideOffset={8}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-l from-rose-50 to-white border-b">
-          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-rose-100">
-            <Palette className="w-3.5 h-3.5 text-rose-500" />
-          </div>
-          <span className="text-[11px] font-bold font-cairo text-slate-700">{isAr ? "تنسيق سريع" : "Quick Style"}</span>
-          <div className="mr-auto flex items-center gap-1">
-            <span className="w-4 h-4 rounded shadow-sm border border-white/60" style={{ backgroundColor: fillColor, opacity }} />
-            {hasPattern && <Badge className="text-[8px] px-1 h-3.5 bg-violet-500 text-white ml-1"><Sparkles className="w-2 h-2" /></Badge>}
-          </div>
-        </div>
-
-        <div className="p-3 space-y-3 max-h-[75vh] overflow-y-auto">
-          {/* ── Fill ────────────────────── */}
-          <div>
-            <div className="flex items-center gap-1 mb-2">
-              <div className="w-1 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span className="text-[10px] font-bold text-slate-600 font-cairo">{isAr ? "التعبئة" : "Fill"}</span>
-            </div>
-            <div className="flex items-center gap-1 mb-2 flex-wrap">
-              {QUICK_COLORS.map(c => (
-                <button key={c} onClick={() => up({ fill_color: c, fill_type: "solid" })}
-                  className="w-5 h-5 rounded-md border-2 transition-all hover:scale-110 flex-shrink-0"
-                  style={{ backgroundColor: c, borderColor: fillColor === c && fillType === "solid" ? "#1e293b" : "transparent" }} />
-              ))}
-              <input type="color" value={fillColor} onChange={(e) => up({ fill_color: e.target.value, fill_type: "solid" })}
-                className="w-5 h-5 rounded-md cursor-pointer border border-slate-200 p-0 flex-shrink-0" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-slate-400 w-12 flex-shrink-0">{isAr ? "الشفافية" : "Opacity"}</span>
-              <Slider value={[Math.round(opacity * 100)]} min={5} max={100} step={5}
-                onValueChange={([v]) => up({ opacity: v / 100 })} className="flex-1" />
-              <span className="text-[10px] font-mono text-slate-500 w-7 text-center flex-shrink-0">{Math.round(opacity * 100)}%</span>
-            </div>
-          </div>
-
-          {/* ── Pattern Toggle ─────────── */}
-          <div className="rounded-lg border overflow-hidden">
-            <button
-              className={`w-full flex items-center justify-between px-2.5 py-2 text-[10px] font-bold transition-all ${showPattern || hasPattern ? "bg-violet-50 text-violet-700" : "bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
-              onClick={() => {
-                const next = !showPattern;
-                setShowPattern(next);
-                if (!next) up({ fill_type: "solid", pattern_type: null });
-                else up({ fill_type: "pattern", pattern_type: patternType || "diagonal-right" });
-              }}
-              data-testid="float-toggle-pattern"
-            >
-              <div className="flex items-center gap-1.5">
-                <Sparkles className={`w-3 h-3 ${showPattern || hasPattern ? "text-violet-500" : "text-slate-400"}`} />
-                {isAr ? "نقش" : "Pattern"}
-                {(showPattern || hasPattern) && <Badge className="text-[7px] px-1 h-3.5 bg-violet-500 text-white">{isAr ? "مفعّل" : "ON"}</Badge>}
-              </div>
-              {(showPattern || hasPattern) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-
-            {(showPattern || hasPattern) && (
-              <div className="p-2.5 space-y-2 bg-white">
-                {/* Pattern grid */}
-                <div className="grid grid-cols-6 gap-0.5 p-1.5 bg-slate-50 rounded-md border">
-                  {PATTERN_TYPES.map(pt => (
-                    <PatternPreviewSvg
-                      key={pt.value}
-                      patternType={pt.value}
-                      fgColor={patternFg}
-                      bgColor={patternBg}
-                      size={32}
-                      selected={patternType === pt.value}
-                      onClick={() => up({ fill_type: "pattern", pattern_type: pt.value })}
-                      label={isAr ? pt.label_ar : pt.label_en}
-                    />
-                  ))}
-                </div>
-                {/* Pattern colors */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <input type="color" value={patternFg} onChange={(e) => up({ pattern_fg_color: e.target.value })}
-                      className="w-6 h-6 rounded cursor-pointer border border-slate-200 p-0.5 flex-shrink-0" />
-                    <span className="text-[9px] text-slate-500">{isAr ? "لون النقش" : "Pattern"}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <input type="color" value={patternBg} onChange={(e) => up({ pattern_bg_color: e.target.value })}
-                      className="w-6 h-6 rounded cursor-pointer border border-slate-200 p-0.5 flex-shrink-0" />
-                    <span className="text-[9px] text-slate-500">{isAr ? "لون الخلفية" : "Background"}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-dashed border-slate-200" />
-
-          {/* ── Border ──────────────────── */}
-          <div>
-            <div className="flex items-center gap-1 mb-2">
-              <div className="w-1 h-3 rounded-full bg-blue-500 flex-shrink-0" />
-              <span className="text-[10px] font-bold text-slate-600 font-cairo">{isAr ? "الحدود" : "Border"}</span>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <input type="color" value={strokeColor} onChange={(e) => up({ stroke_color: e.target.value })}
-                className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 p-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <Slider value={[strokeW]} min={0.1} max={3} step={0.1} onValueChange={([v]) => up({ stroke_width: v })} />
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 w-7 text-center flex-shrink-0">{strokeW.toFixed(1)}</span>
-            </div>
-            <div className="grid grid-cols-4 gap-1">
-              {BORDER_STYLES.map(s => (
-                <button key={s.v} onClick={() => up({ stroke_style: s.v })}
-                  className={`flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg border text-[8px] font-medium transition-all ${strokeStyle === s.v ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" : "border-slate-200 hover:bg-slate-50 text-slate-400"}`}
-                  data-testid={`float-stroke-${s.v}`}>
-                  <svg width="24" height="4" viewBox="0 0 24 4">
-                    <line x1="1" y1="2" x2="23" y2="2" stroke={strokeStyle === s.v ? "#3b82f6" : "#94a3b8"} strokeWidth="2.5" strokeDasharray={s.dash} />
-                  </svg>
-                  <span>{s.icon}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-dashed border-slate-200" />
-
-          {/* ── Live Preview ─────────────── */}
-          <div className="rounded-lg border bg-slate-50 p-1.5">
-            <p className="text-[8px] text-slate-400 text-center mb-1">{isAr ? "معاينة" : "Preview"}</p>
-            <svg width="100%" height="40" viewBox="0 0 220 40">
-              <defs>
-                {hasPattern && patternType && (
-                  <pattern id={previewPatternId} patternUnits="userSpaceOnUse" width={tileSize} height={tileSize}>
-                    <rect width={tileSize} height={tileSize} fill={patternBg} />
-                    {getPatternContent(patternType, patternFg, tileSize)}
-                  </pattern>
-                )}
-              </defs>
-              <rect x="4" y="4" width="212" height="32" rx="5"
-                fill={hasPattern ? `url(#${previewPatternId})` : fillColor}
-                fillOpacity={hasPattern ? 0.9 : opacity}
-                stroke={strokeColor} strokeWidth={strokeW * 3}
-                strokeOpacity={zone.stroke_opacity ?? 1}
-                strokeDasharray={getDash(strokeStyle)}
-              />
-              {hasPattern && (
-                <rect x="4" y="4" width="212" height="32" rx="5"
-                  fill={fillColor} fillOpacity={opacity * 0.25} />
-              )}
-            </svg>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove, handleUpdateZoneStyle }) {
+function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, onSmooth, onRemove }) {
   if (!zone?.polygon_points?.length || !svgRef.current || !mapContainerRef.current) return null;
 
   const pts = zone.polygon_points;
@@ -242,8 +25,8 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
   let posY = screenY - containerRect.top - 52;
 
   // Keep within container bounds
-  posX = Math.max(120, Math.min(posX, containerRect.width - 120));
-  if (posY < 10) posY = (screenY - containerRect.top) + 20; // flip below if too high
+  posX = Math.max(100, Math.min(posX, containerRect.width - 100));
+  if (posY < 10) posY = (screenY - containerRect.top) + 20;
 
   const btnClass = "flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all hover:scale-105 active:scale-95";
 
@@ -268,9 +51,6 @@ function FloatingToolbar({ zone, svgRef, mapContainerRef, isAr, onEdit, onCopy, 
         <button onClick={onSmooth} className={`${btnClass} text-emerald-600 hover:bg-emerald-50`} data-testid="float-smooth-btn" title={isAr ? "تنعيم الزوايا" : "Smooth"}>
           <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
         </button>
-        <div className="w-px h-5 bg-slate-200" />
-        {/* Quick Style Button */}
-        <FloatingStyleButton zone={zone} handleUpdateZoneStyle={handleUpdateZoneStyle} isAr={isAr} btnClass={btnClass} />
         <div className="w-px h-5 bg-slate-200" />
         <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
           <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
@@ -627,7 +407,6 @@ export function MapCanvas({
               onCopy={handleCopyZone}
               onSmooth={handleSmoothZone}
               onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
-              handleUpdateZoneStyle={handleUpdateZoneStyle}
             />
           )}
           {/* Tooltip for non-selected zones */}
