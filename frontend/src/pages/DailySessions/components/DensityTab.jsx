@@ -318,10 +318,16 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
   const heatContainerRef = useRef(null);
   const [heatHovered, setHeatHovered] = useState(null);
   const [heatTooltipPos, setHeatTooltipPos] = useState({ x: 0, y: 0 });
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   const heatWheelRef = useCallback((node) => {
     if (!node) return;
     heatContainerRef.current = node;
+    // Capture dimensions immediately and on resize
+    const updateSize = () => setContainerSize({ w: node.clientWidth, h: node.clientHeight });
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(node);
     const handler = (e) => {
       e.preventDefault();
       const rect = node.getBoundingClientRect();
@@ -356,7 +362,13 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
     node.addEventListener("touchstart", onTs, { passive: false });
     node.addEventListener("touchmove", onTm, { passive: false });
     node.addEventListener("touchend", onTe);
-    return () => { node.removeEventListener("wheel", handler); node.removeEventListener("touchstart", onTs); node.removeEventListener("touchmove", onTm); node.removeEventListener("touchend", onTe); };
+    return () => {
+      node.removeEventListener("wheel", handler);
+      node.removeEventListener("touchstart", onTs);
+      node.removeEventListener("touchmove", onTm);
+      node.removeEventListener("touchend", onTe);
+      ro.disconnect();
+    };
   }, []);
 
   const zoomHeat = (factor) => {
@@ -438,9 +450,9 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
         <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {(() => {
             let ws = { position: "relative", width: "100%", height: "100%" };
-            if (imgRatio) {
-              const ch = 600;
-              const cw = heatContainerRef.current?.clientWidth || 800;
+            if (imgRatio && containerSize.w > 0 && containerSize.h > 0) {
+              const cw = containerSize.w;
+              const ch = containerSize.h;
               if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
               else ws = { position: "relative", width: "100%", height: cw / imgRatio };
             }

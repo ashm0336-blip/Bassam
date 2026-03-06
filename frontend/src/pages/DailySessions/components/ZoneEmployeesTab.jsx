@@ -39,11 +39,16 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   // Wheel zoom with passive:false to prevent page scroll
   const wheelCallbackRef = useCallback((node) => {
     if (!node) return;
     mapContainerRef.current = node;
+    const updateSize = () => setContainerSize({ w: node.clientWidth, h: node.clientHeight });
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(node);
     const handler = (e) => {
       e.preventDefault();
       const rect = node.getBoundingClientRect();
@@ -78,7 +83,13 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     node.addEventListener("touchstart", onTs, { passive: false });
     node.addEventListener("touchmove", onTm, { passive: false });
     node.addEventListener("touchend", onTe);
-    return () => { node.removeEventListener("wheel", handler); node.removeEventListener("touchstart", onTs); node.removeEventListener("touchmove", onTm); node.removeEventListener("touchend", onTe); };
+    return () => {
+      node.removeEventListener("wheel", handler);
+      node.removeEventListener("touchstart", onTs);
+      node.removeEventListener("touchmove", onTm);
+      node.removeEventListener("touchend", onTe);
+      ro.disconnect();
+    };
   }, []);
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
@@ -265,9 +276,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
               <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {(() => {
                   let ws = { position: "relative", width: "100%", height: "100%" };
-                  if (imgRatio) {
-                    const ch = 600;
-                    const cw = mapContainerRef.current?.clientWidth || 800;
+                  if (imgRatio && containerSize.w > 0 && containerSize.h > 0) {
+                    const cw = containerSize.w;
+                    const ch = containerSize.h;
                     if (cw / ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio };
                     else ws = { position: "relative", width: "100%", height: cw / imgRatio };
                   }
