@@ -619,7 +619,7 @@ export default function DailySessionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للخرائط" : "Daily Map Log"}</h1>
+          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للمصليات" : "Daily Prayer Areas Log"}</h1>
           <p className="text-sm text-muted-foreground mt-1">{isAr ? "تتبع التغييرات اليومية للمصليات والمناطق في كل طابق" : "Track daily changes to prayer areas and zones per floor"}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -673,9 +673,9 @@ export default function DailySessionsPage() {
                 <div className="rounded-2xl p-2 mb-4" style={{ backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }} data-testid="daily-tabs-bar">
                   <div className="flex items-center justify-center gap-2">
                     {[
-                      { id: 'map', label: isAr ? 'الخريطة' : 'Map', icon: MapPin, count: activeZones.length },
-                      { id: 'density', label: isAr ? 'الكثافات' : 'Density', icon: Activity, count: densityStats?.criticalCount || null, isAlert: true },
                       { id: 'employees', label: isAr ? 'الموظفين' : 'Staff', icon: Users, count: null },
+                      { id: 'density', label: isAr ? 'الكثافات' : 'Density', icon: Activity, count: densityStats?.criticalCount || null, isAlert: true },
+                      { id: 'map', label: isAr ? 'المصليات' : 'Prayer Areas', icon: MapPin, count: activeZones.length },
                     ].map(tab => {
                       const isActive = activeTab === tab.id;
                       const TabIcon = tab.icon;
