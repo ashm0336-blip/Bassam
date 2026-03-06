@@ -204,7 +204,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const mapImageUrl = selectedFloor?.image_url ? normalizeImageUrl(selectedFloor.image_url) : null;
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
+    <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }} data-testid="zone-employees-tab">
       {/* Fixed handle - always at panel edge */}
       <div
         className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
@@ -219,11 +219,11 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: panelCollapsed ? 'rotate(180deg)' : '' }} />
         </button>
       </div>
-      {/* LEFT: Coverage Map - always full width */}
-      <div className="flex-[3] min-w-0 relative bg-slate-50 flex flex-col">
+      {/* LEFT: Coverage Map - absolute inset-0, never changes size */}
+      <div className="absolute inset-0 bg-slate-50 flex flex-col">
         {mapImageUrl ? (
           <>
-          <div className="relative flex-1" style={{ minHeight: "500px" }}>
+          <div className="relative flex-1">
             {/* Zoom controls */}
             <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm">
               <button onClick={() => zoomMap(0.8)} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="emp-map-zoom-out"><ZoomOut className="w-4 h-4 text-slate-600" /></button>

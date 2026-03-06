@@ -76,7 +76,7 @@ export function DensityTab({
       )}
 
       {/* Main Layout: Heatmap fills full space, Panel floats on top (no layout shift) */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>
         {/* Fixed handle - always at panel edge, never moves far */}
         <div
           className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
@@ -91,8 +91,8 @@ export function DensityTab({
             <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: panelCollapsed ? 'rotate(180deg)' : '' }} />
           </button>
         </div>
-        {/* Heatmap: always full width, never changes size */}
-        <div className="w-full h-full">
+        {/* Heatmap: absolute inset-0 → never changes size */}
+        <div className="absolute inset-0">
           {selectedFloor?.image_url ? (
             <DensityHeatmapInline
               densityStats={densityStats} selectedFloor={selectedFloor} imgRatio={imgRatio}

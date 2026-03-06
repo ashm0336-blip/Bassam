@@ -741,7 +741,7 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>
                     {/* Fixed handle - always at panel edge */}
                     <div
                       className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
@@ -756,8 +756,8 @@ export default function DailySessionsPage() {
                         <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: statsCollapsed ? 'rotate(180deg)' : '' }} />
                       </button>
                     </div>
-                    {/* Map canvas: always full width, no layout shift */}
-                    <div className="w-full h-full">
+                    {/* Map canvas: absolute inset-0 → always same size regardless of panel state */}
+                    <div className="absolute inset-0">
                       <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
                     sessionZones={sessionZones} activeZones={activeZones} removedZones={removedZones}
