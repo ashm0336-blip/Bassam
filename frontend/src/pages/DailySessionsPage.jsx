@@ -801,17 +801,65 @@ export default function DailySessionsPage() {
                 </TabsContent>
 
                 <TabsContent value="density" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <DensityTab
-                    activeSession={activeSession} densityStats={densityStats}
-                    densityEdits={densityEdits} activePrayer={activePrayer} setActivePrayer={setActivePrayer}
-                    handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
-                    savingDensity={savingDensity} selectedFloor={selectedFloor}
-                    imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
-                  />
+                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
+                    {statsCollapsed && (
+                      <button
+                        onClick={() => setStatsCollapsed(false)}
+                        className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
+                        data-testid="density-stats-show"
+                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <DensityTab
+                        activeSession={activeSession} densityStats={densityStats}
+                        densityEdits={densityEdits} activePrayer={activePrayer} setActivePrayer={setActivePrayer}
+                        handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
+                        savingDensity={savingDensity} selectedFloor={selectedFloor}
+                        imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
+                      />
+                    </div>
+                    <MapStatsPanel
+                      sessionStats={sessionStats}
+                      densityStats={densityStats}
+                      changedZones={changedZones}
+                      ZONE_TYPES={ZONE_TYPES}
+                      activeZones={activeZones}
+                      collapsed={statsCollapsed}
+                      onToggle={() => setStatsCollapsed(prev => !prev)}
+                    />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="employees" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio} />
+                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
+                    {statsCollapsed && (
+                      <button
+                        onClick={() => setStatsCollapsed(false)}
+                        className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 backdrop-blur border border-slate-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all"
+                        data-testid="employees-stats-show"
+                        title={isAr ? "إظهار الإحصائيات" : "Show Stats"}
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio} />
+                    </div>
+                    <MapStatsPanel
+                      sessionStats={sessionStats}
+                      densityStats={densityStats}
+                      changedZones={changedZones}
+                      ZONE_TYPES={ZONE_TYPES}
+                      activeZones={activeZones}
+                      collapsed={statsCollapsed}
+                      onToggle={() => setStatsCollapsed(prev => !prev)}
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
