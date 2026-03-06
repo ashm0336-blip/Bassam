@@ -193,7 +193,7 @@ export function MapToolbar({
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant={DRAG_SHAPE_MODES.includes(mapMode) || mapMode === "draw" || mapMode === "freehand" ? "default" : "ghost"} size="sm" className="rounded-none border-l" data-testid="shapes-dropdown-btn">
-                  <Shapes className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "أشكال" : "Shapes"}</span><ChevronDown className="w-3 h-3 mr-1" />
+                  <Shapes className="w-4 h-4 ml-1" /><span className="text-xs hidden lg:inline">{isAr ? "إضافة موقع" : "Add Zone"}</span><ChevronDown className="w-3 h-3 mr-1" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-0" align="start" data-testid="shapes-panel">
