@@ -205,7 +205,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const mapImageUrl = selectedFloor?.image_url ? normalizeImageUrl(selectedFloor.image_url) : null;
 
   return (
-    <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
+    <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ alignItems: "stretch" }} data-testid="zone-employees-tab">
       {/* Show button when panel is collapsed */}
       {panelCollapsed && (
         <button onClick={() => setPanelCollapsed(false)}
@@ -215,7 +215,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "إدارة الموظفين" : "Staff Panel"}</span>
         </button>
       )}
-      {/* LEFT: Coverage Map (60%) */}
+      {/* LEFT: Coverage Map - always full width */}
       <div className="flex-[3] min-w-0 relative bg-slate-50 flex flex-col">
         {mapImageUrl ? (
           <>
@@ -363,8 +363,12 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
         )}
       </div>
 
-      {/* RIGHT: Control Panel (40%) */}
-      <div className={`w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden transition-all duration-300 ${panelCollapsed ? "hidden" : ""}`} data-testid="employees-panel">
+      {/* RIGHT: Control Panel - absolutely positioned, slides over the map */}
+      <div
+        className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden shadow-xl"
+        style={{ width: '40%', transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
+        data-testid="employees-panel"
+      >
         <div className="p-4 space-y-4">
           {/* Panel Header */}
           <div className="flex items-center justify-between">

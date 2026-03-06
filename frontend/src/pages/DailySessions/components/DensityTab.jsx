@@ -75,8 +75,8 @@ export function DensityTab({
         </div>
       )}
 
-      {/* Main Layout: Heatmap (60%) + Panel (40%) */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
+      {/* Main Layout: Heatmap fills full space, Panel floats on top (no layout shift) */}
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
         {/* Show button when panel is collapsed */}
         {panelCollapsed && (
           <button onClick={() => setPanelCollapsed(false)}
@@ -86,8 +86,8 @@ export function DensityTab({
             <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "لوحة الكثافة" : "Panel"}</span>
           </button>
         )}
-        {/* Heatmap */}
-        <div className="flex-1 min-w-0">
+        {/* Heatmap: always full width, never changes size */}
+        <div className="w-full h-full">
           {selectedFloor?.image_url ? (
             <DensityHeatmapInline
               densityStats={densityStats} selectedFloor={selectedFloor} imgRatio={imgRatio}
@@ -95,12 +95,16 @@ export function DensityTab({
               selectedZoneId={selectedZoneId} onZoneClick={handleZoneClick}
             />
           ) : (
-            <div className="h-full min-h-[500px] bg-slate-50 flex items-center justify-center text-sm text-slate-400">{isAr ? "لا توجد صورة خريطة" : "No map image"}</div>
+            <div className="min-h-[500px] bg-slate-50 flex items-center justify-center text-sm text-slate-400">{isAr ? "لا توجد صورة خريطة" : "No map image"}</div>
           )}
         </div>
 
-        {/* Side Panel */}
-        <div className={`w-[40%] flex-shrink-0 bg-gradient-to-b from-slate-50/95 to-white/95 border-l border-slate-200/80 overflow-y-auto flex flex-col transition-all duration-300 ${panelCollapsed ? "hidden" : ""}`} data-testid="density-side-panel">
+        {/* Side Panel: absolutely positioned, slides over the map */}
+        <div
+          className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 border-l border-slate-200/80 overflow-y-auto flex flex-col shadow-xl"
+          style={{ width: '40%', transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
+          data-testid="density-side-panel"
+        >
           <div className="p-4 space-y-3 flex-1">
             {/* Panel Title */}
             <div className="flex items-center justify-between">

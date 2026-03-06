@@ -739,7 +739,7 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
-                  <div className="flex gap-0 rounded-xl overflow-hidden border border-slate-200/60 relative" style={{ alignItems: "stretch" }}>
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ minHeight: '500px' }}>
                     {statsCollapsed && (
                       <button
                         onClick={() => setStatsCollapsed(false)}
@@ -751,7 +751,8 @@ export default function DailySessionsPage() {
                         <span className="text-[10px] font-semibold text-emerald-700">{isAr ? "الإحصائيات" : "Stats"}</span>
                       </button>
                     )}
-                    <div className={`transition-all duration-300 ${statsCollapsed ? "flex-1" : "flex-1 min-w-0"}`}>
+                    {/* Map canvas: always full width, no layout shift */}
+                    <div className="w-full h-full">
                       <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
                     sessionZones={sessionZones} activeZones={activeZones} removedZones={removedZones}
@@ -785,6 +786,7 @@ export default function DailySessionsPage() {
                     onEditStart={onEditStart} setMapMode={setMapMode}
                   />
                     </div>
+                    {/* Stats panel: absolutely positioned, slides over the map */}
                     <MapStatsPanel
                       sessionStats={sessionStats}
                       densityStats={densityStats}
