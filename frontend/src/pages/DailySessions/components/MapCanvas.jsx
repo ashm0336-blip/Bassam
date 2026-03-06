@@ -528,7 +528,7 @@ export function MapCanvas({
             />
           )}
           {/* Tooltip: shows on hover (desktop) or after single tap (tablet) */}
-          {hoveredZone && !interactionRef.current.draggingPoint && !interactionRef.current.isDraggingZone && !interactionRef.current.isRotating && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
+          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
         </div>
       </CardContent>
     </Card>
