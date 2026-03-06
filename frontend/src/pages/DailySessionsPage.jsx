@@ -57,6 +57,8 @@ export default function DailySessionsPage() {
   const [sessionNotes, setSessionNotes] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [statsCollapsed, setStatsCollapsed] = useState(false);
+  const [densityPanelCollapsed, setDensityPanelCollapsed] = useState(false);
+  const [employeesPanelCollapsed, setEmployeesPanelCollapsed] = useState(false);
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -812,11 +814,16 @@ export default function DailySessionsPage() {
                     handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
                     savingDensity={savingDensity} selectedFloor={selectedFloor}
                     imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
+                    panelCollapsed={densityPanelCollapsed}
+                    onPanelToggle={() => setDensityPanelCollapsed(p => !p)}
                   />
                 </TabsContent>
 
                 <TabsContent value="employees" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio} />
+                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
+                    panelCollapsed={employeesPanelCollapsed}
+                    onPanelToggle={() => setEmployeesPanelCollapsed(p => !p)}
+                  />
                 </TabsContent>
               </Tabs>
             </div>

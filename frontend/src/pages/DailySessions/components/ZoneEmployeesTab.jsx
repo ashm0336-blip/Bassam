@@ -22,7 +22,7 @@ const SHIFTS = [
   { value: "الرابعة", label_ar: "الوردية الرابعة", label_en: "Shift 4", color: "#8b5cf6" },
 ];
 
-export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selectedFloor, imgRatio }) {
+export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const [employees, setEmployees] = useState([]);
@@ -31,7 +31,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const [activeShift, setActiveShift] = useState("all");
   const [hoveredZone, setHoveredZone] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Zoom/Pan state
   const [zoom, setZoom] = useState(1);
@@ -212,7 +211,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
         style={{ right: panelCollapsed ? 0 : '40%' }}
       >
         <button
-          onClick={() => setPanelCollapsed(p => !p)}
+            onClick={() => onPanelToggle()}
           className="flex items-center justify-center w-5 h-14 bg-emerald-600 hover:bg-emerald-700 rounded-r-none rounded-l-lg shadow-lg transition-colors"
           data-testid="employees-panel-handle"
           title={isAr ? (panelCollapsed ? "إظهار اللوحة" : "إخفاء اللوحة") : (panelCollapsed ? "Show Panel" : "Hide Panel")}

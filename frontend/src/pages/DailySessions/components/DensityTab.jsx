@@ -15,6 +15,7 @@ export function DensityTab({
   activeSession, densityStats, densityEdits, activePrayer, setActivePrayer,
   handleDensityChange, handleSaveDensityBatch, savingDensity,
   selectedFloor, imgRatio, ZONE_TYPES,
+  panelCollapsed, onPanelToggle,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -22,7 +23,6 @@ export function DensityTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
   const [sortBy, setSortBy] = useState("density-desc");
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Filter & sort zones
   const filteredZones = useMemo(() => {
@@ -83,7 +83,7 @@ export function DensityTab({
           style={{ right: panelCollapsed ? 0 : '40%' }}
         >
           <button
-            onClick={() => setPanelCollapsed(p => !p)}
+            onClick={() => onPanelToggle()}
             className="flex items-center justify-center w-5 h-14 bg-emerald-600 hover:bg-emerald-700 rounded-r-none rounded-l-lg shadow-lg transition-colors"
             data-testid="density-panel-handle"
             title={isAr ? (panelCollapsed ? "إظهار اللوحة" : "إخفاء اللوحة") : (panelCollapsed ? "Show Panel" : "Hide Panel")}
