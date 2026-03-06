@@ -352,7 +352,7 @@ export function MapCanvas({
       if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
       addDrawingPoint({ x: pos.x, y: pos.y });
     } else if (mapMode === "edit" && activeSession?.status === "draft") {
-      if (e.target?.closest && e.target.closest("[data-zone-id]")) return;
+      // Find which zone was clicked (zone-level onClick removed, handled here)
       let found = null;
       for (const zone of sessionZones) {
         if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
@@ -412,7 +412,6 @@ export function MapCanvas({
                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
                           onMouseLeave={() => setHoveredZone(null)}
-                          onClick={(e) => { if (mapMode === "edit" && activeSession?.status === "draft") { e.stopPropagation(); setSelectedZoneId(zone.id); } }}
                           onDoubleClick={(e) => {
                             if (activeSession?.status !== "draft") return;
                             e.stopPropagation();
