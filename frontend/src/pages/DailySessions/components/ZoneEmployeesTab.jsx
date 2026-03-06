@@ -433,16 +433,50 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
             })}
           </div>
 
-          {/* Shift Filter */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => setActiveShift("all")} className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${activeShift === "all" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-              {isAr ? "الكل" : "All"} ({shiftCounts.all})
-            </button>
-            {SHIFTS.map(s => (
-              <button key={s.value} onClick={() => setActiveShift(s.value)} className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all ${activeShift === s.value ? "bg-white shadow-sm border" : "bg-slate-100 text-slate-500"}`} style={activeShift === s.value ? { color: s.color, borderColor: s.color + '40' } : {}}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />{shiftCounts[s.value] || 0}
+          {/* ─── Shift Cards ─────────────────────────── */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{isAr ? "الورديات" : "Shifts"}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {/* All shifts card */}
+              <button onClick={() => setActiveShift("all")}
+                className={`flex flex-col gap-1.5 p-2.5 rounded-xl border-2 transition-all text-right ${activeShift === "all" ? "border-emerald-400 bg-emerald-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                data-testid="shift-all-card">
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-xs font-extrabold text-emerald-600">{employees.length}</span>
+                  <span className="text-[10px] font-bold text-slate-600">{isAr ? "الكل" : "All"}</span>
+                </div>
+                <div className="flex gap-0.5 flex-wrap justify-end">
+                  {employees.slice(0, 8).map(emp => {
+                    const s = SHIFTS.find(sh => sh.value === emp.shift);
+                    return <div key={emp.id} className="w-4 h-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>;
+                  })}
+                  {employees.length > 8 && <span className="text-[7px] text-slate-400 self-center">+{employees.length - 8}</span>}
+                  {employees.length === 0 && <span className="text-[9px] text-slate-300">{isAr ? "لا يوجد" : "Empty"}</span>}
+                </div>
               </button>
-            ))}
+              {SHIFTS.map(s => {
+                const shiftEmps = employees.filter(e => e.shift === s.value);
+                const isActive = activeShift === s.value;
+                return (
+                  <button key={s.value} onClick={() => setActiveShift(isActive ? "all" : s.value)}
+                    className="flex flex-col gap-1.5 p-2.5 rounded-xl border-2 transition-all text-right"
+                    style={{ borderColor: isActive ? s.color : "#e2e8f0", backgroundColor: isActive ? s.color + "12" : "#fff" }}
+                    data-testid={`shift-card-${s.value}`}>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-xs font-extrabold" style={{ color: s.color }}>{shiftEmps.length}</span>
+                      <span className="text-[10px] font-bold" style={{ color: isActive ? s.color : "#475569" }}>{isAr ? s.label_ar : s.label_en}</span>
+                    </div>
+                    <div className="flex gap-0.5 flex-wrap justify-end">
+                      {shiftEmps.slice(0, 6).map(emp => (
+                        <div key={emp.id} className="w-4 h-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.color }}>{emp.name.charAt(0)}</div>
+                      ))}
+                      {shiftEmps.length === 0 && <span className="text-[9px] text-slate-300">{isAr ? "لا يوجد" : "Empty"}</span>}
+                      {shiftEmps.length > 6 && <span className="text-[7px] self-center" style={{ color: s.color }}>+{shiftEmps.length - 6}</span>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Search */}
@@ -452,20 +486,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           </div>
 
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
-
-          {/* Uncovered Alert - scrollable */}
-          {uncoveredZones.length > 0 && (
-            <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-[10px] font-semibold text-red-700 flex items-center gap-1 mb-1.5">
-                <AlertCircle className="w-3.5 h-3.5" />{isAr ? `${uncoveredZones.length} منطقة بدون تغطية` : `${uncoveredZones.length} uncovered`}
-              </p>
-              <div className="flex flex-wrap gap-1 max-h-[60px] overflow-y-auto">
-                {uncoveredZones.map(z => (
-                  <span key={z.id} className="text-[9px] px-1.5 py-0.5 bg-white rounded-full border border-red-200 text-red-600 font-medium">{z.zone_code}</span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Unassigned Employees */}
           {unassignedEmployees.length > 0 && (
@@ -503,14 +523,26 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-          {/* Distribution - Card Grid with Popover */}
+          {/* Distribution - uncovered zones sorted first */}
           <div>
-            <div className="text-center mb-3">
+            <div className="flex items-center justify-between mb-3">
               <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "التوزيع على المناطق" : "Zone Distribution"}</p>
-              <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mt-2" />
+              {uncoveredZones.length > 0 && (
+                <span className="text-[9px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                  <AlertCircle className="w-2.5 h-2.5" />{uncoveredZones.length} {isAr ? "بدون تغطية" : "uncovered"}
+                </span>
+              )}
             </div>
+            <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mb-3" />
             <div className="grid grid-cols-5 gap-1.5 max-h-[300px] overflow-y-auto pr-0.5">
-              {activeZones.filter(z => !z.is_removed).map(zone => {
+              {[...activeZones.filter(z => !z.is_removed)].sort((a, b) => {
+                // Uncovered non-service zones first
+                const aUncovered = (zoneEmployeeMap[a.zone_code] || []).length === 0 && a.zone_type !== "service";
+                const bUncovered = (zoneEmployeeMap[b.zone_code] || []).length === 0 && b.zone_type !== "service";
+                if (aUncovered && !bUncovered) return -1;
+                if (!aUncovered && bUncovered) return 1;
+                return 0;
+              }).map(zone => {
                 const emps = zoneEmployeeMap[zone.zone_code] || [];
                 const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
                 const hasCoverage = emps.length > 0;
@@ -519,16 +551,19 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                   <Popover key={zone.id}>
                     <PopoverTrigger asChild>
                       <button
-                        className={`relative flex flex-col items-center justify-center rounded-lg border p-1.5 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md
+                        className={`relative flex flex-col items-center justify-center rounded-lg border-2 p-1.5 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md
                           ${hasCoverage ? "bg-emerald-50 border-emerald-200 hover:border-emerald-400" :
                             isService ? "bg-slate-50 border-slate-200 hover:border-slate-400" :
-                            "bg-red-50 border-red-200 hover:border-red-400"}`}
-                        onMouseEnter={() => setHoveredZone(zone.id)}
-                        onMouseLeave={() => setHoveredZone(null)}
+                            "bg-red-50 border-red-300 hover:border-red-500 shadow-sm"}`}
                         data-testid={`zone-card-${zone.id}`}
                       >
+                        {!hasCoverage && !isService && (
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                            <AlertCircle className="w-2 h-2 text-white" />
+                          </span>
+                        )}
                         <span className="w-3 h-3 rounded-sm mb-0.5" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
-                        <span className="text-[7px] font-bold text-slate-600 leading-tight truncate w-full text-center">{zone.zone_code}</span>
+                        <span className="text-[7px] font-bold leading-tight truncate w-full text-center" style={{ color: !hasCoverage && !isService ? "#dc2626" : "#475569" }}>{zone.zone_code}</span>
                         <Badge variant={hasCoverage ? "secondary" : isService ? "outline" : "destructive"} className="text-[7px] px-1 h-3.5 mt-0.5">
                           {hasCoverage ? emps.length : isService ? "-" : "0"}
                         </Badge>
