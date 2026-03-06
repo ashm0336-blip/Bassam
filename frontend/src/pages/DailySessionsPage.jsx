@@ -222,7 +222,7 @@ export default function DailySessionsPage() {
       zoomRef.current = nz; setZoom(nz);
       setPanOffset(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
     };
-    // Pinch-to-zoom
+    // Pinch-to-zoom + single-touch scroll prevention
     let pinchDist = null, pinchZoom = null;
     const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
     const onTs = (e) => { if (e.touches.length === 2) { e.preventDefault(); pinchDist = dist(e.touches[0], e.touches[1]); pinchZoom = zoomRef.current; } };
@@ -238,6 +238,9 @@ export default function DailySessionsPage() {
         const s = nz / prev;
         zoomRef.current = nz; setZoom(nz);
         setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      } else if (e.touches.length === 1) {
+        // Prevent browser scroll during single-finger interaction (non-passive handler)
+        e.preventDefault();
       }
     };
     const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };

@@ -104,12 +104,14 @@ export function MapCanvas({
   };
 
   const hasPannedRef = useRef(false);
+  const touchStartPixelRef = useRef({ x: 0, y: 0 });
 
   const handlePointerDown = (e, isTouch = false) => {
     if (!isTouch && e.button !== 0) return;
-    e.preventDefault();
+    if (!isTouch) e.preventDefault();
     hasPannedRef.current = false;
     const { clientX, clientY } = getClientXY(e);
+    if (isTouch) touchStartPixelRef.current = { x: clientX, y: clientY };
     const pos = getMousePercent(e);
     if (activeSession?.status === "completed") {
       setIsPanning(true);
@@ -159,7 +161,14 @@ export function MapCanvas({
     const { clientX, clientY } = getClientXY(e);
     const pos = getMousePercent(e);
     setMousePos(pos);
-    if (isPanning) { hasPannedRef.current = true; setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y }); return; }
+    if (isPanning) {
+      // Only mark as panned if finger moved more than 10px (prevents false positives on tablet taps)
+      if (Math.hypot(clientX - touchStartPixelRef.current.x, clientY - touchStartPixelRef.current.y) > 10) {
+        hasPannedRef.current = true;
+      }
+      setPanOffset({ x: clientX - panStart.x, y: clientY - panStart.y });
+      return;
+    }
     if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
     if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
     if (isRotating && selectedZoneId) {
@@ -214,15 +223,13 @@ export function MapCanvas({
   const handleMouseMove = (e) => handlePointerMove(e);
   const handleTouchMove = (e) => {
     if (e.touches.length !== 1) return; // multi-touch handled by pinch-to-zoom
-    if (isPanning || draggingPoint !== null || isRotating || isDraggingZone || isDrawingFreehand || rectStart) {
-      e.preventDefault();
-    }
     handlePointerMove(e);
   };
 
   const handleMouseUp = () => onMapMouseUp();
   const handleTouchEnd = (e) => {
-    e.preventDefault();
+    // Do NOT call e.preventDefault() here - it prevents click events from firing on tablet
+    // Scrolling is already prevented by touch-action:none CSS on the container
     onMapMouseUp();
   };
 

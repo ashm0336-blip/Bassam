@@ -250,7 +250,7 @@ export default function GateMapPage() {
   // Touch handlers - smart cursor
   const handleTouchStart = (e) => {
     if (e.touches.length !== 1) return;
-    e.preventDefault();
+    // Do NOT call e.preventDefault() here - it prevents click events on tablet
     const { clientX, clientY } = getClientXY(e);
     setIsPanning(true);
     setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
@@ -282,7 +282,7 @@ export default function GateMapPage() {
   };
 
   const handleTouchEnd = (e) => {
-    e.preventDefault();
+    // Do NOT call e.preventDefault() here - it prevents click events on tablet
     if (draggingMarkerId) {
       const marker = markers.find(m => m.id === draggingMarkerId);
       if (marker) updateMarkerPosition(marker.id, marker.x, marker.y);
@@ -322,6 +322,9 @@ export default function GateMapPage() {
         const s = nz / prev;
         zoomRef.current = nz; setZoom(nz);
         setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
+      } else if (e.touches.length === 1) {
+        // Prevent browser scroll during single-finger interaction (non-passive handler)
+        e.preventDefault();
       }
     };
     const onTe = (e) => { if (e.touches.length < 2) { pinchDist = null; pinchZoom = null; } };
