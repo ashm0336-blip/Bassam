@@ -723,7 +723,7 @@ export default function DailySessionsPage() {
                   </div>
                 </div>
 
-                <TabsContent value="map" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
+                <TabsContent value="map" tabIndex={-1} className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -807,7 +807,7 @@ export default function DailySessionsPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value="density" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
+                <TabsContent value="density" tabIndex={-1} className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <DensityTab
                     activeSession={activeSession} densityStats={densityStats}
                     densityEdits={densityEdits} activePrayer={activePrayer} setActivePrayer={setActivePrayer}
@@ -819,7 +819,7 @@ export default function DailySessionsPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value="employees" className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
+                <TabsContent value="employees" tabIndex={-1} className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
                     panelCollapsed={employeesPanelCollapsed}
                     onPanelToggle={() => setEmployeesPanelCollapsed(p => !p)}
