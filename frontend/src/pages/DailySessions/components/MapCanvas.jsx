@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
-import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES } from "../constants";
+import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES, PRAYER_TIMES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
 import { useZoneEmployees } from "./useZoneEmployees";
 import { ZonePatternDefs } from "./ZonePatterns";
@@ -82,6 +82,7 @@ export function MapCanvas({
   ZONE_TYPES, wheelRef, onMapMouseUp,
   handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
   addDrawingPoint, onEditStart, setMapMode,
+  activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -416,6 +417,9 @@ export function MapCanvas({
                         : zone.stroke_style === "dotted" ? "0.5 0.8"
                         : zone.stroke_style === "dash-dot" ? "2 0.6 0.5 0.6"
                         : "2 1");
+                      // Prayer density overlay
+                      const prayerCount = densityEdits?.[zone.id]?.prayer_counts?.[activePrayer] ?? zone.prayer_counts?.[activePrayer] ?? 0;
+                      const prayerDensity = activePrayer && zone.max_capacity > 0 ? getDensityLevel(prayerCount, zone.max_capacity) : null;
                       return (
                         <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
                           onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
@@ -448,6 +452,14 @@ export function MapCanvas({
                               stroke="#3b82f6" strokeWidth="1.8" strokeOpacity="0.5"
                               strokeDasharray="5 3"
                               vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                          )}
+                          {/* Prayer density overlay - subtle color tint per prayer */}
+                          {prayerDensity && prayerCount > 0 && !isSelected && (
+                            <path d={getPath(zone.polygon_points)}
+                              fill={prayerDensity.color}
+                              fillOpacity={0.22}
+                              stroke="none"
+                              pointerEvents="none" />
                           )}
                           {/* Vertex handles - PPT style white squares */}
                           {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
@@ -537,14 +549,14 @@ export function MapCanvas({
             />
           )}
           {/* Tooltip: shows on hover (desktop) or after single tap (tablet) */}
-          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
+          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} activePrayer={activePrayer} densityEdits={densityEdits} />}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap }) {
+function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap, activePrayer, densityEdits }) {
   const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
   const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
   const hasChange = zone.change_type && zone.change_type !== "unchanged";
@@ -556,6 +568,12 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap }) {
   const zoneData = zoneEmployeeMap?.[zone.zone_code];
   const staffCount = zoneData?.count || 0;
   const staffList = zoneData?.employees || [];
+
+  // Prayer-specific data
+  const prayerInfo = activePrayer ? PRAYER_TIMES.find(p => p.key === activePrayer) : null;
+  const prayerCount = densityEdits?.[zone.id]?.prayer_counts?.[activePrayer] ?? zone.prayer_counts?.[activePrayer] ?? 0;
+  const prayerDensity = prayerInfo && capacity > 0 ? getDensityLevel(prayerCount, capacity) : null;
+  const prayerPct = capacity > 0 ? Math.round((prayerCount / capacity) * 100) : 0;
 
   const SHIFT_COLORS = { "الأولى": "#3b82f6", "الثانية": "#22c55e", "الثالثة": "#f97316", "الرابعة": "#8b5cf6" };
 
@@ -569,7 +587,10 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap }) {
               <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold shadow-sm" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
               <span className="font-bold text-sm">{zone.zone_code}</span>
             </div>
-            {hasChange && <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+            <div className="flex items-center gap-1.5">
+              {prayerInfo && <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 font-semibold text-emerald-700">{prayerInfo.icon} {isAr ? prayerInfo.label_ar : prayerInfo.label_en}</span>}
+              {hasChange && <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+            </div>
           </div>
           <div>
             <p className="text-xs font-medium text-slate-800">{isAr ? zone.name_ar : zone.name_en}</p>
@@ -583,6 +604,19 @@ function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap }) {
                 {capacity > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] font-bold flex-shrink-0">S</span><span className="text-[11px] text-slate-600">{capacity.toLocaleString()} {isAr ? "مصلي" : "cap"}</span></div>}
               </div>
             </>
+          )}
+          {/* Prayer-specific occupancy */}
+          {prayerDensity && capacity > 0 && (
+            <div className="rounded-lg p-2 border" style={{ backgroundColor: prayerDensity.color + '10', borderColor: prayerDensity.color + '40' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-semibold" style={{ color: prayerDensity.color }}>{isAr ? `إشغال ${prayerInfo?.label_ar}` : `${prayerInfo?.label_en} occupancy`}</span>
+                <span className="text-[11px] font-bold font-mono" style={{ color: prayerDensity.color }}>{prayerCount.toLocaleString()} / {capacity.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(prayerPct, 100)}%`, backgroundColor: prayerDensity.color }} /></div>
+                <span className="text-[10px] font-bold font-mono" style={{ color: prayerDensity.color }}>{prayerPct}%</span>
+              </div>
+            </div>
           )}
           {currentCount > 0 && capacity > 0 && (
             <div className="flex items-center gap-2 pt-0.5">

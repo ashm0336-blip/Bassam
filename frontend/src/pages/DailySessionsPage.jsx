@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 
-import { API, ZONE_TYPES_FALLBACK, DRAG_SHAPE_MODES } from "./DailySessions/constants";
+import { API, ZONE_TYPES_FALLBACK, DRAG_SHAPE_MODES, PRAYER_TIMES } from "./DailySessions/constants";
 import {
   getAuthHeaders, normalizeImageUrl, smoothPoints, simplifyPoints,
   generateShapeFromDrag, getDensityLevel, formatDate,
@@ -724,6 +724,16 @@ export default function DailySessionsPage() {
                 </div>
 
                 <TabsContent value="map" tabIndex={-1} className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out', minHeight: 'min(760px, calc(100vh - 220px))' }}>
+                  {/* Prayer Time Selector - same as density tab */}
+                  <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl" data-testid="map-prayer-time-selector">
+                    {PRAYER_TIMES.map(pt => (
+                      <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`map-prayer-btn-${pt.key}`}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-cairo font-semibold transition-all ${activePrayer === pt.key ? "bg-white shadow-md text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:text-slate-700 hover:bg-white/50"}`}>
+                        <span className="text-base">{pt.icon}</span>
+                        <span className="hidden sm:inline">{isAr ? pt.label_ar : pt.label_en}</span>
+                      </button>
+                    ))}
+                  </div>
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -789,6 +799,9 @@ export default function DailySessionsPage() {
                     handleDeletePoint={handleDeletePoint}
                     addDrawingPoint={addDrawingPoint}
                     onEditStart={onEditStart} setMapMode={setMapMode}
+                    activePrayer={activePrayer} densityEdits={densityEdits}
+                    handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
+                    savingDensity={savingDensity}
                   />
                     </div>
                     {/* Stats panel: absolutely positioned, slides over the map */}
