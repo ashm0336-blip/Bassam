@@ -3,7 +3,7 @@ import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Clock, MapPin, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings
+  Clock, MapPin, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import GatesDataManagement from "@/components/GatesDataManagement";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import GateMapPage from "@/pages/GateMapPage";
 import MapManagementPage from "@/pages/MapManagementPage";
+import ZoneCategoryManager from "@/pages/admin/ZoneCategoryManager";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -94,7 +95,7 @@ export default function DepartmentSettings({ department }) {
 
   const [shifts, setShifts] = useState([]);
   const [locations, setLocations] = useState([]);
-  const [counts, setCounts] = useState({ employees: 0, shifts: 0, locations: 0, gates: 0, maps: 0 });
+  const [counts, setCounts] = useState({ employees: 0, shifts: 0, locations: 0, gates: 0, maps: 0, categories: 0 });
 
   const [formData, setFormData] = useState({
     value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: 0
@@ -138,6 +139,15 @@ export default function DepartmentSettings({ department }) {
         gates: gatesCount,
         maps: mapsCount
       }));
+
+      // Fetch categories count for plazas
+      if (department === 'plazas') {
+        const token = localStorage.getItem("token");
+        const catRes = await axios.get(`${API}/admin/zone-categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] }));
+        setCounts(prev => ({ ...prev, categories: catRes.data.length }));
+      }
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
@@ -220,6 +230,9 @@ export default function DepartmentSettings({ department }) {
   }
   tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
   tabs.push({ id: 'coverage_locations', label: language === 'ar' ? 'المواقع' : 'Locations', icon: MapPin, count: counts.locations });
+  if (department === 'plazas') {
+    tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
+  }
 
   if (loading) {
     return (
@@ -372,6 +385,10 @@ export default function DepartmentSettings({ department }) {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === 'zone_categories' && department === 'plazas' && (
+          <ZoneCategoryManager />
         )}
       </div>
 
