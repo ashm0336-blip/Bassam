@@ -128,6 +128,9 @@ export function MapCanvas({
 
   const hasPannedRef = useRef(false);
   const touchStartPixelRef = useRef({ x: 0, y: 0 });
+  // Double-tap detection & click suppression after touch
+  const lastTapRef = useRef({ time: 0, zoneId: null });
+  const skipNextClickRef = useRef(false);
   // Synchronous mirrors of parent state for touch event handlers (avoids stale closure on tablet)
   const interactionRef = useRef({
     draggingPoint: null,
@@ -287,13 +290,60 @@ export function MapCanvas({
     onMapMouseUp();
   };
   const handleTouchEnd = (e) => {
-    // Do NOT call e.preventDefault() here - it prevents click events from firing on tablet
-    // Scrolling is already prevented by touch-action:none CSS on the container
     interactionRef.current = { draggingPoint: null, isRotating: false, isDraggingZone: false, dragZoneStart: null, isPanning: false, panStart: { x: 0, y: 0 } };
+
+    const wasInteracting = draggingPoint !== null || isRotating || isDraggingZone;
+    const wasDragShape = DRAG_SHAPE_MODES.includes(mapMode) && rectStart;
+
+    if (!hasPannedRef.current && !wasInteracting && !wasDragShape && activeSession) {
+      const pos = getMousePercent(e);
+      skipNextClickRef.current = true; // suppress synthesized click
+
+      if (mapMode === "draw" && activeSession?.status === "draft") {
+        // Draw mode: tap adds a point
+        if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); }
+        else { addDrawingPoint({ x: pos.x, y: pos.y }); }
+      } else {
+        // Edit / pan / view: single-tap = tooltip, double-tap = edit mode
+        const now = Date.now();
+        let tappedZone = null;
+        for (const zone of sessionZones) {
+          if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { tappedZone = zone; break; }
+        }
+        const isDoubleTap = (now - lastTapRef.current.time) < 350 && lastTapRef.current.zoneId === (tappedZone?.id ?? null);
+        lastTapRef.current = { time: now, zoneId: tappedZone?.id ?? null };
+
+        if (isDoubleTap && tappedZone && activeSession?.status === "draft") {
+          // Double-tap → activate edit mode for this zone
+          if (mapMode === "edit" && selectedZoneId === tappedZone.id) {
+            setSelectedZone(tappedZone); setShowZoneDialog(true);
+          } else {
+            setMapMode("edit"); setSelectedZoneId(tappedZone.id);
+          }
+          setHoveredZone(null);
+        } else if (tappedZone) {
+          // Single tap → show tooltip (sticky on touch)
+          if (mapContainerRef.current) {
+            const { clientX, clientY } = getClientXY(e);
+            const rect = mapContainerRef.current.getBoundingClientRect();
+            setTooltipPos({ x: clientX - rect.left + 16, y: clientY - rect.top - 10 });
+          }
+          setHoveredZone(tappedZone);
+          setSelectedZoneId(null); // not in edit mode on single tap
+        } else {
+          // Tap empty space → clear tooltip & deselect
+          setHoveredZone(null);
+          setSelectedZoneId(null);
+        }
+      }
+    }
+
     onMapMouseUp();
   };
 
   const handleClick = (e) => {
+    // Suppress click events generated after touch interactions (handled in handleTouchEnd)
+    if (skipNextClickRef.current) { skipNextClickRef.current = false; return; }
     if (isPanning || draggingPoint !== null || hasPannedRef.current) return;
     if (activeSession?.status === "completed") return;
     e.preventDefault();
@@ -478,8 +528,8 @@ export function MapCanvas({
               onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
             />
           )}
-          {/* Tooltip for non-selected zones */}
-          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
+          {/* Tooltip: shows on hover (desktop) or after single tap (tablet) */}
+          {hoveredZone && !interactionRef.current.draggingPoint && !interactionRef.current.isDraggingZone && !interactionRef.current.isRotating && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} />}
         </div>
       </CardContent>
     </Card>
