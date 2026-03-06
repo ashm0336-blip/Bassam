@@ -34,7 +34,13 @@ Arabic (العربية)
 - Map pan/zoom consistency fix
 - Save prayer area bug fix (empty strings → null)
 
-### Zone Categories as Source of Truth (Mar 5, 2026)
+### Bug Fixes - Tooltip & Category Propagation (Mar 6, 2026)
+- Fixed tooltip disappearing: condition changed from `mapMode !== "edit"` to `hoveredZone.id !== selectedZoneId`
+- Fixed null pattern fields not clearing: NULLABLE_FIELDS in settings.py allows explicit null for pattern fields
+- Fixed stale session data: onSelectSession now always fetches fresh data from API
+- Category color propagation verified working end-to-end
+
+
 - Categories define ALL zone style: color + fill_type + pattern + stroke (color/width/style/opacity)
 - Backend propagates category update to ALL map_sessions zones + map_zones of that type
 - Removed manual styling: FloatingToolbar now 4 buttons only (edit/copy/smooth/remove), MapToolbar Style dropdown removed
