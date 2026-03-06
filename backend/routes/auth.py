@@ -35,6 +35,28 @@ async def get_activity_logs(
 
 
 # ============= Auth Routes =============
+@router.post("/auth/setup")
+async def setup_admin():
+    """Creates the default admin user if no users exist - safe to call on fresh deployments"""
+    count = await db.users.count_documents({})
+    if count > 0:
+        return {"message": "النظام مُهيّأ مسبقاً", "users": count}
+    import uuid
+    from datetime import datetime, timezone
+    admin_user = {
+        "id": str(uuid.uuid4()),
+        "email": "admin@crowd.sa",
+        "password": hash_password("admin123"),
+        "name": "مسؤول النظام",
+        "role": "system_admin",
+        "department": None,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(admin_user)
+    return {"message": "✅ تم إنشاء مستخدم الأدمن بنجاح", "email": "admin@crowd.sa", "password": "admin123"}
+
+
 @router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
