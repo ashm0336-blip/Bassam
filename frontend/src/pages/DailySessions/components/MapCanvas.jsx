@@ -314,12 +314,9 @@ export function MapCanvas({
         lastTapRef.current = { time: now, zoneId: tappedZone?.id ?? null };
 
         if (isDoubleTap && tappedZone && activeSession?.status === "draft") {
-          // Double-tap → activate edit mode for this zone
-          if (mapMode === "edit" && selectedZoneId === tappedZone.id) {
-            setSelectedZone(tappedZone); setShowZoneDialog(true);
-          } else {
-            setMapMode("edit"); setSelectedZoneId(tappedZone.id);
-          }
+          // Double-tap → select zone + show floating toolbar (open dialog via toolbar)
+          setMapMode("edit");
+          setSelectedZoneId(tappedZone.id);
           setHoveredZone(null);
         } else if (tappedZone) {
           // Single tap → show tooltip (sticky on touch)
