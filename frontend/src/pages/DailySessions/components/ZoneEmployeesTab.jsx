@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axios from "axios";
 import {
   Users, Search, UserCheck, UserX, MapPin, Plus, X, AlertCircle, Percent,
-  ZoomIn, ZoomOut, Maximize2, ChevronRight
+  ZoomIn, ZoomOut, Maximize2, ChevronRight, Sparkles, Printer, Filter,
+  RefreshCw, CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,10 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const [activeShift, setActiveShift] = useState("all");
   const [hoveredZone, setHoveredZone] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [coverageFilter, setCoverageFilter] = useState("all"); // "all" | "uncovered" | "covered"
+  const [autoDistributing, setAutoDistributing] = useState(false);
+  const [showAutoConfirm, setShowAutoConfirm] = useState(false);
+  const printRef = useRef(null);
 
   // Zoom/Pan state
   const [zoom, setZoom] = useState(1);
@@ -161,6 +166,92 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     } catch { toast.error(isAr ? "تعذر الإلغاء" : "Failed"); }
   };
 
+  // ─── Auto-Distribute Algorithm ──────────────────────────
+  const handleAutoDistribute = async () => {
+    setShowAutoConfirm(false);
+    setAutoDistributing(true);
+    try {
+      const unassigned = employees.filter(e => !e.location || !assignedLocations.has(e.location));
+      const uncovered = activeZones.filter(z => !z.is_removed && z.zone_type !== "service" && (zoneEmployeeMap[z.zone_code] || []).length === 0);
+
+      if (unassigned.length === 0) { toast.info(isAr ? "جميع الموظفين معيّنون بالفعل" : "All staff already assigned"); return; }
+      if (uncovered.length === 0) { toast.info(isAr ? "جميع المناطق مغطاة بالفعل" : "All zones already covered"); return; }
+
+      // Smart matching: separate by zone type + shift balance
+      const menZones = uncovered.filter(z => z.zone_type === "men_prayer" || z.zone_type === "reserve_fard");
+      const womenZones = uncovered.filter(z => z.zone_type === "women_prayer");
+      const otherZones = uncovered.filter(z => !menZones.includes(z) && !womenZones.includes(z));
+
+      // Build assignment queue — each zone gets one employee first, then extras
+      const queue = [...menZones, ...womenZones, ...otherZones];
+      const empPool = [...unassigned]; // mutable copy
+      const assignments = []; // { empId, zoneCode }
+
+      // Round 1: one employee per uncovered zone
+      queue.forEach(zone => {
+        if (empPool.length === 0) return;
+        const emp = empPool.shift();
+        assignments.push({ empId: emp.id, zoneCode: zone.zone_code });
+      });
+
+      // Execute assignments in parallel
+      await Promise.all(assignments.map(({ empId, zoneCode }) =>
+        axios.put(`${API}/employees/${empId}`, { location: zoneCode }, getAuthHeaders())
+      ));
+      // Update local state
+      const assignMap = Object.fromEntries(assignments.map(a => [a.empId, a.zoneCode]));
+      setEmployees(prev => prev.map(e => assignMap[e.id] ? { ...e, location: assignMap[e.id] } : e));
+      toast.success(isAr ? `✅ تم توزيع ${assignments.length} موظف على ${assignments.length} منطقة` : `✅ Assigned ${assignments.length} staff to ${assignments.length} zones`);
+    } catch { toast.error(isAr ? "تعذر التوزيع التلقائي" : "Auto-distribute failed"); }
+    finally { setAutoDistributing(false); }
+  };
+
+  // ─── Clear All Assignments ───────────────────────────────
+  const handleClearAll = async () => {
+    const assigned = employees.filter(e => e.location && assignedLocations.has(e.location));
+    if (assigned.length === 0) return;
+    try {
+      await Promise.all(assigned.map(e => axios.put(`${API}/employees/${e.id}`, { location: "" }, getAuthHeaders())));
+      setEmployees(prev => prev.map(e => assigned.find(a => a.id === e.id) ? { ...e, location: "" } : e));
+      toast.success(isAr ? "تم مسح جميع التعيينات" : "All assignments cleared");
+    } catch { toast.error(isAr ? "تعذر المسح" : "Failed"); }
+  };
+
+  // ─── Print Assignment Sheet ──────────────────────────────
+  const handlePrint = () => {
+    const rows = activeZones.filter(z => !z.is_removed && z.zone_type !== "service")
+      .map(z => {
+        const emps = zoneEmployeeMap[z.zone_code] || [];
+        return `<tr style="border-bottom:1px solid #e2e8f0">
+          <td style="padding:8px;font-weight:bold;color:#047857">${z.zone_code}</td>
+          <td style="padding:8px">${z.name_ar}</td>
+          <td style="padding:8px">${emps.length > 0 ? emps.map(e=>`<span style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:2px 6px;margin:1px;display:inline-block">${e.name}</span>`).join('') : '<span style="color:#ef4444">بدون موظف</span>'}</td>
+          <td style="padding:8px;color:#64748b">${emps.length > 0 ? emps.map(e=>e.shift||'').join(', ') : '—'}</td>
+        </tr>`;
+      }).join('');
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html dir="rtl"><head><title>جدول توزيع الموظفين</title>
+      <style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px}h2{color:#047857}table{width:100%;border-collapse:collapse}th{background:#f0fdf4;padding:10px;color:#047857;border:1px solid #a7f3d0}td{border:1px solid #e2e8f0}@media print{button{display:none}}</style>
+      </head><body>
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+        <h2>📋 جدول توزيع موظفي المصليات</h2>
+        <div style="text-align:left;color:#64748b;font-size:12px">
+          <div>التاريخ: ${activeSession?.date || ''}</div>
+          <div>الطابق: ${activeSession?.floor_name || ''}</div>
+          <div>إجمالي الموظفين: ${employees.length} | المعيّنون: ${assignedCount}</div>
+        </div>
+      </div>
+      <table><thead><tr><th>كود المنطقة</th><th>اسم المنطقة</th><th>الموظفون</th><th>الوردية</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <div style="margin-top:16px;padding:10px;background:#fef9c3;border-radius:8px;font-size:12px">
+        ✅ مغطاة: ${coveredZones.length} | 🔴 بدون تغطية: ${uncoveredZones.length} | 📊 نسبة التغطية: ${coveragePct}%
+      </div>
+      <button onclick="window.print()" style="margin-top:16px;padding:10px 20px;background:#047857;color:white;border:none;border-radius:8px;cursor:pointer">🖨️ طباعة</button>
+      </body></html>`);
+    win.document.close();
+  };
+
   const shiftCounts = useMemo(() => {
     const c = { all: employees.length };
     SHIFTS.forEach(s => { c[s.value] = employees.filter(e => e.shift === s.value).length; });
@@ -215,7 +306,99 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
   const mapImageUrl = selectedFloor?.image_url ? normalizeImageUrl(selectedFloor.image_url) : null;
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }} data-testid="zone-employees-tab">
+    <div className="space-y-2" ref={printRef}>
+      {/* ─── Employees Toolbar ─────────────────────────── */}
+      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm flex-wrap" data-testid="employees-toolbar">
+
+        {/* ── Live Status Chips ── */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="flex items-center gap-1 text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-full">
+            <UserCheck className="w-3 h-3" />{assignedCount} {isAr ? "معيّن" : "assigned"}
+          </span>
+          {unassignedEmployees.length > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full">
+              <UserX className="w-3 h-3" />{unassignedEmployees.length} {isAr ? "غير معيّن" : "unassigned"}
+            </span>
+          )}
+          {uncoveredZones.length > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded-full">
+              <AlertCircle className="w-3 h-3" />{uncoveredZones.length} {isAr ? "بدون تغطية" : "uncovered"}
+            </span>
+          )}
+          <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full border ${coveragePct >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : coveragePct >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+            <Percent className="w-3 h-3" />{coveragePct}% {isAr ? "تغطية" : "coverage"}
+          </span>
+        </div>
+
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+        {/* ── Coverage Filter ── */}
+        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+          {[
+            { key: 'all', label: isAr ? 'الكل' : 'All', icon: null },
+            { key: 'uncovered', label: isAr ? 'بدون تغطية' : 'Uncovered', icon: '🔴' },
+            { key: 'covered', label: isAr ? 'مغطاة' : 'Covered', icon: '✅' },
+          ].map(f => (
+            <button key={f.key} onClick={() => setCoverageFilter(f.key)}
+              data-testid={`coverage-filter-${f.key}`}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold transition-all ${coverageFilter === f.key ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400 hover:text-slate-600'}`}>
+              {f.icon && <span>{f.icon}</span>}{f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+        {/* ── Auto Distribute ── */}
+        {activeSession?.status === "draft" && (
+          <Popover open={showAutoConfirm} onOpenChange={setShowAutoConfirm}>
+            <PopoverTrigger asChild>
+              <Button size="sm" className="h-8 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700" disabled={autoDistributing} data-testid="auto-distribute-btn">
+                {autoDistributing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {isAr ? "توزيع تلقائي" : "Auto-Assign"}
+                {unassignedEmployees.length > 0 && <Badge className="text-[8px] h-4 px-1 bg-white/20">{unassignedEmployees.length}</Badge>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-4" align="start">
+              <div className="space-y-3">
+                <div>
+                  <p className="font-cairo font-bold text-sm text-slate-700 mb-1">{isAr ? "التوزيع التلقائي" : "Auto-Distribute"}</p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    {isAr
+                      ? `سيتم توزيع ${unassignedEmployees.length} موظف غير معيّن على ${uncoveredZones.length} منطقة بدون تغطية. يمكنك التعديل اليدوي بعدها.`
+                      : `Will assign ${unassignedEmployees.length} unassigned staff to ${uncoveredZones.length} uncovered zones. You can adjust manually after.`}
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="bg-violet-50 rounded-lg p-2"><p className="text-lg font-bold text-violet-600">{unassignedEmployees.length}</p><p className="text-[8px] text-slate-500">{isAr ? "موظف" : "staff"}</p></div>
+                  <div className="bg-slate-100 rounded-lg p-2 flex items-center justify-center"><Sparkles className="w-5 h-5 text-slate-400" /></div>
+                  <div className="bg-red-50 rounded-lg p-2"><p className="text-lg font-bold text-red-500">{uncoveredZones.length}</p><p className="text-[8px] text-slate-500">{isAr ? "منطقة" : "zones"}</p></div>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleAutoDistribute} className="flex-1 bg-violet-600 hover:bg-violet-700 h-8 text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 ml-1" />{isAr ? "بدء التوزيع" : "Start"}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAutoConfirm(false)} className="flex-1 h-8 text-xs">{isAr ? "إلغاء" : "Cancel"}</Button>
+                </div>
+                {assignedCount > 0 && (
+                  <button onClick={() => { setShowAutoConfirm(false); handleClearAll(); }}
+                    className="w-full text-[9px] text-red-500 hover:text-red-700 transition-colors text-center">
+                    {isAr ? "مسح جميع التعيينات الحالية" : "Clear all assignments"}
+                  </button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {/* ── Print ── */}
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 mr-auto" onClick={handlePrint} data-testid="print-assignments-btn">
+          <Printer className="w-3.5 h-3.5" />{isAr ? "طباعة" : "Print"}
+        </Button>
+      </div>
+
+      {/* ─── Map Container ──────────────────────────────── */}
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }} data-testid="zone-employees-tab">
       {/* Fixed handle - always at panel edge */}
       <div
         className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
@@ -286,7 +469,12 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                     <div style={ws} data-map-inner="true">
                       <img src={mapImageUrl} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" />
                       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="coverage-map">
-                        {activeZones.filter(z => !z.is_removed && z.polygon_points?.length > 1).map(zone => {
+                        {activeZones.filter(z => {
+                          if (z.is_removed || !z.polygon_points?.length > 1) return false;
+                          if (coverageFilter === 'uncovered') return z.zone_type !== 'service' && (zoneEmployeeMap[z.zone_code] || []).length === 0;
+                          if (coverageFilter === 'covered') return (zoneEmployeeMap[z.zone_code] || []).length > 0;
+                          return true;
+                        }).map(zone => {
                           const { fill, opacity } = getZoneCoverageColor(zone);
                           const pts = zone.polygon_points.map(p => `${p.x},${p.y}`).join(" ");
                           const emps = zoneEmployeeMap[zone.zone_code] || [];
@@ -611,6 +799,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
