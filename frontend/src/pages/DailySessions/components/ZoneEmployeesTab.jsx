@@ -215,9 +215,11 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   const zoneEmployeeMap = useMemo(() => {
     const map = {};
     activeZones.forEach(z => {
-      map[z.zone_code] = (z.assigned_employee_ids || [])
+      const emps = (z.assigned_employee_ids || [])
         .map(id => employees.find(e => e.id === id))
         .filter(Boolean);
+      // Merge (in case of duplicate zone_codes, accumulate employees)
+      map[z.zone_code] = [...(map[z.zone_code] || []), ...emps];
     });
     return map;
   }, [activeZones, employees]);

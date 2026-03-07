@@ -60,7 +60,22 @@ Arabic (العربية)
 - Panel state persists when switching tabs (lifted to parent)
 - No layout shift when switching tabs (tabIndex=-1 + minHeight)
 
-### Dark Mode - Forest Night Palette (Mar 7, 2026)
+### Many-to-Many Employee Assignment (Mar 7, 2026)
+- **Architecture change**: from `employee.location` (single string) → `zone.assigned_employee_ids[]` (session-local)
+- **One employee → multiple zones**: Employee card shows zone tags `[ط-32 ✕] [ط-33 ✕] [+ إضافة]`
+- **One zone → multiple employees**: Zone popover shows all assigned employees with individual ✕ remove
+- **Session-local**: Assignments stored in zone within session, not globally on employee
+- **New employee fields**: `contact_phone` (جوال التواصل), `is_tasked` (مكلف ⚡ badge this month)
+- **New schedule field**: `ScheduleAssignment.is_tasked: bool`
+- **API**: `PUT /admin/map-sessions/{session_id}/zones/{zone_id}` with `{assigned_employee_ids: [...]}`
+- **Backwards compatible**: `employee.location` kept for monthly scheduling, old sessions use `||[]` fallback
+- **Auto-Assign**: Updated to use new zone-based API
+- **Clear All**: Clears `assigned_employee_ids=[]` on all zones in session
+- **Print**: Updated to show multiple employees per zone + ⚡ icon for tasked employees
+- **Session cloning**: New sessions include `assigned_employee_ids: []` on all zones
+- **zoneEmployeeMap**: Merge-safe (handles duplicate zone_codes)
+
+
 - **Forest Night Palette**: Deep emerald-tinted dark inspired by Al-Haram night atmosphere
   - Background: `hsl(160 30% 7%)` — very deep forest green
   - Card surface: `hsl(160 28% 10%)` — slightly lighter surface
