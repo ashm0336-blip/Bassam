@@ -100,7 +100,13 @@ Arabic (العربية)
 - Admin: admin@crowd.sa / admin123
 
 ## Upcoming Tasks (Backlog)
-- P0: Complete prayer sessions workflow (delete prayer session, complete prayer session button)
+- **P0 (مهمة جداً): إعادة هيكلة نظام تعيين الموظفين**
+  - التحول من `employee.location` (نص واحد) إلى `zone.employee_ids[]` (قائمة في الجلسة)
+  - موظف واحد يغطي أكثر من منطقة في نفس الجولة ✅
+  - منطقة واحدة بأكثر من موظف ✅
+  - التوزيع مرتبط بالجلسة (محلي) وليس بالموظف عالمياً
+  - واجهة: [ط-32 ✕] [ط-33 ✕] [+ إضافة موقع] للموظف + عرض موظفي المنطقة مع حذف فردي
+- P0: حذف جولة صلاة (delete prayer session button)
 - P1: Professional Gate Management View - Compact Table + Grouped by Plaza (200+ gates)
 - P1: Advanced Role Hierarchy (5-level RBAC)
 - P1: Live Haram Map (unified real-time heatmap)
