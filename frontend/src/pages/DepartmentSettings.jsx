@@ -28,6 +28,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const DEPT_THEMES = {
   gates:          { color: "emerald", accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
   plazas:         { color: "blue",    accent: "#1d4ed8", light: "#eff6ff", border: "#bfdbfe" },
+  squares:        { color: "teal",    accent: "#0f766e", light: "#f0fdfa", border: "#99f6e4" },
   planning:       { color: "violet",  accent: "#6d28d9", light: "#f5f3ff", border: "#c4b5fd" },
   crowd_services: { color: "amber",   accent: "#b45309", light: "#fffbeb", border: "#fcd34d" },
   mataf:          { color: "rose",    accent: "#be123c", light: "#fff1f2", border: "#fecdd3" },
@@ -36,6 +37,7 @@ const DEPT_THEMES = {
 const DEPT_NAMES = {
   gates:          { ar: "إدارة الأبواب",         en: "Gates Management" },
   plazas:         { ar: "إدارة المصليات",         en: "Prayer Areas" },
+  squares:        { ar: "إدارة الساحات",          en: "Plazas Management" },
   planning:       { ar: "تخطيط خدمات الحشود",    en: "Crowd Planning" },
   crowd_services: { ar: "خدمات حشود الحرم",      en: "Crowd Services" },
   mataf:          { ar: "صحن المطاف",            en: "Mataf Management" },

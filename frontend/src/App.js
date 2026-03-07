@@ -46,6 +46,7 @@ function ConditionalDashboard() {
       'planning': '/planning',
       'gates': '/gates',
       'plazas': '/plazas',
+      'squares': '/plazas',
       'mataf': '/mataf',
       'crowd_services': '/crowd-services'
     };
@@ -122,7 +123,7 @@ function AppRoutes() {
           </DepartmentProtectedRoute>
         } />
         <Route path="plazas" element={
-          <DepartmentProtectedRoute department="plazas">
+          <DepartmentProtectedRoute department="squares">
             <PlazasDepartment />
           </DepartmentProtectedRoute>
         } />

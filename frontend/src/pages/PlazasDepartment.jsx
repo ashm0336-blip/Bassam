@@ -105,7 +105,7 @@ export default function PlazasDepartment() {
         const [plazasRes, statsRes, empStatsRes] = await Promise.all([
           axios.get(`${API}/plazas`),
           axios.get(`${API}/plazas/stats`),
-          axios.get(`${API}/employees/stats/plazas`, {
+          axios.get(`${API}/employees/stats/squares`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -308,17 +308,17 @@ export default function PlazasDepartment() {
       )}
 
       {activeTab === 'employees' && (
-        <EmployeeManagement department="plazas" />
+        <EmployeeManagement department="squares" />
       )}
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionsPage department="plazas" />
+        <TransactionsPage department="squares" />
       )}
       
       {/* Settings Tab */}
       {activeTab === 'settings' && (
-        <DepartmentSettings department="plazas" />
+        <DepartmentSettings department="squares" />
       )}
     </div>
   );
