@@ -23,6 +23,86 @@ const SHIFTS = [
   { value: "الرابعة", label_ar: "الوردية الرابعة", label_en: "Shift 4", color: "#8b5cf6" },
 ];
 
+function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, ZONE_TYPES, isAr, activeSession, handleAssign, handleUnassign }) {
+  const [search, setSearch] = useState("");
+  const [selectedZone, setSelectedZone] = useState(null);
+
+  const filteredZones = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return activeZones.filter(z => !z.is_removed && (!q || z.zone_code?.toLowerCase().includes(q) || z.name_ar?.toLowerCase().includes(q)));
+  }, [activeZones, search]);
+
+  return (
+    <div className="space-y-2">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <Input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder={isAr ? "ابحث عن موقع..." : "Search zone..."}
+          className="pr-8 h-8 text-[11px]" autoFocus />
+      </div>
+      {/* Zone list */}
+      <div className="max-h-64 overflow-y-auto space-y-1">
+        {filteredZones.map(zone => {
+          const emps = zoneEmployeeMap[zone.zone_code] || [];
+          const isCovered = emps.length > 0;
+          const isSelected = selectedZone?.id === zone.id;
+          return (
+            <div key={zone.id} className={`rounded-lg border transition-all ${isSelected ? 'border-emerald-400 bg-emerald-50' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
+              <button className="w-full flex items-center gap-2 p-2 text-right" onClick={() => setSelectedZone(isSelected ? null : zone)}>
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.fill_color || '#22c55e' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-slate-700 truncate">{zone.zone_code}</p>
+                  <p className="text-[9px] text-slate-400 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+                </div>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isCovered ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                  {isCovered ? `✅ ${emps.length}` : '○'}
+                </span>
+              </button>
+              {/* Expand: assign/unassign */}
+              {isSelected && (
+                <div className="px-2 pb-2 border-t border-slate-100 pt-2 space-y-1.5">
+                  {/* Current employees */}
+                  {emps.length > 0 && (
+                    <div className="space-y-1">
+                      {emps.map(emp => (
+                        <div key={emp.id} className="flex items-center justify-between px-2 py-1 bg-emerald-50 rounded-lg">
+                          <span className="text-[10px] font-medium text-slate-700">{emp.name}</span>
+                          {activeSession?.status === "draft" && (
+                            <button onClick={() => handleUnassign(emp.id)} className="text-[8px] text-red-500 hover:text-red-700 font-semibold">✕ {isAr ? "إلغاء" : "Remove"}</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Add employee */}
+                  {activeSession?.status === "draft" && unassignedEmployees.length > 0 && (
+                    <Select onValueChange={empId => { handleAssign(empId, zone.zone_code); setSelectedZone(null); }}>
+                      <SelectTrigger className="h-7 text-[10px] border-dashed border-emerald-300">
+                        <Plus className="w-3 h-3 text-emerald-500 ml-1" />
+                        <SelectValue placeholder={isAr ? "إضافة موظف..." : "Add staff..."} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unassignedEmployees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {activeSession?.status === "draft" && unassignedEmployees.length === 0 && (
+                    <p className="text-[9px] text-slate-400 text-center py-1">{isAr ? "لا يوجد موظفون متاحون" : "No available staff"}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {filteredZones.length === 0 && <p className="text-[10px] text-slate-400 text-center py-3">{isAr ? "لا توجد نتائج" : "No results"}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -342,7 +422,33 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
 
-        {/* ── Auto Distribute ── */}
+        {/* ── Quick Zone Assignment ── */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 font-cairo text-xs h-8" data-testid="quick-assign-btn">
+              <MapPin className="w-3.5 h-3.5" />
+              {isAr ? "تعيين سريع" : "Quick Assign"}
+              {uncoveredZones.length > 0 && <Badge variant="destructive" className="text-[8px] h-4 px-1">{uncoveredZones.length}</Badge>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="start" side="bottom" data-testid="quick-assign-panel">
+            <div className="p-3 border-b">
+              <p className="text-[11px] font-cairo font-bold text-slate-600 mb-2">{isAr ? "اختر منطقة وعيّن موظفاً" : "Select zone & assign staff"}</p>
+              <QuickAssignSearch
+                activeZones={activeZones}
+                zoneEmployeeMap={zoneEmployeeMap}
+                unassignedEmployees={unassignedEmployees}
+                ZONE_TYPES={ZONE_TYPES}
+                isAr={isAr}
+                activeSession={activeSession}
+                handleAssign={handleAssign}
+                handleUnassign={handleUnassign}
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
         {activeSession?.status === "draft" && (
           <Popover open={showAutoConfirm} onOpenChange={setShowAutoConfirm}>
             <PopoverTrigger asChild>
@@ -482,8 +588,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                                 fill={fillColor}
                                 fillOpacity={isHovered ? Math.min(fillOpacity + 0.2, 0.85) : fillOpacity}
                                 stroke={fillColor}
-                                strokeWidth={isHovered ? 0.6 : isCovered ? 0.35 : 0.5}
-                                strokeOpacity={isHovered ? 1 : isCovered ? 0.6 : 0.8}
+                                strokeWidth={isHovered ? 0.25 : 0.12}
+                                strokeOpacity={isHovered ? 0.9 : 0.5}
                               />
                             </g>
                           );
