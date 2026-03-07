@@ -196,7 +196,15 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    let emps = employees;
+    // Only show field/both employees with active contracts
+    let emps = employees.filter(emp => {
+      const wt = emp.work_type || 'field';
+      if (wt === 'admin') return false;
+      if (emp.employment_type !== 'permanent' && emp.employment_type) {
+        if (emp.contract_end && new Date(emp.contract_end) < new Date(new Date().toDateString())) return false;
+      }
+      return true;
+    });
     if (activeShift !== "all") emps = emps.filter(e => e.shift === activeShift);
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -715,6 +723,17 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
           {/* Panel Header */}
           <div className="text-center">
             <p className="text-[12px] font-bold font-cairo text-slate-600 tracking-wide">{isAr ? "إدارة الموظفين" : "Staff Management"}</p>
+            {/* Field ops indicator */}
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-[9px] font-medium text-teal-600 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                {isAr ? `متاحون للتوزيع: ${filteredEmployees.length}` : `Available: ${filteredEmployees.length}`}
+              </span>
+              {employees.filter(e=>(e.work_type||'field')==='admin').length > 0 && (
+                <span className="text-[9px] text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                  {isAr ? `إداريون مخفيون: ${employees.filter(e=>(e.work_type||'field')==='admin').length}` : `Admin hidden: ${employees.filter(e=>(e.work_type||'field')==='admin').length}`}
+                </span>
+              )}
+            </div>
           </div>
           <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 

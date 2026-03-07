@@ -4,9 +4,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
-  CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText, Archive
+  CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
+  Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,53 +25,72 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+// ── Constants ────────────────────────────────────────────────────
 const DEPARTMENTS = {
-  planning: { ar: "تخطيط خدمات الحشود", en: "Crowd Planning" },
-  plazas: { ar: "إدارة الساحات", en: "Plazas Management" },
-  gates: { ar: "إدارة الأبواب", en: "Gates Management" },
-  crowd_services: { ar: "خدمات حشود الحرم", en: "Crowd Services" },
-  mataf: { ar: "صحن المطاف", en: "Mataf Management" }
+  planning:       { ar: "تخطيط خدمات الحشود", en: "Crowd Planning" },
+  plazas:         { ar: "إدارة الساحات",       en: "Plazas Management" },
+  gates:          { ar: "إدارة الأبواب",        en: "Gates Management" },
+  crowd_services: { ar: "خدمات حشود الحرم",    en: "Crowd Services" },
+  mataf:          { ar: "صحن المطاف",           en: "Mataf Management" },
 };
 
 const WEEK_DAYS = [
-  { value: "السبت", short: "سبت" },
-  { value: "الأحد", short: "أحد" },
-  { value: "الإثنين", short: "إثنين" },
-  { value: "الثلاثاء", short: "ثلاثاء" },
-  { value: "الأربعاء", short: "أربعاء" },
-  { value: "الخميس", short: "خميس" },
-  { value: "الجمعة", short: "جمعة" },
+  { value: "السبت",     short: "سبت" },
+  { value: "الأحد",     short: "أحد" },
+  { value: "الإثنين",   short: "إثنين" },
+  { value: "الثلاثاء",  short: "ثلاثاء" },
+  { value: "الأربعاء",  short: "أربعاء" },
+  { value: "الخميس",    short: "خميس" },
+  { value: "الجمعة",    short: "جمعة" },
 ];
 
-const MONTH_NAMES_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const EMPLOYMENT_TYPES = [
+  { value: "permanent", label_ar: "دائم",    label_en: "Permanent", color: "#004D38", bg: "#ecfdf5", border: "#a7f3d0" },
+  { value: "seasonal",  label_ar: "موسمي",   label_en: "Seasonal",  color: "#0284c7", bg: "#e0f2fe", border: "#7dd3fc" },
+  { value: "temporary", label_ar: "مؤقت",    label_en: "Temporary", color: "#9333ea", bg: "#faf5ff", border: "#d8b4fe" },
+];
 
-function getMonthKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
+const WORK_TYPES = [
+  { value: "field", label_ar: "ميداني",       label_en: "Field",      color: "#0f766e", bg: "#f0fdfa" },
+  { value: "admin", label_ar: "إداري",        label_en: "Admin",      color: "#64748b", bg: "#f8fafc" },
+  { value: "both",  label_ar: "إداري/ميداني", label_en: "Admin+Field",color: "#d97706", bg: "#fffbeb" },
+];
 
-function getMonthLabel(monthKey) {
-  const [y, m] = monthKey.split('-');
-  return `${MONTH_NAMES_AR[parseInt(m) - 1]} ${y}`;
-}
+const SEASONS = [
+  { value: "ramadan", label_ar: "رمضان", label_en: "Ramadan" },
+  { value: "hajj",    label_ar: "حج",     label_en: "Hajj" },
+  { value: "umrah",   label_ar: "عمرة",   label_en: "Umrah" },
+];
 
+const MONTH_NAMES_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
+                         "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+
+function getMonthKey(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`; }
+function getMonthLabel(key) { const [y,m] = key.split('-'); return `${MONTH_NAMES_AR[parseInt(m)-1]} ${y}`; }
 function getTodayArabic() {
-  const dayMap = { Saturday: "السبت", Sunday: "الأحد", Monday: "الإثنين", Tuesday: "الثلاثاء", Wednesday: "الأربعاء", Thursday: "الخميس", Friday: "الجمعة" };
-  return dayMap[new Date().toLocaleDateString('en-US', { weekday: 'long' })] || "";
+  const map = { Saturday:"السبت", Sunday:"الأحد", Monday:"الإثنين", Tuesday:"الثلاثاء",
+                Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
+  return map[new Date().toLocaleDateString('en-US',{weekday:'long'})] || "";
+}
+function isContractActive(emp) {
+  if (!emp.contract_end) return true;
+  return new Date(emp.contract_end) >= new Date(new Date().toDateString());
 }
 
-function RestDaysPicker({ value = [], onChange, disabled }) {
-  const toggle = (day) => {
-    if (disabled) return;
-    const current = value || [];
-    onChange(current.includes(day) ? current.filter(d => d !== day) : [...current, day]);
-  };
+// ── Sub-components ───────────────────────────────────────────────
+
+function RestDaysPicker({ value=[], onChange, disabled }) {
   return (
     <div className="flex flex-wrap gap-1.5" data-testid="rest-days-picker">
       {WEEK_DAYS.map(day => {
-        const sel = (value || []).includes(day.value);
+        const sel = (value||[]).includes(day.value);
         return (
-          <button key={day.value} type="button" disabled={disabled} onClick={() => toggle(day.value)} data-testid={`rest-day-${day.short}`}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border ${sel ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-amber-300 hover:bg-amber-50'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+          <button key={day.value} type="button" disabled={disabled}
+            onClick={() => !disabled && onChange(sel ? value.filter(d=>d!==day.value) : [...value, day.value])}
+            data-testid={`rest-day-${day.short}`}
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border
+              ${sel ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-amber-300 hover:bg-amber-50'}
+              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
             {day.short}
           </button>
         );
@@ -79,15 +99,15 @@ function RestDaysPicker({ value = [], onChange, disabled }) {
   );
 }
 
-function RestDaysBadges({ restDays = [], todayAr }) {
-  if (!restDays || restDays.length === 0) return <span className="text-[10px] text-muted-foreground">-</span>;
+function RestDaysBadges({ restDays=[], todayAr }) {
+  if (!restDays?.length) return <span className="text-[10px] text-muted-foreground">-</span>;
   return (
     <div className="flex flex-wrap gap-0.5 justify-center">
       {restDays.map(day => {
-        const short = WEEK_DAYS.find(d => d.value === day)?.short || day;
-        const isToday = day === todayAr;
+        const short = WEEK_DAYS.find(d=>d.value===day)?.short || day;
         return (
-          <span key={day} className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${isToday ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-500'}`}>
+          <span key={day} className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium
+            ${day===todayAr ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-500'}`}>
             {short}
           </span>
         );
@@ -96,107 +116,128 @@ function RestDaysBadges({ restDays = [], todayAr }) {
   );
 }
 
+// Employment type badge
+function EmpTypeBadge({ type, isAr }) {
+  const et = EMPLOYMENT_TYPES.find(e=>e.value===type) || EMPLOYMENT_TYPES[0];
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border"
+      style={{ color: et.color, backgroundColor: et.bg, borderColor: et.border }}>
+      {isAr ? et.label_ar : et.label_en}
+    </span>
+  );
+}
+
+// Work type badge
+function WorkTypeBadge({ type, isAr }) {
+  const wt = WORK_TYPES.find(w=>w.value===type) || WORK_TYPES[0];
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+      style={{ color: wt.color, backgroundColor: wt.bg }}>
+      {type==='field' ? <HardHat className="w-2.5 h-2.5"/> : type==='admin' ? <Briefcase className="w-2.5 h-2.5"/> : <Shield className="w-2.5 h-2.5"/>}
+      {isAr ? wt.label_ar : wt.label_en}
+    </span>
+  );
+}
+
+// مكلف toggle — ✅ / ✗
+function TaskedToggle({ value, onChange, disabled, isAr }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!value)}
+      data-testid="tasked-toggle"
+      title={isAr ? (value ? "مكلف هذا الشهر — انقر للإلغاء" : "غير مكلف — انقر للتكليف") : (value ? "Tasked — click to remove" : "Not tasked — click to assign")}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all border-2 font-bold text-sm
+        ${value
+          ? 'bg-emerald-500 border-emerald-600 text-white shadow-md shadow-emerald-200 scale-105'
+          : 'bg-white border-slate-200 text-slate-300 hover:border-amber-300 hover:text-amber-400'
+        }
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105'}`}
+    >
+      {value ? <Check className="w-4 h-4"/> : <X className="w-4 h-4"/>}
+    </button>
+  );
+}
+
 // Month navigation bar
 function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, onApprove, onDelete, isReadOnly, language }) {
   const currentMonthKey = getMonthKey(new Date());
-  const isCurrentMonth = selectedMonth === currentMonthKey;
-
   const navigate = (dir) => {
-    const [y, m] = selectedMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 + dir, 1);
-    onMonthChange(getMonthKey(d));
+    const [y,m] = selectedMonth.split('-').map(Number);
+    onMonthChange(getMonthKey(new Date(y, m-1+dir, 1)));
   };
-
   const months = [];
-  for (let i = -2; i <= 2; i++) {
-    const [y, m] = selectedMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 + i, 1);
-    months.push(getMonthKey(d));
+  for (let i=-2; i<=2; i++) {
+    const [y,m] = selectedMonth.split('-').map(Number);
+    months.push(getMonthKey(new Date(y, m-1+i, 1)));
   }
-
   const statusConfig = {
-    active: { label: "نشط", icon: CheckCircle2, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
-    draft: { label: "مسودة", icon: FileText, color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
-    archived: { label: "مؤرشف", icon: Archive, color: "text-gray-500", bg: "bg-gray-50 border-gray-200" },
+    active:   { label:"نشط",    Icon:CheckCircle2, color:"text-emerald-700", bg:"bg-emerald-50 border-emerald-200" },
+    draft:    { label:"مسودة",  Icon:FileText,     color:"text-amber-700",   bg:"bg-amber-50 border-amber-200" },
+    archived: { label:"مؤرشف", Icon:Archive,       color:"text-gray-500",    bg:"bg-gray-50 border-gray-200" },
   };
-
   return (
     <Card className="border-2 border-primary/10" data-testid="month-bar">
       <CardContent className="p-4">
-        {/* Month pills navigation */}
         <div className="flex items-center gap-2 mb-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate(-1)}>
-            <ChevronRight className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={()=>navigate(-1)}>
+            <ChevronRight className="w-4 h-4"/>
           </Button>
           <div className="flex-1 flex gap-1 justify-center overflow-hidden">
             {months.map(mk => {
-              const isSel = mk === selectedMonth;
-              const isCurrent = mk === currentMonthKey;
-              const [, mm] = mk.split('-');
+              const isSel = mk===selectedMonth, isCur = mk===currentMonthKey;
+              const [,mm] = mk.split('-');
               return (
-                <button key={mk} onClick={() => onMonthChange(mk)} data-testid={`month-pill-${mk}`}
+                <button key={mk} onClick={()=>onMonthChange(mk)} data-testid={`month-pill-${mk}`}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap
-                    ${isSel ? 'bg-primary text-white shadow-md scale-105' : isCurrent ? 'bg-primary/10 text-primary border border-primary/30' : 'text-gray-500 hover:bg-gray-100'}`}>
-                  {MONTH_NAMES_AR[parseInt(mm) - 1]}
-                  {isCurrent && !isSel && <span className="mr-1 text-[9px]">(الحالي)</span>}
+                    ${isSel ? 'bg-primary text-white shadow-md scale-105' : isCur ? 'bg-primary/10 text-primary border border-primary/30' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  {MONTH_NAMES_AR[parseInt(mm)-1]}{isCur && !isSel && <span className="mr-1 text-[9px]">(الحالي)</span>}
                 </button>
               );
             })}
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate(1)}>
-            <ChevronLeft className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={()=>navigate(1)}>
+            <ChevronLeft className="w-4 h-4"/>
           </Button>
         </div>
-
-        {/* Status + Actions row */}
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-2">
             {schedule ? (() => {
               const st = statusConfig[schedule.status] || statusConfig.draft;
-              const StIcon = st.icon;
               return (
                 <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium ${st.bg} ${st.color}`}>
-                  <StIcon className="w-3.5 h-3.5" />
-                  <span>{st.label}</span>
+                  <st.Icon className="w-3.5 h-3.5"/><span>{st.label}</span>
                 </div>
               );
             })() : (
-              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'لا يوجد جدول لهذا الشهر' : 'No schedule'}</span>
-            )}
-            {schedule && (
-              <span className="text-[10px] text-muted-foreground">
-                {schedule.created_by && `${language === 'ar' ? 'بواسطة' : 'by'} ${schedule.created_by}`}
-              </span>
+              <span className="text-xs text-muted-foreground">{language==='ar' ? 'لا يوجد جدول' : 'No schedule'}</span>
             )}
           </div>
-
           {!isReadOnly && (
             <div className="flex items-center gap-2">
-              {!schedule && (
+              {!schedule ? (
                 <>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onCreateSchedule("clone")} data-testid="clone-schedule-btn">
-                    <Copy className="w-3 h-3" />{language === 'ar' ? 'نسخ من السابق' : 'Clone'}
+                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('new')}>
+                    <Plus className="w-3 h-3"/>{language==='ar'?'جديد':'New'}
                   </Button>
-                  <Button size="sm" className="h-7 text-xs gap-1 bg-primary" onClick={() => onCreateSchedule("empty")} data-testid="create-schedule-btn">
-                    <Plus className="w-3 h-3" />{language === 'ar' ? 'جدول جديد' : 'New'}
+                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('clone')}>
+                    <Copy className="w-3 h-3"/>{language==='ar'?'نسخ السابق':'Clone'}
                   </Button>
                 </>
-              )}
-              {schedule && schedule.status === "draft" && (
+              ) : schedule.status==='draft' ? (
                 <>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onDelete} data-testid="delete-schedule-btn">
-                    <Trash2 className="w-3 h-3" />{language === 'ar' ? 'حذف' : 'Delete'}
+                  <Button size="sm" className="h-7 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={onApprove}>
+                    <CheckCircle2 className="w-3 h-3"/>{language==='ar'?'اعتماد':'Approve'}
                   </Button>
-                  <Button size="sm" className="h-7 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={onApprove} data-testid="approve-schedule-btn">
-                    <CheckCircle2 className="w-3 h-3" />{language === 'ar' ? 'اعتماد' : 'Approve'}
+                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 text-destructive border-destructive/30" onClick={onDelete}>
+                    <Trash2 className="w-3 h-3"/>{language==='ar'?'حذف':'Delete'}
                   </Button>
                 </>
-              )}
+              ) : null}
             </div>
           )}
         </div>
-
-        {/* Selected month label */}
         <div className="text-center mt-2">
           <span className="text-sm font-bold text-gray-700">{getMonthLabel(selectedMonth)}</span>
         </div>
@@ -205,39 +246,39 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
   );
 }
 
+// ── Main Component ───────────────────────────────────────────────
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
-  const [employees, setEmployees] = useState([]);
-  const [gates, setGates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [shifts, setShifts] = useState([]);
-  const [coverageLocations, setCoverageLocations] = useState([]);
+  const isAr = language === 'ar';
 
-  // Monthly schedule state
-  const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date()));
-  const [schedule, setSchedule] = useState(null);
+  const [employees, setEmployees]           = useState([]);
+  const [gates, setGates]                   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [dialogOpen, setDialogOpen]         = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editMode, setEditMode]             = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [submitting, setSubmitting]         = useState(false);
+  const [shifts, setShifts]                 = useState([]);
+  const [coverageLocations, setCoverageLocations] = useState([]);
+  const [selectedMonth, setSelectedMonth]   = useState(getMonthKey(new Date()));
+  const [schedule, setSchedule]             = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "", employee_number: "", job_title: "", location: "", shift: "", rest_days: [], work_tasks: "",
-    department: department || user?.department || "planning"
-  });
+  const emptyForm = {
+    name: "", employee_number: "", job_title: "", contact_phone: "",
+    location: "", shift: "", rest_days: [], work_tasks: "",
+    work_type: "field", employment_type: "permanent",
+    season: "", contract_end: "",
+    department: department || user?.department || "planning",
+  };
+  const [formData, setFormData] = useState(emptyForm);
 
   const todayAr = getTodayArabic();
   const currentMonthKey = getMonthKey(new Date());
 
-  useEffect(() => {
-    fetchDepartmentSettings();
-    fetchEmployees();
-    if (department === 'gates') fetchGates();
-  }, [department]);
-
+  useEffect(() => { fetchDepartmentSettings(); fetchEmployees(); if(department==='gates') fetchGates(); }, [department]);
   useEffect(() => { fetchSchedule(); }, [selectedMonth, department]);
 
   const fetchDepartmentSettings = async () => {
@@ -246,16 +287,16 @@ export default function EmployeeManagement({ department }) {
       const dept = department || user?.department;
       if (!dept) return;
       const [sRes, lRes] = await Promise.all([
-        axios.get(`${API}/${dept}/settings/shifts`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
-        axios.get(`${API}/${dept}/settings/coverage_locations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+        axios.get(`${API}/${dept}/settings/shifts`, { headers:{ Authorization:`Bearer ${token}` } }).catch(()=>({data:[]})),
+        axios.get(`${API}/${dept}/settings/coverage_locations`, { headers:{ Authorization:`Bearer ${token}` } }).catch(()=>({data:[]})),
       ]);
       setShifts(sRes.data);
       setCoverageLocations(lRes.data);
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error(e); }
   };
 
   const fetchGates = async () => {
-    try { const r = await axios.get(`${API}/gates`); setGates(r.data); } catch (e) { console.error(e); }
+    try { const r = await axios.get(`${API}/gates`); setGates(r.data); } catch(e) { console.error(e); }
   };
 
   const fetchEmployees = async () => {
@@ -263,9 +304,9 @@ export default function EmployeeManagement({ department }) {
       const token = localStorage.getItem("token");
       const dept = department || user?.department;
       const url = dept ? `${API}/employees?department=${dept}` : `${API}/employees`;
-      const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(url, { headers:{ Authorization:`Bearer ${token}` } });
       setEmployees(res.data);
-    } catch (e) { console.error(e); toast.error(language === 'ar' ? "فشل في جلب الموظفين" : "Failed"); }
+    } catch(e) { toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
     finally { setLoading(false); }
   };
 
@@ -273,98 +314,104 @@ export default function EmployeeManagement({ department }) {
     setScheduleLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API}/schedules/${department}/${selectedMonth}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/schedules/${department}/${selectedMonth}`, { headers:{ Authorization:`Bearer ${token}` } });
       setSchedule(res.data);
-    } catch (e) { setSchedule(null); }
+    } catch(e) { setSchedule(null); }
     finally { setScheduleLoading(false); }
   };
 
-  // Merge employees with schedule assignments
+  // Merge base employee data + monthly schedule
   const mergedEmployees = useMemo(() => {
     const assignmentMap = {};
-    if (schedule && schedule.assignments) {
-      schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
-    }
-    const isCurrentOrActiveSchedule = schedule && (selectedMonth === currentMonthKey || schedule.status === 'active');
-
+    if (schedule?.assignments) schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
+    const isCurrentOrActive = schedule && (selectedMonth===currentMonthKey || schedule.status==='active');
     return employees.map(emp => {
-      const assignment = assignmentMap[emp.id];
-      const restDays = assignment ? assignment.rest_days : (emp.rest_days || []);
-      const location = assignment ? assignment.location : (emp.location || "");
-      const shift = assignment ? assignment.shift : (emp.shift || "");
-      const isOnRest = isCurrentOrActiveSchedule && restDays.includes(todayAr);
-
-      return { ...emp, rest_days: restDays, location, shift, is_active: !isOnRest, on_rest: isOnRest, has_assignment: !!assignment };
+      const a = assignmentMap[emp.id];
+      const restDays = a ? a.rest_days : (emp.rest_days || []);
+      const location  = a ? a.location : (emp.location || "");
+      const shift     = a ? a.shift    : (emp.shift || "");
+      const isTasked  = a ? a.is_tasked : false; // is_tasked comes from monthly schedule
+      const isOnRest  = isCurrentOrActive && restDays.includes(todayAr);
+      const contractOk = isContractActive(emp);
+      return { ...emp, rest_days: restDays, location, shift, is_tasked: isTasked,
+               is_active: !isOnRest && contractOk, on_rest: isOnRest,
+               contract_expired: !contractOk, has_assignment: !!a };
     });
   }, [employees, schedule, selectedMonth, currentMonthKey, todayAr]);
 
   const handleCreateSchedule = async (mode) => {
     try {
       const token = localStorage.getItem("token");
-      const prevMonth = (() => { const [y,m] = selectedMonth.split('-').map(Number); const d = new Date(y, m-2, 1); return getMonthKey(d); })();
-      const payload = { department, month: selectedMonth, clone_from: mode === "clone" ? prevMonth : null };
-      await axios.post(`${API}/admin/schedules`, payload, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(language === 'ar' ? `تم إنشاء جدول ${getMonthLabel(selectedMonth)}` : "Schedule created");
+      const prevMonth = (() => { const [y,m]=selectedMonth.split('-').map(Number); return getMonthKey(new Date(y,m-2,1)); })();
+      await axios.post(`${API}/admin/schedules`, { department, month:selectedMonth, clone_from: mode==="clone"?prevMonth:null }, { headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr ? `تم إنشاء جدول ${getMonthLabel(selectedMonth)}` : "Schedule created");
       fetchSchedule();
-    } catch (e) { toast.error(e.response?.data?.detail || (language === 'ar' ? "فشل الإنشاء" : "Failed")); }
+    } catch(e) { toast.error(e.response?.data?.detail || (isAr?"فشل الإنشاء":"Failed")); }
   };
 
   const handleApproveSchedule = async () => {
-    if (!schedule) return;
+    if(!schedule) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API}/admin/schedules/${schedule.id}/status?status=active`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(language === 'ar' ? "تم اعتماد الجدول" : "Schedule approved");
+      await axios.put(`${API}/admin/schedules/${schedule.id}/status?status=active`,{},{ headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr ? "تم اعتماد الجدول" : "Schedule approved");
       fetchSchedule();
-    } catch (e) { toast.error(language === 'ar' ? "فشل الاعتماد" : "Failed"); }
+    } catch(e) { toast.error(isAr?"فشل الاعتماد":"Failed"); }
   };
 
   const handleDeleteSchedule = async () => {
-    if (!schedule) return;
+    if(!schedule) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API}/admin/schedules/${schedule.id}`, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(language === 'ar' ? "تم حذف الجدول" : "Schedule deleted");
+      await axios.delete(`${API}/admin/schedules/${schedule.id}`,{ headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr?"تم حذف الجدول":"Schedule deleted");
       setSchedule(null);
-    } catch (e) { toast.error(e.response?.data?.detail || (language === 'ar' ? "فشل الحذف" : "Failed")); }
+    } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل الحذف":"Failed")); }
   };
 
   const handleAssignmentChange = useCallback(async (employeeId, field, value) => {
     if (!schedule) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API}/admin/schedules/${schedule.id}/assignment/${employeeId}`, { [field]: value }, { headers: { Authorization: `Bearer ${token}` } });
-      // Update local state
+      await axios.put(`${API}/admin/schedules/${schedule.id}/assignment/${employeeId}`, { [field]:value }, { headers:{ Authorization:`Bearer ${token}` } });
       setSchedule(prev => {
-        if (!prev) return prev;
+        if(!prev) return prev;
         const assignments = [...prev.assignments];
-        const idx = assignments.findIndex(a => a.employee_id === employeeId);
-        if (idx >= 0) { assignments[idx] = { ...assignments[idx], [field]: value }; }
-        else { assignments.push({ employee_id: employeeId, rest_days: [], location: "", shift: "", [field]: value }); }
+        const idx = assignments.findIndex(a=>a.employee_id===employeeId);
+        if(idx>=0) assignments[idx] = { ...assignments[idx], [field]:value };
+        else assignments.push({ employee_id:employeeId, rest_days:[], location:"", shift:"", is_tasked:false, [field]:value });
         return { ...prev, assignments };
       });
-      toast.success(language === 'ar' ? 'تم التحديث' : 'Updated');
-    } catch (e) { toast.error(language === 'ar' ? "فشل التحديث" : "Failed"); }
-  }, [schedule, language]);
+      toast.success(isAr?'تم التحديث':'Updated');
+    } catch(e) { toast.error(isAr?"فشل التحديث":"Failed"); }
+  }, [schedule, isAr]);
 
-  // Fallback: direct employee update when no schedule
   const handleQuickMove = async (employeeId, field, value) => {
-    if (schedule) { handleAssignmentChange(employeeId, field, value); return; }
+    if(schedule) { handleAssignmentChange(employeeId, field, value); return; }
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API}/employees/${employeeId}`, { [field]: value }, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(language === 'ar' ? 'تم التحديث' : 'Updated');
+      await axios.put(`${API}/employees/${employeeId}`, { [field]:value }, { headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr?'تم التحديث':'Updated');
       fetchEmployees();
-    } catch (e) { toast.error(language === 'ar' ? "فشل التحديث" : "Failed"); }
+    } catch(e) { toast.error(isAr?"فشل التحديث":"Failed"); }
   };
 
-  const handleOpenDialog = (employee = null) => {
-    if (employee) {
-      setEditMode(true); setSelectedEmployee(employee);
-      setFormData({ name: employee.name, employee_number: employee.employee_number || "", job_title: employee.job_title, location: "", shift: "", rest_days: [], work_tasks: employee.work_tasks || "", department: employee.department });
+  const handleOpenDialog = (emp=null) => {
+    if(emp) {
+      setEditMode(true); setSelectedEmployee(emp);
+      setFormData({
+        name: emp.name, employee_number: emp.employee_number||"",
+        job_title: emp.job_title, contact_phone: emp.contact_phone||"",
+        location: emp.location||"", shift: emp.shift||"",
+        rest_days: emp.rest_days||[], work_tasks: emp.work_tasks||"",
+        work_type: emp.work_type||"field",
+        employment_type: emp.employment_type||"permanent",
+        season: emp.season||"", contract_end: emp.contract_end||"",
+        department: emp.department,
+      });
     } else {
       setEditMode(false); setSelectedEmployee(null);
-      setFormData({ name: "", employee_number: "", job_title: "", location: "", shift: "", rest_days: [], work_tasks: "", department: department || user?.department || "planning" });
+      setFormData({ ...emptyForm, department: department||user?.department||"planning" });
     }
     setDialogOpen(true);
   };
@@ -373,108 +420,155 @@ export default function EmployeeManagement({ department }) {
     e.preventDefault(); setSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      if (editMode) {
-        await axios.put(`${API}/employees/${selectedEmployee.id}`, { name: formData.name, employee_number: formData.employee_number, job_title: formData.job_title, work_tasks: formData.work_tasks }, { headers: { Authorization: `Bearer ${token}` } });
-        toast.success(language === 'ar' ? "تم تحديث الموظف" : "Updated");
+      const payload = {
+        name: formData.name, employee_number: formData.employee_number,
+        job_title: formData.job_title, contact_phone: formData.contact_phone||undefined,
+        work_type: formData.work_type, employment_type: formData.employment_type,
+        season: formData.season||undefined, contract_end: formData.contract_end||undefined,
+        work_tasks: formData.work_tasks||undefined,
+      };
+      if(editMode) {
+        await axios.put(`${API}/employees/${selectedEmployee.id}`, payload, { headers:{ Authorization:`Bearer ${token}` } });
+        toast.success(isAr?"تم تحديث الموظف":"Updated");
       } else {
-        await axios.post(`${API}/employees`, formData, { headers: { Authorization: `Bearer ${token}` } });
-        toast.success(language === 'ar' ? "تم إضافة الموظف" : "Added");
+        await axios.post(`${API}/employees`, { ...payload, department: formData.department, shift:"", rest_days:[] }, { headers:{ Authorization:`Bearer ${token}` } });
+        toast.success(isAr?"تم إضافة الموظف":"Added");
       }
       setDialogOpen(false); fetchEmployees(); fetchSchedule();
-    } catch (e) { toast.error(e.response?.data?.detail || (language === 'ar' ? "حدث خطأ" : "Error")); }
+    } catch(e) { toast.error(e.response?.data?.detail||(isAr?"حدث خطأ":"Error")); }
     finally { setSubmitting(false); }
   };
 
   const handleDelete = async () => {
-    if (!selectedEmployee) return; setSubmitting(true);
+    if(!selectedEmployee) return; setSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API}/employees/${selectedEmployee.id}`, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(language === 'ar' ? "تم حذف الموظف" : "Deleted");
+      await axios.delete(`${API}/employees/${selectedEmployee.id}`,{ headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr?"تم حذف الموظف":"Deleted");
       setDeleteDialogOpen(false); fetchEmployees();
-    } catch (e) { toast.error(language === 'ar' ? "حدث خطأ" : "Error"); }
+    } catch(e) { toast.error(isAr?"حدث خطأ":"Error"); }
     finally { setSubmitting(false); }
   };
 
   const statistics = useMemo(() => {
-    const total = mergedEmployees.length;
-    const active = mergedEmployees.filter(e => e.is_active).length;
-    const onRest = mergedEmployees.filter(e => e.on_rest).length;
-    const shiftStats = shifts.map(s => ({ ...s, count: mergedEmployees.filter(e => e.shift === s.value).length })).filter(s => s.count > 0);
-    
-    // Weekly coverage
-    const coverage = WEEK_DAYS.map(day => {
-      const resting = mergedEmployees.filter(e => (e.rest_days || []).includes(day.value)).length;
-      const avail = total - resting;
-      return { ...day, available: avail, total, pct: total > 0 ? Math.round((avail / total) * 100) : 0 };
+    const total     = mergedEmployees.length;
+    const active    = mergedEmployees.filter(e=>e.is_active).length;
+    const onRest    = mergedEmployees.filter(e=>e.on_rest).length;
+    const permanent = mergedEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
+    const seasonal  = mergedEmployees.filter(e=>e.employment_type==='seasonal').length;
+    const temporary = mergedEmployees.filter(e=>e.employment_type==='temporary').length;
+    const fieldOps  = mergedEmployees.filter(e=>e.work_type==='field'||e.work_type==='both').length;
+    const tasked    = mergedEmployees.filter(e=>e.is_tasked).length;
+    const shiftStats = shifts.map(s=>({ ...s, count: mergedEmployees.filter(e=>e.shift===s.value).length })).filter(s=>s.count>0);
+    const coverage  = WEEK_DAYS.map(day => {
+      const resting = mergedEmployees.filter(e=>(e.rest_days||[]).includes(day.value)).length;
+      const avail   = total - resting;
+      return { ...day, available:avail, total, pct: total>0?Math.round((avail/total)*100):0 };
     });
-
-    return { total, active, onRest, shiftStats, coverage };
+    return { total, active, onRest, permanent, seasonal, temporary, fieldOps, tasked, shiftStats, coverage };
   }, [mergedEmployees, shifts]);
 
-  const canEdit = !isReadOnly() && (!schedule || schedule.status !== 'archived');
+  const canEdit = !isReadOnly() && (!schedule || schedule.status!=='archived');
 
-  if (loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if(loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary"/></div>;
+
+  const isPermanentEmp = (emp) => (emp.employment_type||'permanent')==='permanent';
 
   return (
     <div className="space-y-5 max-w-full" data-testid="employee-management">
       {/* Month Bar */}
       <MonthBar
         selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} schedule={schedule}
-        onCreateSchedule={handleCreateSchedule} onApprove={handleApproveSchedule} onDelete={handleDeleteSchedule}
-        isReadOnly={isReadOnly()} language={language}
+        onCreateSchedule={handleCreateSchedule} onApprove={handleApproveSchedule}
+        onDelete={handleDeleteSchedule} isReadOnly={isReadOnly()} language={language}
       />
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Total */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <Users className="w-8 h-8 text-blue-600" />
+              <Users className="w-8 h-8 text-blue-600"/>
               <div className="text-right">
-                <p className="text-[10px] text-blue-600">{language === 'ar' ? 'إجمالي' : 'Total'}</p>
+                <p className="text-[10px] text-blue-600">{isAr?'إجمالي':'Total'}</p>
                 <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
               </div>
             </div>
-            <div className="flex gap-3 mt-2 pt-2 border-t border-blue-200 text-center">
-              <div className="flex-1"><p className="text-sm font-bold text-emerald-600">{statistics.active}</p><p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'نشط' : 'Active'}</p></div>
-              <div className="flex-1"><p className="text-sm font-bold text-amber-600">{statistics.onRest}</p><p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'راحة' : 'Rest'}</p></div>
+            <div className="flex gap-2 mt-2 pt-2 border-t border-blue-200 flex-wrap">
+              <div className="flex items-center gap-1 text-[9px]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"/>
+                <span className="text-emerald-700 font-bold">{statistics.permanent}</span>
+                <span className="text-blue-500">{isAr?'دائم':'Perm.'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-[9px]">
+                <span className="w-2 h-2 rounded-full bg-sky-500"/>
+                <span className="text-sky-700 font-bold">{statistics.seasonal}</span>
+                <span className="text-blue-500">{isAr?'موسمي':'Season.'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-[9px]">
+                <span className="w-2 h-2 rounded-full bg-purple-500"/>
+                <span className="text-purple-700 font-bold">{statistics.temporary}</span>
+                <span className="text-blue-500">{isAr?'مؤقت':'Temp.'}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Field / Tasked */}
+        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <HardHat className="w-7 h-7 text-teal-600"/>
+              <div className="text-right">
+                <p className="text-[10px] text-teal-600">{isAr?'ميدانيون':'Field Ops'}</p>
+                <p className="text-2xl font-bold text-teal-900">{statistics.fieldOps}</p>
+              </div>
+            </div>
+            {statistics.tasked > 0 && (
+              <div className="flex items-center gap-1 mt-1 pt-1 border-t border-emerald-200">
+                <Zap className="w-3 h-3 text-amber-500"/>
+                <span className="text-[10px] font-bold text-amber-600">{statistics.tasked}</span>
+                <span className="text-[10px] text-teal-500">{isAr?'مكلف هذا الشهر':'tasked'}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Shifts */}
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
           <CardContent className="p-3">
             <div className="flex items-center justify-between mb-2">
-              <Clock className="w-8 h-8 text-purple-600" />
-              <div className="text-right"><p className="text-[10px] text-purple-600">{language === 'ar' ? 'الورديات' : 'Shifts'}</p></div>
+              <Clock className="w-7 h-7 text-purple-600"/>
+              <p className="text-[10px] text-purple-600">{isAr?'الورديات':'Shifts'}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
               {statistics.shiftStats.map(s => (
                 <div key={s.id} className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-xs font-medium">{s.count}</span>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor:s.color }}/>
+                  <span className="text-xs font-bold">{s.count}</span>
+                  <span className="text-[9px] text-muted-foreground">{s.label?.replace('الوردية ','')}</span>
                 </div>
               ))}
+              {statistics.shiftStats.length===0 && <span className="text-[10px] text-muted-foreground">-</span>}
             </div>
           </CardContent>
         </Card>
 
-        {/* Coverage mini chart */}
-        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 col-span-2">
+        {/* Weekly Coverage */}
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
           <CardContent className="p-3">
             <div className="flex items-center justify-between mb-2">
-              <CalendarDays className="w-6 h-6 text-amber-600" />
-              <p className="text-[10px] text-amber-700 font-semibold">{language === 'ar' ? 'التغطية الأسبوعية' : 'Weekly Coverage'}</p>
+              <CalendarDays className="w-6 h-6 text-amber-600"/>
+              <p className="text-[10px] text-amber-700 font-semibold">{isAr?'التغطية الأسبوعية':'Coverage'}</p>
             </div>
-            <div className="flex gap-1 items-end h-10">
+            <div className="flex gap-0.5 items-end h-10">
               {statistics.coverage.map(day => {
-                const isToday = day.value === todayAr;
-                const isLow = day.pct < 60;
+                const isToday = day.value===todayAr, isLow = day.pct<60;
                 return (
                   <div key={day.value} className="flex-1 flex flex-col items-center gap-0.5" title={`${day.short}: ${day.available}/${day.total}`}>
-                    <div className="w-full rounded-sm relative" style={{ height: `${Math.max(day.pct * 0.35, 4)}px`, backgroundColor: isLow ? '#f87171' : isToday ? '#047857' : '#86efac' }} />
-                    <span className={`text-[8px] ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}>{day.short}</span>
+                    <div className="w-full rounded-sm" style={{ height:`${Math.max(day.pct*0.35,4)}px`, backgroundColor: isLow?'#f87171':isToday?'#047857':'#86efac' }}/>
+                    <span className={`text-[8px] ${isToday?'font-bold text-primary':'text-muted-foreground'}`}>{day.short}</span>
                   </div>
                 );
               })}
@@ -483,19 +577,19 @@ export default function EmployeeManagement({ department }) {
         </Card>
       </div>
 
-      {/* Header + Add button */}
+      {/* Header + Add */}
       <div className="flex items-center justify-between">
         <div className="text-right flex-1">
-          <h2 className="font-cairo font-bold text-lg">{language === 'ar' ? 'جدول الموظفين' : 'Staff Schedule'}</h2>
+          <h2 className="font-cairo font-bold text-lg">{isAr?'جدول الموظفين':'Staff Schedule'}</h2>
           <p className="text-xs text-muted-foreground">
             {schedule
-              ? (language === 'ar' ? `جدول ${getMonthLabel(selectedMonth)} - ${schedule.status === 'active' ? 'معتمد' : schedule.status === 'draft' ? 'مسودة' : 'مؤرشف'}` : `Schedule for ${selectedMonth}`)
-              : (language === 'ar' ? 'البيانات الأساسية للموظفين' : 'Base employee data')}
+              ? `${isAr?'جدول':'Schedule'} ${getMonthLabel(selectedMonth)} — ${schedule.status==='active'?'معتمد':schedule.status==='draft'?'مسودة':'مؤرشف'}`
+              : (isAr?'البيانات الأساسية للموظفين':'Base employee data')}
           </p>
         </div>
         {!isReadOnly() && (
-          <Button size="sm" onClick={() => handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
-            <Plus className="w-4 h-4 ml-1" />{language === 'ar' ? 'موظف جديد' : 'New'}
+          <Button size="sm" onClick={()=>handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
+            <Plus className="w-4 h-4 ml-1"/>{isAr?'موظف جديد':'New'}
           </Button>
         )}
       </div>
@@ -504,82 +598,179 @@ export default function EmployeeManagement({ department }) {
       <Card>
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[1000px]">
+            <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
-                  <TableHead className="text-right font-semibold">{language === 'ar' ? 'الموظف' : 'Employee'}</TableHead>
-                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الوردية' : 'Shift'}</TableHead>
-                  <TableHead className="text-center font-semibold"><div className="flex items-center justify-center gap-1"><Coffee className="w-3.5 h-3.5 text-amber-600" /><span>{language === 'ar' ? 'أيام الراحة' : 'Rest'}</span></div></TableHead>
-                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الموقع' : 'Location'}</TableHead>
-                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-center font-semibold">{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="text-right font-semibold">{isAr?'الموظف':'Employee'}</TableHead>
+                  <TableHead className="text-center font-semibold">{isAr?'نوع التوظيف':'Type'}</TableHead>
+                  <TableHead className="text-center font-semibold">{isAr?'الوردية':'Shift'}</TableHead>
+                  <TableHead className="text-center font-semibold">
+                    <div className="flex items-center justify-center gap-1">
+                      <Coffee className="w-3.5 h-3.5 text-amber-600"/>
+                      <span>{isAr?'أيام الراحة':'Rest'}</span>
+                    </div>
+                  </TableHead>
+                  {schedule && (
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-amber-500"/>
+                        <span>{isAr?'مكلف':'Tasked'}</span>
+                      </div>
+                    </TableHead>
+                  )}
+                  <TableHead className="text-center font-semibold">{isAr?'الحالة':'Status'}</TableHead>
+                  <TableHead className="text-center font-semibold">{isAr?'إجراءات':'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {mergedEmployees.map(emp => (
-                  <TableRow key={emp.id} className={`hover:bg-muted/50 transition-colors ${emp.on_rest ? 'bg-amber-50/40' : ''}`} data-testid={`employee-row-${emp.id}`}>
+                  <TableRow key={emp.id}
+                    className={`hover:bg-muted/50 transition-colors ${emp.on_rest?'bg-amber-50/40':''} ${emp.contract_expired?'opacity-60':''}`}
+                    data-testid={`employee-row-${emp.id}`}>
+
+                    {/* Employee info */}
                     <TableCell className="text-right">
-                      <p className="font-semibold text-sm">{emp.name}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5">{emp.employee_number}</Badge>
-                        <span className="text-[10px] text-muted-foreground">{emp.job_title}</span>
+                      <div className="flex items-start gap-2">
+                        {/* Avatar */}
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0 mt-0.5"
+                          style={{ backgroundColor: (emp.employment_type==='seasonal'?'#0284c7':emp.employment_type==='temporary'?'#9333ea':'#004D38') }}>
+                          {emp.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-semibold text-sm">{emp.name}</p>
+                            {emp.is_tasked && (
+                              <span className="inline-flex items-center gap-0.5 text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full">
+                                <Zap className="w-2.5 h-2.5"/>مكلف
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                            {emp.employee_number && (
+                              <Badge variant="outline" className="text-[9px] font-mono py-0 px-1.5 h-4">{emp.employee_number}</Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground">{emp.job_title}</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            <WorkTypeBadge type={emp.work_type||'field'} isAr={isAr}/>
+                            {emp.contact_phone && (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-500">
+                                <Phone className="w-2.5 h-2.5"/>{emp.contact_phone}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
+
+                    {/* Employment type */}
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <EmpTypeBadge type={emp.employment_type||'permanent'} isAr={isAr}/>
+                        {emp.season && (
+                          <span className="text-[8px] text-sky-600 font-medium">
+                            {SEASONS.find(s=>s.value===emp.season)?.[isAr?'label_ar':'label_en']}
+                          </span>
+                        )}
+                        {emp.contract_end && (
+                          <span className={`text-[8px] font-medium ${emp.contract_expired?'text-red-500':'text-slate-400'}`}>
+                            {emp.contract_expired ? (isAr?'منتهي':'Expired') : emp.contract_end}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Shift */}
                     <TableCell className="text-center">
                       {canEdit ? (
-                        <Select value={emp.shift || ""} onValueChange={v => handleQuickMove(emp.id, 'shift', v)}>
-                          <SelectTrigger className="h-7 w-32 text-[11px]"><SelectValue placeholder="..." /></SelectTrigger>
+                        <Select value={emp.shift||""} onValueChange={v=>handleQuickMove(emp.id,'shift',v)}>
+                          <SelectTrigger className="h-7 w-32 text-[11px]"><SelectValue placeholder="..."/></SelectTrigger>
                           <SelectContent>
-                            {shifts.map(s => (
-                              <SelectItem key={s.id} value={s.value}><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />{s.label}</div></SelectItem>
+                            {shifts.map(s=>(
+                              <SelectItem key={s.id} value={s.value}>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor:s.color }}/>{s.label}
+                                </div>
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      ) : emp.shift ? <Badge style={{ backgroundColor: shifts.find(s => s.value === emp.shift)?.color || '#6b7280' }} className="text-white text-[10px]">{emp.shift}</Badge> : <span className="text-[10px] text-muted-foreground">-</span>}
+                      ) : emp.shift ? (
+                        <Badge style={{ backgroundColor: shifts.find(s=>s.value===emp.shift)?.color||'#6b7280' }}
+                          className="text-white text-[10px]">{emp.shift}</Badge>
+                      ) : <span className="text-[10px] text-muted-foreground">-</span>}
                     </TableCell>
+
+                    {/* Rest days */}
                     <TableCell className="text-center">
                       {canEdit ? (
-                        <RestDaysPicker value={emp.rest_days} onChange={days => handleQuickMove(emp.id, 'rest_days', days)} />
+                        <RestDaysPicker value={emp.rest_days} onChange={days=>handleQuickMove(emp.id,'rest_days',days)}/>
                       ) : (
-                        <RestDaysBadges restDays={emp.rest_days} todayAr={todayAr} />
+                        <RestDaysBadges restDays={emp.rest_days} todayAr={todayAr}/>
                       )}
                     </TableCell>
+
+                    {/* مكلف toggle — only when schedule exists */}
+                    {schedule && (
+                      <TableCell className="text-center">
+                        {isPermanentEmp(emp) ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <TaskedToggle
+                              value={emp.is_tasked}
+                              onChange={v=>handleAssignmentChange(emp.id,'is_tasked',v)}
+                              disabled={!canEdit}
+                              isAr={isAr}
+                            />
+                            <span className="text-[8px] text-muted-foreground">
+                              {emp.is_tasked ? (isAr?'مكلف':'Tasked') : (isAr?'لا':'No')}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground" title={isAr?'التكليف للدائمين فقط':'Permanent only'}>—</span>
+                        )}
+                      </TableCell>
+                    )}
+
+                    {/* Status */}
                     <TableCell className="text-center">
-                      {canEdit && coverageLocations.length > 0 ? (
-                        <Select value={emp.location || ""} onValueChange={v => handleQuickMove(emp.id, 'location', v)}>
-                          <SelectTrigger className="h-7 w-32 text-[11px]"><SelectValue placeholder="..." /></SelectTrigger>
-                          <SelectContent>{coverageLocations.map(l => <SelectItem key={l.id} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                      ) : canEdit && department === 'gates' && gates.length > 0 ? (
-                        <Select value={emp.location || ""} onValueChange={v => handleQuickMove(emp.id, 'location', v)}>
-                          <SelectTrigger className="h-7 w-32 text-[11px]"><SelectValue placeholder="..." /></SelectTrigger>
-                          <SelectContent>{gates.filter(g => g.status === 'مفتوح').map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                      ) : <span className="text-xs">{emp.location || '-'}</span>}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {emp.on_rest ? (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 text-[10px] gap-0.5"><Coffee className="w-3 h-3" />{language === 'ar' ? 'راحة' : 'Rest'}</Badge>
+                      {emp.contract_expired ? (
+                        <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] gap-0.5 hover:bg-red-100">
+                          <X className="w-3 h-3"/>{isAr?'منتهي العقد':'Expired'}
+                        </Badge>
+                      ) : emp.on_rest ? (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 text-[10px] gap-0.5">
+                          <Coffee className="w-3 h-3"/>{isAr?'راحة':'Rest'}
+                        </Badge>
                       ) : (
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-100 text-[10px] gap-0.5"><UserCheck className="w-3 h-3" />{language === 'ar' ? 'نشط' : 'Active'}</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-100 text-[10px] gap-0.5">
+                          <UserCheck className="w-3 h-3"/>{isAr?'نشط':'Active'}
+                        </Badge>
                       )}
                     </TableCell>
+
+                    {/* Actions */}
                     <TableCell className="text-center">
                       {!isReadOnly() && (
                         <div className="flex items-center gap-1 justify-center">
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
-                            <Edit className="w-3 h-3 ml-0.5" />{language === 'ar' ? 'تعديل' : 'Edit'}
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]"
+                            onClick={()=>handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
+                            <Edit className="w-3 h-3 ml-0.5"/>{isAr?'تعديل':'Edit'}
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive" onClick={() => { setSelectedEmployee(emp); setDeleteDialogOpen(true); }}>
-                            <Trash2 className="w-3 h-3" />
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive"
+                            onClick={()=>{ setSelectedEmployee(emp); setDeleteDialogOpen(true); }}>
+                            <Trash2 className="w-3 h-3"/>
                           </Button>
                         </div>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
-                {mergedEmployees.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{language === 'ar' ? 'لا يوجد موظفين' : 'No employees'}</TableCell></TableRow>
+                {mergedEmployees.length===0 && (
+                  <TableRow>
+                    <TableCell colSpan={schedule?8:7} className="text-center py-8 text-muted-foreground">
+                      {isAr?'لا يوجد موظفين':'No employees'}
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -587,39 +778,162 @@ export default function EmployeeManagement({ department }) {
         </CardContent>
       </Card>
 
-      {/* Employee Base Data Dialog (name, number, title only) */}
+      {/* ── Employee Dialog ──────────────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[420px]" data-testid="employee-dialog">
+        <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto" data-testid="employee-dialog">
           <DialogHeader>
-            <DialogTitle className="font-cairo">{editMode ? (language === 'ar' ? 'تعديل بيانات الموظف' : 'Edit Employee') : (language === 'ar' ? 'موظف جديد' : 'New Employee')}</DialogTitle>
-            <DialogDescription>{language === 'ar' ? 'البيانات الأساسية الثابتة - الراحة والموقع والوردية تُدار من الجدول الشهري' : 'Base data - rest/location/shift managed via monthly schedule'}</DialogDescription>
+            <DialogTitle className="font-cairo text-lg">
+              {editMode ? (isAr?'تعديل بيانات الموظف':'Edit Employee') : (isAr?'إضافة موظف جديد':'New Employee')}
+            </DialogTitle>
+            <DialogDescription>
+              {isAr?'البيانات الأساسية الثابتة — الوردية والراحات تُدار من الجدول الشهري':'Base profile — shift & rest managed via monthly schedule'}
+            </DialogDescription>
           </DialogHeader>
+
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label>{language === 'ar' ? 'اسم الموظف' : 'Name'}</Label>
-                <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="mt-1" data-testid="employee-name-input" />
-              </div>
-              <div>
-                <Label>{language === 'ar' ? 'الرقم الوظيفي' : 'Number'}</Label>
-                <Input value={formData.employee_number} onChange={e => setFormData({...formData, employee_number: e.target.value})} required className="mt-1" data-testid="employee-number-input" />
-              </div>
-              <div>
-                <Label>{language === 'ar' ? 'المسمى الوظيفي' : 'Job Title'}</Label>
-                <Input value={formData.job_title} onChange={e => setFormData({...formData, job_title: e.target.value})} required className="mt-1" data-testid="employee-jobtitle-input" />
-              </div>
-              {department === 'planning' && (
+            <div className="space-y-4 py-2">
+
+              {/* Row 1: Name + Number */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>{language === 'ar' ? 'مهام العمل' : 'Tasks'}</Label>
-                  <Input value={formData.work_tasks} onChange={e => setFormData({...formData, work_tasks: e.target.value})} className="mt-1" />
+                  <Label className="text-[11px] font-semibold">{isAr?'اسم الموظف *':'Name *'}</Label>
+                  <Input value={formData.name} onChange={e=>setFormData({...formData,name:e.target.value})}
+                    required className="mt-1 h-9" placeholder={isAr?'الاسم الكامل':'Full name'}
+                    data-testid="employee-name-input"/>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-semibold">{isAr?'الرقم الوظيفي *':'Employee # *'}</Label>
+                  <Input value={formData.employee_number} onChange={e=>setFormData({...formData,employee_number:e.target.value})}
+                    required className="mt-1 h-9 font-mono" placeholder="EMP-001"
+                    data-testid="employee-number-input"/>
+                </div>
+              </div>
+
+              {/* Row 2: Job Title + Phone */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] font-semibold">{isAr?'المسمى الوظيفي *':'Job Title *'}</Label>
+                  <Input value={formData.job_title} onChange={e=>setFormData({...formData,job_title:e.target.value})}
+                    required className="mt-1 h-9" placeholder={isAr?'مثال: محاسب حشود':'e.g. Crowd Analyst'}
+                    data-testid="employee-jobtitle-input"/>
+                </div>
+                <div>
+                  <Label className="text-[11px] font-semibold flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-slate-400"/>
+                    {isAr?'رقم التواصل':'Phone'}
+                  </Label>
+                  <Input value={formData.contact_phone} onChange={e=>setFormData({...formData,contact_phone:e.target.value})}
+                    className="mt-1 h-9 font-mono" placeholder="05xxxxxxxx" type="tel"
+                    data-testid="employee-phone-input"/>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent"/>
+
+              {/* Row 3: Work Type */}
+              <div>
+                <Label className="text-[11px] font-semibold mb-2 block">{isAr?'نوع العمل':'Work Type'}</Label>
+                <div className="flex gap-2">
+                  {WORK_TYPES.map(wt=>(
+                    <button key={wt.value} type="button"
+                      onClick={()=>setFormData({...formData,work_type:wt.value})}
+                      data-testid={`work-type-${wt.value}`}
+                      className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1
+                        ${formData.work_type===wt.value ? 'border-current shadow-md' : 'border-border hover:border-slate-300'}`}
+                      style={formData.work_type===wt.value ? { borderColor:wt.color, backgroundColor:wt.bg, color:wt.color } : {}}>
+                      {wt.value==='field' ? <HardHat className="w-4 h-4"/> : wt.value==='admin' ? <Briefcase className="w-4 h-4"/> : <Shield className="w-4 h-4"/>}
+                      <span className="text-[10px] font-bold">{isAr?wt.label_ar:wt.label_en}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 4: Employment Type */}
+              <div>
+                <Label className="text-[11px] font-semibold mb-2 block">{isAr?'نوع التوظيف':'Employment Type'}</Label>
+                <div className="flex gap-2">
+                  {EMPLOYMENT_TYPES.map(et=>(
+                    <button key={et.value} type="button"
+                      onClick={()=>setFormData({...formData,employment_type:et.value,season:'',contract_end:''})}
+                      data-testid={`employment-type-${et.value}`}
+                      className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1
+                        ${formData.employment_type===et.value ? 'shadow-md' : 'border-border hover:border-slate-300'}`}
+                      style={formData.employment_type===et.value ? { borderColor:et.color, backgroundColor:et.bg, color:et.color } : {}}>
+                      {et.value==='permanent' ? <UserCheck className="w-4 h-4"/> : et.value==='seasonal' ? <CalendarDays className="w-4 h-4"/> : <Clock className="w-4 h-4"/>}
+                      <span className="text-[10px] font-bold">{isAr?et.label_ar:et.label_en}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conditional: Season (seasonal only) */}
+              {formData.employment_type==='seasonal' && (
+                <div className="rounded-xl border-2 border-sky-200 bg-sky-50 p-3 space-y-3">
+                  <p className="text-[10px] font-bold text-sky-700 flex items-center gap-1">
+                    <Info className="w-3 h-3"/>
+                    {isAr?'تفاصيل الموسم':'Season Details'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[10px] font-semibold">{isAr?'الموسم':'Season'}</Label>
+                      <Select value={formData.season} onValueChange={v=>setFormData({...formData,season:v})}>
+                        <SelectTrigger className="h-8 mt-1 text-[11px]" data-testid="season-select">
+                          <SelectValue placeholder={isAr?'اختر...':'Select...'}/>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SEASONS.map(s=><SelectItem key={s.value} value={s.value}>{isAr?s.label_ar:s.label_en}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] font-semibold">{isAr?'تاريخ انتهاء العقد':'Contract End'}</Label>
+                      <Input type="date" value={formData.contract_end}
+                        onChange={e=>setFormData({...formData,contract_end:e.target.value})}
+                        className="h-8 mt-1 text-[11px]" data-testid="contract-end-input"/>
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* Conditional: Contract end (temporary only) */}
+              {formData.employment_type==='temporary' && (
+                <div className="rounded-xl border-2 border-purple-200 bg-purple-50 p-3">
+                  <p className="text-[10px] font-bold text-purple-700 flex items-center gap-1 mb-2">
+                    <Info className="w-3 h-3"/>
+                    {isAr?'تفاصيل العقد المؤقت':'Temporary Contract'}
+                  </p>
+                  <div>
+                    <Label className="text-[10px] font-semibold">{isAr?'تاريخ انتهاء العقد *':'Contract End Date *'}</Label>
+                    <Input type="date" value={formData.contract_end}
+                      onChange={e=>setFormData({...formData,contract_end:e.target.value})}
+                      className="h-8 mt-1 text-[11px]" required
+                      data-testid="contract-end-input"/>
+                  </div>
+                </div>
+              )}
+
+              {/* Note for permanent: is_tasked managed via monthly schedule */}
+              {formData.employment_type==='permanent' && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-2.5 flex items-start gap-2">
+                  <Zap className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0"/>
+                  <p className="text-[10px] text-amber-700 leading-relaxed">
+                    {isAr
+                      ? 'حالة التكليف (مكلف / غير مكلف) تُحدَّد شهرياً من الجدول الشهري مباشرة'
+                      : 'Tasked status is set monthly via the monthly schedule table'}
+                  </p>
+                </div>
+              )}
+
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
-              <Button type="submit" disabled={submitting} data-testid="employee-submit-btn">
-                {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
-                {editMode ? (language === 'ar' ? 'تحديث' : 'Update') : (language === 'ar' ? 'إضافة' : 'Add')}
+
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={()=>setDialogOpen(false)}>
+                {isAr?'إلغاء':'Cancel'}
+              </Button>
+              <Button type="submit" disabled={submitting} className="bg-primary" data-testid="employee-submit-btn">
+                {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1"/>}
+                {editMode ? (isAr?'حفظ التعديلات':'Save') : (isAr?'إضافة الموظف':'Add')}
               </Button>
             </DialogFooter>
           </form>
@@ -630,13 +944,16 @@ export default function EmployeeManagement({ department }) {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-cairo">{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</DialogTitle>
-            <DialogDescription>{language === 'ar' ? `هل أنت متأكد من حذف "${selectedEmployee?.name}"؟` : `Delete "${selectedEmployee?.name}"?`}</DialogDescription>
+            <DialogTitle className="font-cairo">{isAr?'تأكيد الحذف':'Confirm Delete'}</DialogTitle>
+            <DialogDescription>
+              {isAr ? `هل أنت متأكد من حذف "${selectedEmployee?.name}"؟` : `Delete "${selectedEmployee?.name}"?`}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+            <Button variant="outline" onClick={()=>setDeleteDialogOpen(false)}>{isAr?'إلغاء':'Cancel'}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1" />}{language === 'ar' ? 'حذف' : 'Delete'}
+              {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1"/>}
+              {isAr?'حذف':'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

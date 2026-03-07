@@ -136,8 +136,8 @@ class EmployeeCreate(BaseModel):
     name: str
     job_title: str
     department: str
-    location: str
-    shift: str
+    location: str = ""
+    shift: str = ""
     employee_number: Optional[str] = None
     contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
@@ -145,6 +145,10 @@ class EmployeeCreate(BaseModel):
     work_tasks: Optional[str] = None
     is_tasked: bool = False
     is_active: bool = True
+    work_type: str = "field"           # field | admin | both
+    employment_type: str = "permanent" # permanent | seasonal | temporary
+    season: Optional[str] = None       # ramadan | hajj | umrah (for seasonal)
+    contract_end: Optional[str] = None # ISO date for seasonal/temporary
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
@@ -158,6 +162,10 @@ class EmployeeUpdate(BaseModel):
     work_tasks: Optional[str] = None
     is_tasked: Optional[bool] = None
     is_active: Optional[bool] = None
+    work_type: Optional[str] = None
+    employment_type: Optional[str] = None
+    season: Optional[str] = None
+    contract_end: Optional[str] = None
 
 # ============= Monthly Schedule Models =============
 class ScheduleAssignment(BaseModel):
