@@ -473,10 +473,68 @@ export const Layout = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-x-hidden overflow-y-auto">
+        <main className="flex-1 p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-24 lg:pb-6">
           <Outlet />
         </main>
       </div>
+
+      {/* ── Mobile Bottom Navigation Bar ── */}
+      <nav
+        data-testid="mobile-bottom-nav"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border"
+        style={{
+          background: 'hsl(var(--card) / 0.97)',
+          backdropFilter: 'blur(20px)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        <div className="flex h-16 items-stretch">
+          {[...navigation.slice(0, 4)].map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.id}
+                to={item.href}
+                end={item.href === '/'}
+                onClick={() => setMobileMenuOpen(false)}
+                data-testid={`bottom-nav-${item.href.replace(/\//g, '') || 'home'}`}
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-200 relative
+                  ${isActive ? 'text-primary' : 'text-muted-foreground'}`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-b-full" />
+                    )}
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${isActive ? 'bg-primary/10 scale-110' : ''}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-[9px] font-cairo font-medium truncate max-w-[56px] text-center leading-tight">
+                      {item.name}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+
+          {/* More Button */}
+          <button
+            data-testid="bottom-nav-more"
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center">
+              <Menu className="w-5 h-5" />
+            </div>
+            <span className="text-[9px] font-cairo font-medium">
+              {language === 'ar' ? 'المزيد' : 'More'}
+            </span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 };

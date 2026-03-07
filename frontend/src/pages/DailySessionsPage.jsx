@@ -727,31 +727,31 @@ export default function DailySessionsPage() {
   return (
     <div className="space-y-5" data-testid="daily-sessions-page">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 lg:gap-4">
         <div>
-          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للمصليات" : "Daily Prayer Areas Log"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{isAr ? "تتبع التغييرات اليومية للمصليات والمناطق في كل طابق" : "Track daily changes to prayer areas and zones per floor"}</p>
+          <h1 className="font-cairo font-bold text-xl lg:text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للمصليات" : "Daily Prayer Areas Log"}</h1>
+          <p className="text-xs lg:text-sm text-muted-foreground mt-0.5">{isAr ? "تتبع التغييرات اليومية للمصليات والمناطق في كل طابق" : "Track daily changes to prayer areas and zones per floor"}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
-            <SelectTrigger className="w-44" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
+            <SelectTrigger className="w-36 lg:w-44" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
             <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id} data-testid={`floor-option-${f.id}`}>{isAr ? f.name_ar : f.name_en}</SelectItem>)}</SelectContent>
           </Select>
           <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} data-testid="start-new-tour-btn" className="bg-emerald-600 hover:bg-emerald-700">
             <Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}
           </Button>
-          <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn">
+          <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn" className="hidden sm:flex">
             <CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}
           </Button>
         </div>
       </div>
 
       {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5">
         <ArchiveSidebar
           sessions={sessions} activeSession={activeDailySession || activeSession} isAr={isAr}
           theme="emerald" showCompare showNotes
-          className="lg:col-span-1"
+          className="lg:col-span-1 order-2 lg:order-first"
           onSelectSession={async (s) => {
             setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
             try {
@@ -773,7 +773,7 @@ export default function DailySessionsPage() {
           onCompare={handleCompare}
         />
 
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 order-1 lg:order-2">
           {!activeSession ? (
             <Card className="border-dashed">
               <CardContent className="py-16 text-center">
@@ -803,7 +803,7 @@ export default function DailySessionsPage() {
                           type="button"
                           onClick={() => setActiveTab(tab.id)}
                           data-testid={`tab-${tab.id}`}
-                          className={`relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-xl transition-all duration-300 min-w-[100px]
+                          className={`relative flex flex-col items-center gap-1 lg:gap-1.5 px-3 lg:px-5 py-2 lg:py-3 rounded-xl transition-all duration-300 flex-1
                             ${isActive
                               ? 'bg-white shadow-md border-2 scale-[1.02]'
                               : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'
@@ -874,8 +874,8 @@ export default function DailySessionsPage() {
                         </div>
                       </div>
 
-                      {/* Prayer Cards */}
-                      <div className="grid grid-cols-6 gap-1.5">
+                      {/* Prayer Cards - horizontal scroll on mobile, grid on desktop */}
+                      <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar sm:grid sm:grid-cols-6 sm:overflow-visible sm:pb-0">
                         {PRAYER_TIMES.map((pt, idx) => {
                           const ps = prayerSessions[pt.key];
                           const isActivePrayer = activeSession?.prayer === pt.key;
@@ -900,7 +900,7 @@ export default function DailySessionsPage() {
                           else if (isSkipped) cardClass = 'border-slate-300 bg-slate-100/80 opacity-75';
 
                           return (
-                            <div key={pt.key} className="relative flex flex-col gap-1">
+                            <div key={pt.key} className="relative flex flex-col gap-1 flex-shrink-0 sm:flex-shrink" style={{ minWidth: '82px' }}>
                               {/* Main card */}
                               <button
                                 onClick={() => ps && !isSkipped ? handleSelectPrayer(pt.key) : null}
@@ -1029,7 +1029,7 @@ export default function DailySessionsPage() {
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
                   )}
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'var(--map-container-h)' }}>
                     {/* Fixed handle - always at panel edge */}
                     <div
                       className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"

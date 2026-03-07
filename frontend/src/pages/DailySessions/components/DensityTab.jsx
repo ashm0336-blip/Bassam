@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
 import { PRAYER_TIMES } from "../constants";
-import { getPath, isPointInPolygon, getDensityLevel } from "../utils";
+import { getPath, isPointInPolygon, getDensityLevel, useIsMobile } from "../utils";
 
 export function DensityTab({
   activeSession, densityStats, densityEdits, activePrayer, setActivePrayer,
@@ -20,6 +20,8 @@ export function DensityTab({
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const isMobile = useIsMobile();
+  const panelWidth = isMobile ? '92%' : '40%';
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
@@ -205,11 +207,18 @@ export function DensityTab({
       {/* Save bar (remove duplicate, now in toolbar) */}
 
       {/* Main Layout: Heatmap fills full space, Panel floats on top (no layout shift) */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'var(--map-container-h)' }}>
+        {/* Mobile backdrop when panel open */}
+        {isMobile && !panelCollapsed && (
+          <div
+            className="absolute inset-0 bg-black/20 z-20"
+            onClick={() => onPanelToggle()}
+          />
+        )}
         {/* Fixed handle - always at panel edge, never moves far */}
         <div
           className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
-          style={{ right: panelCollapsed ? 0 : '40%' }}
+          style={{ right: panelCollapsed ? 0 : panelWidth }}
         >
           <button
             onClick={() => onPanelToggle()}
@@ -235,8 +244,8 @@ export function DensityTab({
 
         {/* Side Panel: absolutely positioned, slides over the map */}
         <div
-          className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 border-l border-slate-200/80 overflow-y-auto flex flex-col shadow-xl"
-          style={{ width: '40%', transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
+          className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 border-l border-slate-200/80 overflow-y-auto flex flex-col shadow-xl z-25"
+          style={{ width: panelWidth, transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
           data-testid="density-side-panel"
         >
           <div className="p-4 space-y-3 flex-1">

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
-import { normalizeImageUrl } from "../utils";
+import { normalizeImageUrl, useIsMobile } from "../utils";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -106,6 +106,8 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
 export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const isMobile = useIsMobile();
+  const panelWidth = isMobile ? '92%' : '40%';
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -497,11 +499,18 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
       </div>
 
       {/* ─── Map Container ──────────────────────────────── */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }} data-testid="zone-employees-tab">
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'var(--map-container-h)' }} data-testid="zone-employees-tab">
+      {/* Mobile backdrop when panel open */}
+      {isMobile && !panelCollapsed && (
+        <div
+          className="absolute inset-0 bg-black/20 z-20"
+          onClick={() => onPanelToggle()}
+        />
+      )}
       {/* Fixed handle - always at panel edge */}
       <div
         className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300"
-        style={{ right: panelCollapsed ? 0 : '40%' }}
+        style={{ right: panelCollapsed ? 0 : panelWidth }}
       >
         <button
             onClick={() => onPanelToggle()}
@@ -655,8 +664,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
 
       {/* RIGHT: Control Panel - absolutely positioned, slides over the map */}
       <div
-        className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden shadow-xl"
-        style={{ width: '40%', transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
+        className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden shadow-xl z-25"
+        style={{ width: panelWidth, transform: panelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
         data-testid="employees-panel"
       >
         <div className="p-4 space-y-4">

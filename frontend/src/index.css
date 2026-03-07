@@ -161,8 +161,65 @@ code {
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
-/* Glass effect */
+/* ── CSS Variables for responsive map height ── */
+:root {
+  --map-container-h: min(680px, calc(100vh - 260px));
+  --bottom-nav-h: 64px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --map-container-h: min(450px, calc(100svh - 340px));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --map-container-h: min(560px, calc(100vh - 280px));
+  }
+}
+
+/* ── No Scrollbar utility ── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Safe area padding for mobile bottom nav ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Glass effect ── */
 .glass {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Bottom Nav active indicator ── */
+.bottom-nav-item-active::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #004D38;
+  margin: 1px auto 0;
+}
+
+/* ── Mobile drawer backdrop ── */
+@keyframes drawerSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.drawer-slide-up {
+  animation: drawerSlideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
 
 /* Mobile Responsive Utilities */
 @media (max-width: 768px) {
@@ -212,11 +269,6 @@ code {
   .tablet-2-col {
     grid-template-columns: repeat(2, 1fr) !important;
   }
-}
-
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Gold gradient for special elements */
