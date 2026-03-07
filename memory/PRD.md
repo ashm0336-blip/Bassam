@@ -60,7 +60,28 @@ Arabic (العربية)
 - Panel state persists when switching tabs (lifted to parent)
 - No layout shift when switching tabs (tabIndex=-1 + minHeight)
 
-### Full Responsive Design - All Devices (Mar 7, 2026)
+### Dark Mode - Forest Night Palette (Mar 7, 2026)
+- **Forest Night Palette**: Deep emerald-tinted dark inspired by Al-Haram night atmosphere
+  - Background: `hsl(160 30% 7%)` — very deep forest green
+  - Card surface: `hsl(160 28% 10%)` — slightly lighter surface
+  - Primary: `hsl(160 65% 42%)` — brighter emerald for visibility
+  - Gold accent unchanged: `#C5A059`
+- **Global CSS Overrides**: ~80 rules in index.css targeting all hardcoded Tailwind classes
+  - Covers: bg-white, bg-slate-*, bg-gray-*, text-slate-*, border-*, from/to gradients
+  - Covers all status colors: emerald, blue, amber, red, violet
+  - Shadow overrides (stronger in dark), backdrop/overlay adjustments
+- **Component-specific fixes**:
+  - Layout.jsx header: `isDark` conditional for `backgroundColor`
+  - DailySessionsPage.jsx: `isDark` conditional for tab bar, tab icon/label styles
+  - SessionHeader.jsx: `dark:bg-emerald-50`/`dark:bg-amber-50` Tailwind variants
+  - Side panels (stats/density/employees): data-testid CSS overrides
+  - Bottom navigation: `hsl(var(--card)/0.97)` in dark mode
+- **Smooth transitions**: 0.2s ease for all color/background/border properties
+- **Scrollbar**: Dark-themed scrollbar (green-tinted track + hover gold)
+- **Persistence**: `localStorage.theme` saved across sessions
+- **Toggle**: `data-testid="theme-toggle"` Moon/Sun icon in header
+
+
 - **Bottom Navigation Bar**: Fixed at bottom on mobile/tablet (lg:hidden), 4 nav items + More button
 - **Mobile Bottom Nav**: Active indicator (top border + scale), tap More opens full sidebar drawer
 - **Map Heights**: CSS variable `--map-container-h` with 3 responsive breakpoints (mobile/tablet/desktop)
