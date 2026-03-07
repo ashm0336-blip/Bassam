@@ -937,6 +937,7 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   )}
+                  {activeSession?.status !== "completed" && (
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -954,6 +955,7 @@ export default function DailySessionsPage() {
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                   />
+                  )}
                   <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>
                     {/* Fixed handle - always at panel edge */}
                     <div
