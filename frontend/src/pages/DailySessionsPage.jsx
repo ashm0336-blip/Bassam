@@ -266,6 +266,48 @@ export default function DailySessionsPage() {
     }
   }, [activeDailySession]);
 
+  // Skip a prayer session (mark as skipped, doesn't block next prayer)
+  const handleSkipPrayerSession = useCallback(async (prayerKey) => {
+    if (!activeDailySession || !selectedFloor) return;
+    setSaving(true);
+    try {
+      // Create session with status "skipped"
+      const res = await axios.post(`${API}/admin/map-sessions`, {
+        date: activeDailySession.date,
+        floor_id: selectedFloor.id,
+        session_type: "prayer",
+        prayer: prayerKey,
+        parent_session_id: activeDailySession.id,
+      }, getAuthHeaders());
+      // Immediately mark as skipped
+      const skipped = await axios.put(`${API}/admin/map-sessions/${res.data.id}`, { status: "skipped" }, getAuthHeaders());
+      setPrayerSessions(prev => ({ ...prev, [prayerKey]: skipped.data }));
+      setBypassConfirm(null);
+      const pt = PRAYER_TIMES.find(p => p.key === prayerKey);
+      toast.success(isAr ? `تم تجاوز صلاة ${pt?.label_ar}` : `${pt?.label_en} skipped`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || (isAr ? "تعذرت العملية" : "Error"));
+    } finally { setSaving(false); }
+  }, [activeDailySession, selectedFloor, isAr]);
+
+  // Un-skip: convert skipped session back to draft for editing
+  const handleUnskipPrayerSession = useCallback(async (prayerKey) => {
+    const ps = prayerSessions[prayerKey];
+    if (!ps) return;
+    try {
+      const res = await axios.put(`${API}/admin/map-sessions/${ps.id}`, { status: "draft" }, getAuthHeaders());
+      setPrayerSessions(prev => ({ ...prev, [prayerKey]: res.data }));
+      // Load the session for editing
+      setActiveSession(res.data);
+      setActivePrayer(prayerKey);
+      setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
+      const pt = PRAYER_TIMES.find(p => p.key === prayerKey);
+      toast.success(isAr ? `تم فك تجاوز ${pt?.label_ar}` : `${pt?.label_en} unskipped`);
+    } catch (e) {
+      toast.error(isAr ? "تعذرت العملية" : "Error");
+    }
+  }, [prayerSessions, isAr]);
+
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { axios.get(`${API}/zone-categories`).then(res => { if (res.data?.length > 0) setZoneTypes(res.data); }).catch(() => {}); }, []);
   useEffect(() => { if (selectedFloor) { fetchSessions(); setActiveSession(null); setImgRatio(null); } }, [selectedFloor, fetchSessions]);
@@ -816,10 +858,14 @@ export default function DailySessionsPage() {
                           {/* Day completion progress */}
                           {(() => {
                             const completed = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'completed').length;
+                            const skipped = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'skipped').length;
+                            const countable = PRAYER_TIMES.length - skipped;
                             const started = Object.keys(prayerSessions).length;
                             return started > 0 && (
-                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                                {completed}/{PRAYER_TIMES.length} {isAr ? "مكتملة" : "done"}
+                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                {completed}/{countable}
+                                {skipped > 0 && <span className="text-slate-400">({skipped} ⏭️)</span>}
+                                {isAr ? " مكتملة" : " done"}
                               </span>
                             );
                           })()}
@@ -837,45 +883,70 @@ export default function DailySessionsPage() {
                           // Determine ordering state
                           const prevPrayerKey = idx > 0 ? PRAYER_TIMES[idx - 1].key : null;
                           const prevSession = prevPrayerKey ? prayerSessions[prevPrayerKey] : null;
-                          const prevCompleted = !prevPrayerKey || prevSession?.status === 'completed';
-                          const prevIsDraft = prevPrayerKey && prevSession && prevSession.status !== 'completed';
+                          const prevCompleted = !prevPrayerKey || prevSession?.status === 'completed' || prevSession?.status === 'skipped';
+                          const prevIsDraft = prevPrayerKey && prevSession && prevSession.status === 'draft';
                           const prevNotStarted = prevPrayerKey && !prevSession;
                           const canStartFreely = !ps && prevCompleted;
                           const needsBypass = !ps && (prevIsDraft || prevNotStarted);
                           const awaitingBypass = bypassConfirm === pt.key;
+                          const isSkipped = status === 'skipped';
 
                           // Card border/bg based on state
                           let cardClass = 'border-dashed border-slate-200 bg-slate-50/50';
                           if (isActivePrayer) cardClass = 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.03]';
                           else if (status === 'completed') cardClass = 'border-emerald-300 bg-emerald-50/60 cursor-pointer hover:shadow-sm';
                           else if (status === 'draft') cardClass = 'border-blue-300 bg-blue-50/60 cursor-pointer hover:shadow-sm';
+                          else if (isSkipped) cardClass = 'border-slate-300 bg-slate-100/80 opacity-75';
 
                           return (
                             <div key={pt.key} className="relative flex flex-col gap-1">
                               {/* Main card */}
                               <button
-                                onClick={() => ps ? handleSelectPrayer(pt.key) : null}
+                                onClick={() => ps && !isSkipped ? handleSelectPrayer(pt.key) : null}
                                 data-testid={`prayer-session-${pt.key}`}
                                 className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all ${cardClass}`}
                               >
-                                <span className="text-lg leading-none">{pt.icon}</span>
-                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : status ? 'text-slate-600' : 'text-slate-400'}`}>
+                                <span className={`text-lg leading-none ${isSkipped ? 'grayscale opacity-50' : ''}`}>{pt.icon}</span>
+                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : isSkipped ? 'text-slate-400 line-through' : status ? 'text-slate-600' : 'text-slate-400'}`}>
                                   {isAr ? pt.label_ar : pt.label_en}
                                 </span>
                                 <span className="text-[8px] leading-none">
-                                  {status === 'completed' ? '✅' : status === 'draft' ? '🔵' : '○'}
+                                  {status === 'completed' ? '✅' : status === 'draft' ? '🔵' : isSkipped ? '⏭️' : '○'}
                                 </span>
                               </button>
 
-                              {/* Start button - FREE (previous completed) */}
+                              {/* Skip button - for unstarted prayers (can start freely) */}
                               {canStartFreely && (
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleStartPrayerSession(pt.key)}
+                                    disabled={saving}
+                                    data-testid={`start-prayer-session-${pt.key}`}
+                                    className="flex-1 text-[8px] py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-sm disabled:opacity-50"
+                                  >
+                                    {isAr ? "▶ بدء" : "▶ Start"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleSkipPrayerSession(pt.key)}
+                                    disabled={saving}
+                                    data-testid={`skip-prayer-session-${pt.key}`}
+                                    title={isAr ? "تجاوز هذه الصلاة (لا تُحسب في الإحصائيات)" : "Skip this prayer (excluded from stats)"}
+                                    className="text-[8px] px-1.5 py-1.5 rounded-lg border border-slate-300 text-slate-400 hover:bg-slate-100 transition-all"
+                                  >
+                                    ⏭️
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Skipped session - show unskip button */}
+                              {isSkipped && (
                                 <button
-                                  onClick={() => handleStartPrayerSession(pt.key)}
-                                  disabled={saving}
-                                  data-testid={`start-prayer-session-${pt.key}`}
-                                  className="w-full text-[8px] py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                                  onClick={() => handleUnskipPrayerSession(pt.key)}
+                                  data-testid={`unskip-prayer-session-${pt.key}`}
+                                  className="w-full text-[8px] py-1.5 rounded-lg border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold transition-all"
+                                  title={isAr ? "فك التجاوز وإدخال البيانات" : "Unskip and enter data"}
                                 >
-                                  {isAr ? "▶ بدء" : "▶ Start"}
+                                  {isAr ? "فك التجاوز" : "Unskip"}
                                 </button>
                               )}
 
@@ -925,13 +996,14 @@ export default function DailySessionsPage() {
                         <div className="flex items-center gap-3">
                           <span className="text-[9px] text-slate-400 flex items-center gap-1">✅ {isAr ? "مكتملة" : "Done"}</span>
                           <span className="text-[9px] text-slate-400 flex items-center gap-1">🔵 {isAr ? "مسودة" : "Draft"}</span>
+                          <span className="text-[9px] text-slate-400 flex items-center gap-1">⏭️ {isAr ? "متجاوزة" : "Skipped"}</span>
                           <span className="text-[9px] text-slate-400 flex items-center gap-1">⚠️ {isAr ? "يحتاج تجاوز" : "Needs bypass"}</span>
                         </div>
                         {/* Progress dots */}
                         <div className="flex items-center gap-1">
                           {PRAYER_TIMES.map(pt => {
                             const s = prayerSessions[pt.key]?.status;
-                            return <span key={pt.key} className={`w-2 h-2 rounded-full transition-all ${s === 'completed' ? 'bg-emerald-500' : s === 'draft' ? 'bg-blue-400' : 'bg-slate-200'}`} />;
+                            return <span key={pt.key} className={`w-2 h-2 rounded-full transition-all ${s === 'completed' ? 'bg-emerald-500' : s === 'draft' ? 'bg-blue-400' : s === 'skipped' ? 'bg-slate-400' : 'bg-slate-200'}`} title={s === 'skipped' ? (isAr ? 'متجاوزة' : 'Skipped') : ''} />;
                           })}
                         </div>
                       </div>
