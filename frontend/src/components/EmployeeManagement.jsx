@@ -457,7 +457,7 @@ export default function EmployeeManagement({ department }) {
     const permanent = mergedEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
     const seasonal  = mergedEmployees.filter(e=>e.employment_type==='seasonal').length;
     const temporary = mergedEmployees.filter(e=>e.employment_type==='temporary').length;
-    const fieldOps  = mergedEmployees.filter(e=>e.work_type==='field'||e.work_type==='both').length;
+    const fieldOps  = mergedEmployees.filter(e=>(e.work_type||'field')==='field' || e.work_type==='both').length;
     const tasked    = mergedEmployees.filter(e=>e.is_tasked).length;
     const shiftStats = shifts.map(s=>({ ...s, count: mergedEmployees.filter(e=>e.shift===s.value).length })).filter(s=>s.count>0);
     const coverage  = WEEK_DAYS.map(day => {
