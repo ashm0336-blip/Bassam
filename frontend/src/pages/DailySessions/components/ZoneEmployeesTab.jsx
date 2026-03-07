@@ -296,13 +296,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     );
   }
 
-  const getZoneCoverageColor = (zone) => {
-    const emps = zoneEmployeeMap[zone.zone_code] || [];
-    if (zone.zone_type === "service") return { fill: "#94a3b8", opacity: 0.15 };
-    if (emps.length > 0) return { fill: "#22c55e", opacity: 0.35 };
-    return { fill: "#ef4444", opacity: 0.3 };
-  };
-
   const mapImageUrl = selectedFloor?.image_url ? normalizeImageUrl(selectedFloor.image_url) : null;
 
   return (
@@ -479,31 +472,20 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                           const pts = zone.polygon_points.map(p => `${p.x},${p.y}`).join(" ");
                           const emps = zoneEmployeeMap[zone.zone_code] || [];
                           const isHovered = hoveredZone === zone.id;
-                          const cx = zone.polygon_points.reduce((s, p) => s + p.x, 0) / zone.polygon_points.length;
-                          const cy = zone.polygon_points.reduce((s, p) => s + p.y, 0) / zone.polygon_points.length;
+                          const isCovered = emps.length > 0;
+                          const isService = zone.zone_type === "service";
+                          const fillColor = isService ? "#94a3b8" : isCovered ? "#22c55e" : "#ef4444";
+                          const fillOpacity = isService ? 0.15 : isCovered ? 0.55 : 0.35;
                           return (
                             <g key={zone.id}>
                               <polygon
                                 points={pts}
-                                fill={fill}
-                                fillOpacity={isHovered ? opacity + 0.25 : opacity}
-                                stroke={isHovered ? "#1e293b" : fill}
-                                strokeWidth={isHovered ? 0.5 : 0.25}
-                                strokeOpacity={0.8}
-                                className="transition-all duration-200"
+                                fill={fillColor}
+                                fillOpacity={isHovered ? Math.min(fillOpacity + 0.2, 0.85) : fillOpacity}
+                                stroke={fillColor}
+                                strokeWidth={isHovered ? 0.6 : isCovered ? 0.35 : 0.5}
+                                strokeOpacity={isHovered ? 1 : isCovered ? 0.6 : 0.8}
                               />
-                              {emps.length > 0 && (
-                                <>
-                                  <circle cx={cx} cy={cy} r="2.2" fill="#fff" fillOpacity="0.9" />
-                                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.8" fontWeight="800" fill="#16a34a">{emps.length}</text>
-                                </>
-                              )}
-                              {emps.length === 0 && zone.zone_type !== "service" && (
-                                <>
-                                  <circle cx={cx} cy={cy} r="1.5" fill="#ef4444" fillOpacity="0.8" />
-                                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize="1.2" fontWeight="800" fill="#fff">!</text>
-                                </>
-                              )}
                             </g>
                           );
                         })}
