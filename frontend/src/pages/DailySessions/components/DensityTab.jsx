@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Activity, Users, ShieldAlert, Flame, Gauge, AlertCircle, RefreshCw, SaveAll,
   MapPin, ZoomIn, ZoomOut, Maximize2, Layers, Search, ChevronRight,
+  Undo2, Redo2, ListFilter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,39 @@ export function DensityTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
   const [sortBy, setSortBy] = useState("density-desc");
+  // Quick list state
+  const [quickSearch, setQuickSearch] = useState("");
+  const [quickListOpen, setQuickListOpen] = useState(false);
+  // Undo/Redo stack
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
+  // Wrapped change handler that records undo history
+  const handleChangeWithUndo = useCallback((zoneId, field, newValue) => {
+    const zone = densityStats?.zonesDensity?.find(z => z.id === zoneId);
+    const oldValue = field === 'prayer_count'
+      ? (densityEdits?.[zoneId]?.prayer_counts?.[activePrayer] ?? zone?.prayer_counts?.[activePrayer] ?? 0)
+      : (densityEdits?.[zoneId]?.[field] ?? zone?.[field] ?? 0);
+    setUndoStack(prev => [...prev.slice(-29), { zoneId, field, oldValue, newValue, prayer: activePrayer }]);
+    setRedoStack([]);
+    handleDensityChange(zoneId, field, newValue);
+  }, [densityStats, densityEdits, activePrayer, handleDensityChange]);
+
+  const undoDensity = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const action = undoStack[undoStack.length - 1];
+    setRedoStack(prev => [...prev, action]);
+    setUndoStack(prev => prev.slice(0, -1));
+    handleDensityChange(action.zoneId, action.field, action.oldValue, action.prayer);
+  }, [undoStack, handleDensityChange]);
+
+  const redoDensity = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const action = redoStack[redoStack.length - 1];
+    setUndoStack(prev => [...prev, action]);
+    setRedoStack(prev => prev.slice(0, -1));
+    handleDensityChange(action.zoneId, action.field, action.newValue, action.prayer);
+  }, [redoStack, handleDensityChange]);
 
   // Filter & sort zones
   const filteredZones = useMemo(() => {
@@ -65,15 +99,110 @@ export function DensityTab({
         ))}
       </div>
 
-      {/* Save bar */}
-      {Object.keys(densityEdits).length > 0 && (
-        <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid="density-save-bar">
-          <div className="flex items-center gap-2 text-sm text-amber-700"><AlertCircle className="w-4 h-4" />{isAr ? `${Object.keys(densityEdits).length} تعديل غير محفوظ` : `${Object.keys(densityEdits).length} unsaved`}</div>
-          <Button onClick={handleSaveDensityBatch} disabled={savingDensity} className="bg-emerald-600 hover:bg-emerald-700" size="sm" data-testid="density-save-btn">
-            {savingDensity ? <RefreshCw className="w-4 h-4 ml-1 animate-spin" /> : <SaveAll className="w-4 h-4 ml-1" />}{isAr ? "حفظ الكل" : "Save All"}
-          </Button>
-        </div>
-      )}
+      {/* ─── Density Toolbar ──────────────────────── */}
+      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
+        {/* Quick List Dropdown */}
+        <Popover open={quickListOpen} onOpenChange={setQuickListOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 font-cairo text-xs h-8" data-testid="density-quick-list-btn">
+              <ListFilter className="w-3.5 h-3.5" />
+              {isAr ? "قائمة سريعة" : "Quick List"}
+              <Badge variant="secondary" className="text-[9px] px-1 h-4">{densityStats.totalZones}</Badge>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="start" side="bottom" data-testid="density-quick-list-panel">
+            <div className="p-3 border-b">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-cairo font-bold text-slate-600">{isAr ? `إمتلاء المناطق — ${PRAYER_TIMES.find(p=>p.key===activePrayer)?.icon} ${PRAYER_TIMES.find(p=>p.key===activePrayer)?.label_ar}` : `Occupancy — ${PRAYER_TIMES.find(p=>p.key===activePrayer)?.label_en}`}</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Input value={quickSearch} onChange={e => setQuickSearch(e.target.value)}
+                  placeholder={isAr ? "بحث بالكود أو الاسم..." : "Search zone..."}
+                  className="pr-8 h-8 text-[11px]" data-testid="density-quick-search" />
+              </div>
+            </div>
+            <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
+              {densityStats.zonesDensity
+                .filter(z => !quickSearch.trim() || z.zone_code?.toLowerCase().includes(quickSearch.toLowerCase()) || z.name_ar?.toLowerCase().includes(quickSearch.toLowerCase()))
+                .sort((a, b) => b.fillPct - a.fillPct)
+                .map(zone => {
+                  const di = zone.densityInfo;
+                  const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                  const currentEdit = densityEdits?.[zone.id]?.prayer_counts?.[activePrayer];
+                  const displayCount = currentEdit !== undefined ? currentEdit : (zone.prayer_counts?.[activePrayer] ?? 0);
+                  return (
+                    <div key={zone.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 transition-colors" data-testid={`quick-zone-${zone.id}`}>
+                      {/* Color dot */}
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.fill_color || ti?.color || '#22c55e' }} />
+                      {/* Zone info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-700 truncate">{zone.zone_code}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(zone.fillPct, 100)}%`, backgroundColor: di.color }} />
+                          </div>
+                          <span className="text-[9px] font-mono font-bold flex-shrink-0" style={{ color: di.color }}>{zone.fillPct}%</span>
+                        </div>
+                        {zone.max_capacity > 0 && <p className="text-[8px] text-slate-400">{isAr ? `طاقة: ${zone.max_capacity.toLocaleString()}` : `Cap: ${zone.max_capacity.toLocaleString()}`}</p>}
+                      </div>
+                      {/* Quick number input */}
+                      {activeSession?.status === "draft" && zone.max_capacity > 0 && (
+                        <input
+                          type="number"
+                          min={0}
+                          max={Math.ceil(zone.max_capacity * 1.5)}
+                          value={displayCount}
+                          onChange={e => handleChangeWithUndo(zone.id, 'prayer_count', Math.max(0, parseInt(e.target.value) || 0))}
+                          className="w-16 h-7 text-[11px] font-mono text-center border border-slate-200 rounded-lg focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 outline-none"
+                          data-testid={`quick-input-${zone.id}`}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+            {activeSession?.status === "draft" && Object.keys(densityEdits).length > 0 && (
+              <div className="p-2 border-t bg-amber-50">
+                <Button onClick={() => { handleSaveDensityBatch(); setQuickListOpen(false); }} disabled={savingDensity}
+                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700" data-testid="quick-save-btn">
+                  {savingDensity ? <RefreshCw className="w-3.5 h-3.5 ml-1 animate-spin" /> : <SaveAll className="w-3.5 h-3.5 ml-1" />}
+                  {isAr ? `حفظ الكل (${Object.keys(densityEdits).length})` : `Save All (${Object.keys(densityEdits).length})`}
+                </Button>
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        <div className="w-px h-5 bg-slate-200" />
+
+        {/* Undo */}
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undoDensity} disabled={undoStack.length === 0}
+          title={isAr ? `تراجع (${undoStack.length})` : `Undo (${undoStack.length})`} data-testid="density-undo-btn">
+          <Undo2 className="w-4 h-4" />
+        </Button>
+        {/* Redo */}
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redoDensity} disabled={redoStack.length === 0}
+          title={isAr ? `إعادة (${redoStack.length})` : `Redo (${redoStack.length})`} data-testid="density-redo-btn">
+          <Redo2 className="w-4 h-4" />
+        </Button>
+
+        {/* Unsaved count badge */}
+        {Object.keys(densityEdits).length > 0 && (
+          <>
+            <div className="w-px h-5 bg-slate-200" />
+            <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />{Object.keys(densityEdits).length} {isAr ? "غير محفوظ" : "unsaved"}
+            </span>
+            <Button onClick={handleSaveDensityBatch} disabled={savingDensity} size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 mr-auto" data-testid="density-toolbar-save-btn">
+              {savingDensity ? <RefreshCw className="w-3.5 h-3.5 ml-1 animate-spin" /> : <SaveAll className="w-3.5 h-3.5 ml-1" />}
+              {isAr ? "حفظ" : "Save"}
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* Save bar (remove duplicate, now in toolbar) */}
 
       {/* Main Layout: Heatmap fills full space, Panel floats on top (no layout shift) */}
       <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'min(680px, calc(100vh - 260px))' }}>

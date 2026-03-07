@@ -604,9 +604,10 @@ export default function DailySessionsPage() {
   useEffect(() => { setDensityEdits({}); }, [activeSession?.id]);
 
   // ─── Density Handlers ─────────────────────────────────────
-  const handleDensityChange = (zoneId, field, value) => {
+  const handleDensityChange = (zoneId, field, value, prayerOverride = null) => {
+    const prayer = prayerOverride || activePrayer;
     if (field === "prayer_count") {
-      setDensityEdits(prev => ({ ...prev, [zoneId]: { ...prev[zoneId], prayer_counts: { ...(prev[zoneId]?.prayer_counts || {}), [activePrayer]: value } } }));
+      setDensityEdits(prev => ({ ...prev, [zoneId]: { ...prev[zoneId], prayer_counts: { ...(prev[zoneId]?.prayer_counts || {}), [prayer]: value } } }));
     } else {
       setDensityEdits(prev => ({ ...prev, [zoneId]: { ...prev[zoneId], [field]: value } }));
     }
