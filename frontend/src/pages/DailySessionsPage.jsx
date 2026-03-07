@@ -1123,7 +1123,9 @@ export default function DailySessionsPage() {
                 </TabsContent>
 
                 <TabsContent value="employees" tabIndex={-1} className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out', minHeight: 'min(760px, calc(100vh - 220px))' }}>
-                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
+                  <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession}
+                    setActiveSession={setActiveSession}
+                    ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
                     panelCollapsed={employeesPanelCollapsed}
                     onPanelToggle={() => setEmployeesPanelCollapsed(p => !p)}
                   />

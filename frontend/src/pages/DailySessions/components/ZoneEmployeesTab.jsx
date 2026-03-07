@@ -59,39 +59,42 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
                   {isCovered ? `✅ ${emps.length}` : '○'}
                 </span>
               </button>
-              {/* Expand: assign/unassign */}
               {isSelected && (
                 <div className="px-2 pb-2 border-t border-slate-100 pt-2 space-y-1.5">
-                  {/* Current employees */}
+                  {/* Current employees with remove */}
                   {emps.length > 0 && (
                     <div className="space-y-1">
                       {emps.map(emp => (
                         <div key={emp.id} className="flex items-center justify-between px-2 py-1 bg-emerald-50 rounded-lg">
                           <span className="text-[10px] font-medium text-slate-700">{emp.name}</span>
                           {activeSession?.status === "draft" && (
-                            <button onClick={() => handleUnassign(emp.id)} className="text-[8px] text-red-500 hover:text-red-700 font-semibold">✕ {isAr ? "إلغاء" : "Remove"}</button>
+                            <button onClick={() => handleUnassign(emp.id, zone.id)} className="text-[8px] text-red-500 hover:text-red-700 font-semibold">✕ {isAr ? "إلغاء" : "Remove"}</button>
                           )}
                         </div>
                       ))}
                     </div>
                   )}
-                  {/* Add employee */}
-                  {activeSession?.status === "draft" && unassignedEmployees.length > 0 && (
-                    <Select onValueChange={empId => { handleAssign(empId, zone.zone_code); setSelectedZone(null); }}>
-                      <SelectTrigger className="h-7 text-[10px] border-dashed border-emerald-300">
-                        <Plus className="w-3 h-3 text-emerald-500 ml-1" />
-                        <SelectValue placeholder={isAr ? "إضافة موظف..." : "Add staff..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {unassignedEmployees.map(emp => (
-                          <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {activeSession?.status === "draft" && unassignedEmployees.length === 0 && (
-                    <p className="text-[9px] text-slate-400 text-center py-1">{isAr ? "لا يوجد موظفون متاحون" : "No available staff"}</p>
-                  )}
+                  {/* Add employee — shows ALL employees not yet in this zone */}
+                  {activeSession?.status === "draft" && (() => {
+                    const available = unassignedEmployees.length > 0
+                      ? unassignedEmployees
+                      : []; // only unassigned for quick assign
+                    return available.length > 0 ? (
+                      <Select onValueChange={empId => { handleAssign(empId, zone.id); setSelectedZone(null); }}>
+                        <SelectTrigger className="h-7 text-[10px] border-dashed border-emerald-300">
+                          <Plus className="w-3 h-3 text-emerald-500 ml-1" />
+                          <SelectValue placeholder={isAr ? "إضافة موظف..." : "Add staff..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {available.map(emp => (
+                            <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-[9px] text-slate-400 text-center py-1">{isAr ? "لا يوجد موظفون غير معيّنين" : "No unassigned staff"}</p>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -103,7 +106,7 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
   );
 }
 
-export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
+export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const isMobile = useIsMobile();
@@ -208,42 +211,72 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     return codes;
   }, [activeZones]);
 
+  // ── Zone → Employees map (source of truth: zone.assigned_employee_ids) ──
   const zoneEmployeeMap = useMemo(() => {
     const map = {};
-    activeZones.forEach(z => { map[z.zone_code] = []; });
-    employees.forEach(emp => {
-      if (emp.location) {
-        const zone = activeZones.find(z => z.zone_code === emp.location || z.name_ar === emp.location || z.name_en === emp.location);
-        if (zone && map[zone.zone_code]) map[zone.zone_code].push(emp);
-      }
+    activeZones.forEach(z => {
+      map[z.zone_code] = (z.assigned_employee_ids || [])
+        .map(id => employees.find(e => e.id === id))
+        .filter(Boolean);
     });
     return map;
   }, [activeZones, employees]);
 
+  // ── Employee → Zones map (inverse) ──
+  const employeeZonesMap = useMemo(() => {
+    const map = {};
+    activeZones.forEach(zone => {
+      if (!zone.is_removed) {
+        (zone.assigned_employee_ids || []).forEach(empId => {
+          if (!map[empId]) map[empId] = [];
+          map[empId].push(zone);
+        });
+      }
+    });
+    return map;
+  }, [activeZones]);
+
+  // ── Unassigned = employees with ZERO zones ──
   const unassignedEmployees = useMemo(() => {
-    return filteredEmployees.filter(emp => !emp.location || !assignedLocations.has(emp.location));
-  }, [filteredEmployees, assignedLocations]);
+    return filteredEmployees.filter(emp => !(employeeZonesMap[emp.id]?.length > 0));
+  }, [filteredEmployees, employeeZonesMap]);
 
   const assignedCount = useMemo(() => {
-    return employees.filter(emp => emp.location && assignedLocations.has(emp.location)).length;
-  }, [employees, assignedLocations]);
+    return employees.filter(emp => employeeZonesMap[emp.id]?.length > 0).length;
+  }, [employees, employeeZonesMap]);
 
   const coveredZones = activeZones.filter(z => (zoneEmployeeMap[z.zone_code] || []).length > 0);
   const uncoveredZones = activeZones.filter(z => !z.is_removed && z.zone_type !== "service" && (zoneEmployeeMap[z.zone_code] || []).length === 0);
   const coveragePct = activeZones.length > 0 ? Math.round((coveredZones.length / activeZones.length) * 100) : 0;
 
-  const handleAssign = async (empId, zoneCode) => {
+  // ── Assign employee to a zone (many-to-many) ──
+  const handleAssign = async (empId, zoneId) => {
+    const zone = activeZones.find(z => z.id === zoneId);
+    if (!zone) return;
+    const newIds = [...new Set([...(zone.assigned_employee_ids || []), empId])];
     try {
-      await axios.put(`${API}/employees/${empId}`, { location: zoneCode }, getAuthHeaders());
-      setEmployees(prev => prev.map(e => e.id === empId ? { ...e, location: zoneCode } : e));
-      toast.success(isAr ? "تم تعيين الموظف" : "Assigned", { duration: 1200 });
+      const res = await axios.put(
+        `${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`,
+        { assigned_employee_ids: newIds },
+        getAuthHeaders()
+      );
+      setActiveSession(res.data);
+      toast.success(isAr ? "تم التعيين" : "Assigned", { duration: 1200 });
     } catch { toast.error(isAr ? "تعذر التعيين" : "Failed"); }
   };
 
-  const handleUnassign = async (empId) => {
+  // ── Unassign employee from a specific zone ──
+  const handleUnassign = async (empId, zoneId) => {
+    const zone = activeZones.find(z => z.id === zoneId);
+    if (!zone) return;
+    const newIds = (zone.assigned_employee_ids || []).filter(id => id !== empId);
     try {
-      await axios.put(`${API}/employees/${empId}`, { location: "" }, getAuthHeaders());
-      setEmployees(prev => prev.map(e => e.id === empId ? { ...e, location: "" } : e));
+      const res = await axios.put(
+        `${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`,
+        { assigned_employee_ids: newIds },
+        getAuthHeaders()
+      );
+      setActiveSession(res.data);
       toast.success(isAr ? "تم إلغاء التعيين" : "Unassigned", { duration: 1200 });
     } catch { toast.error(isAr ? "تعذر الإلغاء" : "Failed"); }
   };
@@ -253,48 +286,56 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
     setShowAutoConfirm(false);
     setAutoDistributing(true);
     try {
-      const unassigned = employees.filter(e => !e.location || !assignedLocations.has(e.location));
+      const unassigned = employees.filter(e => !(employeeZonesMap[e.id]?.length > 0));
       const uncovered = activeZones.filter(z => !z.is_removed && z.zone_type !== "service" && (zoneEmployeeMap[z.zone_code] || []).length === 0);
 
-      if (unassigned.length === 0) { toast.info(isAr ? "جميع الموظفين معيّنون بالفعل" : "All staff already assigned"); return; }
-      if (uncovered.length === 0) { toast.info(isAr ? "جميع المناطق مغطاة بالفعل" : "All zones already covered"); return; }
+      if (unassigned.length === 0) { toast.info(isAr ? "جميع الموظفين معيّنون بالفعل" : "All staff already assigned"); setAutoDistributing(false); return; }
+      if (uncovered.length === 0) { toast.info(isAr ? "جميع المناطق مغطاة بالفعل" : "All zones already covered"); setAutoDistributing(false); return; }
 
-      // Smart matching: separate by zone type + shift balance
       const menZones = uncovered.filter(z => z.zone_type === "men_prayer" || z.zone_type === "reserve_fard");
       const womenZones = uncovered.filter(z => z.zone_type === "women_prayer");
       const otherZones = uncovered.filter(z => !menZones.includes(z) && !womenZones.includes(z));
-
-      // Build assignment queue — each zone gets one employee first, then extras
       const queue = [...menZones, ...womenZones, ...otherZones];
-      const empPool = [...unassigned]; // mutable copy
-      const assignments = []; // { empId, zoneCode }
+      const empPool = [...unassigned];
 
-      // Round 1: one employee per uncovered zone
+      // Build: zone → employee assignments
+      const zoneUpdates = []; // { zoneId, empId }
       queue.forEach(zone => {
         if (empPool.length === 0) return;
         const emp = empPool.shift();
-        assignments.push({ empId: emp.id, zoneCode: zone.zone_code });
+        zoneUpdates.push({ zone, empId: emp.id });
       });
 
-      // Execute assignments in parallel
-      await Promise.all(assignments.map(({ empId, zoneCode }) =>
-        axios.put(`${API}/employees/${empId}`, { location: zoneCode }, getAuthHeaders())
-      ));
-      // Update local state
-      const assignMap = Object.fromEntries(assignments.map(a => [a.empId, a.zoneCode]));
-      setEmployees(prev => prev.map(e => assignMap[e.id] ? { ...e, location: assignMap[e.id] } : e));
-      toast.success(isAr ? `✅ تم توزيع ${assignments.length} موظف على ${assignments.length} منطقة` : `✅ Assigned ${assignments.length} staff to ${assignments.length} zones`);
+      // Execute in parallel — each zone gets one new employee added
+      const responses = await Promise.all(
+        zoneUpdates.map(({ zone, empId }) => {
+          const newIds = [...new Set([...(zone.assigned_employee_ids || []), empId])];
+          return axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${zone.id}`, { assigned_employee_ids: newIds }, getAuthHeaders());
+        })
+      );
+      // Update session with last response (contains full updated zones)
+      if (responses.length > 0) {
+        // Re-fetch session to get all updated zones
+        const sessionRes = await axios.get(`${API}/map-sessions/${activeSession.id}`, getAuthHeaders());
+        setActiveSession(sessionRes.data);
+      }
+      toast.success(isAr ? `✅ تم توزيع ${zoneUpdates.length} موظف على ${zoneUpdates.length} منطقة` : `✅ Assigned ${zoneUpdates.length} staff to ${zoneUpdates.length} zones`);
     } catch { toast.error(isAr ? "تعذر التوزيع التلقائي" : "Auto-distribute failed"); }
     finally { setAutoDistributing(false); }
   };
 
   // ─── Clear All Assignments ───────────────────────────────
   const handleClearAll = async () => {
-    const assigned = employees.filter(e => e.location && assignedLocations.has(e.location));
-    if (assigned.length === 0) return;
+    const assignedZones = activeZones.filter(z => (z.assigned_employee_ids || []).length > 0);
+    if (assignedZones.length === 0) return;
     try {
-      await Promise.all(assigned.map(e => axios.put(`${API}/employees/${e.id}`, { location: "" }, getAuthHeaders())));
-      setEmployees(prev => prev.map(e => assigned.find(a => a.id === e.id) ? { ...e, location: "" } : e));
+      await Promise.all(
+        assignedZones.map(z =>
+          axios.put(`${API}/admin/map-sessions/${activeSession.id}/zones/${z.id}`, { assigned_employee_ids: [] }, getAuthHeaders())
+        )
+      );
+      const sessionRes = await axios.get(`${API}/map-sessions/${activeSession.id}`, getAuthHeaders());
+      setActiveSession(sessionRes.data);
       toast.success(isAr ? "تم مسح جميع التعيينات" : "All assignments cleared");
     } catch { toast.error(isAr ? "تعذر المسح" : "Failed"); }
   };
@@ -307,7 +348,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
         return `<tr style="border-bottom:1px solid #e2e8f0">
           <td style="padding:8px;font-weight:bold;color:#047857">${z.zone_code}</td>
           <td style="padding:8px">${z.name_ar}</td>
-          <td style="padding:8px">${emps.length > 0 ? emps.map(e=>`<span style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:2px 6px;margin:1px;display:inline-block">${e.name}</span>`).join('') : '<span style="color:#ef4444">بدون موظف</span>'}</td>
+          <td style="padding:8px">${emps.length > 0 ? emps.map(e=>`<span style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:2px 6px;margin:1px;display:inline-block">${e.name}${e.is_tasked ? ' ⚡' : ''}</span>`).join('') : '<span style="color:#ef4444">بدون موظف</span>'}</td>
           <td style="padding:8px;color:#64748b">${emps.length > 0 ? emps.map(e=>e.shift||'').join(', ') : '—'}</td>
         </tr>`;
       }).join('');
@@ -769,27 +810,102 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
               <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1.5 mb-2">
                 <UserX className="w-3.5 h-3.5" />{isAr ? "غير معيّنين" : "Unassigned"}<Badge variant="secondary" className="text-[9px] px-1">{unassignedEmployees.length}</Badge>
               </p>
-              <div className="space-y-1 max-h-[120px] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
                 {unassignedEmployees.map(emp => {
                   const shift = SHIFTS.find(s => s.value === emp.shift);
                   return (
-                    <div key={emp.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg border bg-white hover:shadow-sm transition-all group" data-testid={`unassigned-emp-${emp.id}`}>
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ backgroundColor: shift?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>
-                        <span className="text-[10px] font-medium truncate">{emp.name}</span>
+                    <div key={emp.id} className="flex items-center justify-between px-2.5 py-2 rounded-xl border bg-white hover:shadow-sm transition-all" data-testid={`unassigned-emp-${emp.id}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: shift?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold truncate">{emp.name}</p>
+                          <div className="flex items-center gap-1">
+                            {emp.employee_number && <span className="text-[8px] text-slate-400">{emp.employee_number}</span>}
+                            {emp.is_tasked && <span className="text-[8px] bg-amber-100 text-amber-700 px-1 rounded-full font-semibold">مكلف ⚡</span>}
+                          </div>
+                        </div>
                       </div>
                       {activeSession?.status === "draft" && (
-                        <Select onValueChange={(code) => handleAssign(emp.id, code)}>
-                          <SelectTrigger className="h-5 w-auto min-w-[60px] text-[9px] border-dashed px-1.5"><MapPin className="w-2.5 h-2.5 text-emerald-500" /><SelectValue placeholder={isAr ? "عيّن" : "+"} /></SelectTrigger>
+                        <Select onValueChange={(zoneId) => handleAssign(emp.id, zoneId)}>
+                          <SelectTrigger className="h-6 w-auto min-w-[64px] text-[9px] border-dashed px-1.5 gap-1">
+                            <MapPin className="w-2.5 h-2.5 text-emerald-500" />
+                            <SelectValue placeholder={isAr ? "عيّن" : "+"} />
+                          </SelectTrigger>
                           <SelectContent>
                             {activeZones.filter(z => !z.is_removed).map(z => (
-                              <SelectItem key={z.id} value={z.zone_code} className="text-[10px]">
-                                <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: z.fill_color || "#22c55e" }} />{z.zone_code}</div>
+                              <SelectItem key={z.id} value={z.id} className="text-[10px]">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: z.fill_color || "#22c55e" }} />
+                                  {z.zone_code}
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Assigned Employees — with zone tags */}
+          {employees.filter(e => employeeZonesMap[e.id]?.length > 0).length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1.5 mb-2">
+                <UserCheck className="w-3.5 h-3.5" />{isAr ? "معيّنون" : "Assigned"}<Badge className="text-[9px] px-1 bg-emerald-100 text-emerald-700">{assignedCount}</Badge>
+              </p>
+              <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
+                {employees.filter(e => employeeZonesMap[e.id]?.length > 0 && filteredEmployees.some(f => f.id === e.id)).map(emp => {
+                  const shift = SHIFTS.find(s => s.value === emp.shift);
+                  const empZones = employeeZonesMap[emp.id] || [];
+                  return (
+                    <div key={emp.id} className="px-2.5 py-2 rounded-xl border border-emerald-100 bg-emerald-50/50" data-testid={`assigned-emp-${emp.id}`}>
+                      {/* Header */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ backgroundColor: shift?.color || "#22c55e" }}>{emp.name.charAt(0)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold truncate">{emp.name}</p>
+                          <div className="flex items-center gap-1">
+                            {emp.employee_number && <span className="text-[8px] text-slate-400">{emp.employee_number}</span>}
+                            {emp.is_tasked && <span className="text-[8px] bg-amber-100 text-amber-700 px-1 rounded-full font-semibold">مكلف ⚡</span>}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Zone tags */}
+                      <div className="flex flex-wrap gap-1 items-center">
+                        {empZones.map(zone => (
+                          <span key={zone.id} className="inline-flex items-center gap-0.5 text-[8px] font-bold bg-white border border-emerald-200 text-emerald-700 rounded-full px-2 py-0.5 shadow-sm">
+                            {zone.zone_code}
+                            {activeSession?.status === "draft" && (
+                              <button
+                                onClick={() => handleUnassign(emp.id, zone.id)}
+                                className="w-3 h-3 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors mr-0.5"
+                                data-testid={`unassign-${emp.id}-${zone.id}`}
+                              >✕</button>
+                            )}
+                          </span>
+                        ))}
+                        {/* Add another zone */}
+                        {activeSession?.status === "draft" && (
+                          <Select onValueChange={(zoneId) => handleAssign(emp.id, zoneId)}>
+                            <SelectTrigger className="h-5 text-[8px] border-dashed border-emerald-300 px-1.5 gap-0.5 rounded-full w-auto">
+                              <Plus className="w-2.5 h-2.5 text-emerald-500" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {activeZones.filter(z => !z.is_removed && !(z.assigned_employee_ids || []).includes(emp.id)).map(z => (
+                                <SelectItem key={z.id} value={z.id} className="text-[10px]">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: z.fill_color || "#22c55e" }} />
+                                    {z.zone_code}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -868,7 +984,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                                     </div>
                                   </div>
                                   {activeSession?.status === "draft" && (
-                                    <button onClick={() => handleUnassign(emp.id)} className="opacity-0 group-hover/emp:opacity-100 w-4 h-4 rounded bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-all">
+                                    <button onClick={() => handleUnassign(emp.id, zone.id)} className="opacity-0 group-hover/emp:opacity-100 w-4 h-4 rounded bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-all">
                                       <X className="w-3 h-3" />
                                     </button>
                                   )}
@@ -878,7 +994,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                           </div>
                         )}
                         {activeSession?.status === "draft" && (
-                          <Select onValueChange={(empId) => handleAssign(empId, zone.zone_code)}>
+                          <Select onValueChange={(empId) => handleAssign(empId, zone.id)}>
                             <SelectTrigger className="h-7 w-full text-[10px] border-dashed"><Plus className="w-3 h-3 ml-0.5 text-emerald-500" /><SelectValue placeholder={isAr ? "إضافة موظف" : "Add staff"} /></SelectTrigger>
                             <SelectContent>
                               {unassignedEmployees.map(emp => <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>)}

@@ -139,9 +139,11 @@ class EmployeeCreate(BaseModel):
     location: str
     shift: str
     employee_number: Optional[str] = None
+    contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
     rest_days: Optional[List[str]] = None
     work_tasks: Optional[str] = None
+    is_tasked: bool = False
     is_active: bool = True
 
 class EmployeeUpdate(BaseModel):
@@ -150,9 +152,11 @@ class EmployeeUpdate(BaseModel):
     location: Optional[str] = None
     shift: Optional[str] = None
     employee_number: Optional[str] = None
+    contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
     rest_days: Optional[List[str]] = None
     work_tasks: Optional[str] = None
+    is_tasked: Optional[bool] = None
     is_active: Optional[bool] = None
 
 # ============= Monthly Schedule Models =============
@@ -161,6 +165,7 @@ class ScheduleAssignment(BaseModel):
     rest_days: List[str] = []
     location: str = ""
     shift: str = ""
+    is_tasked: bool = False
 
 class MonthlySchedule(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -182,6 +187,7 @@ class ScheduleAssignmentUpdate(BaseModel):
     rest_days: Optional[List[str]] = None
     location: Optional[str] = None
     shift: Optional[str] = None
+    is_tasked: Optional[bool] = None
 
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -726,6 +732,7 @@ class SessionZone(BaseModel):
     is_removed: bool = False
     daily_note: Optional[str] = None
     change_type: Optional[str] = None
+    assigned_employee_ids: List[str] = Field(default_factory=list)
 
 class MapSession(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -782,6 +789,7 @@ class SessionZoneUpdate(BaseModel):
     per_person_sqm: Optional[float] = None
     carpet_length: Optional[float] = None
     carpet_width: Optional[float] = None
+    assigned_employee_ids: Optional[List[str]] = None
 
 # ============= Transaction Models =============
 class Transaction(BaseModel):
