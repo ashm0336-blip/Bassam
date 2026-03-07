@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { toast } from "sonner";
 
 import { API, ZONE_TYPES_FALLBACK, DRAG_SHAPE_MODES, PRAYER_TIMES } from "./DailySessions/constants";
@@ -35,6 +36,7 @@ import { ZoneEmployeesTab } from "./DailySessions/components/ZoneEmployeesTab";
 export default function DailySessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const { isDark } = useTheme();
 
   // Core state
   const [floors, setFloors] = useState([]);
@@ -788,7 +790,14 @@ export default function DailySessionsPage() {
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 {/* Professional Tab Bar */}
-                <div className="rounded-2xl p-2 mb-4" style={{ backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }} data-testid="daily-tabs-bar">
+                <div
+                  className="rounded-2xl p-2 mb-4"
+                  style={isDark
+                    ? { backgroundColor: 'hsl(160 22% 10%)', border: '1px solid hsl(160 18% 18%)' }
+                    : { backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }
+                  }
+                  data-testid="daily-tabs-bar"
+                >
                   <div className="flex items-center justify-center gap-2">
                     {[
                       { id: 'employees', label: isAr ? 'الموظفين' : 'Staff', icon: Users, count: null },
@@ -808,17 +817,20 @@ export default function DailySessionsPage() {
                               ? 'bg-white shadow-md border-2 scale-[1.02]'
                               : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'
                             }`}
-                          style={isActive ? { borderColor: '#047857' } : {}}
+                          style={isActive ? { borderColor: isDark ? 'hsl(160 65% 42%)' : '#047857' } : {}}
                         >
                           <div
                             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
-                            style={isActive ? { backgroundColor: '#ecfdf5', color: '#047857' } : { backgroundColor: '#f3f4f6', color: '#6b7280' }}
+                            style={isActive
+                            ? { backgroundColor: isDark ? 'hsl(160 30% 16%)' : '#ecfdf5', color: isDark ? 'hsl(160 65% 50%)' : '#047857' }
+                            : { backgroundColor: isDark ? 'hsl(160 15% 14%)' : '#f3f4f6', color: isDark ? 'hsl(155 8% 50%)' : '#6b7280' }
+                          }
                           >
                             <TabIcon className="w-5 h-5" />
                           </div>
                           <span
                             className={`text-xs font-medium transition-colors duration-300 ${isActive ? 'font-bold' : 'text-gray-500'}`}
-                            style={isActive ? { color: '#047857' } : {}}
+                            style={isActive ? { color: isDark ? 'hsl(160 65% 50%)' : '#047857' } : {}}
                           >
                             {tab.label}
                           </span>
@@ -831,7 +843,7 @@ export default function DailySessionsPage() {
                             </span>
                           )}
                           {isActive && (
-                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: '#047857' }} />
+                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: isDark ? 'hsl(160 65% 42%)' : '#047857' }} />
                           )}
                         </button>
                       );

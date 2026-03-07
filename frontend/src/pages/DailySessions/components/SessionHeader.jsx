@@ -14,8 +14,8 @@ export function SessionHeader({ activeSession, activeZones, handleUpdateSession,
 
   return (
     <div className={`relative overflow-hidden rounded-xl border p-4 ${isPrayer
-      ? "bg-gradient-to-l from-amber-50 via-white to-slate-50"
-      : "bg-gradient-to-l from-emerald-50 via-white to-slate-50"}`}>
+      ? "dark:bg-amber-50 dark:border-amber-200/20 bg-gradient-to-l from-amber-50 via-white to-slate-50"
+      : "dark:bg-emerald-50 dark:border-emerald-200/20 bg-gradient-to-l from-emerald-50 via-white to-slate-50"}`}>
       <div className={`absolute -top-12 -left-12 h-32 w-32 rounded-full blur-2xl ${isPrayer ? "bg-amber-200/30" : "bg-emerald-200/30"}`} />
 
       <div className="relative flex items-center justify-between flex-wrap gap-3">

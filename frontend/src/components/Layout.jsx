@@ -360,8 +360,8 @@ export const Layout = () => {
           className={`flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 border-b transition-all duration-200 ${headerSettings.show_shadow ? 'shadow-md' : ''}`}
           style={{
             height: `${headerSettings.header_height || 64}px`,
-            backgroundColor: headerSettings.background_color || '#FFFFFF',
-            color: headerSettings.text_color || '#000000',
+            backgroundColor: isDark ? 'hsl(var(--card))' : (headerSettings.background_color || '#FFFFFF'),
+            color: isDark ? 'hsl(var(--foreground))' : (headerSettings.text_color || '#000000'),
             opacity: (headerSettings.transparency || 100) / 100,
             borderColor: 'var(--border)'
           }}

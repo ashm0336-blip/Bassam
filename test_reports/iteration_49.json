@@ -1,0 +1,59 @@
+{
+  "summary": "Dark mode testing for Arabic RTL Crowd Services Platform. Tested all dark mode features: toggle, persistence, Forest Night palette, component overrides, session header fix, mobile nav. Fixed 1 bug (SessionHeader gradient leak via CSS addition).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "dark_mode_toggle": "PASS - data-testid='theme-toggle' adds 'dark' class to document.documentElement",
+    "toggle_icon": "PASS - Shows Moon in light mode, Sun in dark mode",
+    "localStorage_persistence": "PASS - localStorage.getItem('theme') = 'dark' after toggle",
+    "page_reload_persistence": "PASS - dark class persists after page.reload()",
+    "body_background": "PASS - rgb(12, 23, 20) = Forest Night hsl(160 30% 7%)",
+    "header_background": "PASS - rgb(18, 33, 28) = hsl(var(--card)). isDark conditional in Layout.jsx works",
+    "sidebar_background": "PASS - rgb(18, 33, 28) = bg-card",
+    "dashboard_cards": "PASS - All bg-white elements overridden (0 white leaks), computed rgb(18, 33, 28)",
+    "daily_tabs_bar": "PASS - rgb(20, 31, 27) = hsl(160 22% 10%). isDark inline style in DailySessionsPage works",
+    "prayer_sessions_bar": "PASS - rgb(20, 31, 27). data-testid CSS override + bg-gradient removal working",
+    "session_header": "PASS (FIXED) - rgb(21, 40, 34) brightness=32. Was broken (rgb(236,253,245) brightness=245)",
+    "density_side_panel": "PASS - rgb(18, 33, 28). data-testid CSS override applied with !important",
+    "employees_panel": "PASS - rgb(18, 33, 28). data-testid CSS override applied with !important",
+    "active_tab_buttons": "PASS - rgb(18, 33, 28). .dark .bg-white override catches active tab button",
+    "all_bg_white_overridden": "PASS - All 11 .bg-white elements compute as rgb(18, 33, 28), 0 actual white leaks",
+    "light_mode_restored": "PASS - Toggle back removes 'dark' class, body returns to rgb(248, 248, 247)",
+    "smooth_transitions": "PASS - body transition: 0.25s, 0.2s. Card transition: 0.2s. Matches CSS spec",
+    "mobile_bottom_nav": "PASS - data-testid='mobile-bottom-nav', bg=rgba(18, 33, 28, 0.97) = properly dark",
+    "shadcn_cards_dark": "PASS - Verified via KPI cards computed as hsl(var(--card)) = rgb(18, 33, 28)"
+  },
+  "bug_fixed": {
+    "issue": "SessionHeader gradient leak - dark:bg-emerald-50 and dark:bg-amber-50 Tailwind dark: variants rendered as light emerald rgb(236,253,245) in dark mode",
+    "root_cause": "Tailwind dark: variant generates CSS class 'dark:bg-emerald-50' (selector: .dark .dark\\:bg-emerald-50) which is NOT the same as the global override targeting '.dark .bg-emerald-50'. The global CSS in index.css only covers the standalone class 'bg-emerald-50', not the dark: prefix variant.",
+    "fix_applied": "Added 4 CSS rules to index.css: .dark .dark\\:bg-emerald-50, .dark .dark\\:bg-amber-50, .dark .dark\\:border-emerald-200\\/20, .dark .dark\\:border-amber-200\\/20 with !important to override Tailwind generated styles",
+    "verification": "Session header bg changed from rgb(236, 253, 245) (brightness=245) to rgb(21, 40, 34) (brightness=32)"
+  },
+  "test_report_links": ["/app/test_reports/iteration_49.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FIXED: SessionHeader.jsx used dark:bg-emerald-50 / dark:bg-amber-50 which generated Tailwind dark variant CSS that wasn't caught by global overrides. Fixed in index.css."
+  ],
+  "updated_files": ["/app/frontend/src/index.css"],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (18/18 features verified after fix)"
+  },
+  "seed_data_creation": "Used existing March 7, 2026 session (ID: 6eb12c13-9a9e-4fcd-b729-6dadcae228cf, 60 zones)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dark mode fully functional with Forest Night palette. All components tested. Session header fix applied to index.css (dark: variant CSS overrides). data-testid='theme-toggle' works. dark class on documentElement triggers all ~80 CSS overrides. Mobile bottom nav (data-testid='mobile-bottom-nav') also properly dark. Light mode perfectly restored on toggle.",
+  "rca_of_issue": {
+    "bug": "SessionHeader gradient leak in dark mode",
+    "reproduction": "1. Enable dark mode. 2. Navigate to daily-sessions. 3. Click a session. 4. Observe the session header box has bright mint-green (rgb(236,253,245)) background.",
+    "root_cause": "Tailwind dark:bg-emerald-50 generates .dark .dark\\:bg-emerald-50{background-color:rgb(236 253 245)} which applies LIGHT emerald when dark mode is active. The global override in index.css .dark .bg-emerald-50{...} only matches the class 'bg-emerald-50', NOT the Tailwind variant class 'dark:bg-emerald-50' (different CSS class name).",
+    "fix": "Added to index.css: .dark .dark\\:bg-emerald-50 { background-color: hsl(160 30% 12%) !important; } and corresponding amber rule"
+  }
+}
