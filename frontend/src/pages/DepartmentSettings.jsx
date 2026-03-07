@@ -3,7 +3,7 @@ import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Clock, MapPin, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag
+  Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,8 +94,7 @@ export default function DepartmentSettings({ department }) {
   const [submitting, setSubmitting] = useState(false);
 
   const [shifts, setShifts] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [counts, setCounts] = useState({ employees: 0, shifts: 0, locations: 0, gates: 0, maps: 0, categories: 0 });
+  const [counts, setCounts] = useState({ employees: 0, shifts: 0, gates: 0, maps: 0, categories: 0 });
 
   const [formData, setFormData] = useState({
     value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: 0
@@ -157,13 +156,11 @@ export default function DepartmentSettings({ department }) {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const [shiftsRes, locationsRes] = await Promise.all([
-        axios.get(`${API}/${department}/settings/shifts`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/${department}/settings/coverage_locations`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
+      const shiftsRes = await axios.get(`${API}/${department}/settings/shifts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setShifts(shiftsRes.data);
-      setLocations(locationsRes.data);
-      setCounts(prev => ({ ...prev, shifts: shiftsRes.data.length, locations: locationsRes.data.length }));
+      setCounts(prev => ({ ...prev, shifts: shiftsRes.data.length }));
     } catch (error) {
       console.error("Error fetching settings:", error);
       toast.error(language === 'ar' ? "فشل في جلب الإعدادات" : "Failed to fetch settings");
@@ -229,7 +226,6 @@ export default function DepartmentSettings({ department }) {
     tabs.push({ id: 'maps', label: language === 'ar' ? 'الخرائط' : 'Maps', icon: Layers, count: counts.maps });
   }
   tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
-  tabs.push({ id: 'coverage_locations', label: language === 'ar' ? 'المواقع' : 'Locations', icon: MapPin, count: counts.locations });
   if (department === 'plazas') {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
   }
@@ -330,55 +326,6 @@ export default function DepartmentSettings({ department }) {
                     ))}
                     {shifts.length === 0 && (
                       <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{language === 'ar' ? 'لا توجد ورديات' : 'No shifts found'}</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === 'coverage_locations' && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-cairo font-semibold text-lg">{language === 'ar' ? 'مواقع التغطية' : 'Coverage Locations'}</h3>
-                    <p className="text-sm text-muted-foreground">{language === 'ar' ? 'إدارة مواقع العمل' : 'Manage work locations'}</p>
-                  </div>
-                  {!isReadOnly() && (
-                    <Button onClick={() => handleOpenDialog('coverage_locations')} style={{ backgroundColor: theme.accent }} className="text-white hover:opacity-90" data-testid="add-location-btn">
-                      <Plus className="w-4 h-4 ml-2" />
-                      {language === 'ar' ? 'إضافة موقع' : 'Add Location'}
-                    </Button>
-                  )}
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead className="text-right">{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
-                      <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {locations.map((location) => (
-                      <TableRow key={location.id}>
-                        <TableCell className="text-right font-medium">{location.label}</TableCell>
-                        <TableCell className="text-right">{location.description || '-'}</TableCell>
-                        <TableCell className="text-center">
-                          {!isReadOnly() && (
-                            <div className="flex items-center gap-2 justify-center">
-                              <Button size="sm" variant="ghost" onClick={() => handleOpenDialog('coverage_locations', location)}><Edit className="w-4 h-4" /></Button>
-                              <Button size="sm" variant="ghost" onClick={() => handleDelete(location.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {locations.length === 0 && (
-                      <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">{language === 'ar' ? 'لا توجد مواقع' : 'No locations found'}</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
