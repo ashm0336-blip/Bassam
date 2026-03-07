@@ -60,6 +60,22 @@ Arabic (العربية)
 - Panel state persists when switching tabs (lifted to parent)
 - No layout shift when switching tabs (tabIndex=-1 + minHeight)
 
+### Full Responsive Design - All Devices (Mar 7, 2026)
+- **Bottom Navigation Bar**: Fixed at bottom on mobile/tablet (lg:hidden), 4 nav items + More button
+- **Mobile Bottom Nav**: Active indicator (top border + scale), tap More opens full sidebar drawer
+- **Map Heights**: CSS variable `--map-container-h` with 3 responsive breakpoints (mobile/tablet/desktop)
+- **Prayer Rounds Bar**: Horizontal scroll with snap on mobile (flex overflow-x-auto no-scrollbar), stays as grid on sm+
+- **Panels**: 92% width on mobile (vs 40% desktop) with backdrop overlay on touch
+- **Archive Sidebar**: Shows BELOW main content on mobile (order-2), before on desktop (lg:order-first)
+- **Tab Buttons**: flex-1 instead of min-w-[100px] for equal width on all screens
+- **Main Content**: pb-24 lg:pb-6 to avoid bottom nav overlap
+- **Header**: Responsive text (text-xl lg:text-2xl), smaller flex gaps on mobile
+- **Batch button**: Hidden on mobile (hidden sm:flex), visible on desktop
+- **`useIsMobile` hook**: Added to utils.js, used in DensityTab and ZoneEmployeesTab
+- **Safe Area**: env(safe-area-inset-bottom) support for iOS devices
+- **No Scrollbar**: .no-scrollbar CSS utility class added
+- **Glass effect**: .glass CSS class fixed (was broken)
+
 ### UI Improvements (Mar 6, 2026)
 - "السجل اليومي للمصليات" renamed from "خرائط"
 - Tab renamed: "المصليات" (was "الخريطة")
@@ -70,7 +86,7 @@ Arabic (العربية)
 - Collapsible side panels with fixed handle at panel edge (CSS transform, no layout shift)
 - DensityTab image size: fixed using ResizeObserver for accurate container dimensions
 - ZoneEmployeesTab: same ResizeObserver fix
-- Container heights: `height: min(680px, calc(100vh - 260px))` with `absolute inset-0`
+- Container heights: `height: var(--map-container-h)` responsive via CSS variable
 
 ### Shift Cards in Employees Tab (Mar 6, 2026)
 - 4 shift cards in one row (الأولى-الثانية-الثالثة-الرابعة)
