@@ -468,7 +468,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, ZONE_TYPES, selec
                           if (coverageFilter === 'covered') return (zoneEmployeeMap[z.zone_code] || []).length > 0;
                           return true;
                         }).map(zone => {
-                          const { fill, opacity } = getZoneCoverageColor(zone);
                           const pts = zone.polygon_points.map(p => `${p.x},${p.y}`).join(" ");
                           const emps = zoneEmployeeMap[zone.zone_code] || [];
                           const isHovered = hoveredZone === zone.id;
