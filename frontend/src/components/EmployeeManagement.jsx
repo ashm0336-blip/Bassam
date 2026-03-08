@@ -580,7 +580,7 @@ export default function EmployeeManagement({ department }) {
       const token = localStorage.getItem("token");
       const endpoint = `${API}/employees/${empId}/${action}`;
       const res = await axios.post(endpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(res.data?.message || isAr ? "تم التحديث" : "Updated");
+      toast.success(res.data?.message || (isAr ? "تم التحديث" : "Updated"));
       fetchEmployees();
     } catch(e) {
       toast.error(e.response?.data?.detail || (isAr?"فشلت العملية":"Failed"));
