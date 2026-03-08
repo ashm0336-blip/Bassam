@@ -776,7 +776,7 @@ export default function EmployeeManagement({ department }) {
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1100px]">
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-primary/8 via-primary/4 to-primary/8 border-b-2 border-primary/25">
+                <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
                   <TableHead className="text-right py-4">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 shadow-sm">
