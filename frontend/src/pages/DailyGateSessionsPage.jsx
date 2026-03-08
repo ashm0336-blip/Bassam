@@ -74,6 +74,7 @@ export default function DailyGateSessionsPage() {
   const [selectedGate, setSelectedGate] = useState(null);
   const [showGateDialog, setShowGateDialog] = useState(false);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
+  const [emptyDaySelected, setEmptyDaySelected] = useState(null);
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [sessionNotes, setSessionNotes] = useState("");
@@ -376,7 +377,10 @@ export default function DailyGateSessionsPage() {
             readOnly={!canCreateSession}
             onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
             onDeleteSession={handleDeleteSession}
-            onCalendarEmptyClick={canCreateSession ? (ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); } : undefined}
+            onCalendarEmptyClick={canCreateSession 
+              ? (ds) => { setEmptyDaySelected(null); setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }
+              : (ds) => { setActiveSession(null); setEmptyDaySelected(ds); }
+            }
           />
         </div>
 
@@ -385,7 +389,18 @@ export default function DailyGateSessionsPage() {
           {!activeSession ? (
             <Card className="border-dashed"><CardContent className="py-16 text-center">
               <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><DoorOpen className="w-8 h-8 text-slate-400" /></div>
-              <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">{isAr ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "Pick a day or start a new tour"}</h3>
+              {emptyDaySelected ? (
+                <>
+                  <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
+                    {isAr ? `لا توجد جولات ليوم ${new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}` : `No sessions for ${emptyDaySelected}`}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{isAr ? "اختر يوماً آخر من التقويم" : "Select another day"}</p>
+                </>
+              ) : (
+                <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
+                  {isAr ? (canCreateSession ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "اختر يوماً من التقويم لعرض جولته") : "Pick a day to view its tour"}
+                </h3>
+              )}
             </CardContent></Card>
           ) : (
             <div className="space-y-4">

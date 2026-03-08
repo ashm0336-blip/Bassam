@@ -67,6 +67,7 @@ export default function DailySessionsPage() {
   const [showZoneDialog, setShowZoneDialog] = useState(false);
   const zoneCardsRef = useRef({});
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
+  const [emptyDaySelected, setEmptyDaySelected] = useState(null);
   const [showCompareDialog, setShowCompareDialog] = useState(false);
   const [compareData, setCompareData] = useState(null);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
@@ -809,7 +810,10 @@ export default function DailySessionsPage() {
             }
           }}
           onDeleteSession={handleDeleteSession}
-          onCalendarEmptyClick={canCreateSession ? (ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); } : undefined}
+          onCalendarEmptyClick={canCreateSession 
+            ? (ds) => { setEmptyDaySelected(null); setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }
+            : (ds) => { setActiveSession(null); setActiveDailySession(null); setEmptyDaySelected(ds); }
+          }
           onCompare={handleCompare}
         />
 
@@ -818,10 +822,25 @@ export default function DailySessionsPage() {
             <Card className="border-dashed">
               <CardContent className="py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><Eye className="w-8 h-8 text-slate-400" /></div>
-                <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">{isAr ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "Pick a day from the calendar or start a new tour"}</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">{isAr 
-                  ? (canCreateSession ? "اضغط على يوم في التقويم لعرض جولته، أو اضغط على يوم فارغ لإنشاء جولة جديدة بأثر رجعي" : "اضغط على يوم في التقويم لعرض جولته")
-                  : (canCreateSession ? "Click a day in the calendar to view its tour, or click an empty day to create a retroactive tour" : "Click a day in the calendar to view its tour")}</p>
+                {emptyDaySelected ? (
+                  <>
+                    <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
+                      {isAr ? `لا توجد جولات ليوم ${new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}` : `No sessions for ${emptyDaySelected}`}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{isAr ? "اختر يوماً آخر من التقويم" : "Select another day from the calendar"}</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
+                      {isAr 
+                        ? (canCreateSession ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "اختر يوماً من التقويم لعرض جولته")
+                        : (canCreateSession ? "Pick a day or start a new tour" : "Pick a day to view its tour")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">{isAr 
+                      ? (canCreateSession ? "اضغط على يوم في التقويم لعرض جولته، أو اضغط على يوم فارغ لإنشاء جولة جديدة" : "اضغط على يوم في التقويم لعرض جولته")
+                      : (canCreateSession ? "Click a day to view its tour, or click an empty day to create a new one" : "Click a day to view its tour")}</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -994,7 +1013,7 @@ export default function DailySessionsPage() {
                               )}
 
                               {/* Skipped session - show unskip + delete buttons */}
-                              {isSkipped && (
+                              {isSkipped && canSkipPrayer && (
                                 <div className="flex gap-1">
                                   <button
                                     onClick={() => handleUnskipPrayerSession(pt.key)}
@@ -1014,7 +1033,7 @@ export default function DailySessionsPage() {
                               )}
 
                               {/* Draft/Completed - show delete button (hover) */}
-                              {status && status !== 'skipped' && !isActivePrayer && (
+                              {status && status !== 'skipped' && !isActivePrayer && canDeleteSession && (
                                 <button
                                   onClick={() => handleDeletePrayerSession(pt.key)}
                                   data-testid={`delete-prayer-session-${pt.key}`}
@@ -1026,7 +1045,7 @@ export default function DailySessionsPage() {
                               )}
 
                               {/* Needs bypass - previous not completed */}
-                              {needsBypass && !awaitingBypass && (
+                              {needsBypass && !awaitingBypass && canStartPrayer && (
                                 <button
                                   onClick={() => setBypassConfirm(pt.key)}
                                   data-testid={`bypass-prayer-${pt.key}`}
