@@ -84,12 +84,17 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Public Route (redirect to dashboard if authenticated)
+// Public Route (redirect to dashboard if authenticated, but allow PIN change modal)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   
   if (loading) {
     return null;
+  }
+  
+  // If authenticated AND must change PIN — stay on login page to show modal
+  if (isAuthenticated && user?.must_change_pin) {
+    return children;
   }
   
   if (isAuthenticated) {

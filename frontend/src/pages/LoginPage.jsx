@@ -40,7 +40,7 @@ function PinChangeModal({ onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" dir="rtl">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 animate-[fadeInUp_0.3s_ease-out]">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4">
         <div className="text-center mb-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-3">
             <KeyRound className="w-8 h-8 text-amber-600" />
@@ -103,11 +103,16 @@ function PinChangeModal({ onSuccess }) {
 // ── Main Login Page ──────────────────────────────────────────────
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setUser, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [showPinChange, setShowPinChange] = useState(false);
   const [formData, setFormData] = useState({ identifier: '', password: '' });
+
+  // If user is already logged in with must_change_pin, show modal immediately
+  useEffect(() => {
+    if (user?.must_change_pin) setShowPinChange(true);
+  }, [user?.must_change_pin]);
 
   const [pageSettings, setPageSettings] = useState(window.__LOGIN_SETTINGS__ || {
     primary_color: "#047857",
@@ -143,6 +148,7 @@ export default function LoginPage() {
     const result = await login(formData.identifier, formData.password);
     if (result.success) {
       if (result.must_change_pin) {
+        // Stay on login page — PublicRoute allows it when must_change_pin=true
         setShowPinChange(true);
       } else {
         toast.success('مرحباً بك ✅');
@@ -157,7 +163,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex" dir="rtl" data-testid="login-page">
       {showPinChange && (
-        <PinChangeModal onSuccess={() => { setShowPinChange(false); navigate('/'); }} />
+        <PinChangeModal onSuccess={() => {
+          setShowPinChange(false);
+          // Update user in AuthContext to clear must_change_pin
+          if (setUser) setUser(prev => prev ? { ...prev, must_change_pin: false } : prev);
+          toast.success('مرحباً بك ✅');
+          navigate('/');
+        }} />
       )}
 
       {/* ── Left: Login Form ── */}
@@ -254,7 +266,6 @@ export default function LoginPage() {
                       value={formData.password}
                       onChange={e => setFormData({ ...formData, password: e.target.value })}
                       required
-                      maxLength={isNationalId ? 6 : undefined}
                       data-testid="login-password"
                     />
                     <button type="button"

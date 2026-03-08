@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setToken(access_token);
-      setUser({ ...userData, must_change_pin });
+      setUser({ ...userData, must_change_pin: !!must_change_pin });
       
       return { success: true, must_change_pin };
     } catch (error) {
@@ -106,6 +106,7 @@ export const AuthProvider = ({ children }) => {
       loading, 
       login, 
       logout,
+      setUser,
       isAdmin,
       isGeneralManager,
       canManageDepartment,
