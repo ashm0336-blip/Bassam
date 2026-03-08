@@ -17,7 +17,7 @@ import { Progress } from "@/components/ui/progress";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export default function MapManagementPage() {
+export default function MapManagementPage({ department = "plazas" }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { toast } = useToast();
@@ -54,16 +54,16 @@ export default function MapManagementPage() {
     return value;
   };
 
-  // Fetch floors
+  // Fetch floors — filtered by department
   const fetchFloors = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/floors`);
+      const res = await axios.get(`${API}/floors?department=${department}`, getAuthHeaders());
       const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
       setFloors(normalized);
       normalized.forEach(f => { if (f.image_url) { const img = new Image(); img.src = f.image_url; } });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, []);
+  }, [department]);
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
 
@@ -128,7 +128,7 @@ export default function MapManagementPage() {
         const updated = { ...res.data, image_url: normalizeImageUrl(res.data.image_url) };
         setFloors(prev => prev.map(f => f.id === editingFloor.id ? updated : f));
       } else {
-        await axios.post(`${API}/admin/floors`, floorForm, getAuthHeaders());
+        await axios.post(`${API}/admin/floors`, { ...floorForm, department }, getAuthHeaders());
       }
       setShowFloorDialog(false);
       setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 });

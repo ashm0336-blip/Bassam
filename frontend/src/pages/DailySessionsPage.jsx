@@ -193,7 +193,7 @@ export default function DailySessionsPage() {
   // ─── Data Fetching ────────────────────────────────────────
   const fetchFloors = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/floors`);
+      const res = await axios.get(`${API}/floors?department=plazas`, getAuthHeaders());
       const normalized = res.data.map(f => ({ ...f, image_url: normalizeImageUrl(f.image_url) }));
       setFloors(normalized);
       normalized.forEach(f => { if (f.image_url) { const img = new Image(); img.src = f.image_url; } });

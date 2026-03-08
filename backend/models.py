@@ -504,6 +504,7 @@ class MapFloor(BaseModel):
     image_url: str
     is_active: bool = True
     order: int = 0
+    department: str = "plazas"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class MapFloorCreate(BaseModel):
@@ -512,6 +513,7 @@ class MapFloorCreate(BaseModel):
     floor_number: int
     image_url: str
     order: Optional[int] = 0
+    department: str = "plazas"
 
 # ============= Interactive Zone Models =============
 class MapZone(BaseModel):

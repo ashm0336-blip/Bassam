@@ -128,7 +128,7 @@ export default function DepartmentSettings({ department }) {
         const mRes = await axios.get(`${API}/gate-map/floors`).catch(() => ({ data: [] }));
         mapsCount = mRes.data.length;
       } else {
-        const mRes = await axios.get(`${API}/map-floors`, {
+        const mRes = await axios.get(`${API}/floors?department=${department}`, {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ data: [] }));
         mapsCount = mRes.data.length;
@@ -277,7 +277,7 @@ export default function DepartmentSettings({ department }) {
         {activeTab === 'employees' && <EmployeeManagement department={department} />}
 
         {activeTab === 'maps' && department === 'gates' && <GateMapPage />}
-        {activeTab === 'maps' && department !== 'gates' && <MapManagementPage />}
+        {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} />}
 
         {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
 

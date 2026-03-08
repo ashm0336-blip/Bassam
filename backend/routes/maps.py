@@ -74,8 +74,25 @@ async def delete_marker(marker_id: str, admin: dict = Depends(require_admin)):
 
 # ============= Floor/Layer Management =============
 @router.get("/floors")
-async def get_floors():
-    floors = await db.map_floors.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+async def get_floors(department: Optional[str] = None, user: dict = Depends(get_current_user)):
+    query = {"is_active": True}
+    # department managers only see their own department's floors
+    if user["role"] == "department_manager":
+        query["department"] = user.get("department", department or "plazas")
+    elif department:
+        query["department"] = department
+    floors = await db.map_floors.find(query, {"_id": 0}).sort("order", 1).to_list(100)
+    return floors
+
+
+@router.get("/map-floors")
+async def get_map_floors(department: Optional[str] = None, user: dict = Depends(get_current_user)):
+    query = {"is_active": True}
+    if user["role"] == "department_manager":
+        query["department"] = user.get("department", department or "plazas")
+    elif department:
+        query["department"] = department
+    floors = await db.map_floors.find(query, {"_id": 0}).sort("order", 1).to_list(100)
     return floors
 
 
