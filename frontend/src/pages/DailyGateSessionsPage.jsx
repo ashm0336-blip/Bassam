@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { GatesTab } from "./DailyGateSessions/GatesTab";
 import { EmployeesTab } from "./DailyGateSessions/EmployeesTab";
@@ -57,6 +58,10 @@ const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو
 export default function DailyGateSessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
+  const { canWrite } = useAuth();
+
+  const canCreateSession = canWrite("create_session");
+  const canApproveSession = canWrite("approve_session");
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
@@ -355,8 +360,8 @@ export default function DailyGateSessionsPage() {
             <SelectTrigger className="w-48" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
             <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id}>{isAr ? f.name_ar : (f.name_en || f.name_ar)}</SelectItem>)}</SelectContent>
           </Select>
-          <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} className="bg-blue-600 hover:bg-blue-700" data-testid="start-new-tour-btn"><Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}</Button>
-          <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn"><CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}</Button>
+          {canCreateSession && <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} className="bg-blue-600 hover:bg-blue-700" data-testid="start-new-tour-btn"><Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}</Button>}
+          {canCreateSession && <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn"><CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}</Button>}
         </div>
       </div>
 
@@ -404,11 +409,11 @@ export default function DailyGateSessionsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => { setSessionNotes(activeSession.supervisor_notes || ""); setShowNotesDialog(true); }}><MessageSquare className="w-4 h-4 ml-1" />{isAr ? "ملاحظات" : "Notes"}</Button>
-                    {activeSession.status === "draft" ? (
+                    {canApproveSession && activeSession.status === "draft" ? (
                       <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleUpdateSession({ status: "completed" })} data-testid="complete-session-btn"><CheckCircle2 className="w-4 h-4 ml-1" />{isAr ? "إنهاء الجولة" : "Complete"}</Button>
-                    ) : (
+                    ) : canApproveSession && activeSession.status !== "draft" ? (
                       <Button variant="outline" size="sm" onClick={() => handleUpdateSession({ status: "draft" })}><RotateCcw className="w-4 h-4 ml-1" />{isAr ? "إعادة فتح" : "Reopen"}</Button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
                 {/* Stats strip */}

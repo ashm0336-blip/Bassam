@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 import { API, ZONE_TYPES_FALLBACK, DRAG_SHAPE_MODES, PRAYER_TIMES } from "./DailySessions/constants";
@@ -37,6 +38,17 @@ export default function DailySessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { isDark } = useTheme();
+  const { canWrite } = useAuth();
+
+  // Permission checks
+  const canCreateSession = canWrite("create_session");
+  const canApproveSession = canWrite("approve_session");
+  const canDeleteSession = canWrite("delete_session");
+  const canStartPrayer = canWrite("start_prayer_round");
+  const canCompletePrayer = canWrite("complete_prayer_round");
+  const canSkipPrayer = canWrite("skip_prayer_round");
+  const canDistribute = canWrite("distribute_employees");
+  const canEnterDensity = canWrite("enter_density");
 
   // Core state
   const [floors, setFloors] = useState([]);
@@ -760,12 +772,16 @@ export default function DailySessionsPage() {
             <SelectTrigger className="w-36 lg:w-44" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
             <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id} data-testid={`floor-option-${f.id}`}>{isAr ? f.name_ar : f.name_en}</SelectItem>)}</SelectContent>
           </Select>
-          <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} data-testid="start-new-tour-btn" className="bg-emerald-600 hover:bg-emerald-700">
-            <Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}
-          </Button>
-          <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn" className="hidden sm:flex">
-            <CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}
-          </Button>
+          {canCreateSession && (
+            <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} data-testid="start-new-tour-btn" className="bg-emerald-600 hover:bg-emerald-700">
+              <Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}
+            </Button>
+          )}
+          {canCreateSession && (
+            <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn" className="hidden sm:flex">
+              <CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -950,7 +966,7 @@ export default function DailySessionsPage() {
                               </button>
 
                               {/* Skip button - for unstarted prayers (can start freely) */}
-                              {canStartFreely && (
+                              {canStartFreely && canStartPrayer && (
                                 <div className="flex gap-1">
                                   <button
                                     onClick={() => handleStartPrayerSession(pt.key)}
@@ -960,15 +976,17 @@ export default function DailySessionsPage() {
                                   >
                                     {isAr ? "▶ بدء" : "▶ Start"}
                                   </button>
-                                  <button
-                                    onClick={() => handleSkipPrayerSession(pt.key)}
-                                    disabled={saving}
-                                    data-testid={`skip-prayer-session-${pt.key}`}
-                                    title={isAr ? "تجاوز هذه الصلاة (لا تُحسب في الإحصائيات)" : "Skip this prayer (excluded from stats)"}
-                                    className="text-[8px] px-1.5 py-1.5 rounded-lg border border-slate-300 text-slate-400 hover:bg-slate-100 transition-all"
-                                  >
-                                    ⏭️
-                                  </button>
+                                  {canSkipPrayer && (
+                                    <button
+                                      onClick={() => handleSkipPrayerSession(pt.key)}
+                                      disabled={saving}
+                                      data-testid={`skip-prayer-session-${pt.key}`}
+                                      title={isAr ? "تجاوز هذه الصلاة (لا تُحسب في الإحصائيات)" : "Skip this prayer (excluded from stats)"}
+                                      className="text-[8px] px-1.5 py-1.5 rounded-lg border border-slate-300 text-slate-400 hover:bg-slate-100 transition-all"
+                                    >
+                                      ⏭️
+                                    </button>
+                                  )}
                                 </div>
                               )}
 
