@@ -64,44 +64,54 @@ GROUP_LABELS = {
     "settings":  {"ar": "الإعدادات",           "icon": "Settings"},
 }
 
-# Default permissions per role
+# Default permissions per role — format: {"perm": "read"|"write"}
 DEFAULT_PERMISSIONS = {
-    "general_manager": [
-        "view_daily_sessions",
-        "create_session", "approve_session", "start_prayer_round", "complete_prayer_round",
-        "distribute_employees", "view_coverage_map",
-        "view_density_reports", "view_reports", "export_reports", "compare_sessions",
-        "receive_alerts",
-    ],
-    "department_manager": [
-        "add_employees", "edit_employees", "delete_employees",
-        "manage_accounts", "reset_pins",
-        "view_daily_sessions", "create_session", "approve_session", "delete_session",
-        "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
-        "distribute_employees", "auto_distribute", "view_coverage_map",
-        "enter_density", "view_density_reports",
-        "view_reports", "export_reports", "compare_sessions",
-        "send_alert", "receive_alerts",
-        "manage_settings", "manage_maps", "manage_shifts",
-    ],
-    "shift_supervisor": [
-        "view_daily_sessions",
-        "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
-        "distribute_employees", "auto_distribute", "view_coverage_map",
-        "enter_density",
-        "view_reports",
-        "send_alert", "receive_alerts",
-    ],
-    "field_staff": [
-        "enter_density",
-        "send_alert",
-        "view_coverage_map",
-    ],
-    "admin_staff": [
-        "view_reports",
-        "view_density_reports",
-        "receive_alerts",
-    ],
+    "general_manager": {
+        "view_daily_sessions": "read",
+        "create_session": "read", "approve_session": "read",
+        "start_prayer_round": "read", "complete_prayer_round": "read",
+        "distribute_employees": "read", "view_coverage_map": "read",
+        "view_density_reports": "read", "view_reports": "read",
+        "export_reports": "read", "compare_sessions": "read",
+        "receive_alerts": "read",
+        "add_employees": "read", "edit_employees": "read",
+    },
+    "department_manager": {
+        "add_employees": "write", "edit_employees": "write", "delete_employees": "write",
+        "manage_accounts": "write", "reset_pins": "write",
+        "view_daily_sessions": "write", "create_session": "write",
+        "approve_session": "write", "delete_session": "write",
+        "start_prayer_round": "write", "complete_prayer_round": "write",
+        "skip_prayer_round": "write",
+        "distribute_employees": "write", "auto_distribute": "write",
+        "view_coverage_map": "write",
+        "enter_density": "write", "view_density_reports": "write",
+        "view_reports": "write", "export_reports": "write",
+        "compare_sessions": "write",
+        "send_alert": "write", "receive_alerts": "write",
+        "manage_settings": "write", "manage_maps": "write",
+        "manage_shifts": "write",
+    },
+    "shift_supervisor": {
+        "view_daily_sessions": "read",
+        "start_prayer_round": "write", "complete_prayer_round": "write",
+        "skip_prayer_round": "write",
+        "distribute_employees": "write", "auto_distribute": "write",
+        "view_coverage_map": "read",
+        "enter_density": "write",
+        "view_reports": "read",
+        "send_alert": "write", "receive_alerts": "read",
+    },
+    "field_staff": {
+        "enter_density": "write",
+        "send_alert": "write",
+        "view_coverage_map": "read",
+    },
+    "admin_staff": {
+        "view_reports": "read",
+        "view_density_reports": "read",
+        "receive_alerts": "read",
+    },
 }
 
 # Role hierarchy — no one can grant higher than their level
@@ -113,6 +123,15 @@ ROLE_HIERARCHY = {
     "field_staff":        1,
     "admin_staff":        1,
 }
+
+
+def _normalize_permissions(perms):
+    """Convert old array format to new dict format for backward compatibility"""
+    if isinstance(perms, list):
+        return {p: "write" for p in perms}
+    if isinstance(perms, dict):
+        return perms
+    return {}
 
 
 async def _ensure_defaults():
@@ -127,6 +146,15 @@ async def _ensure_defaults():
                 "updated_at": datetime.now(timezone.utc).isoformat(),
                 "updated_by": "system",
             })
+        else:
+            # Migrate old array format to new dict format
+            existing_perms = existing.get("permissions", {})
+            if isinstance(existing_perms, list):
+                migrated = {p: "write" for p in existing_perms}
+                await db.role_permissions.update_one(
+                    {"role": role},
+                    {"$set": {"permissions": migrated}}
+                )
 
 
 # ─── GET all role permissions ───────────────────────────────────
@@ -134,11 +162,11 @@ async def _ensure_defaults():
 async def get_all_role_permissions(admin: dict = Depends(require_admin)):
     await _ensure_defaults()
     docs = await db.role_permissions.find({}, {"_id": 0}).to_list(20)
-    # Build result with meta
     result = {}
     for doc in docs:
+        perms = _normalize_permissions(doc.get("permissions", {}))
         result[doc["role"]] = {
-            "permissions": doc.get("permissions", []),
+            "permissions": perms,
             "updated_at": doc.get("updated_at"),
             "updated_by": doc.get("updated_by"),
         }
@@ -166,11 +194,18 @@ async def update_role_permissions(role: str, data: dict, admin: dict = Depends(r
     if role == "system_admin":
         raise HTTPException(status_code=403, detail="لا يمكن تعديل صلاحيات مسؤول النظام")
 
-    permissions = data.get("permissions", [])
-    # Validate permissions exist
-    invalid = [p for p in permissions if p not in ALL_PERMISSIONS]
-    if invalid:
-        raise HTTPException(status_code=400, detail=f"صلاحيات غير صحيحة: {invalid}")
+    permissions = data.get("permissions", {})
+    # Support both old array and new dict format
+    if isinstance(permissions, list):
+        permissions = {p: "write" for p in permissions}
+
+    # Validate permissions exist and levels are valid
+    valid_levels = {"read", "write"}
+    for perm, level in permissions.items():
+        if perm not in ALL_PERMISSIONS:
+            raise HTTPException(status_code=400, detail=f"صلاحية غير صحيحة: {perm}")
+        if level not in valid_levels:
+            raise HTTPException(status_code=400, detail=f"مستوى غير صحيح: {level} — المسموح: read, write")
 
     await db.role_permissions.update_one(
         {"role": role},
@@ -181,9 +216,12 @@ async def update_role_permissions(role: str, data: dict, admin: dict = Depends(r
         }},
         upsert=True,
     )
+
+    read_count = sum(1 for v in permissions.values() if v == "read")
+    write_count = sum(1 for v in permissions.values() if v == "write")
     await log_activity(
         "permissions_updated", admin, role,
-        f"تم تحديث صلاحيات دور: {role} — {len(permissions)} صلاحية"
+        f"تم تحديث صلاحيات {role} — {read_count} قراءة، {write_count} تعديل"
     )
     return {"message": f"تم تحديث صلاحيات {role} ✅", "permissions": permissions}
 
@@ -212,10 +250,14 @@ async def reset_role_permissions(role: str, admin: dict = Depends(require_admin)
 async def get_my_permissions(user: dict = Depends(get_current_user)):
     role = user.get("role", "field_staff")
     if role == "system_admin":
-        return {"permissions": list(ALL_PERMISSIONS.keys()), "role": role}
+        # Admin gets all permissions as write
+        return {"permissions": {k: "write" for k in ALL_PERMISSIONS.keys()}, "role": role}
     await _ensure_defaults()
     doc = await db.role_permissions.find_one({"role": role}, {"_id": 0})
-    permissions = doc.get("permissions", DEFAULT_PERMISSIONS.get(role, [])) if doc else DEFAULT_PERMISSIONS.get(role, [])
+    if doc:
+        permissions = _normalize_permissions(doc.get("permissions", {}))
+    else:
+        permissions = DEFAULT_PERMISSIONS.get(role, {})
     return {"permissions": permissions, "role": role}
 
 

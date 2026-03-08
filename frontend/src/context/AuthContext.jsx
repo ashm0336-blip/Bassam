@@ -135,11 +135,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const hasPermission = (permission) => {
+  const hasPermission = (permission, requiredLevel = 'read') => {
     if (!user) return false;
     if (user.role === 'system_admin') return true;
-    return (user.permissions || []).includes(permission);
+    const perms = user.permissions || {};
+    // Support old array format
+    if (Array.isArray(perms)) return perms.includes(permission);
+    // New dict format: {"perm": "read"|"write"}
+    const level = perms[permission];
+    if (!level) return false;
+    if (requiredLevel === 'read') return level === 'read' || level === 'write';
+    if (requiredLevel === 'write') return level === 'write';
+    return false;
   };
+
+  const canRead = (permission) => hasPermission(permission, 'read');
+  const canWrite = (permission) => hasPermission(permission, 'write');
 
   const refreshPermissions = async () => {
     if (!token) return;
@@ -189,7 +200,7 @@ export const AuthProvider = ({ children }) => {
       user, token, loading, login, logout, setUser,
       isAdmin, isGeneralManager,
       canManageDepartment, canViewDepartment, canAddAlerts,
-      isReadOnly, hasPermission, refreshPermissions,
+      isReadOnly, hasPermission, canRead, canWrite, refreshPermissions,
       isAuthenticated: !!user,
       roleChangeAlert, dismissRoleChange,
     }}>
