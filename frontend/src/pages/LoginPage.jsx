@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, ROLE_LABELS, DEPT_LABELS } from '@/context/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -148,10 +148,15 @@ export default function LoginPage() {
     const result = await login(formData.identifier, formData.password);
     if (result.success) {
       if (result.must_change_pin) {
-        // Stay on login page — PublicRoute allows it when must_change_pin=true
         setShowPinChange(true);
       } else {
-        toast.success('مرحباً بك ✅');
+        const u = result.user;
+        const roleName = ROLE_LABELS[u?.role]?.ar || u?.role;
+        const deptName = DEPT_LABELS[u?.department]?.ar;
+        const greeting = deptName
+          ? `مرحباً ${u?.name} — ${roleName} في ${deptName}`
+          : `مرحباً ${u?.name} — ${roleName}`;
+        toast.success(greeting);
         navigate('/');
       }
     } else {

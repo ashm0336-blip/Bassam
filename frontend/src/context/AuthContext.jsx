@@ -1,7 +1,25 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+export const ROLE_LABELS = {
+  system_admin: { ar: 'مسؤول النظام', en: 'System Admin', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  general_manager: { ar: 'المدير العام', en: 'General Manager', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  department_manager: { ar: 'مدير الإدارة', en: 'Dept. Manager', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  shift_supervisor: { ar: 'مشرف الوردية', en: 'Shift Supervisor', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
+  field_staff: { ar: 'عامل ميداني', en: 'Field Staff', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  monitoring_team: { ar: 'فريق المراقبة', en: 'Monitoring', color: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400' },
+};
+
+export const DEPT_LABELS = {
+  plazas: { ar: 'إدارة الساحات', en: 'Plazas' },
+  gates: { ar: 'إدارة الأبواب', en: 'Gates' },
+  planning: { ar: 'إدارة التخطيط', en: 'Planning' },
+  crowd_services: { ar: 'خدمات الحشود', en: 'Crowd Services' },
+  mataf: { ar: 'صحن المطاف', en: 'Mataf' },
+  haram_map: { ar: 'إدارة المصليات', en: 'Prayer Areas' },
+};
 
 const AuthContext = createContext(null);
 
@@ -13,10 +31,14 @@ export const useAuth = () => {
   return context;
 };
 
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [roleChangeAlert, setRoleChangeAlert] = useState(null);
+  const prevRoleRef = useRef(null);
 
   useEffect(() => {
     if (token) {
@@ -27,10 +49,26 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Periodic refresh every 5 minutes
+  useEffect(() => {
+    if (!token || !user) return;
+    const interval = setInterval(() => { refreshUserSilently(); }, REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [token, user?.id]);
+
   const fetchUser = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`);
-      setUser(response.data);
+      const userData = response.data;
+      // Fetch permissions
+      let permissions = [];
+      try {
+        const permRes = await axios.get(`${API}/auth/my-permissions`);
+        permissions = permRes.data.permissions || [];
+      } catch {}
+      const fullUser = { ...userData, permissions };
+      prevRoleRef.current = userData.role;
+      setUser(fullUser);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       logout();
@@ -38,6 +76,31 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  const refreshUserSilently = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [meRes, permRes] = await Promise.all([
+        axios.get(`${API}/auth/me`),
+        axios.get(`${API}/auth/my-permissions`).catch(() => ({ data: { permissions: [] } })),
+      ]);
+      const newRole = meRes.data.role;
+      const oldRole = prevRoleRef.current;
+
+      // Detect role change
+      if (oldRole && newRole !== oldRole) {
+        setRoleChangeAlert({ oldRole, newRole });
+      }
+      prevRoleRef.current = newRole;
+      setUser(prev => prev ? {
+        ...prev,
+        ...meRes.data,
+        permissions: permRes.data.permissions || prev.permissions || [],
+      } : prev);
+    } catch {}
+  }, [token]);
+
+  const dismissRoleChange = () => setRoleChangeAlert(null);
 
   const login = async (identifier, password) => {
     try {
@@ -60,8 +123,10 @@ export const AuthProvider = ({ children }) => {
         permissions = permRes.data.permissions || [];
       } catch {}
 
-      setUser({ ...userData, must_change_pin: !!must_change_pin, permissions });
-      return { success: true, must_change_pin };
+      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions };
+      prevRoleRef.current = userData.role;
+      setUser(fullUser);
+      return { success: true, must_change_pin, user: fullUser };
     } catch (error) {
       return { 
         success: false, 
@@ -79,9 +144,7 @@ export const AuthProvider = ({ children }) => {
   const refreshPermissions = async () => {
     if (!token) return;
     try {
-      const res = await axios.get(`${API}/auth/my-permissions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.get(`${API}/auth/my-permissions`);
       setUser(prev => prev ? { ...prev, permissions: res.data.permissions || [] } : prev);
     } catch {}
   };
@@ -91,15 +154,12 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
+    prevRoleRef.current = null;
+    setRoleChangeAlert(null);
   };
 
-  const isAdmin = () => {
-    return user?.role === 'system_admin';
-  };
-
-  const isGeneralManager = () => {
-    return user?.role === 'general_manager';
-  };
+  const isAdmin = () => user?.role === 'system_admin';
+  const isGeneralManager = () => user?.role === 'general_manager';
 
   const canManageDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
@@ -130,7 +190,8 @@ export const AuthProvider = ({ children }) => {
       isAdmin, isGeneralManager,
       canManageDepartment, canViewDepartment, canAddAlerts,
       isReadOnly, hasPermission, refreshPermissions,
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      roleChangeAlert, dismissRoleChange,
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, ROLE_LABELS, DEPT_LABELS } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
@@ -66,7 +66,7 @@ export const Layout = () => {
   const [expandedMenuId, setExpandedMenuId] = useState(null); // Only one menu can be open at a time
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, roleChangeAlert, dismissRoleChange } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const { t, language, toggleLanguage, isRTL } = useLanguage();
   const { menuItems, loading } = useSidebar();
@@ -271,9 +271,7 @@ export const Layout = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.name || t('platformName')}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {user?.role === 'admin' ? (language === 'ar' ? 'مدير النظام' : 'System Admin') : 
-                   user?.role === 'manager' ? (language === 'ar' ? 'مشرف' : 'Manager') : 
-                   (language === 'ar' ? 'مستخدم' : 'User')}
+                  {ROLE_LABELS[user?.role]?.[language] || user?.role}
                 </p>
               </div>
               <Button
@@ -409,9 +407,14 @@ export const Layout = () => {
 
           <div className="flex items-center gap-2">
             {headerSettings.show_user_name && user && (
-              <span className="text-sm font-medium mr-2" style={{ color: headerSettings.text_color }}>
-                {language === 'ar' ? headerSettings.custom_greeting_ar : headerSettings.custom_greeting_en}، {user.name}
-              </span>
+              <div className="flex items-center gap-2 mr-2">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user.role]?.color || 'bg-slate-100 text-slate-700'}`} data-testid="header-role-badge">
+                  {ROLE_LABELS[user.role]?.[language] || user.role}
+                </span>
+                <span className="text-sm font-medium" style={{ color: headerSettings.text_color }}>
+                  {language === 'ar' ? headerSettings.custom_greeting_ar : headerSettings.custom_greeting_en}، {user.name}
+                </span>
+              </div>
             )}
             
             {/* Theme Toggle */}
@@ -471,6 +474,24 @@ export const Layout = () => {
             )}
           </div>
         </header>
+
+        {/* Role Change Alert Banner */}
+        {roleChangeAlert && (
+          <div className="mx-3 lg:mx-6 mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 flex items-center justify-between gap-3" dir="rtl" data-testid="role-change-alert">
+            <div className="flex items-center gap-2 flex-1">
+              <Shield className="w-5 h-5 text-amber-600 shrink-0" />
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {language === 'ar' 
+                  ? `تم تحديث صلاحياتك — دورك الحالي: ${ROLE_LABELS[roleChangeAlert.newRole]?.ar || roleChangeAlert.newRole}`
+                  : `Your role has been updated — Current role: ${ROLE_LABELS[roleChangeAlert.newRole]?.en || roleChangeAlert.newRole}`
+                }
+              </p>
+            </div>
+            <button onClick={dismissRoleChange} className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 shrink-0" data-testid="role-change-dismiss">
+              {language === 'ar' ? 'فهمت' : 'Got it'}
+            </button>
+          </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-24 lg:pb-6">
