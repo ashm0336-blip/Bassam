@@ -371,7 +371,6 @@ export const Layout = () => {
               className="lg:hidden"
               onClick={() => setMobileMenuOpen(true)}
               data-testid="mobile-menu-open"
-              style={{ color: headerSettings.text_color }}
             >
               <Menu className="w-5 h-5" />
             </Button>
@@ -386,14 +385,14 @@ export const Layout = () => {
             
             <div>
               {headerSettings.show_page_name && (
-                <h2 className="font-cairo font-bold text-lg" style={{ color: headerSettings.text_color }}>
+                <h2 className="font-cairo font-bold text-lg">
                   {navigation.find(n => n.href === location.pathname)?.name || 
                    secondaryNav.find(n => n.href === location.pathname)?.name || 
                    "لوحة التحكم"}
                 </h2>
               )}
               {headerSettings.show_date && (
-                <p className="text-xs" style={{ color: headerSettings.text_color, opacity: 0.7 }}>
+                <p className="text-xs opacity-70">
                   {new Date().toLocaleDateString('ar-SA', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -411,7 +410,7 @@ export const Layout = () => {
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user.role]?.color || 'bg-slate-100 text-slate-700'}`} data-testid="header-role-badge">
                   {ROLE_LABELS[user.role]?.[language] || user.role}
                 </span>
-                <span className="text-sm font-medium" style={{ color: headerSettings.text_color }}>
+                <span className="text-sm font-medium">
                   {language === 'ar' ? headerSettings.custom_greeting_ar : headerSettings.custom_greeting_en}، {user.name}
                 </span>
               </div>
@@ -424,7 +423,6 @@ export const Layout = () => {
                 size="icon"
                 onClick={toggleTheme}
                 className="hover:text-primary"
-                style={{ color: headerSettings.text_color }}
                 data-testid="theme-toggle"
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -438,7 +436,6 @@ export const Layout = () => {
                 size="icon"
                 onClick={toggleLanguage}
                 className="hover:text-primary"
-                style={{ color: headerSettings.text_color }}
                 data-testid="language-toggle"
               >
                 <Languages className="w-5 h-5" />
@@ -451,7 +448,6 @@ export const Layout = () => {
                 variant="ghost" 
                 size="icon" 
                 className="relative hover:text-primary"
-                style={{ color: headerSettings.text_color }}
                 onClick={() => navigate('/notifications')}
                 data-testid="header-notifications"
               >
@@ -466,7 +462,6 @@ export const Layout = () => {
                 size="icon" 
                 onClick={handleLogout}
                 className="hover:text-destructive"
-                style={{ color: headerSettings.text_color }}
                 data-testid="logout-header"
               >
                 <LogOut className="w-5 h-5" />
