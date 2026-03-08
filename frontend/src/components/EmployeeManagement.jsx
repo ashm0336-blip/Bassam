@@ -777,7 +777,7 @@ export default function EmployeeManagement({ department }) {
             <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
-                  <TableHead className="text-right py-4">
+                  <TableHead className="text-right py-2.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 shadow-sm">
                         <Users className="w-4.5 h-4.5 text-primary"/>
@@ -785,7 +785,7 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-sm font-bold text-foreground">{isAr?'الموظف':'Employee'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-4 w-24">
+                  <TableHead className="text-center py-2.5 w-24">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
                         <Briefcase className="w-4 h-4 text-blue-600"/>
@@ -793,7 +793,7 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'التوظيف':'Type'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-4 w-36">
+                  <TableHead className="text-center py-2.5 w-36">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center shadow-sm">
                         <Clock className="w-4 h-4 text-purple-600"/>
@@ -801,7 +801,7 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'الوردية':'Shift'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-4 w-[210px]">
+                  <TableHead className="text-center py-2.5 w-[210px]">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
                         <Coffee className="w-4 h-4 text-amber-600"/>
@@ -810,7 +810,7 @@ export default function EmployeeManagement({ department }) {
                     </div>
                   </TableHead>
                   {schedule && (
-                    <TableHead className="text-center py-4 w-16">
+                    <TableHead className="text-center py-2.5 w-16">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
                           <Zap className="w-4 h-4 text-amber-600"/>
@@ -819,7 +819,7 @@ export default function EmployeeManagement({ department }) {
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="text-center py-4 w-16">
+                  <TableHead className="text-center py-2.5 w-16">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
                         <Activity className="w-4 h-4 text-emerald-600"/>
@@ -827,7 +827,7 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحالة':'Status'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-4 w-24">
+                  <TableHead className="text-center py-2.5 w-24">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
                         <ShieldCheck className="w-4 h-4 text-emerald-600"/>
@@ -836,7 +836,7 @@ export default function EmployeeManagement({ department }) {
                     </div>
                   </TableHead>
                   {canChangeRoles && (
-                    <TableHead className="text-center py-4 w-28">
+                    <TableHead className="text-center py-2.5 w-28">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
                           <Shield className="w-4 h-4 text-violet-600"/>
@@ -845,7 +845,7 @@ export default function EmployeeManagement({ department }) {
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="text-center py-4 w-14">
+                  <TableHead className="text-center py-2.5 w-14">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
                         <MoreVertical className="w-4 h-4 text-slate-500"/>
