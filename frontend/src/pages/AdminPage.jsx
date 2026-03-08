@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
-  LayoutDashboard, Activity, Settings, Menu,
-  Map as MapIcon, Calendar, ShieldAlert, Shield,
+  LayoutDashboard, Activity, Settings, Menu, Shield, UserCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
 import ActivityLog from "./admin/ActivityLog";
 import SystemSettings from "./admin/SystemSettings";
 import SidebarManager from "./admin/SidebarManager";
-import MapManager from "./admin/MapManager";
-import SeasonManager from "./admin/SeasonManager";
-import ProhibitedItemsManager from "./admin/ProhibitedItemsManager";
 import PermissionsManager from "./admin/PermissionsManager";
+import MyAccountTab from "./admin/MyAccountTab";
 
 export default function AdminPage() {
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const isAr = language === 'ar';
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="space-y-6" data-testid="admin-page">
@@ -28,10 +26,10 @@ export default function AdminPage() {
           </div>
           <div>
             <h1 className="font-cairo font-bold text-2xl">
-              {language === 'ar' ? 'لوحة تحكم مسؤول النظام' : 'System Admin Control Panel'}
+              {isAr ? 'لوحة تحكم مسؤول النظام' : 'System Admin Control Panel'}
             </h1>
             <p className="text-sm text-white/80">
-              {language === 'ar' ? 'إدارة كاملة للنظام والإعدادات' : 'Complete system and settings management'}
+              {isAr ? 'إدارة كاملة للنظام والإعدادات' : 'Complete system and settings management'}
             </p>
           </div>
         </div>
@@ -39,63 +37,47 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
-          <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+          <TabsTrigger value="overview" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-overview">
             <LayoutDashboard className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+            <span className="text-xs">{isAr ? 'نظرة عامة' : 'Overview'}</span>
           </TabsTrigger>
-          <TabsTrigger value="permissions" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="permissions-tab">
+          <TabsTrigger value="account" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-account">
+            <UserCircle className="w-5 h-5" />
+            <span className="text-xs">{isAr ? 'حسابي' : 'My Account'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-permissions">
             <Shield className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الصلاحيات' : 'Permissions'}</span>
+            <span className="text-xs">{isAr ? 'الصلاحيات' : 'Permissions'}</span>
           </TabsTrigger>
-          <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-activity">
             <Activity className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'النشاط' : 'Activity'}</span>
+            <span className="text-xs">{isAr ? 'سجل النشاط' : 'Activity'}</span>
           </TabsTrigger>
-          <TabsTrigger value="season" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Calendar className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'المواسم' : 'Seasons'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="prohibited" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <ShieldAlert className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الممنوعات' : 'Prohibited'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="maps" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <MapIcon className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الخرائط' : 'Maps'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-settings">
             <Settings className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'الإعدادات' : 'Settings'}</span>
+            <span className="text-xs">{isAr ? 'إعدادات النظام' : 'Settings'}</span>
           </TabsTrigger>
-          <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-sidebar">
             <Menu className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'القائمة' : 'Sidebar'}</span>
+            <span className="text-xs">{isAr ? 'القائمة' : 'Sidebar'}</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="mt-6">
+        <TabsContent value="overview" className="mt-6">
           <AdminDashboard />
         </TabsContent>
 
-        <TabsContent value="activity" className="mt-6">
-          <ActivityLog />
+        <TabsContent value="account" className="mt-6">
+          <MyAccountTab />
         </TabsContent>
 
         <TabsContent value="permissions" className="mt-6">
           <PermissionsManager />
         </TabsContent>
 
-        <TabsContent value="season" className="mt-6">
-          <SeasonManager />
-        </TabsContent>
-
-        <TabsContent value="prohibited" className="mt-6">
-          <ProhibitedItemsManager />
-        </TabsContent>
-
-        <TabsContent value="maps" className="mt-6">
-          <MapManager />
+        <TabsContent value="activity" className="mt-6">
+          <ActivityLog />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
