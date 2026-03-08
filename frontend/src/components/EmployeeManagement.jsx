@@ -659,98 +659,130 @@ export default function EmployeeManagement({ department }) {
         onDelete={handleDeleteSchedule} isReadOnly={isReadOnly()} language={language}
       />
 
-      {/* Stats Row */}
+      {/* Stats Row — Professional Design */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Total */}
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <Users className="w-8 h-8 text-blue-600"/>
+
+        {/* 1) إجمالي الموظفين */}
+        <Card className="relative overflow-hidden border-0 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700 opacity-[0.07]"/>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l"/>
+          <CardContent className="p-4 relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-600"/>
+              </div>
               <div className="text-right">
-                <p className="text-[10px] text-blue-600">{isAr?'إجمالي':'Total'}</p>
-                <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
+                <p className="text-[11px] font-medium text-blue-600 mb-0.5">{isAr?'إجمالي الموظفين':'Total Staff'}</p>
+                <p className="text-3xl font-black text-blue-800 leading-none">{statistics.total}</p>
               </div>
             </div>
-            <div className="flex gap-2 mt-2 pt-2 border-t border-blue-200 flex-wrap">
-              <div className="flex items-center gap-1 text-[9px]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"/>
-                <span className="text-emerald-700 font-bold">{statistics.permanent}</span>
-                <span className="text-blue-500">{isAr?'دائم':'Perm.'}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[9px]">
-                <span className="w-2 h-2 rounded-full bg-sky-500"/>
-                <span className="text-sky-700 font-bold">{statistics.seasonal}</span>
-                <span className="text-blue-500">{isAr?'موسمي':'Season.'}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[9px]">
-                <span className="w-2 h-2 rounded-full bg-purple-500"/>
-                <span className="text-purple-700 font-bold">{statistics.temporary}</span>
-                <span className="text-blue-500">{isAr?'مؤقت':'Temp.'}</span>
-              </div>
+            <div className="flex gap-1.5 flex-wrap pt-2 border-t border-blue-100">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>{statistics.permanent} {isAr?'دائم':'Perm'}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-500"/>{statistics.seasonal} {isAr?'موسمي':'Sea.'}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"/>{statistics.temporary} {isAr?'مؤقت':'Tmp'}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Field / Tasked */}
-        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-1">
-              <HardHat className="w-7 h-7 text-teal-600"/>
+        {/* 2) الميدانيون */}
+        <Card className="relative overflow-hidden border-0 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-teal-600 opacity-[0.07]"/>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l"/>
+          <CardContent className="p-4 relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <HardHat className="w-5 h-5 text-emerald-600"/>
+              </div>
               <div className="text-right">
-                <p className="text-[10px] text-teal-600">{isAr?'ميدانيون':'Field Ops'}</p>
-                <p className="text-2xl font-bold text-teal-900">{statistics.fieldOps}</p>
+                <p className="text-[11px] font-medium text-emerald-600 mb-0.5">{isAr?'الميدانيون':'Field Ops'}</p>
+                <p className="text-3xl font-black text-emerald-800 leading-none">{statistics.fieldOps}</p>
               </div>
             </div>
-            {statistics.tasked > 0 && (
-              <div className="flex items-center gap-1 mt-1 pt-1 border-t border-emerald-200">
-                <Zap className="w-3 h-3 text-amber-500"/>
-                <span className="text-[10px] font-bold text-amber-600">{statistics.tasked}</span>
-                <span className="text-[10px] text-teal-500">{isAr?'مكلف هذا الشهر':'tasked'}</span>
+            <div className="pt-2 border-t border-emerald-100">
+              {statistics.tasked > 0 ? (
+                <span className="inline-flex items-center gap-1 text-[9px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                  <Zap className="w-2.5 h-2.5"/>{statistics.tasked} {isAr?'مكلف هذا الشهر':'tasked'}
+                </span>
+              ) : (
+                <span className="text-[9px] text-muted-foreground">{isAr?'لا يوجد تكليف هذا الشهر':'No assignments'}</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3) الورديات */}
+        <Card className="relative overflow-hidden border-0 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-violet-600 opacity-[0.07]"/>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l"/>
+          <CardContent className="p-4 relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-purple-600"/>
               </div>
+              <p className="text-[11px] font-medium text-purple-600">{isAr?'توزيع الورديات':'Shift Split'}</p>
+            </div>
+            {statistics.shiftStats.length > 0 ? (
+              <div className="space-y-1.5">
+                {statistics.shiftStats.map(s => {
+                  const pct = statistics.total > 0 ? Math.round((s.count / statistics.total) * 100) : 0;
+                  return (
+                    <div key={s.id} className="flex items-center gap-2">
+                      <span className="text-[9px] text-muted-foreground w-12 text-right shrink-0">
+                        {s.label?.replace('الوردية ', '')}
+                      </span>
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width:`${pct}%`, backgroundColor: s.color }}/>
+                      </div>
+                      <span className="text-[10px] font-bold w-4 text-right" style={{ color: s.color }}>{s.count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">-</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Shifts */}
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <Clock className="w-7 h-7 text-purple-600"/>
-              <p className="text-[10px] text-purple-600">{isAr?'الورديات':'Shifts'}</p>
+        {/* 4) التغطية الأسبوعية */}
+        <Card className="relative overflow-hidden border-0 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-500 opacity-[0.07]"/>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 rounded-l"/>
+          <CardContent className="p-4 relative">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 text-amber-600"/>
+              </div>
+              <p className="text-[11px] font-medium text-amber-700">{isAr?'التغطية الأسبوعية':'Weekly Cover'}</p>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              {statistics.shiftStats.map(s => (
-                <div key={s.id} className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor:s.color }}/>
-                  <span className="text-xs font-bold">{s.count}</span>
-                  <span className="text-[9px] text-muted-foreground">{s.label?.replace('الوردية ','')}</span>
-                </div>
-              ))}
-              {statistics.shiftStats.length===0 && <span className="text-[10px] text-muted-foreground">-</span>}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Weekly Coverage */}
-        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <CalendarDays className="w-6 h-6 text-amber-600"/>
-              <p className="text-[10px] text-amber-700 font-semibold">{isAr?'التغطية الأسبوعية':'Coverage'}</p>
-            </div>
-            <div className="flex gap-0.5 items-end h-10">
+            <div className="flex gap-1 items-end h-10">
               {statistics.coverage.map(day => {
-                const isToday = day.value===todayAr, isLow = day.pct<60;
+                const isToday = day.value===todayAr;
+                const isLow = day.pct < 60;
+                const barH = Math.max(day.pct * 0.36, 4);
                 return (
-                  <div key={day.value} className="flex-1 flex flex-col items-center gap-0.5" title={`${day.short}: ${day.available}/${day.total}`}>
-                    <div className="w-full rounded-sm" style={{ height:`${Math.max(day.pct*0.35,4)}px`, backgroundColor: isLow?'#f87171':isToday?'#047857':'#86efac' }}/>
-                    <span className={`text-[8px] ${isToday?'font-bold text-primary':'text-muted-foreground'}`}>{day.short}</span>
+                  <div key={day.value} className="flex-1 flex flex-col items-center gap-0.5"
+                    title={`${day.value}: ${day.available}/${day.total} (${day.pct}%)`}>
+                    <div className="w-full rounded-md transition-all"
+                      style={{ height:`${barH}px`,
+                        backgroundColor: isLow ? '#f87171' : isToday ? '#047857' : '#6ee7b7',
+                        boxShadow: isToday ? '0 0 6px rgba(4,120,87,0.4)' : 'none' }}/>
+                    <span className={`text-[8px] font-medium ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                      {day.short}
+                    </span>
                   </div>
                 );
               })}
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Header + Add */}
