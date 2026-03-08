@@ -858,15 +858,15 @@ export default function EmployeeManagement({ department }) {
               <TableBody>
                 {mergedEmployees.map(emp => (
                   <TableRow key={emp.id}
-                    className={`hover:bg-muted/50 transition-colors ${emp.on_rest?'bg-amber-50/40':''} ${emp.contract_expired?'opacity-60':''}`}
+                    className={`hover:bg-muted/50 transition-colors [&>td]:py-1.5 ${emp.on_rest?'bg-amber-50/40':''} ${emp.contract_expired?'opacity-60':''}`}
                     data-testid={`employee-row-${emp.id}`}>
 
                     {/* Employee info — professional card */}
-                    <TableCell className="text-right py-3">
-                      <div className="flex items-center gap-3">
+                    <TableCell className="text-right py-2">
+                      <div className="flex items-center gap-2.5">
                         {/* Avatar — bigger with ring */}
                         <div className="relative flex-shrink-0">
-                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold text-white shadow-md ring-2 ring-white"
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white"
                             style={{ backgroundColor: (emp.employment_type==='seasonal'?'#0284c7':emp.employment_type==='temporary'?'#9333ea':'#004D38') }}>
                             {emp.name.charAt(0)}
                           </div>
