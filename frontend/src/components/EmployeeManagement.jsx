@@ -6,6 +6,7 @@ import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
+  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -269,6 +270,7 @@ export default function EmployeeManagement({ department }) {
 
   const emptyForm = {
     name: "", employee_number: "", job_title: "", contact_phone: "",
+    national_id: "",
     location: "", shift: "", rest_days: [], work_tasks: "",
     work_type: "field", employment_type: "permanent",
     season: "", contract_end: "",
@@ -403,6 +405,7 @@ export default function EmployeeManagement({ department }) {
       setFormData({
         name: emp.name, employee_number: emp.employee_number||"",
         job_title: emp.job_title, contact_phone: emp.contact_phone||"",
+        national_id: emp.national_id||"",
         location: emp.location||"", shift: emp.shift||"",
         rest_days: emp.rest_days||[], work_tasks: emp.work_tasks||"",
         work_type: emp.work_type||"field",
@@ -424,6 +427,7 @@ export default function EmployeeManagement({ department }) {
       const payload = {
         name: formData.name, employee_number: formData.employee_number,
         job_title: formData.job_title, contact_phone: formData.contact_phone||undefined,
+        national_id: formData.national_id||undefined,
         work_type: formData.work_type, employment_type: formData.employment_type,
         season: formData.season||undefined, contract_end: formData.contract_end||undefined,
         work_tasks: formData.work_tasks||undefined,
@@ -449,6 +453,19 @@ export default function EmployeeManagement({ department }) {
       setDeleteDialogOpen(false); fetchEmployees();
     } catch(e) { toast.error(isAr?"حدث خطأ":"Error"); }
     finally { setSubmitting(false); }
+  };
+
+  // ── Account Management ──────────────────────────────────────
+  const handleAccountAction = async (empId, action, empName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const endpoint = `${API}/employees/${empId}/${action}`;
+      const res = await axios.post(endpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(res.data?.message || isAr ? "تم التحديث" : "Updated");
+      fetchEmployees();
+    } catch(e) {
+      toast.error(e.response?.data?.detail || (isAr?"فشلت العملية":"Failed"));
+    }
   };
 
   const statistics = useMemo(() => {
@@ -620,6 +637,12 @@ export default function EmployeeManagement({ department }) {
                     </TableHead>
                   )}
                   <TableHead className="text-center font-semibold">{isAr?'الحالة':'Status'}</TableHead>
+                  <TableHead className="text-center font-semibold">
+                    <div className="flex items-center justify-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500"/>
+                      <span>{isAr?'الحساب':'Account'}</span>
+                    </div>
+                  </TableHead>
                   <TableHead className="text-center font-semibold">{isAr?'إجراءات':'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -749,14 +772,70 @@ export default function EmployeeManagement({ department }) {
                       )}
                     </TableCell>
 
+                    {/* Account Status Cell */}
+                    <TableCell className="text-center">
+                      {(() => {
+                        const acStatus = emp.account_status;
+                        if (!emp.national_id) return (
+                          <span className="text-[9px] text-slate-400 italic">{isAr?'لا رقم هوية':'No ID'}</span>
+                        );
+                        const cfg = {
+                          active:     { label: isAr?'نشط':'Active',   icon: ShieldCheck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+                          pending:    { label: isAr?'معلق':'Pending',  icon: ShieldOff,   cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+                          frozen:     { label: isAr?'مجمَّد':'Frozen', icon: ShieldX,     cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+                          terminated: { label: isAr?'منتهي':'Ended',   icon: ShieldX,     cls: 'bg-red-100 text-red-700 border-red-200' },
+                          no_account: { label: isAr?'لا حساب':'No Acc',icon: ShieldOff,   cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+                        }[acStatus] || { label: acStatus, icon: ShieldOff, cls: 'bg-slate-100 text-slate-500' };
+                        const Icon = cfg.icon;
+                        return (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full border ${cfg.cls}`}>
+                              <Icon className="w-3 h-3"/>{cfg.label}
+                            </span>
+                            {canEdit && acStatus !== 'terminated' && (
+                              <div className="flex gap-0.5 mt-0.5">
+                                {acStatus === 'pending' || acStatus === 'frozen' || acStatus === 'no_account' ? (
+                                  <button onClick={()=>handleAccountAction(emp.id,'activate-account',emp.name)}
+                                    className="text-[8px] text-emerald-600 hover:text-emerald-800 font-bold px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                                    title={isAr?'تفعيل الحساب':'Activate'} data-testid={`activate-${emp.id}`}>
+                                    ✓ {isAr?'تفعيل':'Activate'}
+                                  </button>
+                                ) : acStatus === 'active' ? (
+                                  <button onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)}
+                                    className="text-[8px] text-blue-600 hover:text-blue-800 font-bold px-1.5 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors"
+                                    title={isAr?'تجميد':'Freeze'} data-testid={`freeze-${emp.id}`}>
+                                    🔒 {isAr?'تجميد':'Freeze'}
+                                  </button>
+                                ) : null}
+                                {(acStatus === 'active' || acStatus === 'frozen') && (
+                                  <button onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}
+                                    className="text-[8px] text-amber-600 hover:text-amber-800 font-bold px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 transition-colors"
+                                    title={isAr?'إعادة تعيين PIN':'Reset PIN'} data-testid={`reset-pin-${emp.id}`}>
+                                    🔑
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+
                     {/* Actions */}
                     <TableCell className="text-center">
                       {!isReadOnly() && (
-                        <div className="flex items-center gap-1 justify-center">
+                        <div className="flex items-center gap-1 justify-center flex-wrap">
                           <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]"
                             onClick={()=>handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
                             <Edit className="w-3 h-3 ml-0.5"/>{isAr?'تعديل':'Edit'}
                           </Button>
+                          {emp.account_status !== 'terminated' && (
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive"
+                              onClick={()=>handleAccountAction(emp.id,'terminate-account',emp.name)}
+                              title={isAr?'إنهاء الخدمة نهائياً':'Terminate'}>
+                              <ShieldX className="w-3 h-3"/>
+                            </Button>
+                          )}
                           <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive"
                             onClick={()=>{ setSelectedEmployee(emp); setDeleteDialogOpen(true); }}>
                             <Trash2 className="w-3 h-3"/>
@@ -808,6 +887,35 @@ export default function EmployeeManagement({ department }) {
                     required className="mt-1 h-9 font-mono" placeholder="EMP-001"
                     data-testid="employee-number-input"/>
                 </div>
+              </div>
+
+              {/* Row 1.5: National ID */}
+              <div>
+                <Label className="text-[11px] font-semibold flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-500"/>
+                  {isAr?'رقم الهوية الوطنية (10 أرقام)':'National ID (10 digits)'}
+                  <span className="text-slate-400 font-normal">{isAr?'— يُستخدم لتسجيل الدخول':'— used for login'}</span>
+                </Label>
+                <Input
+                  value={formData.national_id}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g,'').slice(0,10);
+                    setFormData({...formData, national_id: val});
+                  }}
+                  className="mt-1 h-9 font-mono tracking-widest text-center"
+                  placeholder="1xxxxxxxxx"
+                  maxLength={10}
+                  inputMode="numeric"
+                  data-testid="employee-national-id-input"
+                />
+                {formData.national_id && (
+                  <p className={`text-[10px] mt-0.5 ${formData.national_id.length === 10 && /^[12]/.test(formData.national_id) ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {formData.national_id.length === 10 && /^[12]/.test(formData.national_id)
+                      ? '✓ سيُنشأ حساب تلقائياً عند الإضافة'
+                      : `${10 - formData.national_id.length} أرقام متبقية — يبدأ بـ 1 أو 2`
+                    }
+                  </p>
+                )}
               </div>
 
               {/* Row 2: Job Title + Phone */}

@@ -6,34 +6,51 @@ import uuid
 
 # ============= Auth Models =============
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: Optional[str] = None          # للأدمن والمديرين
+    national_id: Optional[str] = None   # للموظفين الميدانيين (10 أرقام)
     password: str
     name: str
     role: str = "field_staff"
     department: Optional[str] = None
+    employee_id: Optional[str] = None   # ربط بالموظف
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[str] = None
     department: Optional[str] = None
     password: Optional[str] = None
+    is_active: Optional[bool] = None
+    account_status: Optional[str] = None  # active|frozen|terminated
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    model_config = ConfigDict(extra="ignore")
+    identifier: str   # بريد إلكتروني أو رقم هوية
     password: str
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: str
-    email: str
+    email: Optional[str] = None
+    national_id: Optional[str] = None
     name: str
     role: str
     department: Optional[str] = None
+    account_status: str = "active"
+    must_change_pin: bool = False
+    employee_id: Optional[str] = None
     created_at: str
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+    must_change_pin: bool = False
+
+class PinChangeRequest(BaseModel):
+    new_pin: str   # 4-6 أرقام
+
+class AccountStatusUpdate(BaseModel):
+    status: str  # active | frozen | terminated
 
 # ============= Data Models =============
 class GateCreate(BaseModel):
@@ -139,16 +156,18 @@ class EmployeeCreate(BaseModel):
     location: str = ""
     shift: str = ""
     employee_number: Optional[str] = None
+    national_id: Optional[str] = None       # رقم الهوية (10 أرقام)
     contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
     rest_days: Optional[List[str]] = None
     work_tasks: Optional[str] = None
     is_tasked: bool = False
     is_active: bool = True
-    work_type: str = "field"           # field | admin | both
-    employment_type: str = "permanent" # permanent | seasonal | temporary
-    season: Optional[str] = None       # ramadan | hajj | umrah (for seasonal)
-    contract_end: Optional[str] = None # ISO date for seasonal/temporary
+    work_type: str = "field"
+    employment_type: str = "permanent"
+    season: Optional[str] = None
+    contract_end: Optional[str] = None
+    user_id: Optional[str] = None           # ربط بحساب النظام
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
@@ -156,6 +175,7 @@ class EmployeeUpdate(BaseModel):
     location: Optional[str] = None
     shift: Optional[str] = None
     employee_number: Optional[str] = None
+    national_id: Optional[str] = None
     contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
     rest_days: Optional[List[str]] = None
@@ -166,6 +186,7 @@ class EmployeeUpdate(BaseModel):
     employment_type: Optional[str] = None
     season: Optional[str] = None
     contract_end: Optional[str] = None
+    user_id: Optional[str] = None
 
 # ============= Monthly Schedule Models =============
 class ScheduleAssignment(BaseModel):

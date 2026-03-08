@@ -39,17 +39,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     try {
-      const response = await axios.post(`${API}/auth/login`, { email, password });
-      const { access_token, user: userData } = response.data;
+      const response = await axios.post(`${API}/auth/login`, { identifier, password });
+      const { access_token, user: userData, must_change_pin } = response.data;
       
       localStorage.setItem('token', access_token);
+      if (must_change_pin) localStorage.setItem('must_change_pin', '1');
+      else localStorage.removeItem('must_change_pin');
+      
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setToken(access_token);
-      setUser(userData);
+      setUser({ ...userData, must_change_pin });
       
-      return { success: true };
+      return { success: true, must_change_pin };
     } catch (error) {
       return { 
         success: false, 

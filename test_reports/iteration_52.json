@@ -1,0 +1,80 @@
+{
+  "summary": "Full backend and frontend testing of new authentication system: national ID login, auto-create user accounts, account states, brute force protection, PIN change. 30/30 backend tests passed. Frontend UI verified. One critical bug found: PIN change modal never shows due to PublicRoute race condition.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "LoginPage / PublicRoute / AuthContext",
+        "issue": "PIN change modal (must_change_pin=true) NEVER shows after login. Root cause: AuthContext.login() calls setUser() making isAuthenticated=true, PublicRoute immediately redirects to '/', LoginPage unmounts before setShowPinChange(true) can render the modal. Employee is logged in without being forced to change PIN.",
+        "selector": "PublicRoute in App.js + AuthContext.jsx login()",
+        "priority": "HIGH"
+      },
+      {
+        "component": "LoginPage - password field",
+        "issue": "Password field has maxLength={isNationalId ? 6 : undefined}. When identifier is a national ID, PIN is limited to 6 chars. Employee numbers > 6 chars (e.g. 'EMP-001', 'UI-TEST-001') cannot be entered as default PIN. The stored default PIN (hash(employee_number)) won't match if employee_number > 6 chars. Only affects employees where employee_number is > 6 characters.",
+        "selector": "LoginPage.jsx - password Input with maxLength={isNationalId ? 6 : undefined}",
+        "priority": "MEDIUM - Only affects employee numbers > 6 chars. Real use case with numeric IDs like '123456' is fine."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_verified": [
+    "✅ Login page shows 'رقم الهوية الوطنية' label with placeholder '1xxxxxxxxx'",
+    "✅ Admin can login with email admin@crowd.sa + admin123",
+    "✅ National ID format validation: '6 أرقام متبقية' for partial, '✓ رقم هوية صحيح' for valid 10-digit",
+    "✅ Password label changes to 'كلمة المرور (PIN)' when national ID detected",
+    "✅ Add Employee dialog has national_id field with 10-digit validation",
+    "✅ Validation message '✓ سيُنشأ حساب تلقائياً عند الإضافة' appears for valid national ID",
+    "✅ New employee with national_id creates account automatically (account_created=true)",
+    "✅ New employee account starts as 'pending' status in employee table",
+    "✅ Account status column 'الحساب' visible in employee table with status badges",
+    "✅ Activate button (✓ تفعيل) visible for pending accounts",
+    "✅ After activation, account status badge shows 'نشط' (active)",
+    "✅ Freeze (🔒 تجميد) and Reset PIN (🔑) buttons appear after activation",
+    "✅ Arabic error messages shown on wrong password: 'كلمة المرور غير صحيحة. متبقي N محاولة قبل القفل'",
+    "✅ Brute force protection: 5 wrong attempts lock account (backend confirmed)",
+    "✅ Locked account shows Arabic message '...تم قفل الحساب...'",
+    "✅ Manager can reset PIN via reset-pin endpoint (backend confirmed)",
+    "✅ Manager can freeze/terminate accounts (backend confirmed)",
+    "✅ All account management endpoints return Arabic success/error messages"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_auth_system.py",
+    "/app/test_reports/pytest/auth_system_results.xml"
+  ],
+  "action_items": [
+    "HIGH: Fix PIN change modal not showing - in PublicRoute (App.js), add check: if (isAuthenticated && user?.must_change_pin) allow login page to stay (don't redirect). Fix: change PublicRoute condition to: if (isAuthenticated && !user?.must_change_pin) return <Navigate to='/' replace />;",
+    "MEDIUM: Password field maxLength={isNationalId ? 6 : undefined} - Consider removing maxLength or increasing to match employee_number max length. Currently limits PIN entry to 6 chars when national ID is in identifier field, breaking login for employees with employee_number > 6 chars."
+  ],
+  "critical_code_review_comments": [
+    "CRITICAL: PublicRoute in App.js redirects to '/' as soon as isAuthenticated=true. LoginPage.handleLogin() calls setShowPinChange(true) AFTER login() resolves, but by then AuthContext has already set user/isAuthenticated=true, causing PublicRoute to navigate away. Fix: PublicRoute should check `isAuthenticated && !user?.must_change_pin` before redirecting.",
+    "HIGH: LoginPage.jsx line 257: maxLength={isNationalId ? 6 : undefined} on password field. For national ID users, default PIN = employee_number. If employee_number is > 6 chars, user cannot enter their full PIN. Fix: increase maxLength to at least 20, or remove it entirely for password fields.",
+    "NOTE: The PIN change modal code itself is correct (PinChangeModal component, data-testid attributes, validation logic all work). The issue is purely the routing/auth state race condition."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_auth_system.py"
+  ],
+  "success_rate": {
+    "backend": "100% (30/30 tests passed)",
+    "frontend": "80% (PIN change modal flow broken, all other UI features work)"
+  },
+  "test_credentials": {
+    "admin": "admin@crowd.sa / admin123",
+    "test_employee_cleaned_up": "1122334455 / 123456 (DELETED)"
+  },
+  "seed_data_creation": "Created and deleted UI test employee (1122334455 / UI-TEST-001 → 123456). All test employees cleaned up.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "New auth system backend is 100% working. Key UX bug: PIN change modal never shows after login. Root cause: PublicRoute in App.js redirects to '/' when isAuthenticated=true, but the LoginPage's showPinChange state is set AFTER login() resolves. When user has must_change_pin=true, they bypass the mandatory PIN change and go straight to dashboard. Fix needed in PublicRoute check. Also: password field maxLength=6 issue for national ID login. Otherwise all features work: national ID login, auto-create account, pending status, activate/freeze/reset-pin buttons in employee table, account status column all verified working.",
+  "rca_of_issue": {
+    "issue": "PIN change modal not showing",
+    "root_cause": "Race condition in auth flow: AuthContext.login() sets setUser() → isAuthenticated=true → PublicRoute renders <Navigate to='/' /> → LoginPage unmounts → setShowPinChange(true) never renders modal",
+    "reproduction": "1. Create employee with national_id + activate 2. Login with national_id + employee_number as PIN 3. must_change_pin=true in DB but modal never appears, user goes straight to dashboard",
+    "fix": "In App.js PublicRoute: change `if (isAuthenticated) return <Navigate to='/' />` to `if (isAuthenticated && !user?.must_change_pin) return <Navigate to='/' />`. Also expose `user` from useAuth() in PublicRoute.",
+    "alternative_fix": "In AuthContext.login(), don't call setUser() when must_change_pin=true. Instead store a pendingUser state and only set user after PIN change."
+  }
+}
