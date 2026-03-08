@@ -9,13 +9,18 @@ import {
   Globe,
   Palette,
   Bell,
-  Database,
   HelpCircle,
   ChevronLeft,
   Moon,
   Sun,
   Monitor,
-  Languages
+  Eye,
+  EyeOff,
+  Loader2,
+  Check,
+  Lock,
+  Mail,
+  UserCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +35,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import axios from "axios";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SettingsSection = ({ icon: Icon, title, description, children }) => (
   <Card className="card-hover">
@@ -61,14 +70,65 @@ const SettingItem = ({ label, description, children }) => (
 export default function SettingsPage() {
   const { theme, setTheme, isDark } = useTheme();
   const { language, setLanguage, t, isRTL } = useLanguage();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   
+  // Profile state
+  const [profileData, setProfileData] = useState({ name: user?.name || '', email: user?.email || '' });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // Password state
+  const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm: '' });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false });
+
   const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    sound: false,
-    alerts: true
+    email: true, push: true, sound: false, alerts: true
   });
+
+  const handleProfileSave = async () => {
+    if (!profileData.name.trim()) { toast.error('الاسم مطلوب'); return; }
+    setProfileLoading(true);
+    try {
+      const res = await axios.put(`${API}/auth/update-profile`, profileData);
+      toast.success(res.data?.message || 'تم الحفظ');
+      setUser(prev => prev ? { ...prev, name: profileData.name, email: profileData.email } : prev);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'فشل الحفظ');
+    } finally { setProfileLoading(false); }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!passwordData.current_password) { toast.error('أدخل كلمة المرور الحالية'); return; }
+    if (!passwordData.new_password || passwordData.new_password.length < 4) {
+      toast.error('كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل'); return;
+    }
+    if (passwordData.new_password !== passwordData.confirm) {
+      toast.error('كلمة المرور الجديدة وتأكيدها غير متطابقين'); return;
+    }
+    setPasswordLoading(true);
+    try {
+      const res = await axios.post(`${API}/auth/change-password`, {
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password,
+      });
+      toast.success(res.data?.message || 'تم التغيير');
+      setPasswordData({ current_password: '', new_password: '', confirm: '' });
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'فشل التغيير');
+    } finally { setPasswordLoading(false); }
+  };
+
+  const roleLabels = {
+    system_admin: 'مسؤول النظام',
+    general_manager: 'المدير العام',
+    department_manager: 'مدير الإدارة',
+    shift_supervisor: 'مشرف الوردية',
+    field_staff: 'عامل ميداني',
+    monitoring_team: 'فريق المراقبة',
+  };
 
   return (
     <div className="space-y-6" data-testid="settings-page">
@@ -81,13 +141,14 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Settings */}
+        {/* My Account - حسابي */}
         <SettingsSection
-          icon={User}
-          title={t('myData')}
-          description={language === 'ar' ? 'إدارة المعلومات الشخصية' : 'Manage personal information'}
+          icon={UserCircle}
+          title={language === 'ar' ? 'حسابي' : 'My Account'}
+          description={language === 'ar' ? 'إدارة بيانات حسابك الشخصي' : 'Manage your account details'}
         >
           <div className="space-y-4">
+            {/* Avatar + Role badge */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="font-cairo font-bold text-2xl text-primary">
@@ -95,34 +156,120 @@ export default function SettingsPage() {
                 </span>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{user?.name || 'مستخدم'}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {user?.role === 'admin' ? (language === 'ar' ? 'مدير النظام' : 'System Admin') : 
-                   user?.role === 'manager' ? (language === 'ar' ? 'مشرف' : 'Manager') : 
-                   (language === 'ar' ? 'مستخدم' : 'User')}
-                </p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <h3 className="font-semibold" data-testid="profile-display-name">{user?.name || 'مستخدم'}</h3>
+                <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary" data-testid="profile-role-badge">
+                  {roleLabels[user?.role] || user?.role}
+                </span>
+                {user?.email && <p className="text-xs text-muted-foreground mt-1">{user.email}</p>}
               </div>
-              <Button variant="outline" size="sm">
-                {language === 'ar' ? 'تعديل' : 'Edit'}
-              </Button>
             </div>
             
             <Separator />
             
+            {/* Editable fields */}
             <div className="space-y-3">
               <div>
-                <Label className="text-sm">{language === 'ar' ? 'الاسم الكامل' : 'Full Name'}</Label>
-                <Input defaultValue={user?.name || ''} className="mt-1" />
+                <Label className="text-sm flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-muted-foreground" />
+                  {language === 'ar' ? 'الاسم' : 'Name'}
+                </Label>
+                <Input
+                  value={profileData.name}
+                  onChange={e => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                  className="mt-1"
+                  data-testid="profile-name-input"
+                />
               </div>
               <div>
-                <Label className="text-sm">{t('email')}</Label>
-                <Input defaultValue={user?.email || ''} className="mt-1" dir="ltr" />
+                <Label className="text-sm flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                </Label>
+                <Input
+                  value={profileData.email}
+                  onChange={e => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                  className="mt-1" dir="ltr"
+                  data-testid="profile-email-input"
+                />
               </div>
             </div>
             
-            <Button className="w-full bg-primary hover:bg-primary/90">
-              {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
+            <Button
+              onClick={handleProfileSave}
+              disabled={profileLoading}
+              className="w-full bg-primary hover:bg-primary/90"
+              data-testid="profile-save-btn"
+            >
+              {profileLoading ? <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                : profileSaved ? <><Check className="w-4 h-4 ml-2" />{language === 'ar' ? 'تم الحفظ' : 'Saved'}</>
+                : language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'
+              }
+            </Button>
+          </div>
+        </SettingsSection>
+
+        {/* Change Password - تغيير كلمة المرور */}
+        <SettingsSection
+          icon={Lock}
+          title={language === 'ar' ? 'تغيير كلمة المرور' : 'Change Password'}
+          description={language === 'ar' ? 'تحديث كلمة المرور الخاصة بحسابك' : 'Update your account password'}
+        >
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">{language === 'ar' ? 'كلمة المرور الحالية' : 'Current Password'}</Label>
+              <div className="relative mt-1">
+                <Input
+                  type={showPasswords.current ? "text" : "password"}
+                  value={passwordData.current_password}
+                  onChange={e => setPasswordData(prev => ({ ...prev, current_password: e.target.value }))}
+                  placeholder="••••••••" dir="ltr"
+                  data-testid="current-password-input"
+                />
+                <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}>
+                  {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm">{language === 'ar' ? 'كلمة المرور الجديدة' : 'New Password'}</Label>
+              <div className="relative mt-1">
+                <Input
+                  type={showPasswords.new ? "text" : "password"}
+                  value={passwordData.new_password}
+                  onChange={e => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
+                  placeholder="••••••••" dir="ltr"
+                  data-testid="new-password-input"
+                />
+                <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}>
+                  {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm">{language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}</Label>
+              <Input
+                type="password"
+                value={passwordData.confirm}
+                onChange={e => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
+                placeholder="••••••••" dir="ltr" className="mt-1"
+                data-testid="confirm-password-input"
+              />
+              {passwordData.new_password && passwordData.confirm && passwordData.new_password !== passwordData.confirm && (
+                <p className="text-[11px] text-red-500 mt-1">{language === 'ar' ? 'غير متطابقة' : 'Passwords do not match'}</p>
+              )}
+            </div>
+            <Button
+              onClick={handlePasswordChange}
+              disabled={passwordLoading || !passwordData.current_password || !passwordData.new_password}
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+              data-testid="change-password-submit-btn"
+            >
+              {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                : language === 'ar' ? 'تغيير كلمة المرور' : 'Change Password'
+              }
             </Button>
           </div>
         </SettingsSection>
@@ -305,25 +452,31 @@ export default function SettingsPage() {
           </div>
         </SettingsSection>
 
-        {/* Security Settings */}
+        {/* Security Info */}
         <SettingsSection
           icon={Shield}
-          title={language === 'ar' ? 'الأمان والصلاحيات' : 'Security & Permissions'}
-          description={language === 'ar' ? 'إدارة أمان الحساب' : 'Manage account security'}
+          title={language === 'ar' ? 'معلومات الأمان' : 'Security Info'}
+          description={language === 'ar' ? 'حالة أمان حسابك' : 'Your account security status'}
         >
           <div className="space-y-3">
-            <Button variant="outline" className="w-full justify-between" data-testid="change-password-btn">
-              {language === 'ar' ? 'تغيير كلمة المرور' : 'Change Password'}
-              <ChevronLeft className={`w-4 h-4 ${!isRTL ? 'rotate-180' : ''}`} />
-            </Button>
-            <Button variant="outline" className="w-full justify-between">
-              {language === 'ar' ? 'سجل النشاط' : 'Activity Log'}
-              <ChevronLeft className={`w-4 h-4 ${!isRTL ? 'rotate-180' : ''}`} />
-            </Button>
-            <Button variant="outline" className="w-full justify-between">
-              {language === 'ar' ? 'الأجهزة المتصلة' : 'Connected Devices'}
-              <ChevronLeft className={`w-4 h-4 ${!isRTL ? 'rotate-180' : ''}`} />
-            </Button>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm">{language === 'ar' ? 'حالة الحساب' : 'Account Status'}</span>
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" data-testid="account-status-badge">
+                {language === 'ar' ? 'نشط' : 'Active'}
+              </span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm">{language === 'ar' ? 'الدور' : 'Role'}</span>
+              <span className="text-sm text-muted-foreground">{roleLabels[user?.role] || user?.role}</span>
+            </div>
+            {user?.department && <>
+              <Separator />
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm">{language === 'ar' ? 'الإدارة' : 'Department'}</span>
+                <span className="text-sm text-muted-foreground">{user.department}</span>
+              </div>
+            </>}
           </div>
         </SettingsSection>
 

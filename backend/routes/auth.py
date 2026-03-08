@@ -262,6 +262,53 @@ async def get_me(user: dict = Depends(get_current_user)):
     )
 
 
+# ─── تحديث الملف الشخصي (حسابي) ────────────────────────────────
+@router.put("/auth/update-profile")
+async def update_profile(data: dict, user: dict = Depends(get_current_user)):
+    update = {}
+    if "name" in data and data["name"].strip():
+        update["name"] = data["name"].strip()
+    if "email" in data and data["email"].strip():
+        # تحقق من عدم التكرار
+        existing = await db.users.find_one({"email": data["email"].strip(), "id": {"$ne": user["id"]}})
+        if existing:
+            raise HTTPException(status_code=400, detail="البريد الإلكتروني مستخدم من حساب آخر")
+        update["email"] = data["email"].strip()
+    if not update:
+        raise HTTPException(status_code=400, detail="لا توجد بيانات للتحديث")
+    await db.users.update_one({"id": user["id"]}, {"$set": update})
+    await log_activity("profile_updated", user, user["name"], f"تم تحديث الملف الشخصي: {', '.join(update.keys())}")
+    return {"message": "تم تحديث الملف الشخصي بنجاح", **update}
+
+
+# ─── تغيير كلمة المرور (يتطلب كلمة المرور الحالية) ──────────────
+@router.post("/auth/change-password")
+async def change_password(data: dict, user: dict = Depends(get_current_user)):
+    current_password = data.get("current_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="أدخل كلمة المرور الحالية والجديدة")
+    if len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل")
+
+    # جلب البيانات الكاملة مع كلمة المرور
+    full_user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if not full_user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+
+    if not verify_password(current_password, full_user["password"]):
+        raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
+
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"password": hash_password(new_password)}}
+    )
+    await log_activity("password_changed", user, user["name"], "تم تغيير كلمة المرور")
+    return {"message": "تم تغيير كلمة المرور بنجاح"}
+
+
+
 # ─── CRUD مستخدمين (للأدمن) ────────────────────────────────────
 @router.post("/users", response_model=UserResponse)
 async def create_user(user_data: UserCreate, admin: dict = Depends(require_admin)):

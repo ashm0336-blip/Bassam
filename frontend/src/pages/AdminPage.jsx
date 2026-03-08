@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
-  LayoutDashboard, Users, Activity, Settings, Menu,
+  LayoutDashboard, Activity, Settings, Menu,
   Map as MapIcon, Calendar, ShieldAlert, Shield,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
-import UserManagement from "./admin/UserManagement";
 import ActivityLog from "./admin/ActivityLog";
 import SystemSettings from "./admin/SystemSettings";
 import SidebarManager from "./admin/SidebarManager";
@@ -32,7 +31,7 @@ export default function AdminPage() {
               {language === 'ar' ? 'لوحة تحكم مسؤول النظام' : 'System Admin Control Panel'}
             </h1>
             <p className="text-sm text-white/80">
-              {language === 'ar' ? 'إدارة كاملة للمستخدمين والنظام' : 'Complete user and system management'}
+              {language === 'ar' ? 'إدارة كاملة للنظام والإعدادات' : 'Complete system and settings management'}
             </p>
           </div>
         </div>
@@ -40,14 +39,10 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-9 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Users className="w-5 h-5" />
-            <span className="text-xs">{language === 'ar' ? 'المستخدمون' : 'Users'}</span>
           </TabsTrigger>
           <TabsTrigger value="permissions" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="permissions-tab">
             <Shield className="w-5 h-5" />
@@ -81,10 +76,6 @@ export default function AdminPage() {
 
         <TabsContent value="dashboard" className="mt-6">
           <AdminDashboard />
-        </TabsContent>
-
-        <TabsContent value="users" className="mt-6">
-          <UserManagement />
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6">
