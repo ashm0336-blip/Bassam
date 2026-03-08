@@ -141,7 +141,7 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!formData.identifier || !formData.password) {
-      toast.error('أدخل رقم الهوية وكلمة المرور');
+      toast.error('أدخل رقم الهوية / البريد الإلكتروني وكلمة المرور');
       return;
     }
     setLoading(true);
@@ -209,7 +209,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-medium flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
-                    رقم الهوية الوطنية
+                    رقم الهوية الوطنية أو البريد الإلكتروني
                   </Label>
                   <div className="relative">
                     <Input
@@ -252,13 +252,13 @@ export default function LoginPage() {
                 <div className="space-y-2 pt-2">
                   <Label className="text-gray-700 font-medium flex items-center gap-2">
                     <Lock className="w-4 h-4 text-gray-400" />
-                    {isNationalId ? 'كلمة المرور (PIN)' : 'كلمة المرور'}
+                    {isNationalId ? 'رقم الموظف / PIN' : 'كلمة المرور'}
                   </Label>
                   <div className="relative">
                     <Input
                       type={showPin ? "text" : "password"}
                       inputMode={isNationalId ? "numeric" : "text"}
-                      placeholder={isNationalId ? "● ● ● ●" : "••••••••"}
+                      placeholder={isNationalId ? "الرقم الوظيفي" : "••••••••"}
                       dir="ltr"
                       className={`h-12 pr-4 pl-12 bg-white border-gray-200 focus:border-primary focus:ring-primary/20
                         ${isNationalId ? 'text-center text-xl tracking-[0.5em] font-mono' : 'text-left'}
@@ -274,6 +274,13 @@ export default function LoginPage() {
                       {showPin ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
+                  {/* Helper text for first-time login */}
+                  {isNationalId && (
+                    <p className="text-[11px] text-amber-600 flex items-center gap-1 mt-1">
+                      <KeyRound className="w-3 h-3" />
+                      أول دخول: استخدم رقمك الوظيفي — سيُطلب منك تغييره
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit */}
@@ -287,9 +294,12 @@ export default function LoginPage() {
                 </Button>
 
                 {/* Helper text */}
-                <div className="text-center pt-2">
+                <div className="text-center pt-2 space-y-1">
                   <p className="text-xs text-gray-400">
-                    إذا نسيت PIN — تواصل مع مديرك لإعادة التعيين
+                    إذا نسيت كلمة المرور — تواصل مع مديرك لإعادة التعيين
+                  </p>
+                  <p className="text-[10px] text-gray-300">
+                    يجب إدخال البيانات بشكل صحيح في الحقلين
                   </p>
                 </div>
               </form>

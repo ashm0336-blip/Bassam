@@ -92,7 +92,7 @@ async def login(credentials: UserLogin):
         raise HTTPException(status_code=401, detail="أدخل بريداً إلكترونياً أو رقم هوية صحيحاً")
 
     if not user:
-        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
+        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة — تأكد من رقم الهوية وكلمة المرور")
 
     # ── التحقق من حالة الحساب ──
     status = user.get("account_status", "active")
@@ -127,7 +127,7 @@ async def login(credentials: UserLogin):
         remaining = MAX_FAILED_ATTEMPTS - new_attempts
         raise HTTPException(
             status_code=401,
-            detail=f"كلمة المرور غير صحيحة. متبقي {remaining} محاولة قبل القفل"
+            detail=f"بيانات الدخول غير صحيحة — تأكد من رقم الهوية وكلمة المرور. متبقي {remaining} محاولة قبل القفل"
         )
 
     # ── نجح الدخول — أعد محاولات الفشل ──
