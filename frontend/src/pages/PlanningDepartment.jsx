@@ -3,9 +3,8 @@ import { useSearchParams, useLocation } from "react-router-dom";
 import { useSidebar } from "@/context/SidebarContext";
 import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
-import EmployeeManagement from "@/components/EmployeeManagement";
-import TransactionsPage from "@/pages/TransactionsPage";
 import DepartmentSettings from "@/pages/DepartmentSettings";
+import TransactionsPage from "@/pages/TransactionsPage";
 import {
   Users,
   UserCheck,
@@ -239,7 +238,7 @@ export default function PlanningDepartment() {
       {/* activeTab === 'data' تم حذفه - لا داعي له */}
 
       {activeTab === 'employees' && (
-        <EmployeeManagement department="planning" />
+        <DepartmentSettings department="planning" />
       )}
 
       {/* Transactions Tab */}

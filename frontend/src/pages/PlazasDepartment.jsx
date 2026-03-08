@@ -3,9 +3,8 @@ import { useSearchParams, useLocation } from "react-router-dom";
 import { useSidebar } from "@/context/SidebarContext";
 import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
-import EmployeeManagement from "@/components/EmployeeManagement";
-import TransactionsPage from "@/pages/TransactionsPage";
 import DepartmentSettings from "@/pages/DepartmentSettings";
+import TransactionsPage from "@/pages/TransactionsPage";
 import { 
   LayoutGrid, 
   Users, 
@@ -308,7 +307,7 @@ export default function PlazasDepartment() {
       )}
 
       {activeTab === 'employees' && (
-        <EmployeeManagement department="squares" />
+        <DepartmentSettings department="squares" />
       )}
 
       {/* Transactions Tab */}

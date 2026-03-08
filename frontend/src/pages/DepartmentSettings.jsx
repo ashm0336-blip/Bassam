@@ -88,7 +88,7 @@ export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly } = useAuth();
   const hasDataTab = department === 'gates' || department === 'plazas';
-  const [activeTab, setActiveTab] = useState(hasDataTab ? (department === 'gates' ? 'gates_data' : 'employees') : 'employees');
+  const [activeTab, setActiveTab] = useState('employees');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -127,7 +127,7 @@ export default function DepartmentSettings({ department }) {
       if (department === 'gates') {
         const mRes = await axios.get(`${API}/gate-map/floors`).catch(() => ({ data: [] }));
         mapsCount = mRes.data.length;
-      } else if (department === 'plazas') {
+      } else {
         const mRes = await axios.get(`${API}/map-floors`, {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ data: [] }));
@@ -218,16 +218,14 @@ export default function DepartmentSettings({ department }) {
     }
   };
 
-  // Build tabs list dynamically
+  // Build tabs list — order: الموظفين → الورديات → الخرائط → (dept-specific)
   const tabs = [];
+  tabs.push({ id: 'employees', label: language === 'ar' ? 'الموظفين' : 'Staff',   icon: Users,   count: counts.employees });
+  tabs.push({ id: 'shifts',    label: language === 'ar' ? 'الورديات' : 'Shifts',  icon: Clock,   count: counts.shifts   });
+  tabs.push({ id: 'maps',      label: language === 'ar' ? 'الخرائط'  : 'Maps',    icon: Layers,  count: counts.maps     });
   if (department === 'gates') {
     tabs.push({ id: 'gates_data', label: language === 'ar' ? 'الأبواب' : 'Gates', icon: DoorOpen, count: counts.gates });
   }
-  tabs.push({ id: 'employees', label: language === 'ar' ? 'الموظفين' : 'Staff', icon: Users, count: counts.employees });
-  if (department === 'gates' || department === 'plazas') {
-    tabs.push({ id: 'maps', label: language === 'ar' ? 'الخرائط' : 'Maps', icon: Layers, count: counts.maps });
-  }
-  tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
   if (department === 'plazas') {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
   }
@@ -276,12 +274,12 @@ export default function DepartmentSettings({ department }) {
 
       {/* Tab Content */}
       <div className="transition-all duration-300">
-        {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
-
         {activeTab === 'employees' && <EmployeeManagement department={department} />}
 
         {activeTab === 'maps' && department === 'gates' && <GateMapPage />}
-        {activeTab === 'maps' && department === 'plazas' && <MapManagementPage />}
+        {activeTab === 'maps' && department !== 'gates' && <MapManagementPage />}
+
+        {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
 
         {activeTab === 'shifts' && (
           <Card>
