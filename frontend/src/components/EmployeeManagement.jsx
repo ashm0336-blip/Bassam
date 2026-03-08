@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -6,8 +6,12 @@ import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
-  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus,
+  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,40 +85,138 @@ function isContractActive(emp) {
 
 // ── Sub-components ───────────────────────────────────────────────
 
-function RestDaysPicker({ value=[], onChange, disabled }) {
+const DAY_LETTERS = {
+  "السبت":"س","الأحد":"ح","الإثنين":"ن","الثلاثاء":"ث","الأربعاء":"ر","الخميس":"خ","الجمعة":"ج"
+};
+
+// Compact 7 dots — replaces old pills
+function RestDaysDots({ value=[], onChange, disabled, todayAr }) {
   return (
-    <div className="flex flex-wrap gap-1.5" data-testid="rest-days-picker">
+    <div className="flex items-center gap-[3px] justify-center" data-testid="rest-days-picker">
       {WEEK_DAYS.map(day => {
         const sel = (value||[]).includes(day.value);
+        const isToday = day.value === todayAr;
         return (
           <button key={day.value} type="button" disabled={disabled}
             onClick={() => !disabled && onChange(sel ? value.filter(d=>d!==day.value) : [...value, day.value])}
-            data-testid={`rest-day-${day.short}`}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border
-              ${sel ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-amber-300 hover:bg-amber-50'}
-              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-            {day.short}
-          </button>
+            title={day.value} data-testid={`rest-dot-${day.short}`}
+            className={`w-6 h-6 rounded-full text-[9px] font-bold flex items-center justify-center transition-all duration-150
+              ${sel ? 'bg-amber-400 text-white shadow-sm ring-2 ring-amber-200 scale-110'
+                : isToday ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
+                : 'bg-slate-100 text-slate-400'}
+              ${!disabled && !sel ? 'hover:bg-slate-200 hover:scale-105' : ''}
+              ${disabled ? 'cursor-default' : 'cursor-pointer'}
+            `}
+          >{DAY_LETTERS[day.value]}</button>
         );
       })}
     </div>
   );
 }
 
+// Read-only 7 dots
 function RestDaysBadges({ restDays=[], todayAr }) {
-  if (!restDays?.length) return <span className="text-[10px] text-muted-foreground">-</span>;
   return (
-    <div className="flex flex-wrap gap-0.5 justify-center">
-      {restDays.map(day => {
-        const short = WEEK_DAYS.find(d=>d.value===day)?.short || day;
+    <div className="flex items-center gap-[3px] justify-center">
+      {WEEK_DAYS.map(day => {
+        const sel = (restDays||[]).includes(day.value);
+        const isToday = day.value === todayAr;
         return (
-          <span key={day} className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium
-            ${day===todayAr ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-500'}`}>
-            {short}
+          <span key={day.value} title={day.value}
+            className={`w-6 h-6 rounded-full text-[9px] font-bold flex items-center justify-center
+              ${sel ? (isToday ? 'bg-amber-500 text-white ring-2 ring-amber-300' : 'bg-amber-400 text-white') : 'bg-slate-100 text-slate-300'}`}>
+            {DAY_LETTERS[day.value]}
           </span>
         );
       })}
     </div>
+  );
+}
+
+// ── Smart account status icon cell (no text) ──────────────────
+function AccountStatusIcon({ emp, canEdit, handleAccountAction, isAr }) {
+  const acStatus = emp.account_status;
+  if (!emp.national_id) return (
+    <div className="flex items-center justify-center"
+      title={isAr ? 'لا رقم هوية — أضفه لإنشاء حساب' : 'No national ID'}>
+      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
+        <ShieldOff className="w-3.5 h-3.5 text-slate-300" />
+      </div>
+    </div>
+  );
+  const cfgs = {
+    active:     { cls:'bg-emerald-100 text-emerald-600 ring-emerald-200', Icon:ShieldCheck, tip:isAr?'نشط — انقر للتجميد مؤقتاً':'Active — click to freeze', action:'freeze-account' },
+    pending:    { cls:'bg-amber-100 text-amber-600 ring-amber-200',       Icon:ShieldOff,   tip:isAr?'معلق — انقر للتفعيل':'Pending — click to activate', action:'activate-account' },
+    frozen:     { cls:'bg-blue-100 text-blue-600 ring-blue-200',          Icon:ShieldX,     tip:isAr?'مجمَّد — انقر للتفعيل':'Frozen — click to activate', action:'activate-account' },
+    terminated: { cls:'bg-red-100 text-red-400 ring-red-100',             Icon:ShieldX,     tip:isAr?'منتهي الخدمة':'Service terminated', action:null },
+    no_account: { cls:'bg-slate-100 text-slate-400 ring-slate-100',       Icon:UserPlus,    tip:isAr?'انقر لإنشاء حساب':'Create account', action:'activate-account' },
+  };
+  const cfg = cfgs[acStatus] || cfgs.no_account;
+  const { Icon } = cfg;
+  return (
+    <div className="flex items-center gap-1 justify-center">
+      <button type="button" disabled={!canEdit || acStatus === 'terminated'}
+        onClick={() => canEdit && cfg.action && handleAccountAction(emp.id, cfg.action, emp.name)}
+        title={cfg.tip} data-testid={`account-icon-${emp.id}`}
+        className={`w-7 h-7 rounded-full flex items-center justify-center ring-1 transition-all ${cfg.cls}
+          ${canEdit && cfg.action ? 'cursor-pointer hover:scale-110 hover:shadow-sm' : 'cursor-default'}`}>
+        <Icon className="w-3.5 h-3.5" />
+      </button>
+      {canEdit && (acStatus === 'active' || acStatus === 'frozen') && (
+        <button type="button"
+          onClick={() => handleAccountAction(emp.id,'reset-pin',emp.name)}
+          title={isAr?'إعادة تعيين PIN':'Reset PIN'}
+          data-testid={`reset-pin-icon-${emp.id}`}
+          className="w-6 h-6 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center hover:bg-amber-100 hover:scale-110 transition-all ring-1 ring-amber-100 cursor-pointer">
+          <KeyRound className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Actions ⋮ Dropdown ────────────────────────────────────────
+function ActionsMenu({ emp, canEdit, handleOpenDialog, handleAccountAction, setSelectedEmployee, setDeleteDialogOpen, isAr }) {
+  if (!canEdit) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-slate-100"
+          data-testid={`actions-menu-${emp.id}`}>
+          <MoreVertical className="w-4 h-4 text-slate-500" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" side="bottom" className="w-48 font-cairo" dir="rtl">
+        <DropdownMenuItem onClick={() => handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
+          <Edit className="w-4 h-4 ml-2 text-slate-500"/>{isAr?'تعديل البيانات':'Edit'}
+        </DropdownMenuItem>
+        {(emp.account_status==='active'||emp.account_status==='frozen') && (
+          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
+            <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>{isAr?'إعادة تعيين PIN':'Reset PIN'}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator/>
+        {emp.account_status==='active' && (
+          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)} className="text-blue-600 focus:text-blue-700">
+            <ShieldX className="w-4 h-4 ml-2"/>{isAr?'تجميد الحساب مؤقتاً':'Freeze Account'}
+          </DropdownMenuItem>
+        )}
+        {(emp.account_status==='pending'||emp.account_status==='frozen'||emp.account_status==='no_account') && (
+          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'activate-account',emp.name)} className="text-emerald-600 focus:text-emerald-700">
+            <ShieldCheck className="w-4 h-4 ml-2"/>{isAr?'تفعيل الحساب':'Activate Account'}
+          </DropdownMenuItem>
+        )}
+        {emp.account_status!=='terminated' && (
+          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'terminate-account',emp.name)} className="text-orange-600 focus:text-orange-700">
+            <ShieldOff className="w-4 h-4 ml-2"/>{isAr?'إنهاء الخدمة':'Terminate Service'}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator/>
+        <DropdownMenuItem onClick={()=>{setSelectedEmployee(emp);setDeleteDialogOpen(true);}} className="text-destructive focus:text-destructive">
+          <Trash2 className="w-4 h-4 ml-2"/>{isAr?'حذف الموظف نهائياً':'Delete Employee'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -267,6 +369,7 @@ export default function EmployeeManagement({ department }) {
   const [selectedMonth, setSelectedMonth]   = useState(getMonthKey(new Date()));
   const [schedule, setSchedule]             = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const nationalIdTimerRef = useRef(null);
 
   const emptyForm = {
     name: "", employee_number: "", job_title: "", contact_phone: "",
@@ -277,6 +380,7 @@ export default function EmployeeManagement({ department }) {
     department: department || user?.department || "planning",
   };
   const [formData, setFormData] = useState(emptyForm);
+  const [nationalIdStatus, setNationalIdStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'format_error'
 
   const todayAr = getTodayArabic();
   const currentMonthKey = getMonthKey(new Date());
@@ -312,6 +416,20 @@ export default function EmployeeManagement({ department }) {
     } catch(e) { toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
     finally { setLoading(false); }
   };
+
+  // Live national ID check (debounced)
+  const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
+    if (!id || id.length < 10) { setNationalIdStatus(id.length > 0 ? 'too_short' : null); return; }
+    if (id.length > 10) { setNationalIdStatus('too_long'); return; }
+    if (!/^[12]\d{9}$/.test(id)) { setNationalIdStatus('format_error'); return; }
+    setNationalIdStatus('checking');
+    try {
+      const token = localStorage.getItem("token");
+      const url = `${API}/employees/check-national-id?national_id=${id}${excludeEmpId?`&exclude_emp_id=${excludeEmpId}`:''}`;
+      const res = await axios.get(url, { headers:{ Authorization:`Bearer ${token}` } });
+      setNationalIdStatus(res.data.available ? 'available' : 'taken');
+    } catch { setNationalIdStatus(null); }
+  }, []);
 
   const fetchSchedule = async () => {
     setScheduleLoading(true);
@@ -417,6 +535,7 @@ export default function EmployeeManagement({ department }) {
       setEditMode(false); setSelectedEmployee(null);
       setFormData({ ...emptyForm, department: department||user?.department||"planning" });
     }
+    setNationalIdStatus(null);
     setDialogOpen(true);
   };
 
@@ -620,30 +739,28 @@ export default function EmployeeManagement({ department }) {
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
                   <TableHead className="text-right font-semibold">{isAr?'الموظف':'Employee'}</TableHead>
-                  <TableHead className="text-center font-semibold">{isAr?'نوع التوظيف':'Type'}</TableHead>
-                  <TableHead className="text-center font-semibold">{isAr?'الوردية':'Shift'}</TableHead>
-                  <TableHead className="text-center font-semibold">
-                    <div className="flex items-center justify-center gap-1">
+                  <TableHead className="text-center font-semibold w-20">{isAr?'التوظيف':'Type'}</TableHead>
+                  <TableHead className="text-center font-semibold w-32">{isAr?'الوردية':'Shift'}</TableHead>
+                  <TableHead className="text-center font-semibold w-[200px]">
+                    <div className="flex items-center justify-center gap-1" title={isAr?'أيام الراحة':'Rest Days'}>
                       <Coffee className="w-3.5 h-3.5 text-amber-600"/>
-                      <span>{isAr?'أيام الراحة':'Rest'}</span>
+                      <span className="text-[11px]">س ح ن ث ر خ ج</span>
                     </div>
                   </TableHead>
                   {schedule && (
-                    <TableHead className="text-center font-semibold">
-                      <div className="flex items-center justify-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-amber-500"/>
-                        <span>{isAr?'مكلف':'Tasked'}</span>
-                      </div>
+                    <TableHead className="text-center font-semibold w-12">
+                      <Zap className="w-3.5 h-3.5 text-amber-500 mx-auto" title={isAr?'مكلف':'Tasked'}/>
                     </TableHead>
                   )}
-                  <TableHead className="text-center font-semibold">{isAr?'الحالة':'Status'}</TableHead>
-                  <TableHead className="text-center font-semibold">
-                    <div className="flex items-center justify-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500"/>
-                      <span>{isAr?'الحساب':'Account'}</span>
-                    </div>
+                  <TableHead className="text-center font-semibold w-12">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600 mx-auto" title={isAr?'الحالة':'Status'}/>
                   </TableHead>
-                  <TableHead className="text-center font-semibold">{isAr?'إجراءات':'Actions'}</TableHead>
+                  <TableHead className="text-center font-semibold w-20">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 mx-auto" title={isAr?'الحساب':'Account'}/>
+                  </TableHead>
+                  <TableHead className="text-center font-semibold w-12">
+                    <MoreVertical className="w-3.5 h-3.5 text-slate-400 mx-auto" title={isAr?'إجراءات':'Actions'}/>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -725,123 +842,66 @@ export default function EmployeeManagement({ department }) {
                       ) : <span className="text-[10px] text-muted-foreground">-</span>}
                     </TableCell>
 
-                    {/* Rest days */}
+                    {/* Rest days — compact dots */}
                     <TableCell className="text-center">
                       {canEdit ? (
-                        <RestDaysPicker value={emp.rest_days} onChange={days=>handleQuickMove(emp.id,'rest_days',days)}/>
+                        <RestDaysDots value={emp.rest_days} onChange={days=>handleQuickMove(emp.id,'rest_days',days)} todayAr={todayAr}/>
                       ) : (
                         <RestDaysBadges restDays={emp.rest_days} todayAr={todayAr}/>
                       )}
                     </TableCell>
 
-                    {/* مكلف toggle — only when schedule exists */}
+                    {/* مكلف toggle — icon only */}
                     {schedule && (
                       <TableCell className="text-center">
                         {isPermanentEmp(emp) ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <TaskedToggle
-                              value={emp.is_tasked}
-                              onChange={v=>handleAssignmentChange(emp.id,'is_tasked',v)}
-                              disabled={!canEdit}
-                              isAr={isAr}
-                            />
-                            <span className="text-[8px] text-muted-foreground">
-                              {emp.is_tasked ? (isAr?'مكلف':'Tasked') : (isAr?'لا':'No')}
-                            </span>
-                          </div>
+                          <TaskedToggle
+                            value={emp.is_tasked}
+                            onChange={v=>handleAssignmentChange(emp.id,'is_tasked',v)}
+                            disabled={!canEdit}
+                            isAr={isAr}
+                          />
                         ) : (
-                          <span className="text-[10px] text-muted-foreground" title={isAr?'التكليف للدائمين فقط':'Permanent only'}>—</span>
+                          <span className="text-[10px] text-muted-foreground"
+                            title={isAr?'التكليف للدائمين فقط':'Permanent only'}>—</span>
                         )}
                       </TableCell>
                     )}
 
-                    {/* Status */}
+                    {/* Status — icon only */}
                     <TableCell className="text-center">
                       {emp.contract_expired ? (
-                        <Badge className="bg-red-100 text-red-700 border-red-300 text-[10px] gap-0.5 hover:bg-red-100">
-                          <X className="w-3 h-3"/>{isAr?'منتهي العقد':'Expired'}
-                        </Badge>
+                        <span title={isAr?'منتهي العقد':'Contract expired'}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100">
+                          <X className="w-3.5 h-3.5 text-red-600"/>
+                        </span>
                       ) : emp.on_rest ? (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 text-[10px] gap-0.5">
-                          <Coffee className="w-3 h-3"/>{isAr?'راحة':'Rest'}
-                        </Badge>
+                        <span title={isAr?`في إجازة اليوم (${todayAr})`:'On rest today'}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-100">
+                          <Coffee className="w-3.5 h-3.5 text-amber-700"/>
+                        </span>
                       ) : (
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-100 text-[10px] gap-0.5">
-                          <UserCheck className="w-3 h-3"/>{isAr?'نشط':'Active'}
-                        </Badge>
+                        <span title={isAr?'نشط':'Active'}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100">
+                          <UserCheck className="w-3.5 h-3.5 text-emerald-700"/>
+                        </span>
                       )}
                     </TableCell>
 
-                    {/* Account Status Cell */}
+                    {/* Account — smart icon */}
                     <TableCell className="text-center">
-                      {(() => {
-                        const acStatus = emp.account_status;
-                        if (!emp.national_id) return (
-                          <span className="text-[9px] text-slate-400 italic">{isAr?'لا رقم هوية':'No ID'}</span>
-                        );
-                        const cfg = {
-                          active:     { label: isAr?'نشط':'Active',   icon: ShieldCheck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-                          pending:    { label: isAr?'معلق':'Pending',  icon: ShieldOff,   cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-                          frozen:     { label: isAr?'مجمَّد':'Frozen', icon: ShieldX,     cls: 'bg-blue-100 text-blue-700 border-blue-200' },
-                          terminated: { label: isAr?'منتهي':'Ended',   icon: ShieldX,     cls: 'bg-red-100 text-red-700 border-red-200' },
-                          no_account: { label: isAr?'لا حساب':'No Acc',icon: ShieldOff,   cls: 'bg-slate-100 text-slate-500 border-slate-200' },
-                        }[acStatus] || { label: acStatus, icon: ShieldOff, cls: 'bg-slate-100 text-slate-500' };
-                        const Icon = cfg.icon;
-                        return (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full border ${cfg.cls}`}>
-                              <Icon className="w-3 h-3"/>{cfg.label}
-                            </span>
-                            {canEdit && acStatus !== 'terminated' && (
-                              <div className="flex gap-0.5 mt-0.5">
-                                {acStatus === 'pending' || acStatus === 'frozen' || acStatus === 'no_account' ? (
-                                  <button onClick={()=>handleAccountAction(emp.id,'activate-account',emp.name)}
-                                    className="text-[8px] text-emerald-600 hover:text-emerald-800 font-bold px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 transition-colors"
-                                    title={isAr?'تفعيل الحساب':'Activate'} data-testid={`activate-${emp.id}`}>
-                                    ✓ {isAr?'تفعيل':'Activate'}
-                                  </button>
-                                ) : acStatus === 'active' ? (
-                                  <button onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)}
-                                    className="text-[8px] text-blue-600 hover:text-blue-800 font-bold px-1.5 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors"
-                                    title={isAr?'تجميد':'Freeze'} data-testid={`freeze-${emp.id}`}>
-                                    🔒 {isAr?'تجميد':'Freeze'}
-                                  </button>
-                                ) : null}
-                                {(acStatus === 'active' || acStatus === 'frozen') && (
-                                  <button onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}
-                                    className="text-[8px] text-amber-600 hover:text-amber-800 font-bold px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 transition-colors"
-                                    title={isAr?'إعادة تعيين PIN':'Reset PIN'} data-testid={`reset-pin-${emp.id}`}>
-                                    🔑
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
+                      <AccountStatusIcon emp={emp} canEdit={canEdit}
+                        handleAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
 
-                    {/* Actions */}
+                    {/* Actions — ⋮ dropdown */}
                     <TableCell className="text-center">
-                      {!isReadOnly() && (
-                        <div className="flex items-center gap-1 justify-center flex-wrap">
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]"
-                            onClick={()=>handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
-                            <Edit className="w-3 h-3 ml-0.5"/>{isAr?'تعديل':'Edit'}
-                          </Button>
-                          {emp.account_status !== 'terminated' && (
-                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive"
-                              onClick={()=>handleAccountAction(emp.id,'terminate-account',emp.name)}
-                              title={isAr?'إنهاء الخدمة نهائياً':'Terminate'}>
-                              <ShieldX className="w-3 h-3"/>
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] text-destructive"
-                            onClick={()=>{ setSelectedEmployee(emp); setDeleteDialogOpen(true); }}>
-                            <Trash2 className="w-3 h-3"/>
-                          </Button>
-                        </div>
-                      )}
+                      <ActionsMenu emp={emp} canEdit={canEdit}
+                        handleOpenDialog={handleOpenDialog}
+                        handleAccountAction={handleAccountAction}
+                        setSelectedEmployee={setSelectedEmployee}
+                        setDeleteDialogOpen={setDeleteDialogOpen}
+                        isAr={isAr}/>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -893,29 +953,63 @@ export default function EmployeeManagement({ department }) {
               <div>
                 <Label className="text-[11px] font-semibold flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-500"/>
-                  {isAr?'رقم الهوية الوطنية (10 أرقام)':'National ID (10 digits)'}
-                  <span className="text-slate-400 font-normal">{isAr?'— يُستخدم لتسجيل الدخول':'— used for login'}</span>
+                  {isAr?'رقم الهوية الوطنية':'National ID'}
+                  <span className="text-slate-400 font-normal text-[10px]">{isAr?'10 أرقام — لتسجيل الدخول':'10 digits — for login'}</span>
                 </Label>
                 <Input
                   value={formData.national_id}
                   onChange={e => {
                     const val = e.target.value.replace(/\D/g,'').slice(0,10);
                     setFormData({...formData, national_id: val});
+                    // Debounced live check
+                    clearTimeout(nationalIdTimerRef.current);
+                    nationalIdTimerRef.current = setTimeout(() => {
+                      checkNationalId(val, editMode ? selectedEmployee?.id : null);
+                    }, 500);
                   }}
-                  className="mt-1 h-9 font-mono tracking-widest text-center"
+                  className={`mt-1 h-9 font-mono tracking-widest text-center transition-colors
+                    ${nationalIdStatus==='available' ? 'border-emerald-400 ring-1 ring-emerald-200' :
+                      nationalIdStatus==='taken' ? 'border-red-400 ring-1 ring-red-200' :
+                      nationalIdStatus==='format_error'||nationalIdStatus==='too_long' ? 'border-amber-400 ring-1 ring-amber-200' : ''}
+                  `}
                   placeholder="1xxxxxxxxx"
                   maxLength={10}
                   inputMode="numeric"
                   data-testid="employee-national-id-input"
                 />
-                {formData.national_id && (
-                  <p className={`text-[10px] mt-0.5 ${formData.national_id.length === 10 && /^[12]/.test(formData.national_id) ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {formData.national_id.length === 10 && /^[12]/.test(formData.national_id)
-                      ? '✓ سيُنشأ حساب تلقائياً عند الإضافة'
-                      : `${10 - formData.national_id.length} أرقام متبقية — يبدأ بـ 1 أو 2`
-                    }
-                  </p>
-                )}
+                {/* Live feedback */}
+                <div className="mt-1 min-h-[16px]">
+                  {nationalIdStatus === 'checking' && (
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin"/>جاري التحقق...
+                    </p>
+                  )}
+                  {nationalIdStatus === 'available' && (
+                    <p className="text-[10px] text-emerald-600 flex items-center gap-1">
+                      <Check className="w-3 h-3"/>رقم الهوية متاح — سيُنشأ حساب تلقائياً
+                    </p>
+                  )}
+                  {nationalIdStatus === 'taken' && (
+                    <p className="text-[10px] text-red-600 flex items-center gap-1">
+                      <X className="w-3 h-3"/>رقم الهوية مسجل مسبقاً في النظام
+                    </p>
+                  )}
+                  {nationalIdStatus === 'too_short' && formData.national_id.length > 0 && (
+                    <p className="text-[10px] text-amber-600 flex items-center gap-1">
+                      <Info className="w-3 h-3"/>{10 - formData.national_id.length} أرقام متبقية
+                    </p>
+                  )}
+                  {nationalIdStatus === 'too_long' && (
+                    <p className="text-[10px] text-red-600 flex items-center gap-1">
+                      <X className="w-3 h-3"/>رقم الهوية يجب أن يكون 10 أرقام بالضبط
+                    </p>
+                  )}
+                  {nationalIdStatus === 'format_error' && (
+                    <p className="text-[10px] text-amber-600 flex items-center gap-1">
+                      <Info className="w-3 h-3"/>رقم الهوية يجب أن يبدأ بـ 1 أو 2
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Row 2: Job Title + Phone */}

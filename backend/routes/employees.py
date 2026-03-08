@@ -46,6 +46,19 @@ async def _auto_create_user_account(employee_id: str, employee_doc: dict):
     return user_id
 
 
+@router.get("/employees/check-national-id")
+async def check_national_id(national_id: str, exclude_emp_id: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """التحقق من توفر رقم هوية — يُرجع فقط متاح/غير متاح بدون أي بيانات أخرى"""
+    import re
+    if not re.match(r'^[12]\d{9}$', national_id):
+        return {"available": False, "reason": "format"}
+    query = {"national_id": national_id}
+    if exclude_emp_id:
+        query["id"] = {"$ne": exclude_emp_id}
+    existing = await db.employees.find_one(query, {"_id": 0, "id": 1})
+    return {"available": existing is None}
+
+
 @router.get("/employees")
 async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
@@ -73,9 +86,14 @@ async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_cur
 
     # التحقق من تكرار رقم الهوية
     if employee.national_id:
+        # تحقق من صحة التنسيق
+        import re
+        if not re.match(r'^[12]\d{9}$', employee.national_id):
+            raise HTTPException(status_code=400, detail="رقم الهوية غير صحيح — يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2")
         existing_emp = await db.employees.find_one({"national_id": employee.national_id})
         if existing_emp:
-            raise HTTPException(status_code=400, detail="رقم الهوية مسجل لموظف آخر")
+            # لا نكشف أي بيانات — فقط "مسجل"
+            raise HTTPException(status_code=400, detail="رقم الهوية مسجل مسبقاً في النظام")
 
     employee_id = str(uuid.uuid4())
     employee_doc = {
