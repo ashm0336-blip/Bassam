@@ -324,7 +324,14 @@ export const Layout = () => {
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 py-4 h-[calc(100vh-64px)]">
+        {/* Date at top of mobile sidebar */}
+        <div className="px-4 py-3 border-b border-border bg-muted/30">
+          <p className="text-xs text-muted-foreground text-right">
+            {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+
+        <ScrollArea className="flex-1 py-4 h-[calc(100vh-280px)]">
           <nav className="space-y-1 px-3">
             {navigation.map((item) => (
               <NavItem 
@@ -349,6 +356,37 @@ export const Layout = () => {
             ))}
           </nav>
         </ScrollArea>
+
+        {/* User info + action buttons at bottom of mobile sidebar */}
+        <div className="border-t border-border pb-20">
+          <div className="px-4 py-3 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="font-cairo font-semibold text-primary">
+                {user?.name?.charAt(0) || 'م'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.name}</p>
+              <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
+                {ROLE_LABELS[user?.role]?.[language] || user?.role}
+              </span>
+            </div>
+          </div>
+          <div className="px-4 pb-4 flex items-center gap-2">
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn">
+              <Bell className="w-4 h-4" />
+              <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={toggleTheme} data-testid="mobile-theme-btn">
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              <span>{isDark ? (language === 'ar' ? 'فاتح' : 'Light') : (language === 'ar' ? 'داكن' : 'Dark')}</span>
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs text-destructive hover:bg-destructive hover:text-white" onClick={handleLogout} data-testid="mobile-logout-btn">
+              <LogOut className="w-4 h-4" />
+              <span>{language === 'ar' ? 'خروج' : 'Logout'}</span>
+            </Button>
+          </div>
+        </div>
       </aside>
 
       {/* Main content */}
@@ -385,14 +423,14 @@ export const Layout = () => {
             
             <div>
               {headerSettings.show_page_name && (
-                <h2 className="font-cairo font-bold text-lg">
+                <h2 className="font-cairo font-bold text-base lg:text-lg">
                   {navigation.find(n => n.href === location.pathname)?.name || 
                    secondaryNav.find(n => n.href === location.pathname)?.name || 
                    "لوحة التحكم"}
                 </h2>
               )}
               {headerSettings.show_date && (
-                <p className="text-xs opacity-70">
+                <p className="text-xs opacity-70 hidden lg:block">
                   {new Date().toLocaleDateString('ar-SA', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -405,8 +443,16 @@ export const Layout = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Mobile: short greeting only */}
             {headerSettings.show_user_name && user && (
-              <div className="flex items-center gap-2 mr-2">
+              <span className="text-sm font-medium lg:hidden" data-testid="header-mobile-greeting">
+                {language === 'ar' ? 'أهلاً' : 'Hi'}، {(user.name || '').split(' ').slice(0, 2).join(' ')}
+              </span>
+            )}
+
+            {/* Desktop: full greeting + role badge */}
+            {headerSettings.show_user_name && user && (
+              <div className="hidden lg:flex items-center gap-2 mr-2">
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user.role]?.color || 'bg-slate-100 text-slate-700'}`} data-testid="header-role-badge">
                   {ROLE_LABELS[user.role]?.[language] || user.role}
                 </span>
@@ -416,38 +462,36 @@ export const Layout = () => {
               </div>
             )}
             
-            {/* Theme Toggle */}
+            {/* Desktop only buttons */}
             {headerSettings.show_theme_toggle && (
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={toggleTheme}
-                className="hover:text-primary"
+                className="hover:text-primary hidden lg:flex"
                 data-testid="theme-toggle"
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </Button>
             )}
 
-            {/* Language Toggle */}
             {headerSettings.show_language_toggle && (
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={toggleLanguage}
-                className="hover:text-primary"
+                className="hover:text-primary hidden lg:flex"
                 data-testid="language-toggle"
               >
                 <Languages className="w-5 h-5" />
               </Button>
             )}
 
-            {/* Notifications Bell */}
             {headerSettings.show_notifications_bell && (
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative hover:text-primary"
+                className="relative hover:text-primary hidden lg:flex"
                 onClick={() => navigate('/notifications')}
                 data-testid="header-notifications"
               >
@@ -461,7 +505,7 @@ export const Layout = () => {
                 variant="ghost" 
                 size="icon" 
                 onClick={handleLogout}
-                className="hover:text-destructive"
+                className="hover:text-destructive hidden lg:flex"
                 data-testid="logout-header"
               >
                 <LogOut className="w-5 h-5" />
