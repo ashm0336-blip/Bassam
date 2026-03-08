@@ -791,6 +791,7 @@ export default function DailySessionsPage() {
           sessions={sessions} activeSession={activeDailySession || activeSession} isAr={isAr}
           theme="emerald" showCompare showNotes
           className="lg:col-span-1 order-2 lg:order-first"
+          readOnly={!canDeleteSession}
           onSelectSession={async (s) => {
             setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1;
             try {
@@ -808,7 +809,7 @@ export default function DailySessionsPage() {
             }
           }}
           onDeleteSession={handleDeleteSession}
-          onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
+          onCalendarEmptyClick={canCreateSession ? (ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); } : undefined}
           onCompare={handleCompare}
         />
 
@@ -818,12 +819,14 @@ export default function DailySessionsPage() {
               <CardContent className="py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><Eye className="w-8 h-8 text-slate-400" /></div>
                 <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">{isAr ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "Pick a day from the calendar or start a new tour"}</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">{isAr ? "اضغط على يوم في التقويم لعرض جولته، أو اضغط على يوم فارغ لإنشاء جولة جديدة بأثر رجعي" : "Click a day in the calendar to view its tour, or click an empty day to create a retroactive tour"}</p>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">{isAr 
+                  ? (canCreateSession ? "اضغط على يوم في التقويم لعرض جولته، أو اضغط على يوم فارغ لإنشاء جولة جديدة بأثر رجعي" : "اضغط على يوم في التقويم لعرض جولته")
+                  : (canCreateSession ? "Click a day in the calendar to view its tour, or click an empty day to create a retroactive tour" : "Click a day in the calendar to view its tour")}</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} />
+              <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} readOnly={!canApproveSession} />
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 {/* Professional Tab Bar */}
@@ -1098,6 +1101,7 @@ export default function DailySessionsPage() {
                     undoStack={undoStack} redoStack={redoStack}
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
+                    readOnly={!canCreateSession}
                   />
                   )}
                   <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'var(--map-container-h)' }}>

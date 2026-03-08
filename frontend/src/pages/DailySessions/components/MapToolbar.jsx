@@ -165,13 +165,14 @@ export function MapToolbar({
   handleToggleRemove, ZONE_TYPES,
   undoDrawing, redoDrawing, clearDrawing, undoStack, redoStack,
   undoMapAction, redoMapAction, mapUndoStack, mapRedoStack,
+  readOnly = false,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
   const resetDrawingState = () => { setDrawingPoints([]); setSelectedZoneId(null); setRectStart(null); setFreehandPoints([]); };
 
-  if (activeSession?.status !== "draft") {
+  if (readOnly || activeSession?.status !== "draft") {
     return (
       <div className="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-lg">
         <ZonesDropdown activeZones={activeZones} removedZones={removedZones} selectedZoneId={selectedZoneId} setSelectedZoneId={setSelectedZoneId} setSelectedZone={setSelectedZone} setShowZoneDialog={setShowZoneDialog} handleToggleRemove={handleToggleRemove} activeSession={activeSession} ZONE_TYPES={ZONE_TYPES} />

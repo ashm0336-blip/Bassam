@@ -182,7 +182,7 @@ export default function DailyGateSessionsPage() {
     setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
   };
   const handleGateMouseDown = (e, gateId) => {
-    if (activeSession?.status !== "draft") return;
+    if (activeSession?.status !== "draft" || !canCreateSession) return;
     e.stopPropagation();
     e.preventDefault();
     hasDraggedRef.current = false;
@@ -251,7 +251,7 @@ export default function DailyGateSessionsPage() {
     setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
   };
   const handleGateTouchStart = (e, gateId) => {
-    if (activeSession?.status !== "draft") return;
+    if (activeSession?.status !== "draft" || !canCreateSession) return;
     e.stopPropagation();
     e.preventDefault();
     hasDraggedRef.current = false;
@@ -373,9 +373,10 @@ export default function DailyGateSessionsPage() {
             activeSession={activeSession}
             isAr={isAr}
             theme="blue"
+            readOnly={!canCreateSession}
             onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
             onDeleteSession={handleDeleteSession}
-            onCalendarEmptyClick={(ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }}
+            onCalendarEmptyClick={canCreateSession ? (ds) => { setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); } : undefined}
           />
         </div>
 
@@ -545,7 +546,7 @@ export default function DailyGateSessionsPage() {
                                     const markerColor = isOpen ? indicatorColor : statusColor;
                                     const isDragging = draggingGateId === gate.id;
                                     const isHov = hoveredGate?.id === gate.id;
-                                    const isDraft = activeSession?.status === "draft";
+                                    const isDraft = activeSession?.status === "draft" && canCreateSession;
                                     const ar = imgRatio || 1;
                                     const baseR = 0.7;
                                     const r = isDragging ? baseR * 1.6 : isHov ? baseR * 1.3 : baseR;
@@ -815,7 +816,7 @@ export default function DailyGateSessionsPage() {
             </div>
           )}
           <DialogFooter>
-            {activeSession?.status === "draft" && selectedGate && <Button onClick={() => { handleUpdateGate(selectedGate.id, {daily_note:selectedGate.daily_note}); setShowGateDialog(false); }} data-testid="save-gate-changes"><Save className="w-4 h-4 ml-1" />{isAr?"حفظ":"Save"}</Button>}
+            {activeSession?.status === "draft" && selectedGate && canCreateSession && <Button onClick={() => { handleUpdateGate(selectedGate.id, {daily_note:selectedGate.daily_note}); setShowGateDialog(false); }} data-testid="save-gate-changes"><Save className="w-4 h-4 ml-1" />{isAr?"حفظ":"Save"}</Button>}
             <Button variant="outline" onClick={() => setShowGateDialog(false)}>{isAr?"إغلاق":"Close"}</Button>
           </DialogFooter>
         </DialogContent>

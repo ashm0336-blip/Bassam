@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, PRAYER_TIMES } from "../constants";
 import { formatDate } from "../utils";
 
-export function SessionHeader({ activeSession, activeZones, handleUpdateSession, setSessionNotes, setShowNotesDialog }) {
+export function SessionHeader({ activeSession, activeZones, handleUpdateSession, setSessionNotes, setShowNotesDialog, readOnly = false }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
@@ -67,10 +67,12 @@ export function SessionHeader({ activeSession, activeZones, handleUpdateSession,
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setSessionNotes(activeSession.supervisor_notes || ""); setShowNotesDialog(true); }} data-testid="add-notes-btn">
-            <MessageSquare className="w-4 h-4 ml-1" />{isAr ? "ملاحظات" : "Notes"}
-          </Button>
-          {activeSession.status === "draft" ? (
+          {!readOnly && (
+            <Button variant="outline" size="sm" onClick={() => { setSessionNotes(activeSession.supervisor_notes || ""); setShowNotesDialog(true); }} data-testid="add-notes-btn">
+              <MessageSquare className="w-4 h-4 ml-1" />{isAr ? "ملاحظات" : "Notes"}
+            </Button>
+          )}
+          {!readOnly && activeSession.status === "draft" ? (
             <Button size="sm"
               className={isPrayer ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-200" : "bg-emerald-600 hover:bg-emerald-700"}
               onClick={() => handleUpdateSession({ status: "completed" })}
@@ -80,11 +82,11 @@ export function SessionHeader({ activeSession, activeZones, handleUpdateSession,
                 ? (isAr ? `إنهاء جولة ${prayerInfo?.label_ar}` : `Complete ${prayerInfo?.label_en}`)
                 : (isAr ? "إنهاء الجولة" : "Complete")}
             </Button>
-          ) : (
+          ) : !readOnly && activeSession.status !== "draft" ? (
             <Button variant="outline" size="sm" onClick={() => handleUpdateSession({ status: "draft" })} data-testid="reopen-session-btn">
               <RotateCcw className="w-4 h-4 ml-1" />{isAr ? "إعادة فتح" : "Reopen"}
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 

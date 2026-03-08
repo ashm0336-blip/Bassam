@@ -44,7 +44,7 @@ export function ArchiveSidebar({
   sessions, activeSession, isAr,
   onSelectSession, onDeleteSession, onCalendarEmptyClick,
   onCompare, showCompare = false, showNotes = false,
-  theme = "blue", className = "",
+  theme = "blue", className = "", readOnly = false,
 }) {
   const nowDate = new Date();
   const today = nowDate.toISOString().split("T")[0];
@@ -95,7 +95,7 @@ export function ArchiveSidebar({
     const ds = getDayStr(day);
     const s = sessionDatesMap[ds];
     if (s) onSelectSession(s);
-    else onCalendarEmptyClick(ds);
+    else if (onCalendarEmptyClick) onCalendarEmptyClick(ds);
   };
 
   // ─── Month Grid View ─────────────────────────────────────
@@ -418,6 +418,7 @@ export function ArchiveSidebar({
                         <ArrowLeftRight className="w-2.5 h-2.5" />
                       </button>
                     )}
+                    {!readOnly && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
                       className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-125 transition-all"
@@ -425,6 +426,7 @@ export function ArchiveSidebar({
                     >
                       <Trash2 className="w-2.5 h-2.5" />
                     </button>
+                    )}
                   </div>
                 </div>
               );
