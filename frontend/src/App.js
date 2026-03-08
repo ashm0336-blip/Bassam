@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { HeaderProvider } from "@/context/HeaderContext";
-import { DepartmentProtectedRoute, AdminProtectedRoute } from "@/components/ProtectedRoute";
+import { DepartmentProtectedRoute, AdminProtectedRoute, PermissionProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import ManagerDashboard from "@/pages/ManagerDashboard";
@@ -164,14 +164,14 @@ function AppRoutes() {
           </AdminProtectedRoute>
         } />
         <Route path="daily-sessions" element={
-          <AdminProtectedRoute>
+          <PermissionProtectedRoute permission="view_daily_sessions">
             <DailySessionsPage />
-          </AdminProtectedRoute>
+          </PermissionProtectedRoute>
         } />
         <Route path="daily-gates" element={
-          <AdminProtectedRoute>
+          <PermissionProtectedRoute permission="view_daily_sessions">
             <DailyGateSessionsPage />
-          </AdminProtectedRoute>
+          </PermissionProtectedRoute>
         } />
         <Route path="admin" element={
           <AdminProtectedRoute>

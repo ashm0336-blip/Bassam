@@ -22,6 +22,7 @@ ALL_PERMISSIONS = {
     "change_roles":        {"ar": "تغيير صلاحيات المستخدمين",        "group": "employees", "danger": True},
 
     # Daily Sessions
+    "view_daily_sessions": {"ar": "عرض السجلات اليومية",              "group": "sessions",  "danger": False},
     "create_session":      {"ar": "إنشاء جلسة يومية",               "group": "sessions",  "danger": False},
     "approve_session":     {"ar": "اعتماد الجلسة اليومية",           "group": "sessions",  "danger": False},
     "delete_session":      {"ar": "حذف الجلسات اليومية",             "group": "sessions",  "danger": True},
@@ -66,6 +67,7 @@ GROUP_LABELS = {
 # Default permissions per role
 DEFAULT_PERMISSIONS = {
     "general_manager": [
+        "view_daily_sessions",
         "create_session", "approve_session", "start_prayer_round", "complete_prayer_round",
         "distribute_employees", "view_coverage_map",
         "view_density_reports", "view_reports", "export_reports", "compare_sessions",
@@ -74,7 +76,7 @@ DEFAULT_PERMISSIONS = {
     "department_manager": [
         "add_employees", "edit_employees", "delete_employees",
         "manage_accounts", "reset_pins",
-        "create_session", "approve_session", "delete_session",
+        "view_daily_sessions", "create_session", "approve_session", "delete_session",
         "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
         "distribute_employees", "auto_distribute", "view_coverage_map",
         "enter_density", "view_density_reports",
@@ -83,6 +85,7 @@ DEFAULT_PERMISSIONS = {
         "manage_settings", "manage_maps", "manage_shifts",
     ],
     "shift_supervisor": [
+        "view_daily_sessions",
         "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
         "distribute_employees", "auto_distribute", "view_coverage_map",
         "enter_density",
