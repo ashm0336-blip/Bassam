@@ -776,74 +776,81 @@ export default function EmployeeManagement({ department }) {
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1100px]">
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
-                  {/* الموظف */}
-                  <TableHead className="text-right font-semibold">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-3.5 h-3.5 text-primary"/>
+                <TableRow className="bg-gradient-to-r from-primary/8 via-primary/4 to-primary/8 border-b-2 border-primary/25">
+                  <TableHead className="text-right py-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <Users className="w-4.5 h-4.5 text-primary"/>
                       </div>
-                      <span className="text-[12px]">{isAr?'الموظف':'Employee'}</span>
+                      <span className="text-sm font-bold text-foreground">{isAr?'الموظف':'Employee'}</span>
                     </div>
                   </TableHead>
-                  {/* التوظيف */}
-                  <TableHead className="text-center font-semibold w-20">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Briefcase className="w-3.5 h-3.5 text-blue-500"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'التوظيف':'Type'}</span>
+                  <TableHead className="text-center py-4 w-24">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
+                        <Briefcase className="w-4 h-4 text-blue-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'التوظيف':'Type'}</span>
                     </div>
                   </TableHead>
-                  {/* الوردية */}
-                  <TableHead className="text-center font-semibold w-32">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Clock className="w-3.5 h-3.5 text-purple-500"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'الوردية':'Shift'}</span>
+                  <TableHead className="text-center py-4 w-36">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center shadow-sm">
+                        <Clock className="w-4 h-4 text-purple-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'الوردية':'Shift'}</span>
                     </div>
                   </TableHead>
-                  {/* أيام الراحة */}
-                  <TableHead className="text-center font-semibold w-[200px]">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Coffee className="w-3.5 h-3.5 text-amber-500"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'أيام الراحة':'Rest Days'}</span>
+                  <TableHead className="text-center py-4 w-[210px]">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
+                        <Coffee className="w-4 h-4 text-amber-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'أيام الراحة':'Rest Days'}</span>
                     </div>
                   </TableHead>
-                  {/* مكلف */}
                   {schedule && (
-                    <TableHead className="text-center font-semibold w-12">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <Zap className="w-3.5 h-3.5 text-amber-500"/>
-                        <span className="text-[9px] text-muted-foreground">{isAr?'مكلف':'Tasked'}</span>
+                    <TableHead className="text-center py-4 w-16">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
+                          <Zap className="w-4 h-4 text-amber-600"/>
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-600">{isAr?'مكلف':'Tasked'}</span>
                       </div>
                     </TableHead>
                   )}
-                  {/* الحالة */}
-                  <TableHead className="text-center font-semibold w-12">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Activity className="w-3.5 h-3.5 text-emerald-600"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'الحالة':'Status'}</span>
+                  <TableHead className="text-center py-4 w-16">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <Activity className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحالة':'Status'}</span>
                     </div>
                   </TableHead>
-                  {/* الحساب */}
-                  <TableHead className="text-center font-semibold w-20">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'الحساب':'Account'}</span>
+                  <TableHead className="text-center py-4 w-24">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحساب':'Account'}</span>
                     </div>
                   </TableHead>
-                  {/* الصلاحيات */}
                   {canChangeRoles && (
-                    <TableHead className="text-center font-semibold w-28">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <Shield className="w-3.5 h-3.5 text-violet-500"/>
-                        <span className="text-[9px] text-muted-foreground">{isAr?'الصلاحيات':'Role'}</span>
+                    <TableHead className="text-center py-4 w-28">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
+                          <Shield className="w-4 h-4 text-violet-600"/>
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-600">{isAr?'الصلاحيات':'Role'}</span>
                       </div>
                     </TableHead>
                   )}
-                  {/* إجراءات */}
-                  <TableHead className="text-center font-semibold w-12">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <MoreVertical className="w-3.5 h-3.5 text-slate-400"/>
-                      <span className="text-[9px] text-muted-foreground">{isAr?'إجراءات':'Actions'}</span>
+                  <TableHead className="text-center py-4 w-14">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                        <MoreVertical className="w-4 h-4 text-slate-500"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-400">⋯</span>
                     </div>
                   </TableHead>
                 </TableRow>
@@ -854,32 +861,42 @@ export default function EmployeeManagement({ department }) {
                     className={`hover:bg-muted/50 transition-colors ${emp.on_rest?'bg-amber-50/40':''} ${emp.contract_expired?'opacity-60':''}`}
                     data-testid={`employee-row-${emp.id}`}>
 
-                    {/* Employee info */}
-                    <TableCell className="text-right">
-                      <div className="flex items-start gap-2">
-                        {/* Avatar */}
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0 mt-0.5"
-                          style={{ backgroundColor: (emp.employment_type==='seasonal'?'#0284c7':emp.employment_type==='temporary'?'#9333ea':'#004D38') }}>
-                          {emp.name.charAt(0)}
+                    {/* Employee info — professional card */}
+                    <TableCell className="text-right py-3">
+                      <div className="flex items-center gap-3">
+                        {/* Avatar — bigger with ring */}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold text-white shadow-md ring-2 ring-white"
+                            style={{ backgroundColor: (emp.employment_type==='seasonal'?'#0284c7':emp.employment_type==='temporary'?'#9333ea':'#004D38') }}>
+                            {emp.name.charAt(0)}
+                          </div>
+                          {/* Online-style status dot */}
+                          <span className={`absolute -bottom-0.5 -left-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                            emp.contract_expired ? 'bg-red-500' : emp.on_rest ? 'bg-amber-400' : 'bg-emerald-500'
+                          }`}/>
                         </div>
-                        <div>
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          {/* Name + tasked badge */}
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="font-semibold text-sm">{emp.name}</p>
+                            <p className="font-bold text-sm text-foreground leading-tight">{emp.name}</p>
                             {emp.is_tasked && (
                               <span className="inline-flex items-center gap-0.5 text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full">
                                 <Zap className="w-2.5 h-2.5"/>مكلف
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                          {/* Job title */}
+                          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{emp.job_title}</p>
+                          {/* Number + phone row */}
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             {emp.employee_number && (
-                              <Badge variant="outline" className="text-[9px] font-mono py-0 px-1.5 h-4">{emp.employee_number}</Badge>
+                              <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200">
+                                #{emp.employee_number}
+                              </span>
                             )}
-                            <span className="text-[10px] text-muted-foreground">{emp.job_title}</span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-1 flex-wrap">
                             {emp.contact_phone && (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-500">
+                              <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-400">
                                 <Phone className="w-2.5 h-2.5"/>{emp.contact_phone}
                               </span>
                             )}
