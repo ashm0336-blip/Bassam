@@ -196,10 +196,12 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    // Only show field/both employees with active contracts
+    // Only show non-admin-staff employees with active contracts
     let emps = employees.filter(emp => {
-      const wt = emp.work_type || 'field';
-      if (wt === 'admin') return false;
+      // Hide admin_staff role from field distribution
+      const role = emp.user_role || 'field_staff';
+      if (role === 'admin_staff') return false;
+      // Active contract check
       if (emp.employment_type !== 'permanent' && emp.employment_type) {
         if (emp.contract_end && new Date(emp.contract_end) < new Date(new Date().toDateString())) return false;
       }
@@ -728,9 +730,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
               <span className="text-[9px] font-medium text-teal-600 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
                 {isAr ? `متاحون للتوزيع: ${filteredEmployees.length}` : `Available: ${filteredEmployees.length}`}
               </span>
-              {employees.filter(e=>(e.work_type||'field')==='admin').length > 0 && (
+              {employees.filter(e=>(e.user_role||'field_staff')==='admin_staff').length > 0 && (
                 <span className="text-[9px] text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
-                  {isAr ? `إداريون مخفيون: ${employees.filter(e=>(e.work_type||'field')==='admin').length}` : `Admin hidden: ${employees.filter(e=>(e.work_type||'field')==='admin').length}`}
+                  {isAr ? `إداريون مخفيون: ${employees.filter(e=>(e.user_role||'field_staff')==='admin_staff').length}` : `Admin hidden: ${employees.filter(e=>(e.user_role||'field_staff')==='admin_staff').length}`}
                 </span>
               )}
             </div>

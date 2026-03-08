@@ -6,7 +6,7 @@ import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
-  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical,
+  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical, Activity,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -630,7 +630,10 @@ export default function EmployeeManagement({ department }) {
     const permanent = mergedEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
     const seasonal  = mergedEmployees.filter(e=>e.employment_type==='seasonal').length;
     const temporary = mergedEmployees.filter(e=>e.employment_type==='temporary').length;
-    const fieldOps  = mergedEmployees.filter(e=>(e.work_type||'field')==='field' || e.work_type==='both').length;
+    const fieldOps  = mergedEmployees.filter(e => {
+      const role = e.user_role || 'field_staff';
+      return role !== 'admin_staff';
+    }).length;
     const tasked    = mergedEmployees.filter(e=>e.is_tasked).length;
     const shiftStats = shifts.map(s=>({ ...s, count: mergedEmployees.filter(e=>e.shift===s.value).length })).filter(s=>s.count>0);
     const coverage  = WEEK_DAYS.map(day => {
@@ -774,36 +777,74 @@ export default function EmployeeManagement({ department }) {
             <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
-                  <TableHead className="text-right font-semibold">{isAr?'الموظف':'Employee'}</TableHead>
-                  <TableHead className="text-center font-semibold w-20">{isAr?'التوظيف':'Type'}</TableHead>
-                  <TableHead className="text-center font-semibold w-32">{isAr?'الوردية':'Shift'}</TableHead>
-                  <TableHead className="text-center font-semibold w-[200px]">
-                    <div className="flex items-center justify-center gap-1" title={isAr?'أيام الراحة':'Rest Days'}>
-                      <Coffee className="w-3.5 h-3.5 text-amber-600"/>
-                      <span className="text-[11px]">س ح ن ث ر خ ج</span>
+                  {/* الموظف */}
+                  <TableHead className="text-right font-semibold">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-3.5 h-3.5 text-primary"/>
+                      </div>
+                      <span className="text-[12px]">{isAr?'الموظف':'Employee'}</span>
                     </div>
                   </TableHead>
+                  {/* التوظيف */}
+                  <TableHead className="text-center font-semibold w-20">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Briefcase className="w-3.5 h-3.5 text-blue-500"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'التوظيف':'Type'}</span>
+                    </div>
+                  </TableHead>
+                  {/* الوردية */}
+                  <TableHead className="text-center font-semibold w-32">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Clock className="w-3.5 h-3.5 text-purple-500"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'الوردية':'Shift'}</span>
+                    </div>
+                  </TableHead>
+                  {/* أيام الراحة */}
+                  <TableHead className="text-center font-semibold w-[200px]">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Coffee className="w-3.5 h-3.5 text-amber-500"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'أيام الراحة':'Rest Days'}</span>
+                    </div>
+                  </TableHead>
+                  {/* مكلف */}
                   {schedule && (
                     <TableHead className="text-center font-semibold w-12">
-                      <Zap className="w-3.5 h-3.5 text-amber-500 mx-auto" title={isAr?'مكلف':'Tasked'}/>
-                    </TableHead>
-                  )}
-                  <TableHead className="text-center font-semibold w-12">
-                    <UserCheck className="w-3.5 h-3.5 text-emerald-600 mx-auto" title={isAr?'الحالة':'Status'}/>
-                  </TableHead>
-                  <TableHead className="text-center font-semibold w-20">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 mx-auto" title={isAr?'الحساب':'Account'}/>
-                  </TableHead>
-                  {canChangeRoles && (
-                    <TableHead className="text-center font-semibold w-28">
-                      <div className="flex items-center justify-center gap-1">
-                        <Shield className="w-3.5 h-3.5 text-violet-500"/>
-                        <span className="text-[11px]">{isAr?'الصلاحيات':'Role'}</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <Zap className="w-3.5 h-3.5 text-amber-500"/>
+                        <span className="text-[9px] text-muted-foreground">{isAr?'مكلف':'Tasked'}</span>
                       </div>
                     </TableHead>
                   )}
+                  {/* الحالة */}
                   <TableHead className="text-center font-semibold w-12">
-                    <MoreVertical className="w-3.5 h-3.5 text-slate-400 mx-auto" title={isAr?'إجراءات':'Actions'}/>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Activity className="w-3.5 h-3.5 text-emerald-600"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'الحالة':'Status'}</span>
+                    </div>
+                  </TableHead>
+                  {/* الحساب */}
+                  <TableHead className="text-center font-semibold w-20">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'الحساب':'Account'}</span>
+                    </div>
+                  </TableHead>
+                  {/* الصلاحيات */}
+                  {canChangeRoles && (
+                    <TableHead className="text-center font-semibold w-28">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <Shield className="w-3.5 h-3.5 text-violet-500"/>
+                        <span className="text-[9px] text-muted-foreground">{isAr?'الصلاحيات':'Role'}</span>
+                      </div>
+                    </TableHead>
+                  )}
+                  {/* إجراءات */}
+                  <TableHead className="text-center font-semibold w-12">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <MoreVertical className="w-3.5 h-3.5 text-slate-400"/>
+                      <span className="text-[9px] text-muted-foreground">{isAr?'إجراءات':'Actions'}</span>
+                    </div>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -837,7 +878,6 @@ export default function EmployeeManagement({ department }) {
                             <span className="text-[10px] text-muted-foreground">{emp.job_title}</span>
                           </div>
                           <div className="flex items-center gap-1 mt-1 flex-wrap">
-                            <WorkTypeBadge type={emp.work_type||'field'} isAr={isAr}/>
                             {emp.contact_phone && (
                               <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-500">
                                 <Phone className="w-2.5 h-2.5"/>{emp.contact_phone}
@@ -1127,25 +1167,7 @@ export default function EmployeeManagement({ department }) {
               {/* Divider */}
               <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent"/>
 
-              {/* Row 3: Work Type */}
-              <div>
-                <Label className="text-[11px] font-semibold mb-2 block">{isAr?'نوع العمل':'Work Type'}</Label>
-                <div className="flex gap-2">
-                  {WORK_TYPES.map(wt=>(
-                    <button key={wt.value} type="button"
-                      onClick={()=>setFormData({...formData,work_type:wt.value})}
-                      data-testid={`work-type-${wt.value}`}
-                      className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1
-                        ${formData.work_type===wt.value ? 'border-current shadow-md' : 'border-border hover:border-slate-300'}`}
-                      style={formData.work_type===wt.value ? { borderColor:wt.color, backgroundColor:wt.bg, color:wt.color } : {}}>
-                      {wt.value==='field' ? <HardHat className="w-4 h-4"/> : wt.value==='admin' ? <Briefcase className="w-4 h-4"/> : <Shield className="w-4 h-4"/>}
-                      <span className="text-[10px] font-bold">{isAr?wt.label_ar:wt.label_en}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 4: Employment Type */}
+              {/* Row 3: Employment Type (نوع التوظيف فقط — نوع العمل يُحدد من الصلاحيات) */}
               <div>
                 <Label className="text-[11px] font-semibold mb-2 block">{isAr?'نوع التوظيف':'Employment Type'}</Label>
                 <div className="flex gap-2">
