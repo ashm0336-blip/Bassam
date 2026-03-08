@@ -18,14 +18,28 @@ async def _auto_create_user_account(employee_id: str, employee_doc: dict):
     if not national_id:
         return None  # لا حساب بدون رقم هوية
 
-    # التحقق من عدم وجود حساب مسبق
-    existing = await db.users.find_one({"national_id": national_id})
-    if existing:
-        return existing["id"]
-
-    # PIN الافتراضي = الرقم الوظيفي (يُغيَّر بأول دخول)
     default_pin = employee_number or "0000"
 
+    # التحقق من وجود حساب مسبق (مثلاً موظف أُنهيت خدمته وأُعيد تعيينه)
+    existing = await db.users.find_one({"national_id": national_id})
+    if existing:
+        # إعادة تهيئة الحساب القديم — فرصة ثانية
+        await db.users.update_one(
+            {"id": existing["id"]},
+            {"$set": {
+                "password": hash_password(default_pin),
+                "name": employee_doc.get("name", existing.get("name", "")),
+                "department": employee_doc.get("department"),
+                "account_status": "pending",
+                "must_change_pin": True,
+                "failed_attempts": 0,
+                "employee_id": employee_id,
+                "is_active": False,
+            }}
+        )
+        return existing["id"]
+
+    # حساب جديد تماماً
     user_id = str(uuid.uuid4())
     user_doc = {
         "id": user_id,
