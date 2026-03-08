@@ -690,6 +690,7 @@ class SessionGate(BaseModel):
     current_flow: int = 0
     max_flow: int = 5000
     assigned_staff: int = 0
+    assigned_employee_ids: List[str] = Field(default_factory=list)
     daily_note: Optional[str] = None
     is_removed: bool = False
     change_type: Optional[str] = None
@@ -724,6 +725,7 @@ class SessionGateUpdate(BaseModel):
     classification: Optional[str] = None
     current_flow: Optional[int] = None
     assigned_staff: Optional[int] = None
+    assigned_employee_ids: Optional[List[str]] = None
     daily_note: Optional[str] = None
     is_removed: Optional[bool] = None
     x: Optional[float] = None

@@ -1,0 +1,252 @@
+"""
+RBAC Permissions System — Routes
+"""
+from fastapi import APIRouter, Depends, HTTPException
+from typing import Dict, List, Optional
+from datetime import datetime, timezone
+import uuid
+
+from database import db
+from auth import require_admin, get_current_user, log_activity
+
+router = APIRouter()
+
+# ─── All permissions with Arabic labels ────────────────────────
+ALL_PERMISSIONS = {
+    # Employee Management
+    "add_employees":       {"ar": "إضافة موظفين",                   "group": "employees", "danger": False},
+    "edit_employees":      {"ar": "تعديل بيانات الموظفين",           "group": "employees", "danger": False},
+    "delete_employees":    {"ar": "حذف الموظفين",                    "group": "employees", "danger": True},
+    "manage_accounts":     {"ar": "إدارة حسابات الدخول",             "group": "employees", "danger": False},
+    "reset_pins":          {"ar": "إعادة تعيين كلمات المرور",         "group": "employees", "danger": False},
+    "change_roles":        {"ar": "تغيير صلاحيات المستخدمين",        "group": "employees", "danger": True},
+
+    # Daily Sessions
+    "create_session":      {"ar": "إنشاء جلسة يومية",               "group": "sessions",  "danger": False},
+    "approve_session":     {"ar": "اعتماد الجلسة اليومية",           "group": "sessions",  "danger": False},
+    "delete_session":      {"ar": "حذف الجلسات اليومية",             "group": "sessions",  "danger": True},
+    "start_prayer_round":  {"ar": "بدء جولة صلاة",                   "group": "sessions",  "danger": False},
+    "complete_prayer_round":{"ar": "إنهاء جولة صلاة",               "group": "sessions",  "danger": False},
+    "skip_prayer_round":   {"ar": "تجاوز جولة صلاة",                 "group": "sessions",  "danger": False},
+
+    # Field Distribution
+    "distribute_employees": {"ar": "توزيع الموظفين على المناطق",    "group": "field",     "danger": False},
+    "auto_distribute":     {"ar": "التوزيع التلقائي",                "group": "field",     "danger": False},
+    "view_coverage_map":   {"ar": "عرض خريطة التغطية",               "group": "field",     "danger": False},
+
+    # Density & Data
+    "enter_density":       {"ar": "إدخال بيانات الكثافة",            "group": "density",   "danger": False},
+    "view_density_reports":{"ar": "عرض تقارير الكثافة",              "group": "density",   "danger": False},
+
+    # Reports
+    "view_reports":        {"ar": "عرض التقارير اليومية",            "group": "reports",   "danger": False},
+    "export_reports":      {"ar": "تصدير البيانات",                  "group": "reports",   "danger": False},
+    "compare_sessions":    {"ar": "مقارنة الجلسات",                  "group": "reports",   "danger": False},
+
+    # Alerts
+    "send_alert":          {"ar": "إرسال بلاغ طارئ",                "group": "alerts",    "danger": False},
+    "receive_alerts":      {"ar": "استقبال البلاغات",                "group": "alerts",    "danger": False},
+
+    # Settings
+    "manage_settings":     {"ar": "إدارة إعدادات القسم",             "group": "settings",  "danger": False},
+    "manage_maps":         {"ar": "إدارة خرائط الطوابق",             "group": "settings",  "danger": False},
+    "manage_shifts":       {"ar": "إدارة الورديات",                  "group": "settings",  "danger": False},
+}
+
+GROUP_LABELS = {
+    "employees": {"ar": "إدارة الموظفين",     "icon": "Users"},
+    "sessions":  {"ar": "الجلسات اليومية",    "icon": "Calendar"},
+    "field":     {"ar": "التوزيع الميداني",   "icon": "MapPin"},
+    "density":   {"ar": "الكثافات والبيانات", "icon": "Activity"},
+    "reports":   {"ar": "التقارير",            "icon": "BarChart3"},
+    "alerts":    {"ar": "البلاغات",            "icon": "Bell"},
+    "settings":  {"ar": "الإعدادات",           "icon": "Settings"},
+}
+
+# Default permissions per role
+DEFAULT_PERMISSIONS = {
+    "general_manager": [
+        "create_session", "approve_session", "start_prayer_round", "complete_prayer_round",
+        "distribute_employees", "view_coverage_map",
+        "view_density_reports", "view_reports", "export_reports", "compare_sessions",
+        "receive_alerts",
+    ],
+    "department_manager": [
+        "add_employees", "edit_employees", "delete_employees",
+        "manage_accounts", "reset_pins",
+        "create_session", "approve_session", "delete_session",
+        "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
+        "distribute_employees", "auto_distribute", "view_coverage_map",
+        "enter_density", "view_density_reports",
+        "view_reports", "export_reports", "compare_sessions",
+        "send_alert", "receive_alerts",
+        "manage_settings", "manage_maps", "manage_shifts",
+    ],
+    "shift_supervisor": [
+        "start_prayer_round", "complete_prayer_round", "skip_prayer_round",
+        "distribute_employees", "auto_distribute", "view_coverage_map",
+        "enter_density",
+        "view_reports",
+        "send_alert", "receive_alerts",
+    ],
+    "field_staff": [
+        "enter_density",
+        "send_alert",
+        "view_coverage_map",
+    ],
+    "admin_staff": [
+        "view_reports",
+        "view_density_reports",
+        "receive_alerts",
+    ],
+}
+
+# Role hierarchy — no one can grant higher than their level
+ROLE_HIERARCHY = {
+    "system_admin":       5,
+    "general_manager":    4,
+    "department_manager": 3,
+    "shift_supervisor":   2,
+    "field_staff":        1,
+    "admin_staff":        1,
+}
+
+
+async def _ensure_defaults():
+    """Seed default permissions if not exist"""
+    for role, perms in DEFAULT_PERMISSIONS.items():
+        existing = await db.role_permissions.find_one({"role": role})
+        if not existing:
+            await db.role_permissions.insert_one({
+                "id": str(uuid.uuid4()),
+                "role": role,
+                "permissions": perms,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_by": "system",
+            })
+
+
+# ─── GET all role permissions ───────────────────────────────────
+@router.get("/admin/role-permissions")
+async def get_all_role_permissions(admin: dict = Depends(require_admin)):
+    await _ensure_defaults()
+    docs = await db.role_permissions.find({}, {"_id": 0}).to_list(20)
+    # Build result with meta
+    result = {}
+    for doc in docs:
+        result[doc["role"]] = {
+            "permissions": doc.get("permissions", []),
+            "updated_at": doc.get("updated_at"),
+            "updated_by": doc.get("updated_by"),
+        }
+    return {
+        "roles": result,
+        "all_permissions": ALL_PERMISSIONS,
+        "group_labels": GROUP_LABELS,
+        "defaults": DEFAULT_PERMISSIONS,
+    }
+
+
+# ─── GET permissions for a specific role ───────────────────────
+@router.get("/admin/role-permissions/{role}")
+async def get_role_permissions(role: str, admin: dict = Depends(require_admin)):
+    await _ensure_defaults()
+    doc = await db.role_permissions.find_one({"role": role}, {"_id": 0})
+    if not doc:
+        return {"role": role, "permissions": DEFAULT_PERMISSIONS.get(role, [])}
+    return doc
+
+
+# ─── UPDATE role permissions ────────────────────────────────────
+@router.put("/admin/role-permissions/{role}")
+async def update_role_permissions(role: str, data: dict, admin: dict = Depends(require_admin)):
+    if role == "system_admin":
+        raise HTTPException(status_code=403, detail="لا يمكن تعديل صلاحيات مسؤول النظام")
+
+    permissions = data.get("permissions", [])
+    # Validate permissions exist
+    invalid = [p for p in permissions if p not in ALL_PERMISSIONS]
+    if invalid:
+        raise HTTPException(status_code=400, detail=f"صلاحيات غير صحيحة: {invalid}")
+
+    await db.role_permissions.update_one(
+        {"role": role},
+        {"$set": {
+            "permissions": permissions,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": admin.get("name", admin.get("email", "admin")),
+        }},
+        upsert=True,
+    )
+    await log_activity(
+        "permissions_updated", admin, role,
+        f"تم تحديث صلاحيات دور: {role} — {len(permissions)} صلاحية"
+    )
+    return {"message": f"تم تحديث صلاحيات {role} ✅", "permissions": permissions}
+
+
+# ─── RESET role permissions to defaults ────────────────────────
+@router.post("/admin/role-permissions/{role}/reset")
+async def reset_role_permissions(role: str, admin: dict = Depends(require_admin)):
+    if role == "system_admin":
+        raise HTTPException(status_code=403, detail="لا يمكن تعديل صلاحيات مسؤول النظام")
+    defaults = DEFAULT_PERMISSIONS.get(role, [])
+    await db.role_permissions.update_one(
+        {"role": role},
+        {"$set": {
+            "permissions": defaults,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": admin.get("name", "admin"),
+        }},
+        upsert=True,
+    )
+    await log_activity("permissions_reset", admin, role, f"تم إعادة تعيين صلاحيات {role} للافتراضية")
+    return {"message": "تمت إعادة التعيين للافتراضية ✅", "permissions": defaults}
+
+
+# ─── GET current user's permissions (for AuthContext) ──────────
+@router.get("/auth/my-permissions")
+async def get_my_permissions(user: dict = Depends(get_current_user)):
+    role = user.get("role", "field_staff")
+    if role == "system_admin":
+        return {"permissions": list(ALL_PERMISSIONS.keys()), "role": role}
+    await _ensure_defaults()
+    doc = await db.role_permissions.find_one({"role": role}, {"_id": 0})
+    permissions = doc.get("permissions", DEFAULT_PERMISSIONS.get(role, [])) if doc else DEFAULT_PERMISSIONS.get(role, [])
+    return {"permissions": permissions, "role": role}
+
+
+# ─── UPDATE user role (for employee table role column) ─────────
+@router.put("/users/{user_id}/role")
+async def update_user_role(user_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    new_role = data.get("role")
+    valid_roles = ["general_manager", "department_manager", "shift_supervisor", "field_staff", "admin_staff"]
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail="دور غير صحيح")
+
+    target = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+
+    # Permission check: can only grant roles BELOW current user's level
+    my_level = ROLE_HIERARCHY.get(current_user.get("role", "field_staff"), 0)
+    target_new_level = ROLE_HIERARCHY.get(new_role, 0)
+    target_current_level = ROLE_HIERARCHY.get(target.get("role", "field_staff"), 0)
+
+    if current_user.get("role") != "system_admin":
+        if target_new_level >= my_level:
+            raise HTTPException(status_code=403, detail="لا يمكنك منح دور أعلى من مستواك أو مساوٍ له")
+        if target_current_level >= my_level:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل دور شخص في مستواك أو أعلى")
+        # Department managers can only change their own dept
+        if current_user.get("role") == "department_manager":
+            if target.get("department") != current_user.get("department"):
+                raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
+
+    old_role = target.get("role")
+    await db.users.update_one({"id": user_id}, {"$set": {"role": new_role}})
+    await log_activity(
+        "role_changed", current_user, target.get("name", user_id),
+        f"{current_user['name']} غيّر دور {target.get('name')} من {old_role} إلى {new_role}"
+    )
+    return {"message": f"تم تغيير الدور إلى {new_role} ✅"}

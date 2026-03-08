@@ -310,6 +310,27 @@ export default function DailySessionsPage() {
     }
   }, [prayerSessions, isAr]);
 
+  // Delete prayer session (remove entirely — allows restart)
+  const handleDeletePrayerSession = useCallback(async (prayerKey) => {
+    const ps = prayerSessions[prayerKey];
+    if (!ps) return;
+    const pt = PRAYER_TIMES.find(p => p.key === prayerKey);
+    if (!window.confirm(isAr
+      ? `هل تريد حذف جولة ${pt?.label_ar}؟ سيُمكن إعادة البدء بها من جديد`
+      : `Delete ${pt?.label_en} session? You can restart it.`)) return;
+    try {
+      await axios.delete(`${API}/admin/map-sessions/${ps.id}`, getAuthHeaders());
+      setPrayerSessions(prev => { const n = { ...prev }; delete n[prayerKey]; return n; });
+      if (activeSession?.id === ps.id) {
+        setActiveSession(activeDailySession);
+        setActivePrayer(null);
+      }
+      toast.success(isAr ? `تم حذف جولة ${pt?.label_ar}` : `${pt?.label_en} session deleted`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || (isAr ? "تعذر الحذف" : "Delete failed"));
+    }
+  }, [prayerSessions, activeSession, activeDailySession, isAr]);
+
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { axios.get(`${API}/zone-categories`).then(res => { if (res.data?.length > 0) setZoneTypes(res.data); }).catch(() => {}); }, []);
   useEffect(() => { if (selectedFloor) { fetchSessions(); setActiveSession(null); setImgRatio(null); } }, [selectedFloor, fetchSessions]);
@@ -912,7 +933,7 @@ export default function DailySessionsPage() {
                           else if (isSkipped) cardClass = 'border-slate-300 bg-slate-100/80 opacity-75';
 
                           return (
-                            <div key={pt.key} className="relative flex flex-col gap-1 flex-shrink-0 sm:flex-shrink" style={{ minWidth: '82px' }}>
+                            <div key={pt.key} className="relative flex flex-col gap-1 flex-shrink-0 sm:flex-shrink group" style={{ minWidth: '82px' }}>
                               {/* Main card */}
                               <button
                                 onClick={() => ps && !isSkipped ? handleSelectPrayer(pt.key) : null}
@@ -951,15 +972,35 @@ export default function DailySessionsPage() {
                                 </div>
                               )}
 
-                              {/* Skipped session - show unskip button */}
+                              {/* Skipped session - show unskip + delete buttons */}
                               {isSkipped && (
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleUnskipPrayerSession(pt.key)}
+                                    data-testid={`unskip-prayer-session-${pt.key}`}
+                                    className="flex-1 text-[8px] py-1.5 rounded-lg border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold transition-all"
+                                    title={isAr ? "فك التجاوز وإدخال البيانات" : "Unskip and enter data"}
+                                  >
+                                    {isAr ? "فك التجاوز" : "Unskip"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePrayerSession(pt.key)}
+                                    data-testid={`delete-prayer-session-${pt.key}`}
+                                    className="text-[8px] px-1.5 py-1.5 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                                    title={isAr ? "حذف الجولة نهائياً" : "Delete session"}
+                                  >🗑️</button>
+                                </div>
+                              )}
+
+                              {/* Draft/Completed - show delete button (hover) */}
+                              {status && status !== 'skipped' && !isActivePrayer && (
                                 <button
-                                  onClick={() => handleUnskipPrayerSession(pt.key)}
-                                  data-testid={`unskip-prayer-session-${pt.key}`}
-                                  className="w-full text-[8px] py-1.5 rounded-lg border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold transition-all"
-                                  title={isAr ? "فك التجاوز وإدخال البيانات" : "Unskip and enter data"}
+                                  onClick={() => handleDeletePrayerSession(pt.key)}
+                                  data-testid={`delete-prayer-session-${pt.key}`}
+                                  className="w-full text-[8px] py-1 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all opacity-0 group-hover:opacity-100"
+                                  title={isAr ? "حذف الجولة وإعادة البدء" : "Delete & restart"}
                                 >
-                                  {isAr ? "فك التجاوز" : "Unskip"}
+                                  {isAr ? "🗑️ حذف الجولة" : "🗑️ Delete"}
                                 </button>
                               )}
 

@@ -29,9 +29,11 @@ from routes.maps import router as maps_router
 from routes.sessions import router as sessions_router
 from routes.transactions import router as transactions_router
 from routes.uploads import router as uploads_router
+from routes.permissions import router as permissions_router
 
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
+api_router.include_router(permissions_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(employees_router)
 api_router.include_router(settings_router)

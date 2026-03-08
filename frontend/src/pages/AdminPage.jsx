@@ -1,14 +1,8 @@
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
-  LayoutDashboard,
-  Users,
-  Activity,
-  Settings,
-  Menu,
-  Map as MapIcon,
-  Calendar,
-  ShieldAlert,
+  LayoutDashboard, Users, Activity, Settings, Menu,
+  Map as MapIcon, Calendar, ShieldAlert, Shield,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -19,6 +13,7 @@ import SidebarManager from "./admin/SidebarManager";
 import MapManager from "./admin/MapManager";
 import SeasonManager from "./admin/SeasonManager";
 import ProhibitedItemsManager from "./admin/ProhibitedItemsManager";
+import PermissionsManager from "./admin/PermissionsManager";
 
 export default function AdminPage() {
   const { language } = useLanguage();
@@ -45,7 +40,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-8 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-9 h-auto p-1">
           <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
@@ -53,6 +48,10 @@ export default function AdminPage() {
           <TabsTrigger value="users" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Users className="w-5 h-5" />
             <span className="text-xs">{language === 'ar' ? 'المستخدمون' : 'Users'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="permissions-tab">
+            <Shield className="w-5 h-5" />
+            <span className="text-xs">{language === 'ar' ? 'الصلاحيات' : 'Permissions'}</span>
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Activity className="w-5 h-5" />
@@ -90,6 +89,10 @@ export default function AdminPage() {
 
         <TabsContent value="activity" className="mt-6">
           <ActivityLog />
+        </TabsContent>
+
+        <TabsContent value="permissions" className="mt-6">
+          <PermissionsManager />
         </TabsContent>
 
         <TabsContent value="season" className="mt-6">

@@ -152,15 +152,13 @@ Arabic (العربية)
 - Admin: admin@crowd.sa / admin123
 
 ## Upcoming Tasks (Backlog)
-- **P0 (مهمة جداً): إعادة هيكلة نظام تعيين الموظفين**
-  - التحول من `employee.location` (نص واحد) إلى `zone.employee_ids[]` (قائمة في الجلسة)
-  - موظف واحد يغطي أكثر من منطقة في نفس الجولة ✅
-  - منطقة واحدة بأكثر من موظف ✅
-  - التوزيع مرتبط بالجلسة (محلي) وليس بالموظف عالمياً
-  - واجهة: [ط-32 ✕] [ط-33 ✕] [+ إضافة موقع] للموظف + عرض موظفي المنطقة مع حذف فردي
-- P0: حذف جولة صلاة (delete prayer session button)
+- **P0 (منجز): RBAC System** — صلاحيات مرنة لكل دور مع Checklist UI في لوحة الأدمن ✅
+- **P0 (منجز): زر حذف جولة صلاة** — حذف + إعادة بدء ✅
+- **P0 (منجز): M2M للبوابات** — EmployeesTab مُحدَّث بنظام assigned_employee_ids ✅
+- P0: عمود الصلاحيات (role dropdown) في جدول الموظفين يحتاج تحسين ربط user_role
+- P1: صفحة جلسات يومية لإدارة التخطيط وباقي الإدارات
 - P1: Professional Gate Management View - Compact Table + Grouped by Plaza (200+ gates)
-- P1: Advanced Role Hierarchy (5-level RBAC)
+- P1: تطبيق RBAC على المكونات (hasPermission checks)
 - P1: Live Haram Map (unified real-time heatmap)
 - P1: Smart Alert System with escalations
 - P1: Tour Mode for Gates (mobile flashcard UI)

@@ -67,13 +67,15 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
     elif department and user["role"] in ["system_admin", "general_manager", "monitoring_team"]:
         query["department"] = department
     employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
-    # إضافة حالة الحساب لكل موظف
+    # إضافة حالة الحساب والدور لكل موظف
     for emp in employees:
         if emp.get("user_id"):
-            u = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "account_status": 1})
+            u = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "account_status": 1, "role": 1})
             emp["account_status"] = u.get("account_status", "no_account") if u else "no_account"
+            emp["user_role"] = u.get("role", "field_staff") if u else "field_staff"
         else:
             emp["account_status"] = "no_account"
+            emp["user_role"] = None
     return employees
 
 

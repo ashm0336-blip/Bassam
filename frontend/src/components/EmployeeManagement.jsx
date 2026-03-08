@@ -353,8 +353,24 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 // ── Main Component ───────────────────────────────────────────────
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
-  const { user, isReadOnly } = useAuth();
+  const { user, isReadOnly, hasPermission } = useAuth();
   const isAr = language === 'ar';
+
+  // Can this user change roles?
+  const canChangeRoles = user?.role === 'system_admin' ||
+    user?.role === 'general_manager' ||
+    (user?.role === 'department_manager' && hasPermission?.('change_roles'));
+
+  // Roles this user can assign (can't assign >= own level)
+  const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
+  const myLevel = ROLE_HIERARCHY[user?.role] || 0;
+  const ASSIGNABLE_ROLES = [
+    { value: 'general_manager',    ar: 'مدير عام',       level: 4 },
+    { value: 'department_manager', ar: 'مدير إدارة',     level: 3 },
+    { value: 'shift_supervisor',   ar: 'مشرف وردية',    level: 2 },
+    { value: 'field_staff',        ar: 'موظف ميداني',   level: 1 },
+    { value: 'admin_staff',        ar: 'موظف إداري',    level: 1 },
+  ].filter(r => r.level < myLevel);
 
   const [employees, setEmployees]           = useState([]);
   const [gates, setGates]                   = useState([]);
@@ -587,6 +603,26 @@ export default function EmployeeManagement({ department }) {
     }
   };
 
+  // Change employee role
+  const handleChangeRole = async (emp, newRole) => {
+    if (!emp.user_id) {
+      toast.error(isAr ? "يجب تفعيل حساب الموظف أولاً" : "Activate account first");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `${API}/users/${emp.user_id}/role`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(res.data?.message || "تم تغيير الدور ✅");
+      fetchEmployees();
+    } catch(e) {
+      toast.error(e.response?.data?.detail || "فشل تغيير الدور");
+    }
+  };
+
   const statistics = useMemo(() => {
     const total     = mergedEmployees.length;
     const active    = mergedEmployees.filter(e=>e.is_active).length;
@@ -758,6 +794,14 @@ export default function EmployeeManagement({ department }) {
                   <TableHead className="text-center font-semibold w-20">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 mx-auto" title={isAr?'الحساب':'Account'}/>
                   </TableHead>
+                  {canChangeRoles && (
+                    <TableHead className="text-center font-semibold w-28">
+                      <div className="flex items-center justify-center gap-1">
+                        <Shield className="w-3.5 h-3.5 text-violet-500"/>
+                        <span className="text-[11px]">{isAr?'الصلاحيات':'Role'}</span>
+                      </div>
+                    </TableHead>
+                  )}
                   <TableHead className="text-center font-semibold w-12">
                     <MoreVertical className="w-3.5 h-3.5 text-slate-400 mx-auto" title={isAr?'إجراءات':'Actions'}/>
                   </TableHead>
@@ -893,6 +937,55 @@ export default function EmployeeManagement({ department }) {
                       <AccountStatusIcon emp={emp} canEdit={canEdit}
                         handleAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
+
+                    {/* Role / Permissions — admin & gm only */}
+                    {canChangeRoles && (
+                      <TableCell className="text-center">
+                        {emp.user_id ? (() => {
+                          const ROLE_COLORS = {
+                            general_manager:    '#7c3aed',
+                            department_manager: '#1d4ed8',
+                            shift_supervisor:   '#0f766e',
+                            field_staff:        '#047857',
+                            admin_staff:        '#64748b',
+                          };
+                          const ROLE_LABELS = {
+                            general_manager:    'مدير عام',
+                            department_manager: 'مدير إدارة',
+                            shift_supervisor:   'مشرف وردية',
+                            field_staff:        'موظف ميداني',
+                            admin_staff:        'موظف إداري',
+                          };
+                          const currentRole = emp.user_role || 'field_staff';
+                          return ASSIGNABLE_ROLES.length > 0 ? (
+                            <Select value={currentRole}
+                              onValueChange={(newRole) => handleChangeRole(emp, newRole)}>
+                              <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[90px] justify-center"
+                                style={{ color: ROLE_COLORS[currentRole] }}
+                                data-testid={`role-select-${emp.id}`}>
+                                <SelectValue/>
+                              </SelectTrigger>
+                              <SelectContent dir="rtl">
+                                {ASSIGNABLE_ROLES.map(r => (
+                                  <SelectItem key={r.value} value={r.value} className="text-[11px]">
+                                    <div className="flex items-center gap-1.5">
+                                      <Shield className="w-3 h-3" style={{ color: ROLE_COLORS[r.value] }}/>
+                                      {r.ar}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
+                              {ROLE_LABELS[currentRole] || currentRole}
+                            </span>
+                          );
+                        })() : (
+                          <span className="text-[9px] text-slate-400" title="فعّل الحساب أولاً">—</span>
+                        )}
+                      </TableCell>
+                    )}
 
                     {/* Actions — ⋮ dropdown */}
                     <TableCell className="text-center">

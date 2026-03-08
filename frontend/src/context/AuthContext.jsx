@@ -50,8 +50,17 @@ export const AuthProvider = ({ children }) => {
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setToken(access_token);
-      setUser({ ...userData, must_change_pin: !!must_change_pin });
-      
+
+      // Fetch effective permissions
+      let permissions = [];
+      try {
+        const permRes = await axios.get(`${API}/auth/my-permissions`, {
+          headers: { Authorization: `Bearer ${access_token}` }
+        });
+        permissions = permRes.data.permissions || [];
+      } catch {}
+
+      setUser({ ...userData, must_change_pin: !!must_change_pin, permissions });
       return { success: true, must_change_pin };
     } catch (error) {
       return { 
@@ -59,6 +68,22 @@ export const AuthProvider = ({ children }) => {
         error: error.response?.data?.detail || 'فشل تسجيل الدخول' 
       };
     }
+  };
+
+  const hasPermission = (permission) => {
+    if (!user) return false;
+    if (user.role === 'system_admin') return true;
+    return (user.permissions || []).includes(permission);
+  };
+
+  const refreshPermissions = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API}/auth/my-permissions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => prev ? { ...prev, permissions: res.data.permissions || [] } : prev);
+    } catch {}
   };
 
   const logout = () => {
@@ -101,18 +126,10 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, 
-      token, 
-      loading, 
-      login, 
-      logout,
-      setUser,
-      isAdmin,
-      isGeneralManager,
-      canManageDepartment,
-      canViewDepartment,
-      canAddAlerts,
-      isReadOnly,
+      user, token, loading, login, logout, setUser,
+      isAdmin, isGeneralManager,
+      canManageDepartment, canViewDepartment, canAddAlerts,
+      isReadOnly, hasPermission, refreshPermissions,
       isAuthenticated: !!user 
     }}>
       {children}
