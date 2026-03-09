@@ -58,11 +58,6 @@ const PERM_TREE = [
     { key: "manage_maps" },
     { key: "manage_shifts" },
   ]},
-  { key: "_reports", icon: BarChart3, color: "#7c3aed", label_ar: "التقارير", children: [
-    { key: "view_reports" },
-    { key: "export_reports" },
-    { key: "compare_sessions" },
-  ]},
 ];
 
 export default function PermissionsManager() {
