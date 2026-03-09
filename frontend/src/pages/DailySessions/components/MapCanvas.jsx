@@ -166,7 +166,7 @@ export function MapCanvas({
       setRectStart(pos); setRectEnd(pos);
     } else if (mapMode === "freehand") {
       setIsDrawingFreehand(true); setFreehandPoints([pos]);
-    } else if (mapMode === "edit" && activeSession?.status === "draft") {
+    } else if (mapMode === "edit" && activeSession?.status === "draft" && !readOnly) {
       if (selectedZoneId) {
         const zone = sessionZones.find(z => z.id === selectedZoneId);
         if (zone?.polygon_points) {
@@ -317,7 +317,7 @@ export function MapCanvas({
         const isDoubleTap = (now - lastTapRef.current.time) < 350 && lastTapRef.current.zoneId === (tappedZone?.id ?? null);
         lastTapRef.current = { time: now, zoneId: tappedZone?.id ?? null };
 
-        if (isDoubleTap && tappedZone && activeSession?.status === "draft") {
+        if (isDoubleTap && tappedZone && activeSession?.status === "draft" && !readOnly) {
           // Double-tap → select zone + show floating toolbar (open dialog via toolbar)
           setMapMode("edit");
           setSelectedZoneId(tappedZone.id);
@@ -353,7 +353,7 @@ export function MapCanvas({
     if (mapMode === "draw" && activeSession?.status === "draft") {
       if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
       addDrawingPoint({ x: pos.x, y: pos.y });
-    } else if (mapMode === "edit" && activeSession?.status === "draft") {
+    } else if (mapMode === "edit" && activeSession?.status === "draft" && !readOnly) {
       // Find which zone was clicked (zone-level onClick removed, handled here)
       let found = null;
       for (const zone of sessionZones) {
@@ -366,7 +366,7 @@ export function MapCanvas({
   // Double-click on vertex to delete it
   const handleDoubleClickVertex = (e, zoneId, pointIndex) => {
     e.stopPropagation();
-    if (activeSession?.status !== "draft") return;
+    if (activeSession?.status !== "draft" || readOnly) return;
     const zone = sessionZones.find(z => z.id === zoneId);
     if (!zone?.polygon_points || zone.polygon_points.length <= 3) return; // Keep minimum 3 points
     handleDeletePoint(zoneId, pointIndex);
@@ -381,7 +381,7 @@ export function MapCanvas({
     : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? (isPanning ? "grabbing" : draggingPoint !== null || isRotating || isDraggingZone ? "grabbing" : "grab") : (isPanning ? "grabbing" : "grab"));
 
   const selectedZoneData = selectedZoneId ? sessionZones.find(z => z.id === selectedZoneId) : null;
-  const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
+  const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && !readOnly && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
 
   return (
     <Card className="overflow-hidden border-0 shadow-none rounded-none h-full">
