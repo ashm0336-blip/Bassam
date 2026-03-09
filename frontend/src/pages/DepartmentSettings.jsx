@@ -16,6 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import GatesDataManagement from "@/components/GatesDataManagement";
 import EmployeeManagement from "@/components/EmployeeManagement";
@@ -308,7 +309,7 @@ export default function DepartmentSettings({ department }) {
                     <TableRow>
                       <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                       <TableHead className="text-right">{language === 'ar' ? 'الوقت' : 'Time'}</TableHead>
-                      <TableHead className="text-right">{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
                       <TableHead className="text-center">{language === 'ar' ? 'اللون' : 'Color'}</TableHead>
                       <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                     </TableRow>
@@ -317,9 +318,13 @@ export default function DepartmentSettings({ department }) {
                     {shifts.map((shift) => (
                       <TableRow key={shift.id}>
                         <TableCell className="text-right font-medium">{shift.label}</TableCell>
-                        <TableCell className="text-right">{shift.start_time && shift.end_time ? `${shift.start_time} - ${shift.end_time}` : '-'}</TableCell>
-                        <TableCell className="text-right">{shift.description || '-'}</TableCell>
-                        <TableCell className="text-center"><Badge style={{ backgroundColor: shift.color }}>{shift.label}</Badge></TableCell>
+                        <TableCell className="text-right font-mono text-sm">{shift.start_time && shift.end_time ? `${shift.start_time} - ${shift.end_time}` : '-'}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={shift.description === 'secondary' ? 'outline' : 'default'} className={shift.description === 'secondary' ? 'text-xs' : 'text-xs bg-primary'}>
+                            {shift.description === 'secondary' ? (language === 'ar' ? 'فرعية' : 'Secondary') : (language === 'ar' ? 'رئيسية' : 'Primary')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center"><Badge style={{ backgroundColor: shift.color }} className="text-white text-xs">{shift.label}</Badge></TableCell>
                         <TableCell className="text-center">
                           {!isReadOnly() && (
                             <div className="flex items-center gap-2 justify-center">
@@ -418,12 +423,26 @@ export default function DepartmentSettings({ department }) {
                 </>
               )}
 
-              {/* Description */}
-              <div>
-                <Label htmlFor="description">{language === 'ar' ? 'الوصف (اختياري)' : 'Description (Optional)'}</Label>
-                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="mt-1"
-                  placeholder={activeTab === 'shifts' ? (language === 'ar' ? 'مثال: وردية صباحية' : 'e.g. Morning shift') : ''} />
-              </div>
+              {/* Description / Shift Category */}
+              {activeTab === 'shifts' ? (
+                <div>
+                  <Label className="text-sm font-medium">{language === 'ar' ? 'فئة الوردية' : 'Shift Category'}</Label>
+                  <Select value={formData.description || 'primary'} onValueChange={(v) => setFormData({ ...formData, description: v })}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="primary">{language === 'ar' ? 'رئيسية' : 'Primary'}</SelectItem>
+                      <SelectItem value="secondary">{language === 'ar' ? 'فرعية' : 'Secondary'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="description">{language === 'ar' ? 'الوصف (اختياري)' : 'Description (Optional)'}</Label>
+                  <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="mt-1" />
+                </div>
+              )}
 
               {/* Order - only for non-shifts */}
               {activeTab !== 'shifts' && (
