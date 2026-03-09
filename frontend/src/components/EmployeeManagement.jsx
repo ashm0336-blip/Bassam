@@ -135,7 +135,7 @@ function RestDaysBadges({ restDays=[], todayAr }) {
 }
 
 // ── Smart account status icon cell (no text) ──────────────────
-function AccountStatusIcon({ emp, canEdit, handleAccountAction, isAr }) {
+function AccountStatusIcon({ emp, canManageAccounts, canResetPins, handleAccountAction, isAr }) {
   const acStatus = emp.account_status;
   if (!emp.national_id) return (
     <div className="flex items-center justify-center"
@@ -156,14 +156,14 @@ function AccountStatusIcon({ emp, canEdit, handleAccountAction, isAr }) {
   const { Icon } = cfg;
   return (
     <div className="flex items-center gap-1 justify-center">
-      <button type="button" disabled={!canEdit || acStatus === 'terminated'}
-        onClick={() => canEdit && cfg.action && handleAccountAction(emp.id, cfg.action, emp.name)}
+      <button type="button" disabled={!canManageAccounts || acStatus === 'terminated'}
+        onClick={() => canManageAccounts && cfg.action && handleAccountAction(emp.id, cfg.action, emp.name)}
         title={cfg.tip} data-testid={`account-icon-${emp.id}`}
         className={`w-7 h-7 rounded-full flex items-center justify-center ring-1 transition-all ${cfg.cls}
-          ${canEdit && cfg.action ? 'cursor-pointer hover:scale-110 hover:shadow-sm' : 'cursor-default'}`}>
+          ${canManageAccounts && cfg.action ? 'cursor-pointer hover:scale-110 hover:shadow-sm' : 'cursor-default'}`}>
         <Icon className="w-3.5 h-3.5" />
       </button>
-      {canEdit && (acStatus === 'active' || acStatus === 'frozen') && (
+      {canResetPins && (acStatus === 'active' || acStatus === 'frozen') && (
         <button type="button"
           onClick={() => handleAccountAction(emp.id,'reset-pin',emp.name)}
           title={isAr?'إعادة تعيين PIN':'Reset PIN'}
@@ -177,8 +177,8 @@ function AccountStatusIcon({ emp, canEdit, handleAccountAction, isAr }) {
 }
 
 // ── Actions ⋮ Dropdown ────────────────────────────────────────
-function ActionsMenu({ emp, canEdit, handleOpenDialog, handleAccountAction, setSelectedEmployee, setDeleteDialogOpen, isAr }) {
-  if (!canEdit) return null;
+function ActionsMenu({ emp, canEdit, canDeleteEmp, canManageAccounts, canResetPins, handleOpenDialog, handleAccountAction, setSelectedEmployee, setDeleteDialogOpen, isAr }) {
+  if (!canEdit && !canDeleteEmp && !canManageAccounts) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -188,14 +188,17 @@ function ActionsMenu({ emp, canEdit, handleOpenDialog, handleAccountAction, setS
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" side="bottom" className="w-48 font-cairo" dir="rtl">
-        <DropdownMenuItem onClick={() => handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
-          <Edit className="w-4 h-4 ml-2 text-slate-500"/>{isAr?'تعديل البيانات':'Edit'}
-        </DropdownMenuItem>
-        {(emp.account_status==='active'||emp.account_status==='frozen') && (
+        {canEdit && (
+          <DropdownMenuItem onClick={() => handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
+            <Edit className="w-4 h-4 ml-2 text-slate-500"/>{isAr?'تعديل البيانات':'Edit'}
+          </DropdownMenuItem>
+        )}
+        {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
           <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
             <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>{isAr?'إعادة تعيين PIN':'Reset PIN'}
           </DropdownMenuItem>
         )}
+        {canManageAccounts && <>
         <DropdownMenuSeparator/>
         {emp.account_status==='active' && (
           <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)} className="text-blue-600 focus:text-blue-700">
@@ -212,10 +215,13 @@ function ActionsMenu({ emp, canEdit, handleOpenDialog, handleAccountAction, setS
             <ShieldOff className="w-4 h-4 ml-2"/>{isAr?'إنهاء الخدمة':'Terminate Service'}
           </DropdownMenuItem>
         )}
+        </>}
+        {canDeleteEmp && <>
         <DropdownMenuSeparator/>
         <DropdownMenuItem onClick={()=>{setSelectedEmployee(emp);setDeleteDialogOpen(true);}} className="text-destructive focus:text-destructive">
           <Trash2 className="w-4 h-4 ml-2"/>{isAr?'حذف الموظف نهائياً':'Delete Employee'}
         </DropdownMenuItem>
+        </>}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -354,13 +360,8 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 // ── Main Component ───────────────────────────────────────────────
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
-  const { user, isReadOnly, hasPermission } = useAuth();
+  const { user, isReadOnly, hasPermission, canWrite } = useAuth();
   const isAr = language === 'ar';
-
-  // Can this user change roles?
-  const canChangeRoles = user?.role === 'system_admin' ||
-    user?.role === 'general_manager' ||
-    (user?.role === 'department_manager' && hasPermission?.('change_roles'));
 
   // Roles this user can assign (can't assign >= own level)
   const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
@@ -645,7 +646,12 @@ export default function EmployeeManagement({ department }) {
     return { total, active, onRest, permanent, seasonal, temporary, fieldOps, tasked, shiftStats, coverage };
   }, [mergedEmployees, shifts]);
 
-  const canEdit = !isReadOnly() && (!schedule || schedule.status!=='archived');
+  const canEdit = canWrite('edit_employees') && (!schedule || schedule.status!=='archived');
+  const canAddEmp = canWrite('add_employees');
+  const canDeleteEmp = canWrite('delete_employees');
+  const canManageAccounts = canWrite('manage_accounts');
+  const canResetPins = canWrite('reset_pins');
+  const canChangeRoles = canWrite('change_roles');
 
   if(loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary"/></div>;
 
@@ -657,7 +663,7 @@ export default function EmployeeManagement({ department }) {
       <MonthBar
         selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} schedule={schedule}
         onCreateSchedule={handleCreateSchedule} onApprove={handleApproveSchedule}
-        onDelete={handleDeleteSchedule} isReadOnly={isReadOnly()} language={language}
+        onDelete={handleDeleteSchedule} isReadOnly={!canEdit} language={language}
       />
 
       {/* Employee Table only — stats moved to نظرة عامة */}
@@ -671,7 +677,7 @@ export default function EmployeeManagement({ department }) {
               : (isAr?'البيانات الأساسية للموظفين':'Base employee data')}
           </p>
         </div>
-        {!isReadOnly() && (
+        {canAddEmp && (
           <Button size="sm" onClick={()=>handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
             <Plus className="w-4 h-4 ml-1"/>{isAr?'موظف جديد':'New'}
           </Button>
@@ -920,7 +926,7 @@ export default function EmployeeManagement({ department }) {
 
                     {/* Account — smart icon */}
                     <TableCell className="text-center">
-                      <AccountStatusIcon emp={emp} canEdit={canEdit}
+                      <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts} canResetPins={canResetPins}
                         handleAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
 
@@ -976,6 +982,7 @@ export default function EmployeeManagement({ department }) {
                     {/* Actions — ⋮ dropdown */}
                     <TableCell className="text-center">
                       <ActionsMenu emp={emp} canEdit={canEdit}
+                        canDeleteEmp={canDeleteEmp} canManageAccounts={canManageAccounts} canResetPins={canResetPins}
                         handleOpenDialog={handleOpenDialog}
                         handleAccountAction={handleAccountAction}
                         setSelectedEmployee={setSelectedEmployee}
