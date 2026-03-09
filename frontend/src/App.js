@@ -40,8 +40,8 @@ function ConditionalDashboard() {
     return <ManagerDashboard />;
   }
   
-  // Department Managers see their department page directly
-  if (user?.role === 'department_manager' && user?.department) {
+  // Department users (manager, supervisor, staff) see their department page
+  if (user?.department && user?.role !== 'system_admin') {
     const departmentRoutes = {
       'planning': '/planning',
       'haram_map': '/haram-map',

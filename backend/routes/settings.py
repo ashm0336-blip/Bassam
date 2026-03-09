@@ -207,7 +207,7 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             if user_role in ["system_admin", "general_manager", "monitoring_team"]:
                 filtered_items.append(item)
                 accessible_parent_ids.add(item.get("id"))
-            elif user_role == "department_manager" and user_dept == item.get("department"):
+            elif user_dept and user_dept == item.get("department"):
                 filtered_items.append(item)
                 accessible_parent_ids.add(item.get("id"))
         else:
