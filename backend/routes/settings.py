@@ -190,6 +190,40 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     items = await db.sidebar_menu.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(1000)
     user_role = user.get("role")
     user_dept = user.get("department")
+
+    # Get user's permissions for page-level filtering
+    user_permissions = {}
+    if user_role == "system_admin":
+        user_permissions = {k: "write" for k in ["page_overview", "page_employees", "page_daily_log", "page_transactions", "page_settings"]}
+    else:
+        from routes.permissions import _normalize_permissions, DEFAULT_PERMISSIONS
+        doc = await db.role_permissions.find_one({"role": user_role}, {"_id": 0})
+        if doc:
+            user_permissions = _normalize_permissions(doc.get("permissions", {}))
+        else:
+            user_permissions = DEFAULT_PERMISSIONS.get(user_role, {})
+
+    # Map sidebar hrefs to page permissions
+    PAGE_PERM_MAP = {
+        "overview": "page_overview",
+        "employees": "page_employees",
+        "daily-sessions": "page_daily_log",
+        "daily-gates": "page_daily_log",
+        "transactions": "page_transactions",
+        "settings": "page_settings",
+    }
+
+    def _has_page_perm(href):
+        """Check if user has permission for this page"""
+        if user_role == "system_admin":
+            return True
+        if not href:
+            return True
+        for key, perm in PAGE_PERM_MAP.items():
+            if key in href:
+                return perm in user_permissions
+        return True  # No mapping = allow
+
     filtered_items = []
     accessible_parent_ids = set()
     for item in items:
@@ -213,9 +247,12 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         else:
             filtered_items.append(item)
             accessible_parent_ids.add(item.get("id"))
+
+    # Filter children by parent access AND page permissions
     for item in items:
         if item.get("parent_id") and item.get("parent_id") in accessible_parent_ids:
-            filtered_items.append(item)
+            if _has_page_perm(item.get("href", "")):
+                filtered_items.append(item)
     return filtered_items
 
 

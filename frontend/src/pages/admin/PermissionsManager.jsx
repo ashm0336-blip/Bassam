@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
-  Users, Calendar, MapPin, Activity, BarChart3, Bell, Settings,
+  Users, Calendar, MapPin, Activity, BarChart3, Bell, Settings, LayoutDashboard,
   RefreshCw, Save, RotateCcw, Shield, ShieldCheck,
   ChevronDown, ChevronUp, AlertTriangle, Loader2,
   History, Eye, Pencil, X as XIcon,
@@ -21,8 +21,8 @@ const ROLE_CONFIG = {
   admin_staff:        { ar: "موظف إداري",      color: "#64748b", bg: "#f8fafc", level: 1 },
 };
 
-const GROUP_ICONS = { employees: Users, sessions: Calendar, field: MapPin, density: Activity, reports: BarChart3, alerts: Bell, settings: Settings };
-const GROUP_COLORS = { employees: "#1d4ed8", sessions: "#047857", field: "#0f766e", density: "#d97706", reports: "#7c3aed", alerts: "#dc2626", settings: "#64748b" };
+const GROUP_ICONS = { pages: LayoutDashboard, employees: Users, sessions: Calendar, field: MapPin, density: Activity, reports: BarChart3, alerts: Bell, settings: Settings };
+const GROUP_COLORS = { pages: "#0891b2", employees: "#1d4ed8", sessions: "#047857", field: "#0f766e", density: "#d97706", reports: "#7c3aed", alerts: "#dc2626", settings: "#64748b" };
 
 const LEVEL_CONFIG = {
   none:  { ar: "لا شي", icon: XIcon,   color: "text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", activeBg: "bg-slate-200 dark:bg-slate-700" },

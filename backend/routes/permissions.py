@@ -13,6 +13,13 @@ router = APIRouter()
 
 # ─── All permissions with Arabic labels ────────────────────────
 ALL_PERMISSIONS = {
+    # Pages & Navigation
+    "page_overview":       {"ar": "صفحة نظرة عامة",                  "group": "pages",     "danger": False},
+    "page_employees":      {"ar": "صفحة الموظفين",                   "group": "pages",     "danger": False},
+    "page_daily_log":      {"ar": "صفحة السجل اليومي",               "group": "pages",     "danger": False},
+    "page_transactions":   {"ar": "صفحة المعاملات",                  "group": "pages",     "danger": False},
+    "page_settings":       {"ar": "صفحة إعدادات القسم",              "group": "pages",     "danger": False},
+
     # Employee Management
     "add_employees":       {"ar": "إضافة موظفين",                   "group": "employees", "danger": False},
     "edit_employees":      {"ar": "تعديل بيانات الموظفين",           "group": "employees", "danger": False},
@@ -55,6 +62,7 @@ ALL_PERMISSIONS = {
 }
 
 GROUP_LABELS = {
+    "pages":     {"ar": "الصفحات والتبويبات", "icon": "LayoutDashboard"},
     "employees": {"ar": "إدارة الموظفين",     "icon": "Users"},
     "sessions":  {"ar": "الجلسات اليومية",    "icon": "Calendar"},
     "field":     {"ar": "التوزيع الميداني",   "icon": "MapPin"},
@@ -67,6 +75,8 @@ GROUP_LABELS = {
 # Default permissions per role — format: {"perm": "read"|"write"}
 DEFAULT_PERMISSIONS = {
     "general_manager": {
+        "page_overview": "read", "page_employees": "read", "page_daily_log": "read",
+        "page_transactions": "read", "page_settings": "read",
         "view_daily_sessions": "read",
         "create_session": "read", "approve_session": "read",
         "start_prayer_round": "read", "complete_prayer_round": "read",
@@ -77,6 +87,8 @@ DEFAULT_PERMISSIONS = {
         "add_employees": "read", "edit_employees": "read",
     },
     "department_manager": {
+        "page_overview": "write", "page_employees": "write", "page_daily_log": "write",
+        "page_transactions": "write", "page_settings": "write",
         "add_employees": "write", "edit_employees": "write", "delete_employees": "write",
         "manage_accounts": "write", "reset_pins": "write",
         "view_daily_sessions": "write", "create_session": "write",
@@ -93,6 +105,7 @@ DEFAULT_PERMISSIONS = {
         "manage_shifts": "write",
     },
     "shift_supervisor": {
+        "page_overview": "read", "page_daily_log": "read",
         "view_daily_sessions": "read",
         "start_prayer_round": "write", "complete_prayer_round": "write",
         "skip_prayer_round": "write",
@@ -103,11 +116,13 @@ DEFAULT_PERMISSIONS = {
         "send_alert": "write", "receive_alerts": "read",
     },
     "field_staff": {
+        "page_overview": "read",
         "enter_density": "write",
         "send_alert": "write",
         "view_coverage_map": "read",
     },
     "admin_staff": {
+        "page_overview": "read", "page_transactions": "read",
         "view_reports": "read",
         "view_density_reports": "read",
         "receive_alerts": "read",
