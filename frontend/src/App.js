@@ -1,5 +1,6 @@
 import "@/App.css";
 import { useEffect } from "react";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -228,6 +229,7 @@ function App() {
             <HeaderProvider>
               <BrowserRouter>
                 <AppRoutes />
+                <PWAInstallPrompt />
               </BrowserRouter>
               <Toaster position="top-left" />
             </HeaderProvider>
