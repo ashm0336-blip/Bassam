@@ -270,9 +270,11 @@ export default function AdminDashboard() {
                 system_admin: { icon: Shield, color: "bg-red-600" },
                 general_manager: { icon: Briefcase, color: "bg-purple-500" },
                 department_manager: { icon: Briefcase, color: "bg-blue-500" },
+                shift_supervisor: { icon: UserCheck, color: "bg-violet-500" },
                 field_staff: { icon: UserCheck, color: "bg-green-500" },
+                admin_staff: { icon: Briefcase, color: "bg-sky-500" },
                 monitoring_team: { icon: Eye, color: "bg-orange-500" }
-              }[key];
+              }[key] || { icon: Users, color: "bg-gray-500" };
               
               const Icon = roleConfig.icon;
               
