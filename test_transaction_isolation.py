@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class TransactionIsolationTester:
-    def __init__(self, base_url="https://gates-prayer-mgmt.preview.emergentagent.com"):
+    def __init__(self, base_url="https://permission-portal-4.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
