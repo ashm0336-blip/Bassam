@@ -22,7 +22,9 @@ const ROLE_COLORS = {
   system_admin: "#dc2626",
   general_manager: "#9333ea",
   department_manager: "#3b82f6",
+  shift_supervisor: "#7c3aed",
   field_staff: "#22c55e",
+  admin_staff: "#0ea5e9",
   monitoring_team: "#f97316"
 };
 
@@ -30,15 +32,19 @@ const ROLE_LABELS = {
   ar: {
     system_admin: "مسؤول النظام",
     general_manager: "المدير العام",
-    department_manager: "مدير إدارة",
+    department_manager: "مدير الإدارة",
+    shift_supervisor: "مشرف الوردية",
     field_staff: "موظف ميداني",
+    admin_staff: "موظف إداري",
     monitoring_team: "فريق المراقبة"
   },
   en: {
     system_admin: "System Admin",
     general_manager: "General Manager",
     department_manager: "Department Manager",
+    shift_supervisor: "Shift Supervisor",
     field_staff: "Field Staff",
+    admin_staff: "Admin Staff",
     monitoring_team: "Monitoring Team"
   }
 };

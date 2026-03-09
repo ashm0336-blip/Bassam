@@ -126,7 +126,8 @@ export default function SettingsPage() {
     general_manager: 'المدير العام',
     department_manager: 'مدير الإدارة',
     shift_supervisor: 'مشرف الوردية',
-    field_staff: 'عامل ميداني',
+    field_staff: 'موظف ميداني',
+    admin_staff: 'موظف إداري',
     monitoring_team: 'فريق المراقبة',
   };
 
