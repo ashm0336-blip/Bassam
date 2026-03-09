@@ -58,10 +58,11 @@ const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو
 export default function DailyGateSessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
-  const { canWrite } = useAuth();
+  const { canWrite, canRead } = useAuth();
 
   const canCreateSession = canWrite("create_session");
   const canApproveSession = canWrite("approve_session");
+  const canDeleteSession = canWrite("delete_session");
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
@@ -374,7 +375,7 @@ export default function DailyGateSessionsPage() {
             activeSession={activeSession}
             isAr={isAr}
             theme="blue"
-            readOnly={!canCreateSession}
+            readOnly={!canDeleteSession}
             onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
             onDeleteSession={handleDeleteSession}
             onCalendarEmptyClick={canCreateSession 

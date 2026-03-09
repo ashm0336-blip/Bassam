@@ -360,7 +360,12 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 // ── Main Component ───────────────────────────────────────────────
 export default function EmployeeManagement({ department }) {
   const { language } = useLanguage();
-  const { user, isReadOnly, hasPermission, canWrite } = useAuth();
+  const { user, isReadOnly, hasPermission, canWrite, canRead } = useAuth();
+
+  // Permission levels:
+  // none = can't see at all
+  // read = can see data, no edit buttons
+  // write = can see and edit
   const isAr = language === 'ar';
 
   // Roles this user can assign (can't assign >= own level)
@@ -647,11 +652,19 @@ export default function EmployeeManagement({ department }) {
   }, [mergedEmployees, shifts]);
 
   const canEdit = canWrite('edit_employees') && (!schedule || schedule.status!=='archived');
+  const canViewEmp = canRead('edit_employees') || canRead('add_employees');
   const canAddEmp = canWrite('add_employees');
   const canDeleteEmp = canWrite('delete_employees');
   const canManageAccounts = canWrite('manage_accounts');
   const canResetPins = canWrite('reset_pins');
   const canChangeRoles = canWrite('change_roles');
+
+  // If can't even read employees, hide the whole section
+  if (!canViewEmp && user?.role !== 'system_admin') return (
+    <div className="flex items-center justify-center min-h-[300px] text-muted-foreground text-sm">
+      {language === 'ar' ? 'ليس لديك صلاحية لعرض بيانات الموظفين' : 'No permission to view employees'}
+    </div>
+  );
 
   if(loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary"/></div>;
 

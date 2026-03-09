@@ -38,9 +38,9 @@ export default function DailySessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { isDark } = useTheme();
-  const { canWrite } = useAuth();
+  const { canWrite, canRead } = useAuth();
 
-  // Permission checks
+  // Permission checks — write = edit buttons, read = view only, none = hidden
   const canCreateSession = canWrite("create_session");
   const canApproveSession = canWrite("approve_session");
   const canDeleteSession = canWrite("delete_session");
@@ -48,7 +48,9 @@ export default function DailySessionsPage() {
   const canCompletePrayer = canWrite("complete_prayer_round");
   const canSkipPrayer = canWrite("skip_prayer_round");
   const canDistribute = canWrite("distribute_employees");
+  const canViewDistribute = canRead("distribute_employees");
   const canEnterDensity = canWrite("enter_density");
+  const canViewDensity = canRead("enter_density") || canRead("view_density_reports");
 
   // Core state
   const [floors, setFloors] = useState([]);
