@@ -63,10 +63,6 @@ const PERM_TREE = [
     { key: "export_reports" },
     { key: "compare_sessions" },
   ]},
-  { key: "_alerts", icon: Bell, color: "#dc2626", label_ar: "البلاغات", children: [
-    { key: "send_alert" },
-    { key: "receive_alerts" },
-  ]},
 ];
 
 export default function PermissionsManager() {
