@@ -63,7 +63,8 @@ const ICON_MAP = {
 export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMenuId, setExpandedMenuId] = useState(null); // Only one menu can be open at a time
+  const [expandedMenuId, setExpandedMenuId] = useState(null);
+  const [autoExpanded, setAutoExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin, roleChangeAlert, dismissRoleChange } = useAuth();
@@ -103,6 +104,16 @@ export const Layout = () => {
   // Split into primary and secondary navigation
   const navigation = parentItems.filter(item => !item.is_secondary);
   const secondaryNav = parentItems.filter(item => item.is_secondary);
+
+  // Auto-expand department menu for department managers
+  useEffect(() => {
+    if (autoExpanded || !user?.department || user?.role === 'system_admin' || user?.role === 'general_manager') return;
+    const deptParent = parentItems.find(item => item.department === user.department && childrenMap[item.id]?.length > 0);
+    if (deptParent) {
+      setExpandedMenuId(deptParent.id);
+      setAutoExpanded(true);
+    }
+  }, [parentItems.length, user?.department, autoExpanded]);
 
   const toggleMenu = (menuId) => {
     // Close if same menu clicked, otherwise open new one (close others automatically)
