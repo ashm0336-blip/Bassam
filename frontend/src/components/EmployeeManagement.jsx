@@ -6,7 +6,7 @@ import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
-  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical, Activity,
+  KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical, Activity, Tag,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -709,6 +709,14 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'الوردية':'Shift'}</span>
                     </div>
                   </TableHead>
+                  <TableHead className="text-center py-2.5 w-[80px]">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center shadow-sm">
+                        <Tag className="w-4 h-4 text-indigo-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'الفئة':'Type'}</span>
+                    </div>
+                  </TableHead>
                   <TableHead className="text-center py-2.5 w-[210px]">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
@@ -849,6 +857,19 @@ export default function EmployeeManagement({ department }) {
                         <Badge style={{ backgroundColor: shifts.find(s=>s.value===emp.shift)?.color||'#6b7280' }}
                           className="text-white text-[10px]">{emp.shift}</Badge>
                       ) : <span className="text-[10px] text-muted-foreground">-</span>}
+                    </TableCell>
+
+                    {/* Shift Category */}
+                    <TableCell className="text-center">
+                      {(() => {
+                        const shiftData = shifts.find(s => s.value === emp.shift);
+                        const cat = shiftData?.description;
+                        return cat === 'secondary' ? (
+                          <Badge variant="outline" className="text-[10px]">{isAr ? 'فرعية' : 'Sub'}</Badge>
+                        ) : emp.shift ? (
+                          <Badge className="text-[10px] bg-primary">{isAr ? 'رئيسية' : 'Main'}</Badge>
+                        ) : <span className="text-[10px] text-muted-foreground">-</span>;
+                      })()}
                     </TableCell>
 
                     {/* Rest days — compact dots */}
