@@ -179,7 +179,8 @@ export default function DepartmentSettings({ department }) {
     } else {
       setEditMode(false);
       setSelectedItem(null);
-      setFormData({ value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: 0 });
+      const maxOrder = settingType === 'shifts' ? shifts.length + 1 : 0;
+      setFormData({ value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: maxOrder });
     }
     setDialogOpen(true);
   };
@@ -189,9 +190,14 @@ export default function DepartmentSettings({ department }) {
     setSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      const payload = { department, setting_type: activeTab, ...formData };
+      // Auto-generate value from label if empty
+      const submitData = { ...formData };
+      if (!submitData.value && submitData.label) {
+        submitData.value = submitData.label.replace(/\s+/g, '_').toLowerCase();
+      }
+      const payload = { department, setting_type: activeTab, ...submitData };
       if (editMode) {
-        await axios.put(`${API}/${department}/settings/${selectedItem.id}`, formData, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`${API}/${department}/settings/${selectedItem.id}`, submitData, { headers: { Authorization: `Bearer ${token}` } });
         toast.success(language === 'ar' ? "تم التحديث بنجاح" : "Updated successfully");
       } else {
         await axios.post(`${API}/${department}/settings`, payload, { headers: { Authorization: `Bearer ${token}` } });
@@ -343,45 +349,89 @@ export default function DepartmentSettings({ department }) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="font-cairo">{editMode ? (language === 'ar' ? 'تعديل' : 'Edit') : (language === 'ar' ? 'إضافة جديد' : 'Add New')}</DialogTitle>
-            <DialogDescription>{language === 'ar' ? 'املأ المعلومات أدناه' : 'Fill in the information below'}</DialogDescription>
+            <DialogTitle className="font-cairo">
+              {activeTab === 'shifts'
+                ? (editMode ? (language === 'ar' ? 'تعديل الوردية' : 'Edit Shift') : (language === 'ar' ? 'إضافة وردية' : 'Add Shift'))
+                : (editMode ? (language === 'ar' ? 'تعديل' : 'Edit') : (language === 'ar' ? 'إضافة جديد' : 'Add New'))
+              }
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4" dir="rtl">
+              {/* Name */}
               <div>
-                <Label htmlFor="label">{language === 'ar' ? 'الاسم' : 'Name'}</Label>
-                <Input id="label" value={formData.label} onChange={(e) => setFormData({ ...formData, label: e.target.value })} required className="mt-1" />
+                <Label htmlFor="label" className="text-sm font-medium">{language === 'ar' ? (activeTab === 'shifts' ? 'اسم الوردية' : 'الاسم') : 'Name'} *</Label>
+                <Input id="label" value={formData.label} onChange={(e) => setFormData({ ...formData, label: e.target.value })} required className="mt-1"
+                  placeholder={activeTab === 'shifts' ? (language === 'ar' ? 'مثال: الوردية الأولى' : 'e.g. First Shift') : ''} />
               </div>
-              <div>
-                <Label htmlFor="value">{language === 'ar' ? 'القيمة' : 'Value'}</Label>
-                <Input id="value" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} required className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="description">{language === 'ar' ? 'الوصف (اختياري)' : 'Description (Optional)'}</Label>
-                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="mt-1" />
-              </div>
+
+              {/* Value - hidden for shifts, shown for others */}
+              {activeTab !== 'shifts' && (
+                <div>
+                  <Label htmlFor="value">{language === 'ar' ? 'القيمة' : 'Value'} *</Label>
+                  <Input id="value" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} required className="mt-1" />
+                </div>
+              )}
+
+              {/* Shift-specific fields */}
               {activeTab === 'shifts' && (
                 <>
+                  {/* Time range */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="start_time">{language === 'ar' ? 'وقت البداية' : 'Start Time'}</Label>
-                      <Input id="start_time" type="time" value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className="mt-1" />
+                      <Label htmlFor="start_time" className="text-sm font-medium">{language === 'ar' ? 'وقت البداية' : 'Start Time'}</Label>
+                      <Input id="start_time" type="time" value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className="mt-1 text-center font-mono text-lg" dir="ltr" />
                     </div>
                     <div>
-                      <Label htmlFor="end_time">{language === 'ar' ? 'وقت النهاية' : 'End Time'}</Label>
-                      <Input id="end_time" type="time" value={formData.end_time} onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} className="mt-1" />
+                      <Label htmlFor="end_time" className="text-sm font-medium">{language === 'ar' ? 'وقت النهاية' : 'End Time'}</Label>
+                      <Input id="end_time" type="time" value={formData.end_time} onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} className="mt-1 text-center font-mono text-lg" dir="ltr" />
                     </div>
                   </div>
+
+                  {/* Duration badge */}
+                  {formData.start_time && formData.end_time && (() => {
+                    const [sh, sm] = formData.start_time.split(':').map(Number);
+                    const [eh, em] = formData.end_time.split(':').map(Number);
+                    let mins = (eh * 60 + em) - (sh * 60 + sm);
+                    if (mins <= 0) mins += 24 * 60;
+                    const hours = Math.floor(mins / 60);
+                    const remMins = mins % 60;
+                    return (
+                      <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                        <span className="text-sm font-medium text-primary">
+                          {language === 'ar' ? 'المدة:' : 'Duration:'} {hours} {language === 'ar' ? 'ساعة' : 'hrs'}{remMins > 0 ? ` ${remMins} ${language === 'ar' ? 'دقيقة' : 'min'}` : ''}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Color */}
                   <div>
-                    <Label htmlFor="color">{language === 'ar' ? 'اللون' : 'Color'}</Label>
-                    <Input id="color" type="color" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} className="mt-1 h-10" />
+                    <Label className="text-sm font-medium">{language === 'ar' ? 'لون الوردية' : 'Shift Color'}</Label>
+                    <div className="flex items-center gap-3 mt-1">
+                      <Input type="color" value={formData.color} onChange={(e) => setFormData({ ...formData, color: e.target.value })} className="w-12 h-10 p-1 cursor-pointer" />
+                      <div className="flex-1 h-10 rounded-lg border flex items-center justify-center text-sm font-medium" style={{ backgroundColor: formData.color + '20', color: formData.color, borderColor: formData.color + '40' }}>
+                        {formData.label || (language === 'ar' ? 'معاينة' : 'Preview')}
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
+
+              {/* Description */}
               <div>
-                <Label htmlFor="order">{language === 'ar' ? 'الترتيب' : 'Order'}</Label>
-                <Input id="order" type="number" value={formData.order} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} className="mt-1" />
+                <Label htmlFor="description">{language === 'ar' ? 'الوصف (اختياري)' : 'Description (Optional)'}</Label>
+                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="mt-1"
+                  placeholder={activeTab === 'shifts' ? (language === 'ar' ? 'مثال: وردية صباحية' : 'e.g. Morning shift') : ''} />
               </div>
+
+              {/* Order - only for non-shifts */}
+              {activeTab !== 'shifts' && (
+                <div>
+                  <Label htmlFor="order">{language === 'ar' ? 'الترتيب' : 'Order'}</Label>
+                  <Input id="order" type="number" value={formData.order} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} className="mt-1" />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
