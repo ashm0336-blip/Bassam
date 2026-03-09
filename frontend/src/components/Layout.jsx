@@ -73,23 +73,12 @@ export const Layout = () => {
   const { menuItems, loading } = useSidebar();
   const { headerSettings } = useHeader();
 
-  // Convert menu items from API to navigation format
+  // Convert menu items from API — backend already filters by role/department/permissions
   const allMenuItems = menuItems.map(item => ({
     ...item,
     name: language === 'ar' ? item.name_ar : item.name_en,
     icon: ICON_MAP[item.icon] || LayoutDashboard,
-  })).filter(item => {
-    if (!item.is_active) return false;
-    // Admin sees everything
-    if (user?.role === 'system_admin') return true;
-    // Hide admin-only items from non-admins
-    if (item.admin_only) return false;
-    // General manager sees all departments
-    if (user?.role === 'general_manager' || user?.role === 'monitoring_team') return true;
-    // Department users see: their department items + public items (no department)
-    if (item.department && item.department !== user?.department) return false;
-    return true;
-  });
+  })).filter(item => item.is_active);
 
   // Organize into parent and children
   const parentItems = allMenuItems.filter(item => !item.parent_id);
