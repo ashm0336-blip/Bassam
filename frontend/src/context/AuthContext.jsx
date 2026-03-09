@@ -31,7 +31,7 @@ export const useAuth = () => {
   return context;
 };
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL = 60 * 1000; // كل دقيقة
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
