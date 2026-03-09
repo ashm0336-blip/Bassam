@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Users, Calendar, MapPin, Activity, BarChart3, Bell, Settings, LayoutDashboard,
-  RefreshCw, Save, RotateCcw, Shield, ShieldCheck,
+  RefreshCw, Save, RotateCcw, Shield, ShieldCheck, FileText,
   ChevronDown, ChevronUp, AlertTriangle, Loader2,
-  History, Eye, Pencil, X as XIcon,
+  History, Eye, Pencil, X as XIcon, Layers,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,53 @@ const ROLE_CONFIG = {
   admin_staff:        { ar: "موظف إداري",      color: "#64748b", bg: "#f8fafc", level: 1 },
 };
 
-const GROUP_ICONS = { pages: LayoutDashboard, employees: Users, sessions: Calendar, field: MapPin, density: Activity, reports: BarChart3, alerts: Bell, settings: Settings };
-const GROUP_COLORS = { pages: "#0891b2", employees: "#1d4ed8", sessions: "#047857", field: "#0f766e", density: "#d97706", reports: "#7c3aed", alerts: "#dc2626", settings: "#64748b" };
-
 const LEVEL_CONFIG = {
-  none:  { ar: "لا شي", icon: XIcon,   color: "text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", activeBg: "bg-slate-200 dark:bg-slate-700" },
-  read:  { ar: "قراءة", icon: Eye,     color: "text-blue-600",  bg: "bg-blue-50 dark:bg-blue-900/20", activeBg: "bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400" },
-  write: { ar: "تعديل", icon: Pencil,  color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", activeBg: "bg-emerald-100 dark:bg-emerald-900/40 ring-2 ring-emerald-400" },
+  none:  { ar: "لا شي", icon: XIcon,   color: "text-slate-400", activeBg: "bg-slate-200 dark:bg-slate-700 ring-1 ring-slate-300" },
+  read:  { ar: "قراءة", icon: Eye,     color: "text-blue-600",  activeBg: "bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400" },
+  write: { ar: "تعديل", icon: Pencil,  color: "text-emerald-600", activeBg: "bg-emerald-100 dark:bg-emerald-900/40 ring-2 ring-emerald-400" },
 };
+
+// Tree structure mapping permissions to their page location
+const PERM_TREE = [
+  { key: "page_overview", icon: LayoutDashboard, color: "#0891b2", children: [] },
+  { key: "page_transactions", icon: FileText, color: "#7c3aed", children: [] },
+  { key: "page_employees", icon: Users, color: "#1d4ed8", children: [
+    { key: "add_employees" },
+    { key: "edit_employees" },
+    { key: "delete_employees", danger: true },
+    { key: "manage_accounts" },
+    { key: "reset_pins" },
+    { key: "change_roles", danger: true },
+  ]},
+  { key: "page_daily_log", icon: Calendar, color: "#047857", children: [
+    { key: "view_daily_sessions" },
+    { key: "create_session" },
+    { key: "approve_session" },
+    { key: "delete_session", danger: true },
+    { key: "start_prayer_round" },
+    { key: "complete_prayer_round" },
+    { key: "skip_prayer_round" },
+    { key: "distribute_employees" },
+    { key: "auto_distribute" },
+    { key: "view_coverage_map" },
+    { key: "enter_density" },
+    { key: "view_density_reports" },
+  ]},
+  { key: "page_settings", icon: Settings, color: "#64748b", children: [
+    { key: "manage_settings" },
+    { key: "manage_maps" },
+    { key: "manage_shifts" },
+  ]},
+  { key: "_reports", icon: BarChart3, color: "#7c3aed", label_ar: "التقارير", children: [
+    { key: "view_reports" },
+    { key: "export_reports" },
+    { key: "compare_sessions" },
+  ]},
+  { key: "_alerts", icon: Bell, color: "#dc2626", label_ar: "البلاغات", children: [
+    { key: "send_alert" },
+    { key: "receive_alerts" },
+  ]},
+];
 
 export default function PermissionsManager() {
   const [data, setData] = useState(null);
@@ -36,7 +75,7 @@ export default function PermissionsManager() {
   const [saving, setSaving] = useState({});
   const [resetting, setResetting] = useState({});
   const [activeRole, setActiveRole] = useState("department_manager");
-  const [expandedGroups, setExpandedGroups] = useState({});
+  const [expandedNodes, setExpandedNodes] = useState({});
   const [pendingChanges, setPendingChanges] = useState({});
 
   const fetchPermissions = useCallback(async () => {
@@ -51,9 +90,10 @@ export default function PermissionsManager() {
         if (!init[role]) init[role] = { ...perms };
       });
       setPendingChanges(init);
-      const groups = {};
-      Object.values(res.data.all_permissions || {}).forEach(p => { groups[p.group] = true; });
-      setExpandedGroups(groups);
+      // Expand all by default
+      const exp = {};
+      PERM_TREE.forEach(node => { if (node.children?.length > 0) exp[node.key] = true; });
+      setExpandedNodes(exp);
     } catch { toast.error("فشل جلب الصلاحيات"); }
     finally { setLoading(false); }
   }, []);
@@ -63,18 +103,13 @@ export default function PermissionsManager() {
   const setPermLevel = (role, perm, level) => {
     setPendingChanges(prev => {
       const current = { ...(prev[role] || {}) };
-      if (level === "none") {
-        delete current[perm];
-      } else {
-        current[perm] = level;
-      }
+      if (level === "none") { delete current[perm]; }
+      else { current[perm] = level; }
       return { ...prev, [role]: current };
     });
   };
 
-  const getPermLevel = (role, perm) => {
-    return pendingChanges[role]?.[perm] || "none";
-  };
+  const getPermLevel = (perm) => pendingChanges[activeRole]?.[perm] || "none";
 
   const saveRole = async (role) => {
     setSaving(prev => ({ ...prev, [role]: true }));
@@ -89,8 +124,8 @@ export default function PermissionsManager() {
   const resetRole = async (role) => {
     setResetting(prev => ({ ...prev, [role]: true }));
     try {
-      const res = await axios.post(`${API}/admin/role-permissions/${role}/reset`, {}, getAuthHeaders());
-      toast.success(res.data.message || "تمت إعادة التعيين");
+      await axios.post(`${API}/admin/role-permissions/${role}/reset`, {}, getAuthHeaders());
+      toast.success("تمت إعادة التعيين");
       fetchPermissions();
     } catch { toast.error("فشلت إعادة التعيين"); }
     finally { setResetting(prev => ({ ...prev, [role]: false })); }
@@ -100,22 +135,40 @@ export default function PermissionsManager() {
     if (!data) return false;
     const saved = data.roles?.[role]?.permissions || data.defaults?.[role] || {};
     const pending = pendingChanges[role] || {};
-    const savedKeys = Object.keys(saved);
-    const pendingKeys = Object.keys(pending);
-    if (savedKeys.length !== pendingKeys.length) return true;
-    return savedKeys.some(k => saved[k] !== pending[k]) || pendingKeys.some(k => pending[k] !== saved[k]);
+    const allKeys = new Set([...Object.keys(saved), ...Object.keys(pending)]);
+    return [...allKeys].some(k => (saved[k] || "none") !== (pending[k] || "none"));
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!data) return null;
 
-  const allPermsEntries = Object.entries(data.all_permissions || {});
-  const groups = [...new Set(allPermsEntries.map(([, v]) => v.group))];
-  const roleKeys = Object.keys(ROLE_CONFIG);
+  const allPerms = data.all_permissions || {};
   const activePerms = pendingChanges[activeRole] || {};
   const readCount = Object.values(activePerms).filter(v => v === "read").length;
   const writeCount = Object.values(activePerms).filter(v => v === "write").length;
   const totalActive = readCount + writeCount;
+
+  const LevelButton = ({ permKey, danger }) => {
+    const currentLevel = getPermLevel(permKey);
+    return (
+      <div className="flex gap-1 shrink-0">
+        {["none", "read", "write"].map(level => {
+          const cfg = LEVEL_CONFIG[level];
+          const Icon = cfg.icon;
+          const isActive = currentLevel === level;
+          return (
+            <button key={level} type="button" onClick={() => setPermLevel(activeRole, permKey, level)}
+              data-testid={`${permKey}-${level}`} title={cfg.ar}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all
+                ${isActive ? cfg.activeBg + ' ' + cfg.color : 'bg-transparent text-muted-foreground hover:bg-muted'}`}>
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{cfg.ar}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5" data-testid="permissions-manager" dir="rtl">
@@ -124,30 +177,22 @@ export default function PermissionsManager() {
           <h2 className="font-cairo font-bold text-xl flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" /> إدارة الصلاحيات
           </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">حدد مستوى الوصول لكل دور — قراءة أو تعديل</p>
+          <p className="text-sm text-muted-foreground mt-0.5">حدد مستوى الوصول لكل صفحة وصلاحية</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchPermissions} className="gap-1.5">
-          <RefreshCw className="w-3.5 h-3.5" /> تحديث
-        </Button>
-      </div>
-
-      {/* Level Legend */}
-      <div className="flex gap-4 text-xs text-muted-foreground">
-        {Object.entries(LEVEL_CONFIG).map(([key, cfg]) => {
-          const Icon = cfg.icon;
-          return (
-            <div key={key} className="flex items-center gap-1.5">
-              <Icon className={`w-3.5 h-3.5 ${cfg.color}`} />
-              <span>{cfg.ar}</span>
-            </div>
-          );
-        })}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {Object.entries(LEVEL_CONFIG).map(([key, cfg]) => {
+            const Icon = cfg.icon;
+            return <span key={key} className="flex items-center gap-1"><Icon className={`w-3.5 h-3.5 ${cfg.color}`} />{cfg.ar}</span>;
+          })}
+          <Button variant="outline" size="sm" onClick={fetchPermissions} className="gap-1.5 mr-2">
+            <RefreshCw className="w-3.5 h-3.5" /> تحديث
+          </Button>
+        </div>
       </div>
 
       {/* Role Tabs */}
       <div className="flex gap-2 flex-wrap">
-        {roleKeys.map(role => {
-          const cfg = ROLE_CONFIG[role];
+        {Object.entries(ROLE_CONFIG).map(([role, cfg]) => {
           const changed = hasChanges(role);
           const perms = pendingChanges[role] || {};
           const count = Object.keys(perms).length;
@@ -167,72 +212,61 @@ export default function PermissionsManager() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-3">
-          {groups.map(group => {
-            const GroupIcon = GROUP_ICONS[group] || Shield;
-            const groupColor = GROUP_COLORS[group] || "#64748b";
-            const groupLabel = data.group_labels?.[group]?.ar || group;
-            const groupPerms = allPermsEntries.filter(([, v]) => v.group === group);
-            const activeCount = groupPerms.filter(([k]) => activePerms[k]).length;
-            const isExpanded = expandedGroups[group] !== false;
+        {/* Tree */}
+        <div className="lg:col-span-2 space-y-2">
+          {PERM_TREE.map(node => {
+            const NodeIcon = node.icon || LayoutDashboard;
+            const nodeColor = node.color || "#64748b";
+            const nodeLabel = node.label_ar || allPerms[node.key]?.ar || node.key;
+            const hasKids = node.children?.length > 0;
+            const isExpanded = expandedNodes[node.key] !== false;
+            const isPage = node.key.startsWith("page_");
+            const activeKids = hasKids ? node.children.filter(c => activePerms[c.key]).length : 0;
 
             return (
-              <Card key={group} className="overflow-hidden border">
-                <button type="button" className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                  onClick={() => setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }))}>
+              <Card key={node.key} className="overflow-hidden border">
+                {/* Parent node */}
+                <div className={`flex items-center justify-between p-3 ${hasKids ? 'cursor-pointer hover:bg-muted/30' : ''}`}
+                  onClick={() => hasKids && setExpandedNodes(prev => ({ ...prev, [node.key]: !prev[node.key] }))}>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: groupColor + "18", color: groupColor }}>
-                      <GroupIcon className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: nodeColor + "18", color: nodeColor }}>
+                      <NodeIcon className="w-4 h-4" />
                     </div>
-                    <span className="font-cairo font-bold text-sm">{groupLabel}</span>
-                    <span className="text-[11px] text-muted-foreground">{activeCount}/{groupPerms.length}</span>
+                    <span className="font-cairo font-bold text-sm">{nodeLabel}</span>
+                    {hasKids && <span className="text-[11px] text-muted-foreground">{activeKids}/{node.children.length}</span>}
                   </div>
-                  {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                </button>
+                  <div className="flex items-center gap-2">
+                    {isPage && <LevelButton permKey={node.key} />}
+                    {hasKids && (isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />)}
+                  </div>
+                </div>
 
-                {isExpanded && (
-                  <CardContent className="p-0 border-t">
-                    <div className="divide-y">
-                      {groupPerms.map(([permKey, permInfo]) => {
-                        const currentLevel = getPermLevel(activeRole, permKey);
-                        const isDanger = permInfo.danger;
-                        return (
-                          <div key={permKey} className={`flex items-center justify-between px-4 py-2.5 gap-2 ${isDanger ? 'bg-red-50/30 dark:bg-red-950/10' : ''}`} data-testid={`perm-${permKey}`}>
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {isDanger && <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
-                              <span className={`text-sm font-cairo truncate ${isDanger ? 'text-red-700 dark:text-red-400' : ''}`}>{permInfo.ar}</span>
-                              {isDanger && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full border border-red-200 shrink-0 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">حساسة</span>}
-                            </div>
-                            {/* 3-level selector */}
-                            <div className="flex gap-1 shrink-0">
-                              {["none", "read", "write"].map(level => {
-                                const cfg = LEVEL_CONFIG[level];
-                                const Icon = cfg.icon;
-                                const isActive = currentLevel === level;
-                                return (
-                                  <button key={level} type="button" onClick={() => setPermLevel(activeRole, permKey, level)}
-                                    data-testid={`${permKey}-${level}`}
-                                    title={cfg.ar}
-                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all
-                                      ${isActive ? cfg.activeBg + ' ' + cfg.color : 'bg-transparent text-muted-foreground hover:' + cfg.bg}`}>
-                                    <Icon className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">{cfg.ar}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                {/* Children */}
+                {hasKids && isExpanded && (
+                  <div className="border-t divide-y">
+                    {node.children.map(child => {
+                      const childLabel = allPerms[child.key]?.ar || child.key;
+                      const isDanger = child.danger || allPerms[child.key]?.danger;
+                      return (
+                        <div key={child.key} className={`flex items-center justify-between px-4 pr-12 py-2.5 ${isDanger ? 'bg-red-50/30 dark:bg-red-950/10' : ''}`} data-testid={`perm-${child.key}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-1 h-4 rounded-full mr-1" style={{ backgroundColor: nodeColor + "40" }} />
+                            {isDanger && <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                            <span className={`text-sm font-cairo ${isDanger ? 'text-red-700 dark:text-red-400' : ''}`}>{childLabel}</span>
+                            {isDanger && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full border border-red-200 dark:bg-red-900/30 dark:text-red-400">حساسة</span>}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
+                          <LevelButton permKey={child.key} danger={isDanger} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </Card>
             );
           })}
         </div>
 
-        {/* Right: Summary */}
+        {/* Summary */}
         <div className="space-y-4">
           <Card>
             <CardContent className="p-4 space-y-4">
@@ -255,7 +289,7 @@ export default function PermissionsManager() {
                   <p className="text-[9px] text-blue-600/70">قراءة</p>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2">
-                  <p className="text-xl font-bold text-slate-400">{allPermsEntries.length - totalActive}</p>
+                  <p className="text-xl font-bold text-slate-400">{Object.keys(allPerms).length - totalActive}</p>
                   <p className="text-[9px] text-muted-foreground">بدون</p>
                 </div>
               </div>
@@ -285,34 +319,6 @@ export default function PermissionsManager() {
                   آخر تحديث: {data.roles[activeRole].updated_by} — {new Date(data.roles[activeRole].updated_at).toLocaleDateString('ar-SA')}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Active permissions list */}
-          <Card>
-            <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm font-cairo">الصلاحيات المُفعَّلة</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-2 max-h-[300px] overflow-y-auto space-y-1">
-              {totalActive === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">لا توجد صلاحيات مُفعَّلة</p>
-              ) : Object.entries(activePerms).map(([perm, level]) => {
-                const info = data.all_permissions[perm];
-                const lvlCfg = LEVEL_CONFIG[level];
-                const LvlIcon = lvlCfg?.icon || Eye;
-                return (
-                  <div key={perm} className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${info?.danger ? 'bg-red-400' : level === 'write' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
-                      <span>{info?.ar || perm}</span>
-                    </div>
-                    <div className={`flex items-center gap-1 ${lvlCfg?.color}`}>
-                      <LvlIcon className="w-3 h-3" />
-                      <span>{lvlCfg?.ar}</span>
-                    </div>
-                  </div>
-                );
-              })}
             </CardContent>
           </Card>
         </div>
