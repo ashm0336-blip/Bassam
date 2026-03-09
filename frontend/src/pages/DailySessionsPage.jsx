@@ -1103,7 +1103,7 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   )}
-                  {activeSession?.status !== "completed" && (
+                  {activeSession?.status !== "completed" && canCreateSession && (
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -1174,6 +1174,7 @@ export default function DailySessionsPage() {
                     activePrayer={activePrayer} densityEdits={densityEdits}
                     handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
                     savingDensity={savingDensity}
+                    readOnly={!canCreateSession}
                   />
                     </div>
                     {/* Stats panel: absolutely positioned, slides over the map */}

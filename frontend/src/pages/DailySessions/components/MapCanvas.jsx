@@ -83,6 +83,7 @@ export function MapCanvas({
   handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
   addDrawingPoint, onEditStart, setMapMode,
   activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
+  readOnly = false,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -426,7 +427,7 @@ export function MapCanvas({
                           onMouseLeave={() => setHoveredZone(null)}
                           onDoubleClick={(e) => {
                             if (skipNextDblClickRef.current) { skipNextDblClickRef.current = false; return; }
-                            if (activeSession?.status !== "draft") return;
+                            if (activeSession?.status !== "draft" || readOnly) return;
                             e.stopPropagation();
                             if (mapMode === "pan") {
                               setMapMode("edit");
@@ -438,7 +439,7 @@ export function MapCanvas({
                               setSelectedZoneId(zone.id);
                             }
                           }}
-                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" ? (isSelected ? "move" : "pointer") : "inherit" }}>
+                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" && !readOnly ? (isSelected ? "move" : "pointer") : "inherit" }}>
                           <path d={getPath(zone.polygon_points)}
                             fill={fillValue}
                             fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
@@ -502,7 +503,7 @@ export function MapCanvas({
                       );
                     })}
                     {removedZones.map(zone => (
-                      <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { if (activeSession?.status === "draft") { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }} style={{ cursor: activeSession?.status === "draft" ? "pointer" : "default" }}>
+                      <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { if (activeSession?.status === "draft" && !readOnly) { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }} style={{ cursor: activeSession?.status === "draft" && !readOnly ? "pointer" : "default" }}>
                         <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity={0.08} stroke="#ef4444" strokeWidth={0.5} strokeOpacity={0.4} strokeDasharray="2 1.5" vectorEffect="non-scaling-stroke" />
                         {zone.polygon_points?.length > 0 && (() => { const cx2 = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy2 = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx2-0.8} y1={cy2-0.8} x2={cx2+0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx2+0.8} y1={cy2-0.8} x2={cx2-0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
                       </g>
