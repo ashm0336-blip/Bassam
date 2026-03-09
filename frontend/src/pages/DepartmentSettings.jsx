@@ -87,7 +87,10 @@ function SettingsTabButton({ icon: Icon, label, count, isActive, onClick, theme 
 
 export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
-  const { user, isReadOnly } = useAuth();
+  const { user, isReadOnly, canWrite, canRead } = useAuth();
+  const canEditShifts = canWrite('manage_shifts');
+  const canEditMaps = canWrite('manage_maps');
+  const canEditSettings = canWrite('manage_settings');
   const hasDataTab = department === 'gates' || department === 'plazas';
   const [activeTab, setActiveTab] = useState('employees');
   const [loading, setLoading] = useState(true);
@@ -297,7 +300,7 @@ export default function DepartmentSettings({ department }) {
                     <h3 className="font-cairo font-semibold text-lg">{language === 'ar' ? 'الورديات' : 'Shifts'}</h3>
                     <p className="text-sm text-muted-foreground">{language === 'ar' ? 'إدارة الورديات الخاصة بالقسم' : 'Manage department shifts'}</p>
                   </div>
-                  {!isReadOnly() && (
+                  {canEditShifts && (
                     <Button onClick={() => handleOpenDialog('shifts')} style={{ backgroundColor: theme.accent }} className="text-white hover:opacity-90" data-testid="add-shift-btn">
                       <Plus className="w-4 h-4 ml-2" />
                       {language === 'ar' ? 'إضافة وردية' : 'Add Shift'}
@@ -326,7 +329,7 @@ export default function DepartmentSettings({ department }) {
                         </TableCell>
                         <TableCell className="text-center"><Badge style={{ backgroundColor: shift.color }} className="text-white text-xs">{shift.label}</Badge></TableCell>
                         <TableCell className="text-center">
-                          {!isReadOnly() && (
+                          {canEditShifts && (
                             <div className="flex items-center gap-2 justify-center">
                               <Button size="sm" variant="ghost" onClick={() => handleOpenDialog('shifts', shift)}><Edit className="w-4 h-4" /></Button>
                               <Button size="sm" variant="ghost" onClick={() => handleDelete(shift.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { Progress } from "@/components/ui/progress";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -21,6 +22,8 @@ export default function MapManagementPage({ department = "plazas" }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { toast } = useToast();
+  const { canWrite } = useAuth();
+  const canEditMaps = canWrite('manage_maps');
 
   const [floors, setFloors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -192,13 +195,13 @@ export default function MapManagementPage({ department = "plazas" }) {
             <Button variant="outline" onClick={fetchFloors} data-testid="refresh-floors-button">
               <RefreshCw className="w-4 h-4 ml-2" />{isAr ? "تحديث" : "Refresh"}
             </Button>
-            <Button
+            {canEditMaps && <Button
               onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}
               className="bg-blue-600 hover:bg-blue-700"
               data-testid="add-floor-button"
             >
               <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة طابق" : "Add Floor"}
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>
@@ -238,9 +241,13 @@ export default function MapManagementPage({ department = "plazas" }) {
             <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
               {isAr ? "ابدأ بإضافة طوابق الحرم ورفع صور الأدوار لكل طابق" : "Start by adding Haram floors and uploading floor plan images"}
             </p>
-            <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700" data-testid="empty-add-floor-button">
-              <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة أول طابق" : "Add First Floor"}
-            </Button>
+            {canEditMaps ? (
+              <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700" data-testid="empty-add-floor-button">
+                <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة أول طابق" : "Add First Floor"}
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">{isAr ? "ليس لديك صلاحية لإضافة طوابق" : "No permission to add floors"}</p>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -291,7 +298,7 @@ export default function MapManagementPage({ department = "plazas" }) {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
+                  {canEditMaps && <Button
                     variant="outline"
                     size="sm"
                     className="flex-1"
@@ -305,8 +312,8 @@ export default function MapManagementPage({ department = "plazas" }) {
                   >
                     <Edit2 className="w-3.5 h-3.5 ml-1.5" />
                     {isAr ? "تعديل" : "Edit"}
-                  </Button>
-                  <Button
+                  </Button>}
+                  {canEditMaps && <Button
                     variant="outline"
                     size="sm"
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
@@ -314,7 +321,7 @@ export default function MapManagementPage({ department = "plazas" }) {
                     data-testid={`floor-delete-${floor.id}`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </Button>}
                 </div>
               </CardContent>
             </Card>
