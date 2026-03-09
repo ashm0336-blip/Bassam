@@ -462,6 +462,25 @@ class HeaderSettingsUpdate(BaseModel):
     border_style: Optional[str] = None
     transparency: Optional[int] = None
 
+# ============= PWA / Mobile Settings =============
+class PWASettings(BaseModel):
+    id: str = "pwa_settings"
+    app_name_ar: str = "منصة خدمات الحشود"
+    app_name_short_ar: str = "حشود"
+    app_name_en: str = "Crowd Services"
+    theme_color: str = "#004D38"
+    show_install_prompt: bool = True
+    icon_url: Optional[str] = None  # base64 or URL
+    updated_at: Optional[str] = None
+
+class PWASettingsUpdate(BaseModel):
+    app_name_ar: Optional[str] = None
+    app_name_short_ar: Optional[str] = None
+    app_name_en: Optional[str] = None
+    theme_color: Optional[str] = None
+    show_install_prompt: Optional[bool] = None
+    icon_url: Optional[str] = None
+
 # ============= Map Models =============
 class MapMarker(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

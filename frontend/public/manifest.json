@@ -1,6 +1,6 @@
 {
-  "name": "منصة خدمات الحشود | Al-Haram OS",
-  "short_name": "خدمات الحشود",
+  "name": "منصة خدمات الحشود",
+  "short_name": "الحشود",
   "description": "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
   "start_url": "/",
   "display": "standalone",
@@ -10,7 +10,6 @@
   "lang": "ar",
   "dir": "rtl",
   "scope": "/",
-  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -23,15 +22,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "لوحة التحكم",
-      "short_name": "الرئيسية",
-      "description": "الذهاب للوحة التحكم",
-      "url": "/",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

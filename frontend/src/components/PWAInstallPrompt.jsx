@@ -1,29 +1,33 @@
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
+import axios from "axios";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [pwaSettings, setPwaSettings] = useState({ show_install_prompt: true, app_name_short_ar: "حشود", theme_color: "#004D38" });
 
   useEffect(() => {
+    // Fetch PWA settings
+    axios.get(`${API}/settings/pwa`).then(r => setPwaSettings(r.data)).catch(() => {});
+
     // Check if already installed
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
       return;
     }
 
-    // Check iOS
     const ios = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     setIsIOS(ios);
 
-    // Show iOS banner after 3 seconds if not dismissed before
     if (ios && !localStorage.getItem("pwa_dismissed")) {
       setTimeout(() => setShowBanner(true), 3000);
     }
 
-    // Listen for Android/Chrome install prompt
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -53,7 +57,8 @@ export const PWAInstallPrompt = () => {
     localStorage.setItem("pwa_dismissed", "true");
   };
 
-  if (!showBanner || isInstalled) return null;
+  // Respect the admin setting
+  if (!pwaSettings.show_install_prompt || !showBanner || isInstalled) return null;
 
   return (
     <div
@@ -62,8 +67,10 @@ export const PWAInstallPrompt = () => {
     >
       <div className="bg-card border border-border rounded-2xl shadow-2xl p-4 flex items-start gap-3">
         {/* Icon */}
-        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
-          <span className="text-white font-cairo font-bold text-xl">ح</span>
+        <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0" style={{ background: pwaSettings.theme_color }}>
+          <span className="text-white font-cairo font-bold text-xl">
+            {pwaSettings.app_name_short_ar?.charAt(0) || 'ح'}
+          </span>
         </div>
 
         {/* Content */}

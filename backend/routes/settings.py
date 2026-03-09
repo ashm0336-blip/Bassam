@@ -8,6 +8,7 @@ from auth import get_current_user, require_admin, require_department_manager, lo
 from models import (
     DropdownOption, DropdownOptionCreate, DropdownOptionUpdate,
     LoginPageSettings, LoginPageSettingsUpdate, HeaderSettings, HeaderSettingsUpdate,
+    PWASettings, PWASettingsUpdate,
     SidebarMenuItem, SidebarMenuItemCreate, SidebarMenuItemUpdate,
     ZoneCategory, ZoneCategoryCreate, ZoneCategoryUpdate,
     DepartmentSettingCreate, DepartmentSettingUpdate,
@@ -176,6 +177,72 @@ async def update_header_settings(settings: HeaderSettingsUpdate, admin: dict = D
         await log_activity("تحديث إعدادات Header", admin, "header_settings", "تم تحديث الإعدادات")
     updated = await db.header_settings.find_one({"id": "header_settings"}, {"_id": 0})
     return updated
+
+
+# ============= PWA / Mobile Settings =============
+@router.get("/settings/pwa")
+async def get_pwa_settings():
+    settings = await db.pwa_settings.find_one({"id": "pwa_settings"}, {"_id": 0})
+    if not settings:
+        return PWASettings().model_dump()
+    return settings
+
+
+@router.put("/admin/settings/pwa")
+async def update_pwa_settings(settings: PWASettingsUpdate, admin: dict = Depends(require_admin)):
+    import json, base64, os
+
+    update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.pwa_settings.update_one(
+            {"id": "pwa_settings"}, {"$set": update_data}, upsert=True
+        )
+
+    # Fetch full settings to rebuild manifest
+    doc = await db.pwa_settings.find_one({"id": "pwa_settings"}, {"_id": 0})
+    if not doc:
+        doc = PWASettings().model_dump()
+
+    # Update manifest.json
+    manifest_path = "/app/frontend/public/manifest.json"
+    manifest = {
+        "name": doc.get("app_name_ar", "منصة خدمات الحشود"),
+        "short_name": doc.get("app_name_short_ar", "حشود"),
+        "description": "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#0a1628",
+        "theme_color": doc.get("theme_color", "#004D38"),
+        "orientation": "any",
+        "lang": "ar",
+        "dir": "rtl",
+        "scope": "/",
+        "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+        ]
+    }
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+
+    # Save icon if provided as base64
+    icon_data = doc.get("icon_url", "")
+    if icon_data and icon_data.startswith("data:image"):
+        try:
+            header, b64data = icon_data.split(",", 1)
+            img_bytes = base64.b64decode(b64data)
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+            img.resize((512, 512), Image.LANCZOS).save("/app/frontend/public/icon-512.png")
+            img.resize((192, 192), Image.LANCZOS).save("/app/frontend/public/icon-192.png")
+        except Exception:
+            pass
+
+    await log_activity("تحديث إعدادات الجوال", admin, "pwa_settings", "تم تحديث إعدادات PWA")
+    updated = await db.pwa_settings.find_one({"id": "pwa_settings"}, {"_id": 0})
+    return updated or doc
 
 
 # ============= Sidebar Menu =============
