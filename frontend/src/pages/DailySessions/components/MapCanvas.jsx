@@ -152,7 +152,7 @@ export function MapCanvas({
     const { clientX, clientY } = getClientXY(e);
     if (isTouch) touchStartPixelRef.current = { x: clientX, y: clientY };
     const pos = getMousePercent(e);
-    if (activeSession?.status === "completed") {
+    if (activeSession?.status === "completed" || readOnly) {
       interactionRef.current.isPanning = true;
       interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
       setIsPanning(true);
