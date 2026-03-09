@@ -32,12 +32,13 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 // ── Constants ────────────────────────────────────────────────────
 const DEPARTMENTS = {
-  planning:       { ar: "تخطيط خدمات الحشود", en: "Crowd Planning" },
-  plazas:         { ar: "إدارة المصليات",       en: "Prayer Areas" },
-  squares:        { ar: "إدارة الساحات",        en: "Plazas Management" },
-  gates:          { ar: "إدارة الأبواب",         en: "Gates Management" },
-  crowd_services: { ar: "خدمات حشود الحرم",    en: "Crowd Services" },
-  mataf:          { ar: "صحن المطاف",           en: "Mataf Management" },
+  planning:       { ar: "إدارة التخطيط",         en: "Planning" },
+  haram_map:      { ar: "إدارة المصليات",         en: "Prayer Areas" },
+  plazas:         { ar: "إدارة الساحات",           en: "Plazas" },
+  squares:        { ar: "إدارة الساحات",           en: "Plazas" },
+  gates:          { ar: "إدارة الأبواب",           en: "Gates Management" },
+  crowd_services: { ar: "خدمات حشود الحرم",      en: "Crowd Services" },
+  mataf:          { ar: "صحن المطاف",             en: "Mataf Management" },
 };
 
 const WEEK_DAYS = [

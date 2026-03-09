@@ -23,12 +23,13 @@ const TODAY_AR = (() => {
 })();
 
 const DEPT_CONFIG = {
-  plazas:         { color:"#004D38", accent:"#00C278", bg:"from-emerald-900 to-teal-900",    icon:"🕌", label_ar:"إدارة المصليات",         sessions_href:"/daily-sessions" },
-  gates:          { color:"#1d4ed8", accent:"#60a5fa", bg:"from-blue-900 to-indigo-900",      icon:"🚪", label_ar:"إدارة الأبواب",           sessions_href:"/daily-gates" },
-  planning:       { color:"#6d28d9", accent:"#c4b5fd", bg:"from-violet-900 to-purple-900",    icon:"📋", label_ar:"تخطيط خدمات الحشود",     sessions_href:null },
-  squares:        { color:"#0f766e", accent:"#99f6e4", bg:"from-teal-900 to-cyan-900",        icon:"⛩️", label_ar:"إدارة الساحات",           sessions_href:null },
-  mataf:          { color:"#be123c", accent:"#fda4af", bg:"from-rose-900 to-red-900",         icon:"🕋", label_ar:"صحن المطاف",              sessions_href:null },
-  crowd_services: { color:"#b45309", accent:"#fcd34d", bg:"from-amber-900 to-orange-900",     icon:"👥", label_ar:"خدمات الحشود",            sessions_href:null },
+  planning:       { color:"#6d28d9", accent:"#c4b5fd", bg:"from-violet-900 to-purple-900",    icon:"📋", label_ar:"إدارة التخطيط",           sessions_href:null },
+  haram_map:      { color:"#004D38", accent:"#00C278", bg:"from-emerald-900 to-teal-900",    icon:"🕌", label_ar:"إدارة المصليات",           sessions_href:"/daily-sessions" },
+  plazas:         { color:"#0f766e", accent:"#99f6e4", bg:"from-teal-900 to-cyan-900",       icon:"⛩️", label_ar:"إدارة الساحات",            sessions_href:null },
+  squares:        { color:"#0f766e", accent:"#99f6e4", bg:"from-teal-900 to-cyan-900",       icon:"⛩️", label_ar:"إدارة الساحات",            sessions_href:null },
+  gates:          { color:"#1d4ed8", accent:"#60a5fa", bg:"from-blue-900 to-indigo-900",     icon:"🚪", label_ar:"إدارة الأبواب",            sessions_href:"/daily-gates" },
+  mataf:          { color:"#be123c", accent:"#fda4af", bg:"from-rose-900 to-red-900",        icon:"🕋", label_ar:"صحن المطاف",               sessions_href:null },
+  crowd_services: { color:"#b45309", accent:"#fcd34d", bg:"from-amber-900 to-orange-900",    icon:"👥", label_ar:"خدمات الحشود",             sessions_href:null },
 };
 
 const SHIFT_COLORS = { "الأولى":"#3b82f6","الثانية":"#22c55e","الثالثة":"#f97316","الرابعة":"#8b5cf6","الأولى صبح":"#06b6d4" };

@@ -80,7 +80,8 @@ const AVAILABLE_ICONS = [
 
 const DEPARTMENTS = [
   { value: "none", label_ar: "لا يوجد (عام)", label_en: "None (Public)" },
-  { value: "planning", label_ar: "تخطيط خدمات الحشود", label_en: "Crowd Planning" },
+  { value: "planning", label_ar: "إدارة التخطيط", label_en: "Planning" },
+  { value: "haram_map", label_ar: "إدارة المصليات", label_en: "Prayer Areas" },
   { value: "plazas", label_ar: "إدارة الساحات", label_en: "Plazas Management" },
   { value: "gates", label_ar: "إدارة الأبواب", label_en: "Gates Management" },
   { value: "crowd_services", label_ar: "خدمات الحشود", label_en: "Crowd Services" },

@@ -8,8 +8,8 @@ export default function HaramMapPage() {
 
   return (
     <div data-testid="haram-map-page">
-      {activeTab === "dashboard" && <DepartmentOverview department="plazas" />}
-      {activeTab === "settings" && <DepartmentSettings department="plazas" />}
+      {activeTab === "dashboard" && <DepartmentOverview department="haram_map" />}
+      {activeTab === "settings" && <DepartmentSettings department="haram_map" />}
     </div>
   );
 }

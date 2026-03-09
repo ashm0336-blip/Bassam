@@ -44,6 +44,7 @@ function ConditionalDashboard() {
   if (user?.role === 'department_manager' && user?.department) {
     const departmentRoutes = {
       'planning': '/planning',
+      'haram_map': '/haram-map',
       'gates': '/gates',
       'plazas': '/plazas',
       'squares': '/plazas',
@@ -152,7 +153,11 @@ function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
         <Route path="settings" element={<Navigate to="/admin" replace />} />
-        <Route path="haram-map" element={<HaramMapPage />} />
+        <Route path="haram-map" element={
+          <DepartmentProtectedRoute department="haram_map">
+            <HaramMapPage />
+          </DepartmentProtectedRoute>
+        } />
         <Route path="map-management" element={
           <AdminProtectedRoute>
             <MapManagementPage />

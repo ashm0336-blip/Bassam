@@ -13,12 +13,12 @@ export const ROLE_LABELS = {
 };
 
 export const DEPT_LABELS = {
-  plazas: { ar: 'إدارة الساحات', en: 'Plazas' },
-  gates: { ar: 'إدارة الأبواب', en: 'Gates' },
   planning: { ar: 'إدارة التخطيط', en: 'Planning' },
+  haram_map: { ar: 'إدارة المصليات', en: 'Prayer Areas' },
+  gates: { ar: 'إدارة الأبواب', en: 'Gates' },
+  plazas: { ar: 'إدارة الساحات', en: 'Plazas' },
   crowd_services: { ar: 'خدمات الحشود', en: 'Crowd Services' },
   mataf: { ar: 'صحن المطاف', en: 'Mataf' },
-  haram_map: { ar: 'إدارة المصليات', en: 'Prayer Areas' },
 };
 
 const AuthContext = createContext(null);
