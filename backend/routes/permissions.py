@@ -46,15 +46,6 @@ ALL_PERMISSIONS = {
     "enter_density":       {"ar": "إدخال بيانات الكثافة",            "group": "density",   "danger": False},
     "view_density_reports":{"ar": "عرض تقارير الكثافة",              "group": "density",   "danger": False},
 
-    # Reports
-    "view_reports":        {"ar": "عرض التقارير اليومية",            "group": "reports",   "danger": False},
-    "export_reports":      {"ar": "تصدير البيانات",                  "group": "reports",   "danger": False},
-    "compare_sessions":    {"ar": "مقارنة الجلسات",                  "group": "reports",   "danger": False},
-
-    # Alerts
-    "send_alert":          {"ar": "إرسال بلاغ طارئ",                "group": "alerts",    "danger": False},
-    "receive_alerts":      {"ar": "استقبال البلاغات",                "group": "alerts",    "danger": False},
-
     # Settings
     "manage_settings":     {"ar": "إدارة إعدادات القسم",             "group": "settings",  "danger": False},
     "manage_maps":         {"ar": "إدارة خرائط الطوابق",             "group": "settings",  "danger": False},
