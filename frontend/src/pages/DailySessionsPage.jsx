@@ -1201,6 +1201,7 @@ export default function DailySessionsPage() {
                     imgRatio={imgRatio} ZONE_TYPES={ZONE_TYPES}
                     panelCollapsed={densityPanelCollapsed}
                     onPanelToggle={() => setDensityPanelCollapsed(p => !p)}
+                    readOnly={!canEnterDensity}
                   />
                 </TabsContent>
 
@@ -1210,6 +1211,7 @@ export default function DailySessionsPage() {
                     ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
                     panelCollapsed={employeesPanelCollapsed}
                     onPanelToggle={() => setEmployeesPanelCollapsed(p => !p)}
+                    readOnly={!canDistribute}
                   />
                 </TabsContent>
               </Tabs>

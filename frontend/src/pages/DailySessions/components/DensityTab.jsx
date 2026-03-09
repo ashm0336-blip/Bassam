@@ -17,6 +17,7 @@ export function DensityTab({
   handleDensityChange, handleSaveDensityBatch, savingDensity,
   selectedFloor, imgRatio, ZONE_TYPES,
   panelCollapsed, onPanelToggle,
+  readOnly = false,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -149,7 +150,7 @@ export function DensityTab({
                         {zone.max_capacity > 0 && <p className="text-[8px] text-slate-400">{isAr ? `طاقة: ${zone.max_capacity.toLocaleString()}` : `Cap: ${zone.max_capacity.toLocaleString()}`}</p>}
                       </div>
                       {/* Quick number input */}
-                      {activeSession?.status === "draft" && zone.max_capacity > 0 && (
+                      {!readOnly && activeSession?.status === "draft" && zone.max_capacity > 0 && (
                         <input
                           type="number"
                           min={0}
@@ -164,7 +165,7 @@ export function DensityTab({
                   );
                 })}
             </div>
-            {activeSession?.status === "draft" && Object.keys(densityEdits).length > 0 && (
+            {!readOnly && activeSession?.status === "draft" && Object.keys(densityEdits).length > 0 && (
               <div className="p-2 border-t bg-amber-50">
                 <Button onClick={() => { handleSaveDensityBatch(); setQuickListOpen(false); }} disabled={savingDensity}
                   className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700" data-testid="quick-save-btn">
@@ -176,6 +177,7 @@ export function DensityTab({
           </PopoverContent>
         </Popover>
 
+        {!readOnly && <>
         <div className="w-px h-5 bg-slate-200" />
 
         {/* Undo */}
@@ -202,6 +204,7 @@ export function DensityTab({
             </Button>
           </>
         )}
+        </>}
       </div>
 
       {/* Save bar (remove duplicate, now in toolbar) */}
@@ -347,7 +350,7 @@ export function DensityTab({
                   handleDensityChange={handleDensityChange}
                   isSelected={zone.id === selectedZoneId}
                   onSelect={() => handleZoneClick(zone.id)}
-                  isAr={isAr}
+                  isAr={isAr} readOnly={readOnly}
                 />
               ))}
             </div>
@@ -359,7 +362,7 @@ export function DensityTab({
   );
 }
 
-function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDensityChange, isSelected, onSelect, isAr }) {
+function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDensityChange, isSelected, onSelect, isAr, readOnly = false }) {
   const di = zone.densityInfo;
   const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
   const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
@@ -414,6 +417,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
             </div>
           </div>
           {/* Input */}
+          {!readOnly && (
           <div className="flex items-center gap-2">
             <div className="flex items-center border rounded-lg overflow-hidden flex-1">
               <Input type="number" min={0} max={120}
@@ -430,6 +434,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
               <p className="text-[7px] text-slate-400">{isAr ? "مصلي" : "people"}</p>
             </div>
           </div>
+          )}
           {/* Rows */}
           {zone.totalRows > 0 && (
             <div className="flex items-center gap-1.5 pt-1.5 border-t border-dashed border-slate-100">

@@ -67,7 +67,7 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
                       {emps.map(emp => (
                         <div key={emp.id} className="flex items-center justify-between px-2 py-1 bg-emerald-50 rounded-lg">
                           <span className="text-[10px] font-medium text-slate-700">{emp.name}</span>
-                          {activeSession?.status === "draft" && (
+                          {activeSession?.status === "draft" && !readOnly && (
                             <button onClick={() => handleUnassign(emp.id, zone.id)} className="text-[8px] text-red-500 hover:text-red-700 font-semibold">✕ {isAr ? "إلغاء" : "Remove"}</button>
                           )}
                         </div>
@@ -75,7 +75,7 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
                     </div>
                   )}
                   {/* Add employee — shows ALL employees not yet in this zone */}
-                  {activeSession?.status === "draft" && (() => {
+                  {activeSession?.status === "draft" && !readOnly && (() => {
                     const available = unassignedEmployees.length > 0
                       ? unassignedEmployees
                       : []; // only unassigned for quick assign
@@ -106,7 +106,7 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
   );
 }
 
-export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle }) {
+export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle, readOnly = false }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const isMobile = useIsMobile();
@@ -478,6 +478,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
 
         {/* ── Quick Zone Assignment ── */}
+        {!readOnly && <>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1.5 font-cairo text-xs h-8" data-testid="quick-assign-btn">
@@ -504,7 +505,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
         </Popover>
 
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
-        {activeSession?.status === "draft" && (
+        {activeSession?.status === "draft" && !readOnly && (
           <Popover open={showAutoConfirm} onOpenChange={setShowAutoConfirm}>
             <PopoverTrigger asChild>
               <Button size="sm" className="h-8 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700" disabled={autoDistributing} data-testid="auto-distribute-btn">
@@ -544,6 +545,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
             </PopoverContent>
           </Popover>
         )}
+        </>}
 
         {/* ── Print ── */}
         <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 mr-auto" onClick={handlePrint} data-testid="print-assignments-btn">
@@ -848,7 +850,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                           </div>
                         </div>
                       </div>
-                      {activeSession?.status === "draft" && (
+                      {activeSession?.status === "draft" && !readOnly && (
                         <Select onValueChange={(zoneId) => handleAssign(emp.id, zoneId)}>
                           <SelectTrigger className="h-6 w-auto min-w-[64px] text-[9px] border-dashed px-1.5 gap-1">
                             <MapPin className="w-2.5 h-2.5 text-emerald-500" />
@@ -901,7 +903,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                         {empZones.map(zone => (
                           <span key={zone.id} className="inline-flex items-center gap-0.5 text-[8px] font-bold bg-white border border-emerald-200 text-emerald-700 rounded-full px-2 py-0.5 shadow-sm">
                             {zone.zone_code}
-                            {activeSession?.status === "draft" && (
+                            {activeSession?.status === "draft" && !readOnly && (
                               <button
                                 onClick={() => handleUnassign(emp.id, zone.id)}
                                 className="w-3 h-3 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors mr-0.5"
@@ -911,7 +913,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                           </span>
                         ))}
                         {/* Add another zone */}
-                        {activeSession?.status === "draft" && (
+                        {activeSession?.status === "draft" && !readOnly && (
                           <Select onValueChange={(zoneId) => handleAssign(emp.id, zoneId)}>
                             <SelectTrigger className="h-5 text-[8px] border-dashed border-emerald-300 px-1.5 gap-0.5 rounded-full w-auto">
                               <Plus className="w-2.5 h-2.5 text-emerald-500" />
@@ -1006,7 +1008,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                                       {shift && <p className="text-[8px] text-slate-400">{isAr ? shift.label_ar : shift.label_en}</p>}
                                     </div>
                                   </div>
-                                  {activeSession?.status === "draft" && (
+                                  {activeSession?.status === "draft" && !readOnly && (
                                     <button onClick={() => handleUnassign(emp.id, zone.id)} className="opacity-0 group-hover/emp:opacity-100 w-4 h-4 rounded bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-all">
                                       <X className="w-3 h-3" />
                                     </button>
@@ -1016,7 +1018,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                             })}
                           </div>
                         )}
-                        {activeSession?.status === "draft" && (
+                        {activeSession?.status === "draft" && !readOnly && (
                           <Select onValueChange={(empId) => handleAssign(empId, zone.id)}>
                             <SelectTrigger className="h-7 w-full text-[10px] border-dashed"><Plus className="w-3 h-3 ml-0.5 text-emerald-500" /><SelectValue placeholder={isAr ? "إضافة موظف" : "Add staff"} /></SelectTrigger>
                             <SelectContent>
