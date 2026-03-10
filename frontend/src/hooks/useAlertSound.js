@@ -1,114 +1,135 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import axios from 'axios';
 
-// Sound URLs (base64 encoded short beeps for critical alerts)
-const ALERT_SOUNDS = {
-  critical: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdW+Hk5WHc2JfaHKCjpGMgHRtcH2IkZKNgXdxdoCKkpOPg3l0eYKLkpKPg3p0eYKKkZGOgnt1eYGJkJCNgXt1eIGIj4+MgHx2eICHjo6LgH12d3+Gjo2KgH12d36FjYyJf312dn6EjIuIf352dn2Di4qHfn52dX2CioqGfn52dXyCiYmFfX52dXuBiIiEfX52dHuAh4eDfX52dHp/hoaCfH12dHl+hYWBe312c3l9hIR/e312c3h8g4N+ent1c3d7goJ9ent1cnZ6gYF7eXt0cnV5f397eHp0cXR4fn56d3l0cHN3fX15dnh0cHJ2fHx4dXdzb3F1e3t3dHZybnB0ent2c3VxbW9zeXl1cnRwa25yeHh0cXNvam1xdnd0cHJuamtwd3ZzcHFsaWpvcHNzcHBrZ2luc3JycG9rZmhrcnFxcG5qZWdqcHBwbm1pZGZpcG9vbWxoY2VobW5ubGtmYmRna2xtbGpkYWNmamtramliYGJlZ2lqaGhhX2FkZmhoaGZgXmBjZWdnZ2ReXmBiZGZmZWNdXV9hY2VlZGJcXF5gYmRkY2FbW11fYWNjYmBaWlxeYGJhYF9ZWVtdX2FhYF5YWFpcXmBfX11XV1lbXV9fXlxWVlhaXF5eXVtVVVdZW11dXFpUVFZYWlxcW1lTU1VXWVtbWlhSUlRWWFpaWVdRUVNVV1lZWFZQUFJUVlhYV1VPT1FTVVdXVlROTlBSVFZWVFNNTU9RU1VVVFJMTE5QUlRUU1FLTM5OUFJTUlBKSkxOUFJSUU9JSUtNT1FRT05ISEpMTlBQT01HRklLTU9PTkxGRkhKTE5OTEtFRUdJS01NTEpEREZISktMS0lDQ0VHSU1LSkhCQkRGSEpKSUdBQUNFR0lJSEZAQEJERkhIR0U/P0FDRUVHR0ZEPT9BQ0VHRkVEPj5AQkRGRkVDPT0/QUJERET',
-  warning: 'data:audio/wav;base64,UklGRjIHAABXQVZFZm10IBAAAAABAAEAESsAACJWAAABAAgAZGF0YQ4HAABhZmhqam1ub3BxcnN0dXZ3eHh5enp7fH19fn9/gIGBgoODhIWFhoaHiImJiouLjI2Njo+PkJGRkpOTlJWVlpeXmJmZmputra2vr7CxsbKzs7S1tba3t7i5ubq7u7y9vb6/v8DBwcLDw8TFxcbHx8jJycrLy8zNzc7Pz9DR0dLT09TV1dbX19jZ2dra29zc3d7e3+Dg4eLi4+Tk5ebm5+jo6err6+zs7e7u7/Dw8fHy8/P09fX29/f4+Pn5+vv7/P39/v7/',
-  info: 'data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA='
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Generate a proper beep sound programmatically using Web Audio API
+const playBeep = (type = 'warning') => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    if (type === 'critical') {
+      // Urgent: 3 fast high beeps
+      oscillator.frequency.value = 880;
+      oscillator.type = 'square';
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.2);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.4);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.6);
+    } else if (type === 'warning') {
+      // Warning: 2 medium beeps
+      oscillator.frequency.value = 660;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.25, ctx.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.5);
+    } else {
+      // Info: 1 soft beep
+      oscillator.frequency.value = 520;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.3);
+    }
+
+    // Cleanup
+    oscillator.onended = () => ctx.close();
+  } catch (e) {
+    console.error('Sound error:', e);
+  }
 };
 
 export const useAlertSound = () => {
-  const audioRef = useRef(null);
   const lastPlayedRef = useRef(0);
 
   const playSound = useCallback((type = 'warning') => {
-    // Throttle: don't play more than once every 5 seconds
     const now = Date.now();
-    if (now - lastPlayedRef.current < 5000) return;
+    if (now - lastPlayedRef.current < 3000) return;
     lastPlayedRef.current = now;
-
-    try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-      }
-      
-      audioRef.current.src = ALERT_SOUNDS[type] || ALERT_SOUNDS.warning;
-      audioRef.current.volume = 0.5;
-      audioRef.current.play().catch(console.error);
-    } catch (error) {
-      console.error('Error playing sound:', error);
-    }
+    playBeep(type);
   }, []);
 
   return { playSound };
 };
 
-// Alert Monitor Component
-export const AlertMonitor = ({ alerts, enabled = true }) => {
+// Alert Monitor - polls for new alerts and plays sound
+export const CrowdAlertMonitor = () => {
   const { playSound } = useAlertSound();
-  const processedAlertsRef = useRef(new Set());
+  const knownAlertsRef = useRef(new Set());
+  const initializedRef = useRef(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('alert_sound') !== 'off';
+  });
 
   useEffect(() => {
-    if (!enabled || !alerts?.length) return;
+    const checkAlerts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await axios.get(`${API}/alerts/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const count = res.data.count || 0;
 
-    alerts.forEach(alert => {
-      // Only process new alerts
-      if (processedAlertsRef.current.has(alert.id)) return;
-      processedAlertsRef.current.add(alert.id);
-
-      // Check for critical conditions
-      if (alert.type === 'emergency' || alert.priority === 'critical') {
-        playSound('critical');
-      } else if (alert.type === 'warning' || alert.priority === 'high') {
-        playSound('warning');
-      }
-    });
-
-    // Cleanup old alerts from processed set
-    if (processedAlertsRef.current.size > 100) {
-      const ids = Array.from(processedAlertsRef.current);
-      processedAlertsRef.current = new Set(ids.slice(-50));
-    }
-  }, [alerts, enabled, playSound]);
-
-  return null;
-};
-
-// Crowd Alert Monitor - checks for critical occupancy
-export const CrowdAlertMonitor = ({ departments, plazas, mataf, enabled = true, threshold = 85 }) => {
-  const { playSound } = useAlertSound();
-  const alertedAreasRef = useRef(new Set());
-
-  useEffect(() => {
-    if (!enabled) return;
-
-    const checkCritical = (items, idField = 'id') => {
-      items?.forEach(item => {
-        const percentage = item.percentage || 0;
-        const id = item[idField];
-        
-        if (percentage >= threshold && !alertedAreasRef.current.has(id)) {
-          alertedAreasRef.current.add(id);
-          playSound('critical');
-          
-          // Show browser notification if permitted
-          if (Notification.permission === 'granted') {
-            new Notification('تنبيه ازدحام حرج', {
-              body: `${item.name || item.level}: نسبة الإشغال ${percentage}%`,
-              icon: '/favicon.ico',
-              tag: `crowd-alert-${id}`
-            });
-          }
-        } else if (percentage < threshold - 5) {
-          // Remove from alerted when goes back to safe
-          alertedAreasRef.current.delete(id);
+        // First run: just record current count, don't play sound
+        if (!initializedRef.current) {
+          knownAlertsRef.current = new Set([count]);
+          initializedRef.current = true;
+          return;
         }
-      });
+
+        // If count increased, new alert arrived
+        const prevCount = Array.from(knownAlertsRef.current)[0] || 0;
+        if (count > prevCount && soundEnabled) {
+          playSound('critical');
+        }
+        knownAlertsRef.current = new Set([count]);
+      } catch (e) { /* silent */ }
     };
 
-    checkCritical(departments);
-    checkCritical(plazas);
-    checkCritical(mataf);
-  }, [departments, plazas, mataf, enabled, threshold, playSound]);
+    checkAlerts();
+    const interval = setInterval(checkAlerts, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, [soundEnabled, playSound]);
 
-  // Request notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
+  const toggleSound = () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    localStorage.setItem('alert_sound', newVal ? 'on' : 'off');
+    if (newVal) playSound('info'); // Play test beep when enabling
+  };
 
-  return null;
+  return (
+    <button
+      onClick={toggleSound}
+      className={`p-2 rounded-lg transition-colors ${soundEnabled ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`}
+      title={soundEnabled ? 'الصوت مفعّل' : 'الصوت مُعطّل'}
+      data-testid="sound-toggle"
+    >
+      {soundEnabled ? (
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      )}
+    </button>
+  );
 };
 
+export const AlertMonitor = CrowdAlertMonitor;
 export default useAlertSound;
