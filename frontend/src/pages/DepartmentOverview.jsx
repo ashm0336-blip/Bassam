@@ -135,15 +135,20 @@ export default function DepartmentOverview({ department = "planning" }) {
 
   // ── Derived Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
+    // الإحصائيات تعكس فقط بيانات الجدول المعتمد (active)
+    // إذا الجدول مسودة أو غير موجود → تُستخدم البيانات الأساسية للموظف بدون تأثير الجدول
+    const isApproved = schedule?.status === 'active';
     const assignmentMap = {};
-    if (schedule?.assignments) schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
+    if (isApproved && schedule?.assignments) {
+      schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
+    }
 
     const merged = employees.map(emp => {
-      const a = assignmentMap[emp.id];
+      const a = isApproved ? assignmentMap[emp.id] : null;
       const restDays = a ? a.rest_days : (emp.rest_days || []);
       const shift = a ? a.shift : (emp.shift || "");
-      const isTasked = a ? a.is_tasked : false;
-      const onRest = schedule && restDays.includes(TODAY_AR);
+      const isTasked = a ? (a.is_tasked === true) : false;
+      const onRest = isApproved && restDays.includes(TODAY_AR);
       return { ...emp, restDays, shift, isTasked, onRest };
     });
 

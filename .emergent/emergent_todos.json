@@ -1,14 +1,10 @@
 [
   {
-    "content": "إصلاح حفظ is_tasked في قاعدة البيانات (backend)",
+    "content": "إصلاح DepartmentOverview.jsx - الإحصائيات من الجدول المعتمد فقط",
     "status": "completed"
   },
   {
-    "content": "إضافة endpoint لفتح الجدول بعد الاعتماد (unlock)",
-    "status": "completed"
-  },
-  {
-    "content": "تحديث الفرونتند - إخفاء التعديل بعد الاعتماد وإضافة زر الفتح للمدير والأدمن",
+    "content": "إصلاح ops.py (لوحة التحكم) - استخدام بيانات الجدول المعتمد للـ rest_days و shift",
     "status": "completed"
   }
 ]

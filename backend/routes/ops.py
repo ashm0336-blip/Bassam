@@ -11,7 +11,7 @@ async def get_ops_dashboard():
     """All-in-one endpoint for the operations room dashboard"""
     # ── KPIs ──
     gates = await db.gates.find({}, {"_id": 0}).to_list(500)
-    employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(2000)
+    employees = await db.employees.find({}, {"_id": 0}).to_list(2000)
     alerts = await db.alerts.find({"is_read": False}, {"_id": 0}).sort("received_at", -1).to_list(50)
     plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
@@ -23,15 +23,42 @@ async def get_ops_dashboard():
     day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
     today_ar = day_map.get(datetime.now().weekday(), "")
 
-    # Active employees (not on rest today)
-    active_employees = [e for e in employees if today_ar not in (e.get("rest_days") or [])]
-    on_rest = [e for e in employees if today_ar in (e.get("rest_days") or [])]
+    # جلب الجداول المعتمدة (active) للشهر الحالي لكل الإدارات
+    current_month = datetime.now().strftime("%Y-%m")
+    active_schedules = await db.monthly_schedules.find(
+        {"month": current_month, "status": "active"}, {"_id": 0}
+    ).to_list(20)
 
-    # Shift distribution
+    # بناء خريطة تعيينات من الجداول المعتمدة: employee_id → assignment
+    active_assignment_map = {}
+    for sched in active_schedules:
+        for a in sched.get("assignments", []):
+            active_assignment_map[a["employee_id"]] = a
+
+    # دمج بيانات الموظفين مع الجداول المعتمدة فقط
+    def get_emp_data(emp):
+        """إرجاع rest_days و shift و is_tasked من الجدول المعتمد إن وجد، وإلا من الموظف مباشرة"""
+        a = active_assignment_map.get(emp.get("id", ""))
+        rest_days = a["rest_days"] if a else (emp.get("rest_days") or [])
+        shift = a["shift"] if a else (emp.get("shift") or "غير محدد")
+        is_tasked = a.get("is_tasked", False) if a else False
+        return rest_days, shift, is_tasked
+
+    # Active employees (not on rest today) — بناءً على الجداول المعتمدة
+    active_employees = []
+    on_rest_list = []
+    for e in employees:
+        rest_days, _, _ = get_emp_data(e)
+        if today_ar and today_ar in rest_days:
+            on_rest_list.append(e)
+        else:
+            active_employees.append(e)
+
+    # Shift distribution — من الجداول المعتمدة فقط
     shifts = {}
     for e in active_employees:
-        s = e.get("shift", "غير محدد")
-        shifts[s] = shifts.get(s, 0) + 1
+        _, shift, _ = get_emp_data(e)
+        shifts[shift] = shifts.get(shift, 0) + 1
 
     # Department stats
     dept_emp = {}
@@ -49,7 +76,7 @@ async def get_ops_dashboard():
         "closed_gates": len(closed_gates),
         "total_employees": len(employees),
         "active_employees": len(active_employees),
-        "on_rest": len(on_rest),
+        "on_rest": len(on_rest_list),
         "total_crowd": total_crowd,
         "total_capacity": total_cap,
         "crowd_percentage": crowd_pct,
@@ -81,7 +108,7 @@ async def get_ops_dashboard():
 
     # ── Smart Alerts ──
     smart_alerts = []
-    # Gates without employees
+    # Gates without employees — بناءً على الجداول المعتمدة
     gates_no_emp = [g for g in open_gates if not any(e.get("location", "").find(g["name"]) >= 0 for e in active_employees)]
     if len(gates_no_emp) > 3:
         smart_alerts.append({"type": "warning", "icon": "DoorOpen", "message": f"{len(gates_no_emp)} بوابة مفتوحة بدون موظف معيّن", "count": len(gates_no_emp), "action": "عرض البوابات", "href": "/gates?tab=dashboard"})
