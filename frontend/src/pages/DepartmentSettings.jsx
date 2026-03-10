@@ -249,22 +249,7 @@ export default function DepartmentSettings({ department }) {
   }
 
   return (
-    <div className="space-y-6" data-testid="department-settings">
-      {/* Header */}
-      <div className="flex items-center gap-3 text-right">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 justify-end">
-            <h2 className="font-cairo font-bold text-xl">{language === 'ar' ? 'إعدادات القسم' : 'Department Settings'}</h2>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.light }}>
-              <Settings className="w-4 h-4" style={{ color: theme.accent }} />
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {deptName} - {language === 'ar' ? 'إدارة البيانات الأساسية والموظفين والإعدادات' : 'Manage base data, staff, and settings'}
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-4" data-testid="department-settings">
       {/* Tab Navigation - Card Style */}
       <div className="rounded-2xl p-2" style={{ backgroundColor: theme.light, border: `1px solid ${theme.border}` }} data-testid="settings-tabs-bar">
         <div className="flex gap-2 overflow-x-auto pb-1">
