@@ -480,7 +480,7 @@ export default function EmployeeManagement({ department }) {
     finally { setScheduleLoading(false); }
   };
 
-  // Merge base employee data + monthly schedule
+  // Merge base employee data + monthly schedule (للجدول والتعديل)
   const mergedEmployees = useMemo(() => {
     const assignmentMap = {};
     if (schedule?.assignments) schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
@@ -490,7 +490,7 @@ export default function EmployeeManagement({ department }) {
       const restDays = a ? a.rest_days : (emp.rest_days || []);
       const location  = a ? a.location : (emp.location || "");
       const shift     = a ? a.shift    : (emp.shift || "");
-      const isTasked  = a ? a.is_tasked : false; // is_tasked comes from monthly schedule
+      const isTasked  = a ? a.is_tasked : false;
       const isOnRest  = isCurrentOrActive && restDays.includes(todayAr);
       const contractOk = isContractActive(emp);
       return { ...emp, rest_days: restDays, location, shift, is_tasked: isTasked,
@@ -498,6 +498,27 @@ export default function EmployeeManagement({ department }) {
                contract_expired: !contractOk, has_assignment: !!a };
     });
   }, [employees, schedule, selectedMonth, currentMonthKey, todayAr]);
+
+  // statsEmployees — للإحصائيات فقط: يستخدم بيانات الجدول المعتمد فقط (active)
+  // إذا الجدول مسودة أو غير موجود → تُستخدم البيانات الأساسية للموظف بدون تأثير الجدول
+  const statsEmployees = useMemo(() => {
+    const isApproved = schedule?.status === 'active';
+    const assignmentMap = {};
+    if (isApproved && schedule?.assignments) {
+      schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
+    }
+    return employees.map(emp => {
+      const a = isApproved ? assignmentMap[emp.id] : null;
+      const restDays  = a ? a.rest_days : (emp.rest_days || []);
+      const shift     = a ? a.shift     : (emp.shift || "");
+      const isTasked  = a ? (a.is_tasked === true) : false;
+      const isOnRest  = isApproved && restDays.includes(todayAr);
+      const contractOk = isContractActive(emp);
+      return { ...emp, rest_days: restDays, shift, is_tasked: isTasked,
+               is_active: !isOnRest && contractOk, on_rest: isOnRest,
+               contract_expired: !contractOk };
+    });
+  }, [employees, schedule, todayAr]);
 
   const handleCreateSchedule = async (mode) => {
     try {
@@ -658,25 +679,27 @@ export default function EmployeeManagement({ department }) {
   };
 
   const statistics = useMemo(() => {
-    const total     = mergedEmployees.length;
-    const active    = mergedEmployees.filter(e=>e.is_active).length;
-    const onRest    = mergedEmployees.filter(e=>e.on_rest).length;
-    const permanent = mergedEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
-    const seasonal  = mergedEmployees.filter(e=>e.employment_type==='seasonal').length;
-    const temporary = mergedEmployees.filter(e=>e.employment_type==='temporary').length;
-    const fieldOps  = mergedEmployees.filter(e => {
+    // الإحصائيات تعكس فقط بيانات الجدول المعتمد (active)
+    // إذا الجدول مسودة أو غير موجود → الأرقام من البيانات الأساسية للموظفين
+    const total     = statsEmployees.length;
+    const active    = statsEmployees.filter(e=>e.is_active).length;
+    const onRest    = statsEmployees.filter(e=>e.on_rest).length;
+    const permanent = statsEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
+    const seasonal  = statsEmployees.filter(e=>e.employment_type==='seasonal').length;
+    const temporary = statsEmployees.filter(e=>e.employment_type==='temporary').length;
+    const fieldOps  = statsEmployees.filter(e => {
       const role = e.user_role || 'field_staff';
       return role !== 'admin_staff';
     }).length;
-    const tasked    = mergedEmployees.filter(e=>e.is_tasked).length;
-    const shiftStats = shifts.map(s=>({ ...s, count: mergedEmployees.filter(e=>e.shift===s.value).length })).filter(s=>s.count>0);
+    const tasked    = statsEmployees.filter(e=>e.is_tasked).length;
+    const shiftStats = shifts.map(s=>({ ...s, count: statsEmployees.filter(e=>e.shift===s.value).length })).filter(s=>s.count>0);
     const coverage  = WEEK_DAYS.map(day => {
-      const resting = mergedEmployees.filter(e=>(e.rest_days||[]).includes(day.value)).length;
+      const resting = statsEmployees.filter(e=>(e.rest_days||[]).includes(day.value)).length;
       const avail   = total - resting;
       return { ...day, available:avail, total, pct: total>0?Math.round((avail/total)*100):0 };
     });
     return { total, active, onRest, permanent, seasonal, temporary, fieldOps, tasked, shiftStats, coverage };
-  }, [mergedEmployees, shifts]);
+  }, [statsEmployees, shifts]);
 
   // canEdit: يمنع التعديل عندما الجدول معتمد (active) أو مؤرشف
   const canEdit = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
