@@ -1,34 +1,34 @@
 [
   {
-    "content": "Copy backend files from GitHub repo to /app",
+    "content": "Phase 1 POC-A: Create professional seed data (200+ gates, 50+ employees, schedules)",
     "status": "completed"
   },
   {
-    "content": "Copy frontend files from GitHub repo to /app",
+    "content": "Phase 1 POC-B: Dashboard ops endpoint (KPIs, heatmap, alerts, timeline)",
     "status": "completed"
   },
   {
-    "content": "Add missing env variables (JWT_SECRET, etc.)",
+    "content": "Phase 1 POC-C: Field worker endpoints (density + alert)",
     "status": "completed"
   },
   {
-    "content": "Install missing backend dependencies",
+    "content": "Phase 2.1: Rebuild Dashboard UI (ops room feel)",
     "status": "completed"
   },
   {
-    "content": "Install missing frontend dependencies",
+    "content": "Phase 2.2: Seed data admin action in UI",
     "status": "completed"
   },
   {
-    "content": "Verify services are running correctly",
+    "content": "Phase 2.3: Mobile-first field worker UI",
     "status": "completed"
   },
   {
-    "content": "Seed database with sidebar menu, dropdown options, zone categories",
+    "content": "Phase 2.4: Compact gate display (200+ gates) - existing dept overview shows data",
     "status": "completed"
   },
   {
-    "content": "Ask user about what features to complete from PRD task list",
-    "status": "completed"
+    "content": "Phase 2: End to end testing with testing agent",
+    "status": "in_progress"
   }
 ]

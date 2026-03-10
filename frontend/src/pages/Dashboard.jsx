@@ -1,363 +1,361 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context/LanguageContext";
-import { 
-  Users, 
-  DoorOpen, 
-  AlertTriangle, 
-  TrendingUp,
-  Clock,
-  Activity,
-  ArrowUp,
-  ArrowDown,
-  Volume2,
-  VolumeX
+import {
+  Users, DoorOpen, AlertTriangle, TrendingUp, Clock, Activity,
+  ShieldAlert, Calendar, Building, MapPin, RefreshCw,
+  ChevronLeft, Eye, Zap, BarChart3, Bell, ArrowUp, ArrowDown,
+  Volume2, VolumeX
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, RadialBarChart, RadialBar
 } from "recharts";
 import { CrowdAlertMonitor } from "@/hooks/useAlertSound";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const StatCard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = "primary" }) => (
-  <Card className="card-hover" data-testid={`stat-card-${title}`}>
-    <CardContent className="p-6">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="text-3xl font-cairo font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-          {trend && (
-            <div className={`flex items-center gap-1 text-xs ${trendUp ? "text-primary" : "text-destructive"}`}>
-              {trendUp ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-              <span>{trend}</span>
-            </div>
-          )}
-        </div>
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-          color === "primary" ? "bg-primary/10 text-primary" :
-          color === "secondary" ? "bg-secondary/20 text-secondary" :
-          color === "destructive" ? "bg-destructive/10 text-destructive" :
-          "bg-muted text-muted-foreground"
-        }`}>
-          <Icon className="w-6 h-6" />
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+// ── Animated Number ──
+function AnimNum({ value, duration = 600 }) {
+  const [d, setD] = useState(0);
+  useEffect(() => {
+    let s = 0, step = value / (duration / 16);
+    const t = setInterval(() => { s += step; if (s >= value) { setD(value); clearInterval(t); } else setD(Math.round(s)); }, 16);
+    return () => clearInterval(t);
+  }, [value, duration]);
+  return <span>{d.toLocaleString('ar-SA')}</span>;
+}
 
-const DepartmentCard = ({ dept, language }) => {
-  const statusColors = {
-    normal: "bg-primary",
-    warning: "bg-secondary",
-    critical: "bg-destructive"
-  };
-
-  const statusLabels = {
-    normal: language === 'ar' ? "طبيعي" : "Normal",
-    warning: language === 'ar' ? "مرتفع" : "High",
-    critical: language === 'ar' ? "حرج" : "Critical"
-  };
-
-  const employeeStats = dept.employee_stats || {};
-
+// ── KPI Gauge Card ──
+function GaugeCard({ icon: Icon, label, value, total, unit, color, sub }) {
+  const pct = total ? Math.round(value / total * 100) : 0;
+  const gaugeData = [{ value: pct, fill: color }];
   return (
-    <Card className="card-hover" data-testid={`dept-card-${dept.id}`}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-cairo font-semibold text-sm">{dept.name}</h3>
-          <Badge variant={employeeStats.total > 0 ? "default" : "secondary"} className="text-[10px] px-2 py-0.5">
-            {employeeStats.total > 0 ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-          </Badge>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3 text-[10px]">
-            <div>
-              <p className="text-muted-foreground">{language === 'ar' ? 'الموظفون' : 'Staff'}</p>
-              <p className="font-cairo font-bold text-base">{dept.active_staff}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">{language === 'ar' ? 'المواقع' : 'Locations'}</p>
-              <p className="font-cairo font-bold text-base">{employeeStats.locations_count || 0}</p>
-            </div>
+    <Card className="relative overflow-hidden border-0 shadow-lg" data-testid={`gauge-${label}`}>
+      <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: color }} />
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-semibold text-muted-foreground mb-1">{label}</p>
+            <p className="text-3xl font-black" style={{ color }}><AnimNum value={value} /></p>
+            {total && <p className="text-[10px] text-muted-foreground mt-0.5">من {total.toLocaleString('ar-SA')} {unit}</p>}
+            {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
           </div>
-          
-          <div className="grid grid-cols-4 gap-1 pt-2 border-t border-gray-100">
-            <div className="text-center">
-              <div className="w-2 h-2 rounded-full bg-blue-500 mx-auto mb-1" />
-              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و1' : 'S1'}</p>
-              <p className="font-bold text-xs">{employeeStats.shifts?.['الأولى'] || 0}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-2 h-2 rounded-full bg-green-500 mx-auto mb-1" />
-              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و2' : 'S2'}</p>
-              <p className="font-bold text-xs">{employeeStats.shifts?.['الثانية'] || 0}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-2 h-2 rounded-full bg-orange-500 mx-auto mb-1" />
-              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و3' : 'S3'}</p>
-              <p className="font-bold text-xs">{employeeStats.shifts?.['الثالثة'] || 0}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-2 h-2 rounded-full bg-purple-500 mx-auto mb-1" />
-              <p className="text-[9px] text-muted-foreground">{language === 'ar' ? 'و4' : 'S4'}</p>
-              <p className="font-bold text-xs">{employeeStats.shifts?.['الرابعة'] || 0}</p>
+          <div className="w-16 h-16 relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="100%" startAngle={180} endAngle={0} data={gaugeData} barSize={6}>
+                <RadialBar background clockWise dataKey="value" cornerRadius={5} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Icon className="w-5 h-5" style={{ color }} />
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
   );
+}
+
+// ── Alert Type Config ──
+const ALERT_STYLE = {
+  danger: { bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800", text: "text-red-700 dark:text-red-400", icon: "text-red-500" },
+  warning: { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-400", icon: "text-amber-500" },
+  info: { bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-200 dark:border-blue-800", text: "text-blue-700 dark:text-blue-400", icon: "text-blue-500" },
 };
+const ALERT_ICON_MAP = { DoorOpen, AlertTriangle, Calendar, ShieldAlert, Users, Bell };
 
-const AlertItem = ({ alert }) => {
-  const typeStyles = {
-    emergency: { bg: "bg-destructive/10", border: "border-destructive/30", icon: "text-destructive" },
-    warning: { bg: "bg-secondary/10", border: "border-secondary/30", icon: "text-secondary" },
-    info: { bg: "bg-primary/10", border: "border-primary/30", icon: "text-primary" }
-  };
-
-  const style = typeStyles[alert.type] || typeStyles.info;
-
+// ── Heatmap Bar (plaza utilization) ──
+function PlazaHeatmap({ data, navigate }) {
+  const sorted = [...data].sort((a, b) => b.utilization - a.utilization);
   return (
-    <div 
-      className={`p-4 rounded-lg border ${style.bg} ${style.border} animate-fade-in`}
-      data-testid={`alert-${alert.id}`}
-    >
-      <div className="flex items-start gap-3">
-        <AlertTriangle className={`w-5 h-5 flex-shrink-0 ${style.icon}`} />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">{alert.title}</p>
-          <p className="text-xs text-muted-foreground mt-1">{alert.message}</p>
-        </div>
-      </div>
+    <div className="space-y-2">
+      {sorted.map((p, i) => {
+        const barColor = p.utilization > 80 ? '#ef4444' : p.utilization > 60 ? '#f59e0b' : '#22c55e';
+        return (
+          <div key={i} className="group cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-all" onClick={() => navigate('/gates?tab=dashboard')}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold truncate max-w-[60%]">{p.plaza}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{p.open}/{p.total}</span>
+                <Badge variant="outline" className="text-[9px] px-1.5" style={{ borderColor: barColor, color: barColor }}>{p.utilization}%</Badge>
+              </div>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(p.utilization, 100)}%`, background: barColor }} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-};
+}
 
+// ── Main Dashboard ──
 export default function Dashboard() {
-  const { t, language } = useLanguage();
-  const [stats, setStats] = useState(null);
-  const [departments, setDepartments] = useState([]);
-  const [crowdData, setCrowdData] = useState([]);
-  const [alerts, setAlerts] = useState([]);
-  const [gatesWithoutStaff, setGatesWithoutStaff] = useState([]);
+  const [ops, setOps] = useState(null);
+  const [deptStats, setDeptStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const navigate = useNavigate();
+  const { language } = useLanguage();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, deptsRes, crowdRes, alertsRes, gatesRes, employeesRes] = await Promise.all([
-          axios.get(`${API}/dashboard/stats`),
-          axios.get(`${API}/dashboard/departments`),
-          axios.get(`${API}/dashboard/crowd-hourly`),
-          axios.get(`${API}/alerts`),
-          axios.get(`${API}/gates`),
-          axios.get(`${API}/employees?department=gates`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          })
-        ]);
-        
-        setStats(statsRes.data);
-        setDepartments(deptsRes.data);
-        setCrowdData(crowdRes.data);
-        setAlerts(alertsRes.data.slice(0, 4));
-        
-        // Find open gates without staff
-        const openGates = gatesRes.data.filter(g => g.status === 'مفتوح');
-        const employees = employeesRes.data.filter(e => e.is_active);
-        const gatesNoStaff = openGates.filter(gate => {
-          const staffAtGate = employees.filter(emp => emp.location === gate.name);
-          return staffAtGate.length === 0;
-        });
-        setGatesWithoutStaff(gatesNoStaff);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+  const fetchData = useCallback(async () => {
+    try {
+      const [opsRes, deptRes] = await Promise.all([
+        axios.get(`${API}/dashboard/ops`),
+        axios.get(`${API}/dashboard/departments`),
+      ]);
+      setOps(opsRes.data);
+      setDeptStats(deptRes.data);
+      setLastUpdate(new Date());
+    } catch (e) {
+      console.error('Dashboard fetch error:', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  if (loading || !ops) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6 h-32 bg-muted/50" />
-            </Card>
-          ))}
-        </div>
+      <div className="space-y-4 animate-pulse">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[1,2,3,4].map(i => <Card key={i}><CardContent className="p-4 h-24" /></Card>)}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">{[1,2,3].map(i => <Card key={i}><CardContent className="p-4 h-48" /></Card>)}</div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6" data-testid="dashboard-page">
-      {/* Sound Alert Monitor */}
-      <CrowdAlertMonitor 
-        departments={departments}
-        enabled={soundEnabled}
-        threshold={85}
-      />
+  const { kpis, heatmap, smart_alerts, recent_alerts, timeline, plazas } = ops;
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          title={t('openGates')}
-          value={`${stats?.open_gates || 0} / ${stats?.total_gates || 0}`}
-          subtitle={language === 'ar' ? 'باب نشط' : 'active gates'}
-          icon={DoorOpen}
-          color="primary"
-        />
-        <StatCard
-          title={language === 'ar' ? 'الموظفين النشطين' : 'Active Staff'}
-          value={stats?.active_staff || 0}
-          subtitle={language === 'ar' ? 'في الخدمة الآن' : 'on duty now'}
-          icon={Users}
-          color="secondary"
-        />
-        <StatCard
-          title={t('activeAlerts')}
-          value={stats?.alerts_count || 0}
-          subtitle={language === 'ar' ? `${gatesWithoutStaff.length} باب بدون موظفين` : `${gatesWithoutStaff.length} gates without staff`}
-          icon={AlertTriangle}
-          color="destructive"
-        />
+  // Shift chart data
+  const shiftData = Object.entries(kpis.shift_distribution || {}).map(([name, count]) => ({
+    name, count,
+    fill: name === 'الأولى' ? '#3b82f6' : name === 'الثانية' ? '#22c55e' : name === 'الثالثة' ? '#f97316' : '#8b5cf6'
+  }));
+
+  // Dept pie
+  const deptData = Object.entries(kpis.department_employees || {}).map(([dept, count]) => {
+    const labels = { gates: 'الأبواب', plazas: 'الساحات', planning: 'التخطيط', crowd_services: 'الحشود', mataf: 'المطاف', haram_map: 'المصليات' };
+    const colors = { gates: '#1d4ed8', plazas: '#0d9488', planning: '#7c3aed', crowd_services: '#d97706', mataf: '#dc2626', haram_map: '#059669' };
+    return { name: labels[dept] || dept, value: count, fill: colors[dept] || '#666' };
+  });
+
+  return (
+    <div className="space-y-4" data-testid="ops-dashboard">
+      {/* Header bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center shadow-lg">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="font-cairo font-bold text-lg">غرفة العمليات</h1>
+            <p className="text-[10px] text-muted-foreground">آخر تحديث: {lastUpdate?.toLocaleTimeString('ar-SA') || '—'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <CrowdAlertMonitor />
+          <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5 text-xs" data-testid="refresh-dashboard">
+            <RefreshCw className="w-3.5 h-3.5" />
+            تحديث
+          </Button>
+        </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Employee Distribution by Shift */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-cairo text-lg text-right">{language === 'ar' ? 'توزيع الموظفين حسب الوردية' : 'Staff Distribution by Shift'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {departments.map((dept) => {
-                const shifts = dept.employee_stats?.shifts || {};
-                const total = Object.values(shifts).reduce((a, b) => a + b, 0);
-                
-                if (total === 0) return null;
-                
-                return (
-                  <div key={dept.id} className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-sm font-medium mb-2 text-right">{dept.name}</p>
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div>
-                        <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-1" />
-                        <p className="text-xs font-bold">{shifts['الأولى'] || 0}</p>
-                      </div>
-                      <div>
-                        <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-1" />
-                        <p className="text-xs font-bold">{shifts['الثانية'] || 0}</p>
-                      </div>
-                      <div>
-                        <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-1" />
-                        <p className="text-xs font-bold">{shifts['الثالثة'] || 0}</p>
-                      </div>
-                      <div>
-                        <div className="w-3 h-3 rounded-full bg-purple-500 mx-auto mb-1" />
-                        <p className="text-xs font-bold">{shifts['الرابعة'] || 0}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+      {/* ── KPI Gauges ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <GaugeCard icon={DoorOpen} label="الأبواب المفتوحة" value={kpis.open_gates} total={kpis.total_gates} unit="باب" color="#059669" />
+        <GaugeCard icon={Users} label="الموظفين النشطين" value={kpis.active_employees} total={kpis.total_employees} unit="موظف" color="#2563eb" sub={`في الخدمة الآن`} />
+        <GaugeCard icon={TrendingUp} label="نسبة الإشغال" value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={kpis.crowd_percentage > 80 ? '#ef4444' : kpis.crowd_percentage > 60 ? '#f59e0b' : '#22c55e'} sub={`${kpis.total_crowd?.toLocaleString('ar-SA')} زائر`} />
+        <GaugeCard icon={AlertTriangle} label="التنبيهات النشطة" value={kpis.active_alerts} total={kpis.active_alerts + 5} unit="" color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'} sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرج` : 'لا توجد حالات حرجة'} />
+      </div>
 
-        {/* Alerts */}
-        <Card data-testid="alerts-panel">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="font-cairo text-lg">{t('latestAlerts')}</CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs text-primary">
-                {t('viewAll')}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Gates Without Staff Warning */}
-            {gatesWithoutStaff.length > 0 && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm text-destructive">
-                      {language === 'ar' ? '⚠️ أبواب مفتوحة بدون موظفين' : '⚠️ Open gates without staff'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {gatesWithoutStaff.slice(0, 3).map(g => g.name).join(', ')}
-                      {gatesWithoutStaff.length > 3 && ` +${gatesWithoutStaff.length - 3}`}
-                    </p>
-                    <p className="text-xs font-medium mt-1 text-destructive">
-                      {language === 'ar' ? `إجمالي ${gatesWithoutStaff.length} باب يحتاج موظفين` : `${gatesWithoutStaff.length} gates need staff`}
-                    </p>
+      {/* ── Smart Alerts ── */}
+      {smart_alerts.length > 0 && (
+        <div className="space-y-2" data-testid="smart-alerts">
+          {smart_alerts.map((alert, i) => {
+            const style = ALERT_STYLE[alert.type] || ALERT_STYLE.info;
+            const AlertIcon = ALERT_ICON_MAP[alert.icon] || AlertTriangle;
+            return (
+              <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${style.bg} ${style.border}`}>
+                <div className="flex items-center gap-3">
+                  <AlertIcon className={`w-5 h-5 flex-shrink-0 ${style.icon}`} />
+                  <div>
+                    <p className={`text-sm font-semibold ${style.text}`}>{alert.message}</p>
                   </div>
                 </div>
+                {alert.href && (
+                  <Button variant="ghost" size="sm" className={`text-xs ${style.text}`} onClick={() => navigate(alert.href)}>
+                    {alert.action} <ChevronLeft className="w-3 h-3 mr-1" />
+                  </Button>
+                )}
               </div>
-            )}
-            
-            {alerts.map((alert, index) => (
-              <div key={alert.id} className={`stagger-${index + 1}`}>
-                <AlertItem alert={alert} />
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Main Grid (3 columns) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Column 1: Heatmap */}
+        <Card className="lg:col-span-1 border-0 shadow-lg">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-cairo">حالة البوابات حسب الساحة</CardTitle>
+              <Badge variant="outline" className="text-[9px]">{heatmap.length} ساحة</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <ScrollArea className="h-[320px]">
+              <PlazaHeatmap data={heatmap} navigate={navigate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Column 2: Shift distribution + Department pie */}
+        <Card className="lg:col-span-1 border-0 shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-cairo">توزيع الموظفين حسب الوردية</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={shiftData} layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v) => `${v} موظف`} />
+                <Bar dataKey="count" radius={[0,4,4,0]}>
+                  {shiftData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+          <Separator />
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm font-cairo">توزيع الموظفين حسب الإدارة</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-3">
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie data={deptData} cx="50%" cy="50%" outerRadius={55} innerRadius={30} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                  {deptData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Pie>
+                <Tooltip formatter={(v) => `${v} موظف`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Column 3: Alerts + Timeline */}
+        <Card className="lg:col-span-1 border-0 shadow-lg">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-cairo">آخر التنبيهات</CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/notifications')}>عرض الكل</Button>
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 pb-2">
+            <ScrollArea className="h-[140px]">
+              <div className="space-y-2">
+                {recent_alerts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">لا توجد تنبيهات</p>}
+                {recent_alerts.map((a, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${a.priority === 'critical' ? 'bg-red-500' : a.priority === 'high' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold truncate">{a.title}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{a.message}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
+          </CardContent>
+          <Separator />
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm font-cairo">آخر الأحداث</CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <ScrollArea className="h-[140px]">
+              <div className="space-y-2">
+                {timeline.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">لا توجد أحداث</p>}
+                {timeline.map((t, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg border border-transparent hover:border-border transition-all">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Activity className="w-3 h-3 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium">{t.user_name}: <span className="text-muted-foreground">{t.action}</span></p>
+                      {t.details && <p className="text-[10px] text-muted-foreground truncate">{t.details}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
 
-      {/* Departments Grid */}
+      {/* ── Departments Status Cards ── */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-cairo font-bold text-xl">{t('departmentStatus')}</h2>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="text-xs"
-              data-testid="sound-toggle"
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4 ml-1" /> : <VolumeX className="w-4 h-4 ml-1" />}
-              {soundEnabled ? (language === 'ar' ? 'تنبيهات صوتية' : 'Sound alerts') : (language === 'ar' ? 'صامت' : 'Muted')}
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs">
-              <TrendingUp className="w-4 h-4 ml-2" />
-              {t('detailedReport')}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-cairo font-bold text-base">حالة الإدارات</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => navigate('/reports')}>
+              <BarChart3 className="w-3.5 h-3.5" /> تقرير مفصل
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {departments.map((dept, index) => (
-            <div key={dept.id} className={`animate-fade-in stagger-${index + 1}`}>
-              <DepartmentCard dept={dept} language={language} />
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          {deptStats.map((dept, i) => {
+            const statusColor = dept.status === 'critical' ? '#ef4444' : dept.status === 'warning' ? '#f59e0b' : '#22c55e';
+            const ICONS = { planning: '📋', plazas: '⛩️', gates: '🚪', crowd_services: '👥', mataf: '🕋' };
+            return (
+              <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/${dept.id === 'plazas' ? 'plazas' : dept.id === 'crowd_services' ? 'crowd-services' : dept.id}`)} data-testid={`dept-card-${dept.id}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xl">{ICONS[dept.id] || '📊'}</span>
+                    <Badge style={{ background: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40` }} className="text-[9px] font-bold">
+                      {dept.status === 'critical' ? 'حرج' : dept.status === 'warning' ? 'مرتفع' : 'طبيعي'}
+                    </Badge>
+                  </div>
+                  <h3 className="font-cairo font-bold text-sm mb-2 truncate">{dept.name}</h3>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">المواقع</p>
+                      <p className="font-bold text-lg">{dept.employee_stats?.locations_count || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">الموظفون</p>
+                      <p className="font-bold text-lg">{dept.employee_stats?.total || 0}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex gap-1">
+                    {Object.entries(dept.employee_stats?.shifts || {}).map(([shift, count], si) => {
+                      const sColors = ['#3b82f6','#22c55e','#f97316','#8b5cf6'];
+                      return count > 0 ? (
+                        <div key={si} className="flex items-center gap-0.5">
+                          <div className="w-2 h-2 rounded-full" style={{ background: sColors[si] || '#999' }} />
+                          <span className="text-[9px] text-muted-foreground">{count}</span>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>

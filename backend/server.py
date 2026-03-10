@@ -30,6 +30,9 @@ from routes.sessions import router as sessions_router
 from routes.transactions import router as transactions_router
 from routes.uploads import router as uploads_router
 from routes.permissions import router as permissions_router
+from routes.seed import router as seed_router
+from routes.ops import router as ops_router
+from routes.field import router as field_router
 
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
@@ -41,6 +44,9 @@ api_router.include_router(maps_router)
 api_router.include_router(sessions_router)
 api_router.include_router(transactions_router)
 api_router.include_router(uploads_router)
+api_router.include_router(seed_router)
+api_router.include_router(ops_router)
+api_router.include_router(field_router)
 
 
 # ============= Frontend Serving with Injected Settings =============
