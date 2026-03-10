@@ -25,7 +25,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -235,7 +234,8 @@ export default function TasksPage({ department }) {
 
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState({});
-  const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);  // كل موظفي الإدارة
+  const [activeSchedule, setActiveSchedule] = useState(null); // الجدول المعتمد
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("kanban"); // kanban | list
   const [search, setSearch] = useState("");
@@ -271,10 +271,20 @@ export default function TasksPage({ department }) {
   const fetchEmployees = useCallback(async () => {
     if (!isManager) return;
     try {
-      const res = await axios.get(`${API}/employees?department=${dept}`, {
-        headers: { Authorization: `Bearer ${token()}` }
-      });
-      setEmployees(res.data);
+      const currentMonth = new Date().toLocaleDateString("en-CA", {
+        timeZone: "Asia/Riyadh"
+      }).slice(0, 7); // yyyy-MM بتوقيت السعودية
+      const [empRes, schedRes] = await Promise.all([
+        axios.get(`${API}/employees?department=${dept}`, {
+          headers: { Authorization: `Bearer ${token()}` }
+        }),
+        axios.get(`${API}/schedules/${dept}/${currentMonth}`, {
+          headers: { Authorization: `Bearer ${token()}` }
+        }).catch(() => ({ data: null })),
+      ]);
+      setEmployees(empRes.data);
+      const sched = schedRes.data;
+      setActiveSchedule(sched?.status === "active" ? sched : null);
     } catch { }
   }, [dept, isManager]);
 
@@ -284,6 +294,28 @@ export default function TasksPage({ department }) {
     const interval = setInterval(() => fetchTasks(true), 30000);
     return () => clearInterval(interval);
   }, [fetchTasks, fetchEmployees]);
+
+  // ── تصنيف الموظفين: مداوم / في راحة / غير محدد ──────────────
+  const todayAr = (() => {
+    const map = { Saturday:"السبت", Sunday:"الأحد", Monday:"الإثنين", Tuesday:"الثلاثاء",
+                  Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
+    return map[new Date().toLocaleDateString("en-US", { weekday:"long", timeZone:"Asia/Riyadh" })] || "";
+  })();
+
+  const enrichedEmployees = employees.map(emp => {
+    if (!activeSchedule) return { ...emp, dutyStatus: "no_schedule" };
+    const assignment = activeSchedule.assignments?.find(a => a.employee_id === emp.id);
+    if (!assignment) return { ...emp, dutyStatus: "no_schedule" };
+    const onRest = (assignment.rest_days || []).includes(todayAr);
+    return { ...emp, dutyStatus: onRest ? "rest" : "working" };
+  });
+
+  // الأولوية: مداومون أولاً، ثم غير محدد، ثم في راحة
+  const sortedEmployees = [
+    ...enrichedEmployees.filter(e => e.dutyStatus === "working"),
+    ...enrichedEmployees.filter(e => e.dutyStatus === "no_schedule"),
+    ...enrichedEmployees.filter(e => e.dutyStatus === "rest"),
+  ];
 
   // ── Filtered tasks ─────────────────────────────────────────
   const filtered = tasks.filter(t => {
@@ -665,36 +697,87 @@ export default function TasksPage({ department }) {
                 {employees.length === 0 ? (
                   <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون في هذه الإدارة</p>
                 ) : (
-                  <div className="max-h-48 overflow-y-auto divide-y">
-                    {/* Select All */}
-                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 cursor-pointer"
-                      onClick={() => setForm(f => ({
-                        ...f,
-                        assignee_ids: f.assignee_ids.length === employees.length ? [] : employees.map(e => e.id)
-                      }))}>
-                      <Checkbox checked={form.assignee_ids.length === employees.length && employees.length > 0} />
-                      <span className="text-xs font-semibold text-primary">تحديد الكل</span>
-                    </div>
-                    {employees.map(emp => (
-                      <div key={emp.id}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 cursor-pointer"
-                        onClick={() => toggleAssignee(emp.id)}
-                        data-testid={`assignee-${emp.id}`}>
-                        <Checkbox checked={form.assignee_ids.includes(emp.id)} />
-                        <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
-                          {emp.name.charAt(0)}
+                  <div className="max-h-56 overflow-y-auto divide-y">
+                    {/* Select All — المداومون فقط */}
+                    {activeSchedule && (
+                      <div
+                        className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 cursor-pointer select-none"
+                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
+                        onClick={e => {
+                          e.preventDefault(); e.stopPropagation();
+                          const workingIds = sortedEmployees.filter(e => e.dutyStatus === "working").map(e => e.id);
+                          setForm(f => ({
+                            ...f,
+                            assignee_ids: f.assignee_ids.length === workingIds.length && workingIds.every(id => f.assignee_ids.includes(id))
+                              ? [] : workingIds
+                          }));
+                        }}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
+                          ${sortedEmployees.filter(e => e.dutyStatus === "working").every(e => form.assignee_ids.includes(e.id)) && sortedEmployees.filter(e => e.dutyStatus === "working").length > 0
+                            ? "bg-emerald-600 border-emerald-600" : "border-slate-300 bg-white"}`}>
+                          {sortedEmployees.filter(e => e.dutyStatus === "working").every(e => form.assignee_ids.includes(e.id)) && sortedEmployees.filter(e => e.dutyStatus === "working").length > 0
+                            && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{emp.name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{emp.job_title}</p>
-                        </div>
-                        {emp.employment_type && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                            {emp.employment_type === "permanent" ? "دائم" : emp.employment_type === "seasonal" ? "موسمي" : "مؤقت"}
-                          </span>
-                        )}
+                        <span className="text-xs font-semibold text-emerald-700">تحديد المداومين فقط</span>
+                        <span className="text-[10px] text-emerald-600 mr-auto">
+                          {sortedEmployees.filter(e => e.dutyStatus === "working").length} مداوم
+                        </span>
                       </div>
-                    ))}
+                    )}
+
+                    {sortedEmployees.map(emp => {
+                      const isSelected = form.assignee_ids.includes(emp.id);
+                      const isRest = emp.dutyStatus === "rest";
+                      const statusLabel = emp.dutyStatus === "working"
+                        ? { text: "مداوم", cls: "bg-emerald-100 text-emerald-700" }
+                        : emp.dutyStatus === "rest"
+                        ? { text: "في راحة", cls: "bg-amber-100 text-amber-700" }
+                        : null;
+
+                      return (
+                        <div key={emp.id}
+                          className={`flex items-center gap-3 px-3 py-2.5 select-none transition-colors
+                            ${isRest ? "opacity-50 bg-slate-50" : "cursor-pointer hover:bg-muted/30"}
+                            ${isSelected ? "bg-primary/5" : ""}`}
+                          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
+                          onClick={e => {
+                            e.preventDefault(); e.stopPropagation();
+                            if (isRest) return; // في الراحة لا يُكلَّف
+                            toggleAssignee(emp.id);
+                          }}
+                          title={isRest ? "الموظف في راحة اليوم" : emp.name}
+                          data-testid={`assignee-${emp.id}`}>
+
+                          {/* Custom Checkbox */}
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
+                            ${isSelected ? "bg-primary border-primary" : isRest ? "border-slate-200 bg-slate-100" : "border-slate-300 bg-white"}`}>
+                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          </div>
+
+                          {/* Avatar */}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
+                            ${isRest ? "bg-slate-200 text-slate-400" : "bg-primary/15 text-primary"}`}>
+                            {emp.name.charAt(0)}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${isRest ? "text-slate-400" : ""}`}>{emp.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{emp.job_title}</p>
+                          </div>
+
+                          {/* Status Badges */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {statusLabel && (
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusLabel.cls}`}>
+                                {statusLabel.text}
+                              </span>
+                            )}
+                            {isRest && <span title="في راحة — غير متاح للتكليف">🚫</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
