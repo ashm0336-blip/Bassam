@@ -572,28 +572,6 @@ export default function GateMapPage() {
                                       <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                     </g>
                                   )}
-
-                                  {/* Label */}
-                                  {showLabel && (
-                                    <g style={{ pointerEvents: "none" }}>
-                                      <rect
-                                        x={marker.x - 6} y={marker.y - r * ar - 2.2}
-                                        width="12" height="1.6"
-                                        rx="0.4" fill="white" fillOpacity="0.92"
-                                        stroke={isDragging ? "#3b82f6" : sc.color} strokeWidth="0.06"
-                                        vectorEffect="non-scaling-stroke"
-                                      />
-                                      <text
-                                        x={marker.x} y={marker.y - r * ar - 1.1}
-                                        textAnchor="middle" dominantBaseline="middle"
-                                        fill={isDragging ? "#3b82f6" : "#1e293b"}
-                                        fontSize="1.1" fontWeight="700"
-                                        fontFamily="Cairo, sans-serif"
-                                      >
-                                        {marker.name_ar}
-                                      </text>
-                                    </g>
-                                  )}
                                 </g>
                               );
                             })}
