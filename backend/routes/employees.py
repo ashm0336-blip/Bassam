@@ -398,11 +398,19 @@ async def update_assignment(schedule_id: str, employee_id: str, data: ScheduleAs
                 a["location"] = data.location
             if data.shift is not None:
                 a["shift"] = data.shift
+            if data.is_tasked is not None:
+                a["is_tasked"] = data.is_tasked
             found = True
             break
     
     if not found:
-        new_a = {"employee_id": employee_id, "rest_days": data.rest_days or [], "location": data.location or "", "shift": data.shift or ""}
+        new_a = {
+            "employee_id": employee_id,
+            "rest_days": data.rest_days or [],
+            "location": data.location or "",
+            "shift": data.shift or "",
+            "is_tasked": data.is_tasked if data.is_tasked is not None else False
+        }
         assignments.append(new_a)
 
     await db.monthly_schedules.update_one(
@@ -433,6 +441,24 @@ async def update_schedule_status(schedule_id: str, status: str = "active", user:
     action = "اعتماد" if status == "active" else "أرشفة"
     await log_activity("schedule_status", user, schedule["month"], f"تم {action} جدول شهري: {schedule['month']}")
     return {"message": f"تم {action} الجدول بنجاح"}
+
+
+@router.put("/admin/schedules/{schedule_id}/unlock")
+async def unlock_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
+    """فتح الجدول المعتمد للتعديل - للمدير والأدمن فقط"""
+    if user["role"] not in ["system_admin", "department_manager"]:
+        raise HTTPException(status_code=403, detail="فقط مدير الإدارة والأدمن يمكنهم فتح الجدول")
+    schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="الجدول غير موجود")
+    if schedule.get("status") != "active":
+        raise HTTPException(status_code=400, detail="الجدول غير معتمد")
+    await db.monthly_schedules.update_one(
+        {"id": schedule_id},
+        {"$set": {"status": "draft", "unlocked_by": user.get("name", ""), "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    await log_activity("schedule_unlocked", user, schedule["month"], f"تم فتح الجدول للتعديل: {schedule['month']}")
+    return {"message": "تم فتح الجدول للتعديل"}
 
 
 @router.delete("/admin/schedules/{schedule_id}")

@@ -1,30 +1,14 @@
 [
   {
-    "content": "P0: Seed data + Dashboard + Field UI + Sessions data",
+    "content": "إصلاح حفظ is_tasked في قاعدة البيانات (backend)",
     "status": "completed"
   },
   {
-    "content": "P1-5: إصلاح نظرة عامة في لوحة الأدمن",
+    "content": "إضافة endpoint لفتح الجدول بعد الاعتماد (unlock)",
     "status": "completed"
   },
   {
-    "content": "P1-8: نقل الممنوعات لإعدادات إدارة البوابات",
-    "status": "completed"
-  },
-  {
-    "content": "P1-9: نظام تنبيهات ذكي في الباك إند",
-    "status": "completed"
-  },
-  {
-    "content": "P1-10: صفحة ملف شخصي كامل لكل موظف",
-    "status": "completed"
-  },
-  {
-    "content": "P1-11: تصدير التقارير PDF/Excel",
-    "status": "completed"
-  },
-  {
-    "content": "End to end testing",
+    "content": "تحديث الفرونتند - إخفاء التعديل بعد الاعتماد وإضافة زر الفتح للمدير والأدمن",
     "status": "completed"
   }
 ]

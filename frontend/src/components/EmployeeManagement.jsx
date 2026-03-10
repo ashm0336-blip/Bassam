@@ -7,7 +7,7 @@ import {
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
   KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical, Activity, Tag,
-  Download, Upload,
+  Download, Upload, LockOpen, Lock,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -273,7 +273,7 @@ function TaskedToggle({ value, onChange, disabled, isAr }) {
 }
 
 // Month navigation bar
-function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, onApprove, onDelete, isReadOnly, language }) {
+function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, onApprove, onDelete, onUnlock, canUnlock, isReadOnly, language }) {
   const currentMonthKey = getMonthKey(new Date());
   const navigate = (dir) => {
     const [y,m] = selectedMonth.split('-').map(Number);
@@ -285,9 +285,9 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
     months.push(getMonthKey(new Date(y, m-1+i, 1)));
   }
   const statusConfig = {
-    active:   { label:"نشط",    Icon:CheckCircle2, color:"text-emerald-700", bg:"bg-emerald-50 border-emerald-200" },
-    draft:    { label:"مسودة",  Icon:FileText,     color:"text-amber-700",   bg:"bg-amber-50 border-amber-200" },
-    archived: { label:"مؤرشف", Icon:Archive,       color:"text-gray-500",    bg:"bg-gray-50 border-gray-200" },
+    active:   { label:"معتمد ومقفل", Icon:Lock,        color:"text-emerald-700", bg:"bg-emerald-50 border-emerald-200" },
+    draft:    { label:"مسودة",       Icon:FileText,    color:"text-amber-700",   bg:"bg-amber-50 border-amber-200" },
+    archived: { label:"مؤرشف",      Icon:Archive,      color:"text-gray-500",    bg:"bg-gray-50 border-gray-200" },
   };
   return (
     <Card className="border-2 border-primary/10" data-testid="month-bar">
@@ -326,29 +326,44 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
               <span className="text-xs text-muted-foreground">{language==='ar' ? 'لا يوجد جدول' : 'No schedule'}</span>
             )}
           </div>
-          {!isReadOnly && (
-            <div className="flex items-center gap-2">
-              {!schedule ? (
-                <>
-                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('new')}>
-                    <Plus className="w-3 h-3"/>{language==='ar'?'جديد':'New'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('clone')}>
-                    <Copy className="w-3 h-3"/>{language==='ar'?'نسخ السابق':'Clone'}
-                  </Button>
-                </>
-              ) : schedule.status==='draft' ? (
-                <>
-                  <Button size="sm" className="h-7 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={onApprove}>
-                    <CheckCircle2 className="w-3 h-3"/>{language==='ar'?'اعتماد':'Approve'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 text-destructive border-destructive/30" onClick={onDelete}>
-                    <Trash2 className="w-3 h-3"/>{language==='ar'?'حذف':'Delete'}
-                  </Button>
-                </>
-              ) : null}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* حالة: لا يوجد جدول */}
+            {!schedule && !isReadOnly && (
+              <>
+                <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('new')}>
+                  <Plus className="w-3 h-3"/>{language==='ar'?'جديد':'New'}
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={()=>onCreateSchedule('clone')}>
+                  <Copy className="w-3 h-3"/>{language==='ar'?'نسخ السابق':'Clone'}
+                </Button>
+              </>
+            )}
+            {/* حالة: مسودة — زر اعتماد وحذف للمدير وفوق */}
+            {schedule?.status === 'draft' && !isReadOnly && (
+              <>
+                <Button size="sm" className="h-7 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={onApprove}
+                  data-testid="approve-schedule-btn">
+                  <CheckCircle2 className="w-3 h-3"/>{language==='ar'?'اعتماد':'Approve'}
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 text-destructive border-destructive/30" onClick={onDelete}>
+                  <Trash2 className="w-3 h-3"/>{language==='ar'?'حذف':'Delete'}
+                </Button>
+              </>
+            )}
+            {/* حالة: معتمد — زر فتح للمدير والأدمن فقط */}
+            {schedule?.status === 'active' && canUnlock && (
+              <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 text-orange-600 border-orange-300 hover:bg-orange-50"
+                onClick={onUnlock} data-testid="unlock-schedule-btn">
+                <LockOpen className="w-3 h-3"/>{language==='ar'?'فتح للتعديل':'Unlock'}
+              </Button>
+            )}
+            {/* حالة: معتمد — رسالة للمستخدم العادي */}
+            {schedule?.status === 'active' && !canUnlock && (
+              <span className="text-[11px] text-emerald-600 flex items-center gap-1">
+                <Lock className="w-3 h-3"/>{language==='ar'?'الجدول مقفل':'Locked'}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-center mt-2">
           <span className="text-sm font-bold text-gray-700">{getMonthLabel(selectedMonth)}</span>
@@ -514,6 +529,17 @@ export default function EmployeeManagement({ department }) {
     } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل الحذف":"Failed")); }
   };
 
+  const handleUnlockSchedule = async () => {
+    if(!schedule) return;
+    if(!window.confirm(isAr ? "هل تريد فتح الجدول للتعديل؟ سيتم تغيير حالته إلى مسودة." : "Unlock schedule for editing?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/admin/schedules/${schedule.id}/unlock`, {}, { headers:{ Authorization:`Bearer ${token}` } });
+      toast.success(isAr ? "تم فتح الجدول للتعديل" : "Schedule unlocked");
+      fetchSchedule();
+    } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل فتح الجدول":"Failed to unlock")); }
+  };
+
   const handleAssignmentChange = useCallback(async (employeeId, field, value) => {
     if (!schedule) return;
     try {
@@ -652,7 +678,10 @@ export default function EmployeeManagement({ department }) {
     return { total, active, onRest, permanent, seasonal, temporary, fieldOps, tasked, shiftStats, coverage };
   }, [mergedEmployees, shifts]);
 
-  const canEdit = canWrite('edit_employees') && (!schedule || schedule.status!=='archived');
+  // canEdit: يمنع التعديل عندما الجدول معتمد (active) أو مؤرشف
+  const canEdit = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  // canUnlock: فقط مدير الإدارة والأدمن يقدرون يفتحون الجدول
+  const canUnlock = user?.role === 'system_admin' || user?.role === 'department_manager';
   const canViewEmp = canRead('edit_employees') || canRead('add_employees');
   const canAddEmp = canWrite('add_employees');
   const canDeleteEmp = canWrite('delete_employees');
@@ -677,7 +706,8 @@ export default function EmployeeManagement({ department }) {
       <MonthBar
         selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} schedule={schedule}
         onCreateSchedule={handleCreateSchedule} onApprove={handleApproveSchedule}
-        onDelete={handleDeleteSchedule} isReadOnly={!canEdit} language={language}
+        onDelete={handleDeleteSchedule} onUnlock={handleUnlockSchedule}
+        canUnlock={canUnlock} isReadOnly={!canEdit} language={language}
       />
 
       {/* Employee Table only — stats moved to نظرة عامة */}
