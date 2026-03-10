@@ -273,6 +273,40 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
     return {"message": "تم حذف الموظف بنجاح"}
 
 
+@router.get("/employees/{employee_id}/profile")
+async def get_employee_profile(employee_id: str, user: dict = Depends(get_current_user)):
+    """ملف شخصي كامل للموظف"""
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    if not check_department_access(user, emp.get("department", "")):
+        raise HTTPException(status_code=403, detail="لا يمكنك الوصول لبيانات هذه الإدارة")
+
+    # Get user account info
+    account = None
+    if emp.get("national_id"):
+        account = await db.users.find_one({"national_id": emp["national_id"]}, {"_id": 0, "password": 0})
+
+    # Get recent activity
+    activities = await db.activity_logs.find(
+        {"$or": [{"user_name": emp.get("name")}, {"target": emp.get("name")}]},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(10)
+
+    # Get schedules
+    schedules = await db.monthly_schedules.find(
+        {"department": emp.get("department"), "assignments.employee_id": employee_id},
+        {"_id": 0}
+    ).sort("month", -1).to_list(5)
+
+    return {
+        "employee": emp,
+        "account": account,
+        "activities": activities,
+        "schedules": schedules,
+    }
+
+
 @router.get("/employees/stats/{department}")
 async def get_employee_stats(department: str, user: dict = Depends(get_current_user)):
     if not check_department_access(user, department):

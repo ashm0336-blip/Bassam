@@ -32,6 +32,7 @@ import GateMapPage from "@/pages/GateMapPage";
 import DailySessionsPage from "@/pages/DailySessionsPage";
 import DailyGateSessionsPage from "@/pages/DailyGateSessionsPage";
 import FieldWorkerPage from "@/pages/FieldWorkerPage";
+import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
@@ -182,6 +183,9 @@ function AppRoutes() {
         } />
         <Route path="field" element={
           <FieldWorkerPage />
+        } />
+        <Route path="employee/:id" element={
+          <EmployeeProfilePage />
         } />
         <Route path="admin" element={
           <AdminProtectedRoute>

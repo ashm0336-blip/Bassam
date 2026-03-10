@@ -1,34 +1,30 @@
 [
   {
-    "content": "Phase 1 POC-A: Create professional seed data (200+ gates, 50+ employees, schedules)",
+    "content": "P0: Seed data + Dashboard + Field UI + Sessions data",
     "status": "completed"
   },
   {
-    "content": "Phase 1 POC-B: Dashboard ops endpoint (KPIs, heatmap, alerts, timeline)",
+    "content": "P1-5: إصلاح نظرة عامة في لوحة الأدمن (توصيات + تنبيهات ذكية)",
     "status": "completed"
   },
   {
-    "content": "Phase 1 POC-C: Field worker endpoints (density + alert)",
+    "content": "P1-8: نقل الممنوعات لإعدادات إدارة البوابات",
     "status": "completed"
   },
   {
-    "content": "Phase 2.1: Rebuild Dashboard UI (ops room feel)",
+    "content": "P1-9: نظام تنبيهات ذكي في الباك إند",
     "status": "completed"
   },
   {
-    "content": "Phase 2.2: Seed data admin action in UI",
+    "content": "P1-10: صفحة ملف شخصي كامل لكل موظف",
     "status": "completed"
   },
   {
-    "content": "Phase 2.3: Mobile-first field worker UI",
+    "content": "P1-11: تصدير التقارير PDF/Excel (كان موجود)",
     "status": "completed"
   },
   {
-    "content": "Phase 2.4: Compact gate display (200+ gates) - existing dept overview shows data",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: End to end testing with testing agent",
+    "content": "End to end testing",
     "status": "in_progress"
   }
 ]

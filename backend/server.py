@@ -33,6 +33,7 @@ from routes.permissions import router as permissions_router
 from routes.seed import router as seed_router
 from routes.ops import router as ops_router
 from routes.field import router as field_router
+from routes.smart_alerts import router as smart_alerts_router
 
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
@@ -47,6 +48,7 @@ api_router.include_router(uploads_router)
 api_router.include_router(seed_router)
 api_router.include_router(ops_router)
 api_router.include_router(field_router)
+api_router.include_router(smart_alerts_router)
 
 
 # ============= Frontend Serving with Injected Settings =============
