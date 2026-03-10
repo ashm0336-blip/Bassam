@@ -21,7 +21,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import AlertsPage from "@/pages/AlertsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
-import MapPage from "@/pages/MapPage";
+// MapPage removed
 import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import TransactionsPage from "@/pages/TransactionsPage";
 import LoginPage from "@/pages/LoginPage";
@@ -124,7 +124,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<ConditionalDashboard />} />
-        <Route path="map" element={<MapPage />} />
+        {/* map route removed */}
         <Route path="planning" element={
           <DepartmentProtectedRoute department="planning">
             <PlanningDepartment />
