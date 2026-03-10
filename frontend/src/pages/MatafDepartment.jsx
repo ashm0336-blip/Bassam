@@ -139,7 +139,7 @@ export default function MatafDepartment() {
     <div className="space-y-6" data-testid="mataf-page">
       {activeTab === 'dashboard' && (
         <DepartmentOverview department="mataf" />
-      )}}
+      )}
 
       {activeTab === 'data' && (
         <>

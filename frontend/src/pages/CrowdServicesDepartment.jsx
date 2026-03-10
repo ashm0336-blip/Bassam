@@ -76,7 +76,7 @@ export default function CrowdServicesDepartment() {
     <div className="space-y-6" data-testid="crowd-services-page">
       {activeTab === 'dashboard' && (
         <DepartmentOverview department="crowd_services" />
-      )}}
+      )}
 
       {activeTab === 'data' && (
         <>
