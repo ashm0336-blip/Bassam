@@ -29,26 +29,28 @@ async def get_ops_dashboard():
         {"month": current_month, "status": "active"}, {"_id": 0}
     ).to_list(20)
 
+    # الإدارات التي عندها جداول معتمدة هذا الشهر
+    approved_departments = {sched.get("department") for sched in active_schedules}
+
     # بناء خريطة تعيينات من الجداول المعتمدة: employee_id → assignment
     active_assignment_map = {}
     for sched in active_schedules:
         for a in sched.get("assignments", []):
             active_assignment_map[a["employee_id"]] = a
 
-    # دمج بيانات الموظفين مع الجداول المعتمدة فقط
-    def get_emp_data(emp):
-        """إرجاع rest_days و shift و is_tasked من الجدول المعتمد إن وجد، وإلا من الموظف مباشرة"""
-        a = active_assignment_map.get(emp.get("id", ""))
-        rest_days = a["rest_days"] if a else (emp.get("rest_days") or [])
-        shift = a["shift"] if a else (emp.get("shift") or "غير محدد")
-        is_tasked = a.get("is_tasked", False) if a else False
-        return rest_days, shift, is_tasked
-
-    # Active employees (not on rest today) — بناءً على الجداول المعتمدة
+    # القاعدة: الموظف "نشط" فقط إذا:
+    # 1. إدارته عندها جدول معتمد هذا الشهر
+    # 2. وليس في أيام راحته اليوم (من الجدول المعتمد)
+    # إذا الإدارة ما عندها جدول معتمد → الموظف لا يُحسب نشطاً
     active_employees = []
     on_rest_list = []
     for e in employees:
-        rest_days, _, _ = get_emp_data(e)
+        dept = e.get("department", "")
+        # إذا الإدارة ما عندها جدول معتمد → تجاهل الموظف من الإحصائيات
+        if dept not in approved_departments:
+            continue
+        a = active_assignment_map.get(e.get("id", ""))
+        rest_days = a["rest_days"] if a else []
         if today_ar and today_ar in rest_days:
             on_rest_list.append(e)
         else:
@@ -57,10 +59,11 @@ async def get_ops_dashboard():
     # Shift distribution — من الجداول المعتمدة فقط
     shifts = {}
     for e in active_employees:
-        _, shift, _ = get_emp_data(e)
+        a = active_assignment_map.get(e.get("id", ""))
+        shift = a["shift"] if a and a.get("shift") else "غير محدد"
         shifts[shift] = shifts.get(shift, 0) + 1
 
-    # Department stats
+    # إجمالي الموظفين حسب الإدارة — كل الموظفين (ليس مرتبطاً بالجدول)
     dept_emp = {}
     for e in employees:
         d = e.get("department", "other")
