@@ -33,6 +33,7 @@ const DEPT_THEMES = {
   planning:       { color: "violet",  accent: "#6d28d9", light: "#f5f3ff", border: "#c4b5fd" },
   crowd_services: { color: "amber",   accent: "#b45309", light: "#fffbeb", border: "#fcd34d" },
   mataf:          { color: "rose",    accent: "#be123c", light: "#fff1f2", border: "#fecdd3" },
+  haram_map:      { color: "emerald", accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
 };
 
 const DEPT_NAMES = {
@@ -42,6 +43,7 @@ const DEPT_NAMES = {
   planning:       { ar: "تخطيط خدمات الحشود",    en: "Crowd Planning" },
   crowd_services: { ar: "خدمات حشود الحرم",      en: "Crowd Services" },
   mataf:          { ar: "صحن المطاف",            en: "Mataf Management" },
+  haram_map:      { ar: "إدارة المصليات",         en: "Prayer Halls" },
 };
 
 function SettingsTabButton({ icon: Icon, label, count, isActive, onClick, theme }) {

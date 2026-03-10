@@ -318,17 +318,19 @@ export default function Dashboard() {
             <BarChart3 className="w-3.5 h-3.5" /> تقرير مفصل
           </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {deptStats.map((dept, i) => {
             const DEPT_COLORS = {
               planning:       { accent: "#7c3aed", light: "#f5f3ff", border: "#c4b5fd" },
               gates:          { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
               plazas:         { accent: "#0f766e", light: "#f0fdfa", border: "#99f6e4" },
+              haram_map:      { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
               crowd_services: { accent: "#b45309", light: "#fffbeb", border: "#fcd34d" },
               mataf:          { accent: "#be123c", light: "#fff1f2", border: "#fecdd3" },
             };
             const DEPT_ICONS = {
-              planning: "📋", gates: "🚪", plazas: "⛩️", crowd_services: "👥", mataf: "🕋"
+              planning: "📋", gates: "🚪", plazas: "⛩️",
+              haram_map: "🕌", crowd_services: "👥", mataf: "🕋"
             };
             const clr = DEPT_COLORS[dept.id] || { accent: "#6b7280", light: "#f9fafb", border: "#e5e7eb" };
             const icon = DEPT_ICONS[dept.id] || "🏢";

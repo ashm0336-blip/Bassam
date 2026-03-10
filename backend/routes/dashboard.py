@@ -103,6 +103,7 @@ async def get_departments():
         {"id": "planning",       "name": "إدارة تخطيط خدمات الحشود", "route": "/planning",       "icon": "ClipboardList"},
         {"id": "gates",          "name": "إدارة الأبواب",             "route": "/gates",          "icon": "DoorOpen"},
         {"id": "plazas",         "name": "إدارة الساحات",             "route": "/plazas",         "icon": "LayoutGrid"},
+        {"id": "haram_map",      "name": "إدارة المصليات",            "route": "/haram-map",      "icon": "Building2"},
         {"id": "crowd_services", "name": "إدارة خدمات حشود الحرم",   "route": "/crowd-services", "icon": "Users"},
         {"id": "mataf",          "name": "إدارة صحن المطاف",          "route": "/mataf",          "icon": "Circle"},
     ]
