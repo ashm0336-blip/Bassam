@@ -3,53 +3,57 @@ import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// Generate a proper beep sound programmatically using Web Audio API
+// Web Audio API beep generator
+let audioCtx = null;
+const getAudioContext = () => {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  return audioCtx;
+};
+
 const playBeep = (type = 'warning') => {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
     
-    const ctx = new AudioContext();
+    // Resume if suspended (browser autoplay policy)
+    if (ctx.state === 'suspended') ctx.resume();
+
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
-    
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
+
     if (type === 'critical') {
-      // Urgent: 3 fast high beeps
       oscillator.frequency.value = 880;
       oscillator.type = 'square';
       gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.2);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.4);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.6);
-    } else if (type === 'warning') {
-      // Warning: 2 medium beeps
-      oscillator.frequency.value = 660;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.25, ctx.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.18);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.36);
       gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.5);
+    } else if (type === 'warning') {
+      oscillator.frequency.value = 660;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime + 0.25);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.4);
     } else {
-      // Info: 1 soft beep
       oscillator.frequency.value = 520;
       oscillator.type = 'sine';
       gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
       oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.3);
+      oscillator.stop(ctx.currentTime + 0.25);
     }
-
-    // Cleanup
-    oscillator.onended = () => ctx.close();
   } catch (e) {
     console.error('Sound error:', e);
   }
@@ -57,54 +61,53 @@ const playBeep = (type = 'warning') => {
 
 export const useAlertSound = () => {
   const lastPlayedRef = useRef(0);
-
   const playSound = useCallback((type = 'warning') => {
     const now = Date.now();
-    if (now - lastPlayedRef.current < 3000) return;
+    if (now - lastPlayedRef.current < 2000) return;
     lastPlayedRef.current = now;
     playBeep(type);
   }, []);
-
   return { playSound };
 };
 
-// Alert Monitor - polls for new alerts and plays sound
+// Main Alert Monitor Component
 export const CrowdAlertMonitor = () => {
   const { playSound } = useAlertSound();
-  const knownAlertsRef = useRef(new Set());
+  const knownIdsRef = useRef(new Set());
   const initializedRef = useRef(false);
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    return localStorage.getItem('alert_sound') !== 'off';
-  });
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('alert_sound') !== 'off');
 
   useEffect(() => {
     const checkAlerts = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await axios.get(`${API}/alerts/unread-count`, {
+        const res = await axios.get(`${API}/alerts`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const count = res.data.count || 0;
+        const alerts = res.data || [];
+        const currentIds = new Set(alerts.map(a => a.id));
 
-        // First run: just record current count, don't play sound
         if (!initializedRef.current) {
-          knownAlertsRef.current = new Set([count]);
+          // First run — just record existing IDs, no sound
+          knownIdsRef.current = currentIds;
           initializedRef.current = true;
           return;
         }
 
-        // If count increased, new alert arrived
-        const prevCount = Array.from(knownAlertsRef.current)[0] || 0;
-        if (count > prevCount && soundEnabled) {
-          playSound('critical');
+        // Find NEW alerts (IDs we haven't seen before)
+        const newAlerts = alerts.filter(a => !knownIdsRef.current.has(a.id));
+        if (newAlerts.length > 0 && soundEnabled) {
+          const hasCritical = newAlerts.some(a => a.priority === 'critical' || a.type === 'security' || a.type === 'medical');
+          playSound(hasCritical ? 'critical' : 'warning');
         }
-        knownAlertsRef.current = new Set([count]);
+
+        knownIdsRef.current = currentIds;
       } catch (e) { /* silent */ }
     };
 
     checkAlerts();
-    const interval = setInterval(checkAlerts, 10000); // Check every 10 seconds
+    const interval = setInterval(checkAlerts, 8000);
     return () => clearInterval(interval);
   }, [soundEnabled, playSound]);
 
@@ -112,14 +115,19 @@ export const CrowdAlertMonitor = () => {
     const newVal = !soundEnabled;
     setSoundEnabled(newVal);
     localStorage.setItem('alert_sound', newVal ? 'on' : 'off');
-    if (newVal) playSound('info'); // Play test beep when enabling
+    // Unlock audio context and play test beep on enable
+    if (newVal) {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      playBeep('info');
+    }
   };
 
   return (
     <button
       onClick={toggleSound}
-      className={`p-2 rounded-lg transition-colors ${soundEnabled ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`}
-      title={soundEnabled ? 'الصوت مفعّل' : 'الصوت مُعطّل'}
+      className={`p-2 rounded-lg border transition-all ${soundEnabled ? 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-muted-foreground bg-muted/50 border-border hover:bg-muted'}`}
+      title={soundEnabled ? 'صوت التنبيهات مفعّل — اضغط للإيقاف' : 'صوت التنبيهات مُعطّل — اضغط للتفعيل'}
       data-testid="sound-toggle"
     >
       {soundEnabled ? (
