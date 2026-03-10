@@ -65,6 +65,7 @@ export const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMenuId, setExpandedMenuId] = useState(null);
   const [autoExpanded, setAutoExpanded] = useState(false);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin, roleChangeAlert, dismissRoleChange } = useAuth();
@@ -72,6 +73,21 @@ export const Layout = () => {
   const { t, language, toggleLanguage, isRTL } = useLanguage();
   const { menuItems, loading } = useSidebar();
   const { headerSettings } = useHeader();
+
+  // Fetch unread alerts count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(`${API}/alerts/unread-count`, { headers: { Authorization: `Bearer ${token}` } });
+        setUnreadAlerts(res.data.count || 0);
+      } catch (e) { /* silent */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Convert menu items from API — backend already filters by role/department/permissions
   const allMenuItems = menuItems.map(item => ({
@@ -507,7 +523,7 @@ export const Layout = () => {
                 data-testid="header-notifications"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                {unreadAlerts > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />}
               </Button>
             )}
 

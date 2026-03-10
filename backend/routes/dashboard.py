@@ -179,6 +179,13 @@ async def get_alerts(department: Optional[str] = None, type: Optional[str] = Non
     return alerts
 
 
+@router.get("/alerts/unread-count")
+async def get_unread_alerts_count():
+    count = await db.alerts.count_documents({"is_read": False})
+    return {"count": count}
+
+
+
 @router.put("/alerts/{alert_id}")
 async def update_alert(alert_id: str, alert: AlertUpdate, user: dict = Depends(get_current_user)):
     existing = await db.alerts.find_one({"id": alert_id}, {"_id": 0})
