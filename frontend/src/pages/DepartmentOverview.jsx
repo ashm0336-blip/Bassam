@@ -135,65 +135,80 @@ export default function DepartmentOverview({ department = "planning" }) {
 
   // ── Derived Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
-    // الإحصائيات تعكس فقط بيانات الجدول المعتمد (active)
-    // إذا الجدول مسودة أو غير موجود → تُستخدم البيانات الأساسية للموظف بدون تأثير الجدول
+    // ⚠️ القاعدة الأساسية:
+    // الإحصائيات المرتبطة بالجدول (مداومون، راحة، تغطية، ورديات، مكلفون)
+    // تُعرض فقط من الجدول المعتمد (active). إذا الجدول مسودة أو غير موجود → صفر.
     const isApproved = schedule?.status === 'active';
     const assignmentMap = {};
     if (isApproved && schedule?.assignments) {
       schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
     }
 
-    const merged = employees.map(emp => {
-      const a = isApproved ? assignmentMap[emp.id] : null;
-      const restDays = a ? a.rest_days : (emp.rest_days || []);
-      const shift = a ? a.shift : (emp.shift || "");
-      const isTasked = a ? (a.is_tasked === true) : false;
-      const onRest = isApproved && restDays.includes(TODAY_AR);
-      return { ...emp, restDays, shift, isTasked, onRest };
-    });
+    // البيانات الأساسية للموظف (غير مرتبطة بالجدول)
+    const total = employees.length;
+    const permanent = employees.filter(e => (e.employment_type||"permanent") === "permanent").length;
+    const seasonal  = employees.filter(e => e.employment_type === "seasonal").length;
+    const temporary = employees.filter(e => e.employment_type === "temporary").length;
 
-    const total = merged.length;
-    const onRest = merged.filter(e => e.onRest).length;
-    const working = total - onRest;
-    const tasked = merged.filter(e => e.isTasked).length;
-    const availabilityPct = total > 0 ? Math.round((working / total) * 100) : 0;
-
-    // Account status
+    // حالة الحسابات — مستقلة عن الجدول
     const acStatus = { active: 0, pending: 0, frozen: 0, no_account: 0, terminated: 0 };
-    merged.forEach(e => { const s = e.account_status || "no_account"; acStatus[s] = (acStatus[s] || 0) + 1; });
+    employees.forEach(e => { const s = e.account_status || "no_account"; acStatus[s] = (acStatus[s] || 0) + 1; });
 
-    // Employment type
-    const permanent = merged.filter(e => (e.employment_type||"permanent") === "permanent").length;
-    const seasonal  = merged.filter(e => e.employment_type === "seasonal").length;
-    const temporary = merged.filter(e => e.employment_type === "temporary").length;
+    // Roles — مستقلة عن الجدول
+    const roleMap = {};
+    employees.forEach(e => { const r = e.user_role || "field_staff"; roleMap[r] = (roleMap[r] || 0) + 1; });
 
-    // Shifts
-    const shiftMap = {};
-    merged.forEach(e => { if (e.shift) shiftMap[e.shift] = (shiftMap[e.shift] || 0) + 1; });
-    const shiftStats = Object.entries(shiftMap).map(([k, v]) => ({ name: k, count: v, pct: total > 0 ? Math.round(v/total*100) : 0, color: SHIFT_COLORS[k] || "#94a3b8" })).sort((a,b) => b.count - a.count);
-
-    // Weekly coverage
-    const coverage = WEEK_DAYS_ORDER.map(day => {
-      const resting = merged.filter(e => e.restDays.includes(day)).length;
-      const avail = total - resting;
-      const pct = total > 0 ? Math.round(avail / total * 100) : 0;
-      return { day, letter: DAY_LETTERS[day], avail, resting, pct, isToday: day === TODAY_AR };
-    });
-
-    // Expiring contracts (next 30 days)
+    // العقود المنتهية — مستقلة عن الجدول
     const today = new Date();
     const in30 = new Date(today); in30.setDate(today.getDate() + 30);
-    const expiring = merged.filter(e => {
+    const expiring = employees.filter(e => {
       if (!e.contract_end) return false;
       const d = new Date(e.contract_end);
       return d >= today && d <= in30;
     }).sort((a,b) => new Date(a.contract_end) - new Date(b.contract_end)).slice(0, 5);
 
-    // Roles
-    const roleMap = {};
-    merged.forEach(e => { const r = e.user_role || "field_staff"; roleMap[r] = (roleMap[r] || 0) + 1; });
+    // ── إحصائيات الجدول: صفر إذا لم يكن معتمداً ──
+    let onRest = 0, working = 0, tasked = 0, availabilityPct = 0;
+    let shiftStats = [];
+    let coverage = WEEK_DAYS_ORDER.map(day => ({
+      day, letter: DAY_LETTERS[day], avail: 0, resting: 0, pct: 0, isToday: day === TODAY_AR
+    }));
+    let merged = employees.map(emp => ({ ...emp, restDays: [], shift: "", isTasked: false, onRest: false }));
 
-    return { total, onRest, working, tasked, availabilityPct, acStatus, permanent, seasonal, temporary, shiftStats, coverage, expiring, roleMap, merged };
+    if (isApproved) {
+      merged = employees.map(emp => {
+        const a = assignmentMap[emp.id];
+        const restDays = a ? (a.rest_days || []) : [];
+        const shift = a ? (a.shift || "") : "";
+        const isTasked = a ? (a.is_tasked === true) : false;
+        const empOnRest = restDays.includes(TODAY_AR);
+        return { ...emp, restDays, shift, isTasked, onRest: empOnRest };
+      });
+
+      onRest = merged.filter(e => e.onRest).length;
+      working = total - onRest;
+      tasked = merged.filter(e => e.isTasked).length;
+      availabilityPct = total > 0 ? Math.round((working / total) * 100) : 0;
+
+      // Shifts — من الجدول المعتمد فقط
+      const shiftMap = {};
+      merged.forEach(e => { if (e.shift) shiftMap[e.shift] = (shiftMap[e.shift] || 0) + 1; });
+      shiftStats = Object.entries(shiftMap).map(([k, v]) => ({
+        name: k, count: v,
+        pct: total > 0 ? Math.round(v/total*100) : 0,
+        color: SHIFT_COLORS[k] || "#94a3b8"
+      })).sort((a,b) => b.count - a.count);
+
+      // التغطية الأسبوعية — من الجدول المعتمد فقط
+      coverage = WEEK_DAYS_ORDER.map(day => {
+        const resting = merged.filter(e => e.restDays.includes(day)).length;
+        const avail = total - resting;
+        const pct = total > 0 ? Math.round(avail / total * 100) : 0;
+        return { day, letter: DAY_LETTERS[day], avail, resting, pct, isToday: day === TODAY_AR };
+      });
+    }
+
+    return { total, onRest, working, tasked, availabilityPct, acStatus, permanent, seasonal, temporary, shiftStats, coverage, expiring, roleMap, merged, isApproved };
   }, [employees, schedule]);
 
   if (loading) return (

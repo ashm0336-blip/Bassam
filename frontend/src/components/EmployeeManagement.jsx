@@ -499,8 +499,7 @@ export default function EmployeeManagement({ department }) {
     });
   }, [employees, schedule, selectedMonth, currentMonthKey, todayAr]);
 
-  // statsEmployees — للإحصائيات فقط: يستخدم بيانات الجدول المعتمد فقط (active)
-  // إذا الجدول مسودة أو غير موجود → تُستخدم البيانات الأساسية للموظف بدون تأثير الجدول
+  // statsEmployees — للإحصائيات فقط: صفر لكل البيانات المرتبطة بالجدول حين لا يكون معتمداً
   const statsEmployees = useMemo(() => {
     const isApproved = schedule?.status === 'active';
     const assignmentMap = {};
@@ -509,8 +508,9 @@ export default function EmployeeManagement({ department }) {
     }
     return employees.map(emp => {
       const a = isApproved ? assignmentMap[emp.id] : null;
-      const restDays  = a ? a.rest_days : (emp.rest_days || []);
-      const shift     = a ? a.shift     : (emp.shift || "");
+      // إذا لم يكن الجدول معتمداً → rest_days وshift وis_tasked كلها صفر/فارغ
+      const restDays  = a ? (a.rest_days || []) : [];
+      const shift     = a ? (a.shift || "")     : "";
       const isTasked  = a ? (a.is_tasked === true) : false;
       const isOnRest  = isApproved && restDays.includes(todayAr);
       const contractOk = isContractActive(emp);
