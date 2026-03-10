@@ -877,3 +877,27 @@ class TransactionUpdate(BaseModel):
     priority: Optional[str] = None
     due_date: Optional[str] = None
     completed_date: Optional[str] = None
+
+
+# ─────────────────────────────────────────────
+# Tasks (نظام المهام اليومية)
+# ─────────────────────────────────────────────
+class TaskCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    department: str
+    assignee_ids: List[str]          # يدعم موظف واحد أو أكثر
+    priority: str = "normal"         # low | normal | high | urgent
+    due_at: Optional[str] = None     # ISO datetime
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    assignee_ids: Optional[List[str]] = None
+    priority: Optional[str] = None
+    due_at: Optional[str] = None
+    status: Optional[str] = None
+
+class TaskStatusUpdate(BaseModel):
+    status: str                      # pending | in_progress | done | canceled
+    note: Optional[str] = None       # ملاحظة عند التحديث

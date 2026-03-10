@@ -35,6 +35,7 @@ from routes.ops import router as ops_router
 from routes.field import router as field_router
 from routes.smart_alerts import router as smart_alerts_router
 from routes.employee_io import router as employee_io_router
+from routes.tasks import router as tasks_router
 
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
@@ -51,6 +52,7 @@ api_router.include_router(ops_router)
 api_router.include_router(field_router)
 api_router.include_router(smart_alerts_router)
 api_router.include_router(employee_io_router)
+api_router.include_router(tasks_router)
 
 
 # ============= Frontend Serving with Injected Settings =============

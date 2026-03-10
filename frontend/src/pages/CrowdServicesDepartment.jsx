@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
-import TransactionsPage from "@/pages/TransactionsPage";
+import TasksPage from "@/pages/TasksPage";
 import { 
   Users, 
   HeartPulse,
@@ -99,7 +99,7 @@ export default function CrowdServicesDepartment() {
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionsPage department="crowd_services" />
+        <TasksPage department="crowd_services" />
       )}
       
       {/* Settings Tab */}

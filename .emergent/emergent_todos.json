@@ -1,10 +1,18 @@
 [
   {
-    "content": "إصلاح DepartmentOverview.jsx - الإحصائيات من الجدول المعتمد فقط",
+    "content": "Backend: نموذج Task + API endpoints كاملة",
     "status": "completed"
   },
   {
-    "content": "إصلاح ops.py (لوحة التحكم) - استخدام بيانات الجدول المعتمد للـ rest_days و shift",
+    "content": "Frontend: TasksPage.jsx (Kanban + List + نموذج تكليف متعدد)",
+    "status": "completed"
+  },
+  {
+    "content": "استبدال TransactionsPage بـ TasksPage في كل الإدارات",
+    "status": "completed"
+  },
+  {
+    "content": "ربط الإشعارات (جرس + صوت) عند إنشاء مهمة",
     "status": "completed"
   }
 ]

@@ -1,0 +1,647 @@
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  Plus, LayoutGrid, List, Clock, CheckCircle2, Loader2, Trash2,
+  Edit, AlertTriangle, XCircle, ChevronDown, Users, Zap, Calendar,
+  ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// ── Config ────────────────────────────────────────────────────
+const PRIORITY_CFG = {
+  low:    { label: "منخفض",  color: "#64748b", bg: "#f1f5f9", border: "#cbd5e1", Icon: ArrowUpRight },
+  normal: { label: "عادي",   color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: CircleDot },
+  high:   { label: "مرتفع",  color: "#d97706", bg: "#fffbeb", border: "#fcd34d", Icon: Zap },
+  urgent: { label: "عاجل",   color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
+};
+
+const STATUS_CFG = {
+  pending:     { label: "قيد الانتظار", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0", Icon: Clock },
+  in_progress: { label: "جارية",        color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: Loader2 },
+  done:        { label: "مكتملة",       color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", Icon: CheckCircle2 },
+  canceled:    { label: "ملغاة",        color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb", Icon: XCircle },
+  overdue:     { label: "متأخرة",       color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
+};
+
+const KANBAN_COLUMNS = [
+  { key: "pending",     ...STATUS_CFG.pending },
+  { key: "in_progress", ...STATUS_CFG.in_progress },
+  { key: "done",        ...STATUS_CFG.done },
+  { key: "overdue",     ...STATUS_CFG.overdue },
+];
+
+// ── Sub-components ────────────────────────────────────────────
+
+function PriorityBadge({ priority }) {
+  const cfg = PRIORITY_CFG[priority] || PRIORITY_CFG.normal;
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
+      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
+      <cfg.Icon className="w-3 h-3" />
+      {cfg.label}
+    </span>
+  );
+}
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_CFG[status] || STATUS_CFG.pending;
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
+      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
+      <cfg.Icon className="w-3 h-3" />
+      {cfg.label}
+    </span>
+  );
+}
+
+function AssigneeAvatars({ assignees, max = 3 }) {
+  const shown = assignees.slice(0, max);
+  const rest = assignees.length - max;
+  return (
+    <div className="flex items-center -space-x-1 rtl:space-x-reverse">
+      {shown.map((a, i) => (
+        <div key={i} title={a.name}
+          className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm">
+          {a.name?.charAt(0) || "؟"}
+        </div>
+      ))}
+      {rest > 0 && (
+        <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-bold border-2 border-white">
+          +{rest}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DueBadge({ dueAt }) {
+  if (!dueAt) return null;
+  const due = new Date(dueAt);
+  const now = new Date();
+  const diffH = (due - now) / 36e5;
+  const isOverdue = diffH < 0;
+  const isSoon = diffH >= 0 && diffH < 24;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md
+      ${isOverdue ? "bg-red-100 text-red-700" : isSoon ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
+      <Calendar className="w-3 h-3" />
+      {isOverdue ? "متأخرة" : due.toLocaleDateString("ar-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+    </span>
+  );
+}
+
+// ── Kanban Card ───────────────────────────────────────────────
+function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr }) {
+  const pri = PRIORITY_CFG[task.priority] || PRIORITY_CFG.normal;
+  return (
+    <div className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 p-3 space-y-2.5 cursor-default"
+      style={{ borderLeftWidth: "3px", borderLeftColor: pri.color }}
+      data-testid={`task-card-${task.id}`}>
+
+      {/* Header: priority + actions */}
+      <div className="flex items-start justify-between gap-2">
+        <PriorityBadge priority={task.priority} />
+        {canManage && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-slate-100">
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-44">
+              <DropdownMenuItem onClick={() => onEdit(task)}><Edit className="w-3.5 h-3.5 ml-2" />تعديل</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {["pending", "in_progress", "done", "canceled"].map(s => (
+                <DropdownMenuItem key={s} onClick={() => onStatusChange(task.id, s)}
+                  disabled={task.status === s}
+                  className={task.status === s ? "opacity-50" : ""}>
+                  {(() => { const SCfg = STATUS_CFG[s]; return <SCfg.Icon className="w-3.5 h-3.5 ml-2" />; })()}
+                  {STATUS_CFG[s].label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive focus:text-destructive">
+                <Trash2 className="w-3.5 h-3.5 ml-2" />حذف
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {/* زر تحديث للموظف */}
+        {!canManage && task.status !== "done" && task.status !== "canceled" && (
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
+            onClick={() => onStatusChange(task.id, task.status === "pending" ? "in_progress" : "done")}>
+            {task.status === "pending" ? "بدء" : "إنهاء"}
+          </Button>
+        )}
+      </div>
+
+      {/* Title */}
+      <p className="font-cairo font-semibold text-sm text-foreground leading-snug">{task.title}</p>
+
+      {/* Description */}
+      {task.description && (
+        <p className="text-[11px] text-muted-foreground line-clamp-2">{task.description}</p>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+        <AssigneeAvatars assignees={task.assignees_info || []} />
+        <div className="flex items-center gap-1">
+          <DueBadge dueAt={task.due_at} />
+        </div>
+      </div>
+
+      <p className="text-[9px] text-muted-foreground">بواسطة: {task.created_by}</p>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────
+export default function TasksPage({ department }) {
+  const { language } = useLanguage();
+  const { user } = useAuth();
+  const isAr = language === "ar";
+  const isManager = ["system_admin", "general_manager", "department_manager"].includes(user?.role);
+
+  const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState({});
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState("kanban"); // kanban | list
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+
+  // Dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTask, setEditTask] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form
+  const emptyForm = { title: "", description: "", priority: "normal", due_at: "", assignee_ids: [] };
+  const [form, setForm] = useState(emptyForm);
+
+  const dept = department || user?.department;
+  const token = () => localStorage.getItem("token");
+
+  // ── Fetch ──────────────────────────────────────────────────
+  const fetchTasks = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const [tRes, sRes] = await Promise.all([
+        axios.get(`${API}/tasks?department=${dept}`, { headers: { Authorization: `Bearer ${token()}` } }),
+        axios.get(`${API}/tasks/stats?department=${dept}`, { headers: { Authorization: `Bearer ${token()}` } }),
+      ]);
+      setTasks(tRes.data);
+      setStats(sRes.data);
+    } catch { toast.error("فشل في جلب المهام"); }
+    finally { setLoading(false); }
+  }, [dept]);
+
+  const fetchEmployees = useCallback(async () => {
+    if (!isManager) return;
+    try {
+      const res = await axios.get(`${API}/employees?department=${dept}`, {
+        headers: { Authorization: `Bearer ${token()}` }
+      });
+      setEmployees(res.data);
+    } catch { }
+  }, [dept, isManager]);
+
+  useEffect(() => {
+    fetchTasks();
+    fetchEmployees();
+    const interval = setInterval(() => fetchTasks(true), 30000);
+    return () => clearInterval(interval);
+  }, [fetchTasks, fetchEmployees]);
+
+  // ── Filtered tasks ─────────────────────────────────────────
+  const filtered = tasks.filter(t => {
+    if (filterStatus !== "all" && t.status !== filterStatus) return false;
+    if (filterPriority !== "all" && t.priority !== filterPriority) return false;
+    if (search && !t.title.includes(search) && !t.description?.includes(search)) return false;
+    return true;
+  });
+
+  // ── Submit ─────────────────────────────────────────────────
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) return toast.error("عنوان المهمة مطلوب");
+    if (form.assignee_ids.length === 0) return toast.error("يجب اختيار موظف واحد على الأقل");
+    setSubmitting(true);
+    try {
+      const payload = { ...form, department: dept, due_at: form.due_at || null };
+      if (editTask) {
+        await axios.put(`${API}/tasks/${editTask.id}`, payload, { headers: { Authorization: `Bearer ${token()}` } });
+        toast.success("تم تحديث المهمة");
+      } else {
+        await axios.post(`${API}/tasks`, payload, { headers: { Authorization: `Bearer ${token()}` } });
+        toast.success(`✅ تم إنشاء المهمة وتنبيه ${form.assignee_ids.length} موظف`);
+      }
+      setDialogOpen(false);
+      setForm(emptyForm);
+      setEditTask(null);
+      fetchTasks();
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل الحفظ"); }
+    finally { setSubmitting(false); }
+  };
+
+  const handleEdit = (task) => {
+    setEditTask(task);
+    setForm({
+      title: task.title,
+      description: task.description || "",
+      priority: task.priority,
+      due_at: task.due_at ? task.due_at.slice(0, 16) : "",
+      assignee_ids: task.assignee_ids || [],
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (taskId) => {
+    if (!confirm("هل أنت متأكد من حذف المهمة؟")) return;
+    try {
+      await axios.delete(`${API}/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token()}` } });
+      toast.success("تم حذف المهمة");
+      fetchTasks();
+    } catch { toast.error("فشل الحذف"); }
+  };
+
+  const handleStatusChange = async (taskId, status) => {
+    try {
+      await axios.put(`${API}/tasks/${taskId}/status`, { status }, { headers: { Authorization: `Bearer ${token()}` } });
+      toast.success(`تم تحديث الحالة إلى: ${STATUS_CFG[status]?.label}`);
+      fetchTasks();
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل التحديث"); }
+  };
+
+  const toggleAssignee = (empId) => {
+    setForm(f => ({
+      ...f,
+      assignee_ids: f.assignee_ids.includes(empId)
+        ? f.assignee_ids.filter(id => id !== empId)
+        : [...f.assignee_ids, empId],
+    }));
+  };
+
+  // ── Stats Row ──────────────────────────────────────────────
+  const STATS = [
+    { label: "الكل",        value: stats.total    || 0, color: "#6b7280", key: "all" },
+    { label: "انتظار",      value: stats.pending  || 0, color: STATUS_CFG.pending.color, key: "pending" },
+    { label: "جارية",       value: stats.in_progress || 0, color: STATUS_CFG.in_progress.color, key: "in_progress" },
+    { label: "مكتملة",      value: stats.done     || 0, color: STATUS_CFG.done.color, key: "done" },
+    { label: "متأخرة",      value: stats.overdue  || 0, color: STATUS_CFG.overdue.color, key: "overdue" },
+  ];
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[300px]">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-4 font-cairo" data-testid="tasks-page">
+
+      {/* ── Header ────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-cairo font-bold text-lg flex items-center gap-2">
+            <Tag className="w-5 h-5 text-primary" />
+            المهام اليومية
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {isManager ? "إدارة وتكليف المهام لموظفي الإدارة" : "مهامك المكلف بها"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchTasks()}
+            className="gap-1.5 text-xs h-8" data-testid="refresh-tasks">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+          {/* Toggle View */}
+          <div className="flex border rounded-lg overflow-hidden">
+            <button onClick={() => setViewMode("kanban")}
+              className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                ${viewMode === "kanban" ? "bg-primary text-white" : "hover:bg-muted text-muted-foreground"}`}
+              data-testid="view-kanban">
+              <LayoutGrid className="w-3.5 h-3.5" /> لوحة
+            </button>
+            <button onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                ${viewMode === "list" ? "bg-primary text-white" : "hover:bg-muted text-muted-foreground"}`}
+              data-testid="view-list">
+              <List className="w-3.5 h-3.5" /> قائمة
+            </button>
+          </div>
+          {isManager && (
+            <Button size="sm" className="gap-1.5 bg-primary h-8" onClick={() => { setEditTask(null); setForm(emptyForm); setDialogOpen(true); }}
+              data-testid="create-task-btn">
+              <Plus className="w-4 h-4" /> مهمة جديدة
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Stats ─────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2">
+        {STATS.map(s => (
+          <button key={s.key}
+            onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all
+              ${filterStatus === s.key ? "shadow-md scale-105" : "hover:shadow-sm"}`}
+            style={filterStatus === s.key
+              ? { backgroundColor: s.color + "15", borderColor: s.color, color: s.color }
+              : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
+            <span className="font-bold text-base" style={{ color: s.color }}>{s.value}</span>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Filters ───────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input value={search} onChange={e => setSearch(e.target.value)}
+            className="h-8 text-sm pr-9" placeholder="بحث في المهام..." />
+        </div>
+        <Select value={filterPriority} onValueChange={setFilterPriority}>
+          <SelectTrigger className="h-8 w-36 text-xs">
+            <Filter className="w-3 h-3 ml-1" /><SelectValue placeholder="الأولوية" />
+          </SelectTrigger>
+          <SelectContent dir="rtl">
+            <SelectItem value="all">كل الأولويات</SelectItem>
+            {Object.entries(PRIORITY_CFG).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* ── Kanban View ───────────────────────────────────── */}
+      {viewMode === "kanban" && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]" data-testid="kanban-board">
+          {KANBAN_COLUMNS.map(col => {
+            const colTasks = filtered.filter(t => t.status === col.key);
+            return (
+              <div key={col.key} className="flex flex-col gap-3">
+                {/* Column Header */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border font-medium text-sm"
+                  style={{ backgroundColor: col.bg, borderColor: col.border, color: col.color }}>
+                  <col.Icon className="w-4 h-4" />
+                  <span>{col.label}</span>
+                  <span className="mr-auto font-bold text-xs px-1.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: col.color + "20", color: col.color }}>
+                    {colTasks.length}
+                  </span>
+                </div>
+                {/* Tasks */}
+                <div className="space-y-2 flex-1">
+                  {colTasks.length === 0 && (
+                    <div className="text-center py-8 text-xs text-muted-foreground border-2 border-dashed rounded-xl">
+                      لا توجد مهام
+                    </div>
+                  )}
+                  {colTasks.map(t => (
+                    <KanbanCard key={t.id} task={t} canManage={isManager}
+                      onEdit={handleEdit} onDelete={handleDelete}
+                      onStatusChange={handleStatusChange} isAr={isAr} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── List View ─────────────────────────────────────── */}
+      {viewMode === "list" && (
+        <Card data-testid="tasks-list">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="text-right">المهمة</TableHead>
+                    <TableHead className="text-center">الأولوية</TableHead>
+                    <TableHead className="text-center">الحالة</TableHead>
+                    <TableHead className="text-center">الموظفون</TableHead>
+                    <TableHead className="text-center">الموعد</TableHead>
+                    <TableHead className="text-center">بواسطة</TableHead>
+                    {isManager && <TableHead className="text-center w-20">إجراء</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Tag className="w-8 h-8 opacity-30" />
+                          <p>لا توجد مهام حالياً</p>
+                          {isManager && <Button size="sm" onClick={() => { setEditTask(null); setForm(emptyForm); setDialogOpen(true); }} className="mt-2 gap-1"><Plus className="w-3.5 h-3.5"/>أنشئ مهمة</Button>}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {filtered.map(t => (
+                    <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
+                      <TableCell className="text-right">
+                        <p className="font-semibold text-sm">{t.title}</p>
+                        {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
+                      </TableCell>
+                      <TableCell className="text-center"><PriorityBadge priority={t.priority} /></TableCell>
+                      <TableCell className="text-center"><StatusBadge status={t.status} /></TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <AssigneeAvatars assignees={t.assignees_info || []} />
+                          <span className="text-[9px] text-muted-foreground">
+                            {(t.assignees_info || []).map(a => a.name).join("، ")}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center"><DueBadge dueAt={t.due_at} /></TableCell>
+                      <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
+                      {isManager && (
+                        <TableCell className="text-center">
+                          <div className="flex items-center gap-1 justify-center">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}>
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Select value={t.status} onValueChange={v => handleStatusChange(t.id, v)}>
+                              <SelectTrigger className="h-7 w-7 border-0 p-0 bg-transparent">
+                                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                              </SelectTrigger>
+                              <SelectContent dir="rtl">
+                                {Object.entries(STATUS_CFG).filter(([k]) => k !== "overdue").map(([k, v]) => (
+                                  <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(t.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* زر تحديث للموظف */}
+                      {!isManager && t.status !== "done" && t.status !== "canceled" && (
+                        <TableCell className="text-center">
+                          <Button size="sm" variant="outline" className="h-7 text-[11px]"
+                            onClick={() => handleStatusChange(t.id, t.status === "pending" ? "in_progress" : "done")}>
+                            {t.status === "pending" ? "بدء" : "إنهاء"}
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Task Dialog ───────────────────────────────────── */}
+      <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) { setEditTask(null); setForm(emptyForm); } }}>
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto font-cairo" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-cairo text-lg flex items-center gap-2">
+              <Tag className="w-5 h-5 text-primary" />
+              {editTask ? "تعديل المهمة" : "إنشاء مهمة جديدة"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+
+            {/* Title */}
+            <div>
+              <Label className="text-sm font-semibold">عنوان المهمة *</Label>
+              <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+                required className="mt-1" placeholder="مثال: تفتيش بوابة الملك فهد"
+                data-testid="task-title-input" />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label className="text-sm font-semibold">التفاصيل (اختياري)</Label>
+              <Textarea value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                className="mt-1 resize-none" rows={2}
+                placeholder="وصف تفصيلي للمهمة..."
+                data-testid="task-desc-input" />
+            </div>
+
+            {/* Priority + Due */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm font-semibold">الأولوية</Label>
+                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {Object.entries(PRIORITY_CFG).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>
+                        <div className="flex items-center gap-2">
+                          <v.Icon className="w-3.5 h-3.5" style={{ color: v.color }} />
+                          {v.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-semibold">الموعد النهائي</Label>
+                <Input type="datetime-local" value={form.due_at}
+                  onChange={e => setForm({ ...form, due_at: e.target.value })}
+                  className="mt-1 text-sm" dir="ltr"
+                  data-testid="task-due-input" />
+              </div>
+            </div>
+
+            {/* Assignees — multi-select */}
+            <div>
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                الموظفون المكلفون *
+                {form.assignee_ids.length > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {form.assignee_ids.length} محدد
+                  </span>
+                )}
+              </Label>
+              <div className="mt-2 border rounded-xl overflow-hidden">
+                {employees.length === 0 ? (
+                  <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون في هذه الإدارة</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto divide-y">
+                    {/* Select All */}
+                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        assignee_ids: f.assignee_ids.length === employees.length ? [] : employees.map(e => e.id)
+                      }))}>
+                      <Checkbox checked={form.assignee_ids.length === employees.length && employees.length > 0} />
+                      <span className="text-xs font-semibold text-primary">تحديد الكل</span>
+                    </div>
+                    {employees.map(emp => (
+                      <div key={emp.id}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => toggleAssignee(emp.id)}
+                        data-testid={`assignee-${emp.id}`}>
+                        <Checkbox checked={form.assignee_ids.includes(emp.id)} />
+                        <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {emp.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{emp.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{emp.job_title}</p>
+                        </div>
+                        {emp.employment_type && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                            {emp.employment_type === "permanent" ? "دائم" : emp.employment_type === "seasonal" ? "موسمي" : "مؤقت"}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>إلغاء</Button>
+              <Button type="submit" disabled={submitting} className="gap-1.5 bg-primary" data-testid="submit-task-btn">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {editTask ? "حفظ التعديل" : "إنشاء المهمة"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import DepartmentOverview from "@/pages/DepartmentOverview";
-import TransactionsPage from "@/pages/TransactionsPage";
+import TasksPage from "@/pages/TasksPage";
 import DepartmentSettings from "@/pages/DepartmentSettings";
 
 export default function GatesDepartment() {
@@ -12,7 +12,7 @@ export default function GatesDepartment() {
       {activeTab === 'dashboard'    && <DepartmentOverview department="gates" />}
       {activeTab === 'data'         && <DepartmentSettings department="gates" />}
       {activeTab === 'employees'    && <DepartmentSettings department="gates" />}
-      {activeTab === 'transactions' && <TransactionsPage department="gates" />}
+      {activeTab === 'transactions' && <TasksPage department="gates" />}
       {activeTab === 'settings'     && <DepartmentSettings department="gates" />}
     </div>
   );

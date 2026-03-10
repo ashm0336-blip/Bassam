@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
-import TransactionsPage from "@/pages/TransactionsPage";
+import TasksPage from "@/pages/TasksPage";
 import {
   Users,
   UserCheck,
@@ -129,7 +129,7 @@ export default function PlanningDepartment() {
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionsPage department="planning" />
+        <TasksPage department="planning" />
       )}
       
       {/* Settings Tab */}

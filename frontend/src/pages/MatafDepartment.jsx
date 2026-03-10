@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
-import TransactionsPage from "@/pages/TransactionsPage";
+import TasksPage from "@/pages/TasksPage";
 import { 
   Clock,
   Users,
@@ -175,7 +175,7 @@ export default function MatafDepartment() {
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionsPage department="mataf" />
+        <TasksPage department="mataf" />
       )}
 
       {/* Settings Tab */}

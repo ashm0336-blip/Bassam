@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
-import TransactionsPage from "@/pages/TransactionsPage";
+import TasksPage from "@/pages/TasksPage";
 import { 
   LayoutGrid, 
   Users, 
@@ -171,7 +171,7 @@ export default function PlazasDepartment() {
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionsPage department="squares" />
+        <TasksPage department="squares" />
       )}
       
       {/* Settings Tab */}
