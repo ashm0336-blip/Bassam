@@ -899,5 +899,5 @@ class TaskUpdate(BaseModel):
     status: Optional[str] = None
 
 class TaskStatusUpdate(BaseModel):
-    status: str                      # pending | in_progress | done | canceled
+    status: str                      # pending | in_progress | done
     note: Optional[str] = None       # ملاحظة عند التحديث

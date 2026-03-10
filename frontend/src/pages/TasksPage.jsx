@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Plus, LayoutGrid, List, Clock, CheckCircle2, Loader2, Trash2,
-  Edit, AlertTriangle, XCircle, ChevronDown, Users, Zap, Calendar,
+  Edit, AlertTriangle, ChevronDown, Users, Zap, Calendar,
   ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
   Flame, TimerOff, Timer, AlarmClock,
 } from "lucide-react";
@@ -41,7 +41,6 @@ const STATUS_CFG = {
   pending:     { label: "قيد الانتظار", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0", Icon: Clock },
   in_progress: { label: "جارية",        color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: Loader2 },
   done:        { label: "مكتملة",       color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", Icon: CheckCircle2 },
-  canceled:    { label: "ملغاة",        color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb", Icon: XCircle },
   overdue:     { label: "متأخرة",       color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
 };
 
@@ -158,7 +157,7 @@ function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr })
             <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-44">
               <DropdownMenuItem onClick={() => onEdit(task)}><Edit className="w-3.5 h-3.5 ml-2" />تعديل</DropdownMenuItem>
               <DropdownMenuSeparator />
-              {["pending", "in_progress", "done", "canceled"].map(s => (
+              {["pending", "in_progress", "done"].map(s => (
                 <DropdownMenuItem key={s} onClick={() => onStatusChange(task.id, s)}
                   disabled={task.status === s}
                   className={task.status === s ? "opacity-50" : ""}>
@@ -174,7 +173,7 @@ function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr })
           </DropdownMenu>
         )}
         {/* زر تحديث للموظف */}
-        {!canManage && task.status !== "done" && task.status !== "canceled" && (
+        {!canManage && task.status !== "done" && (
           <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
             onClick={() => onStatusChange(task.id, task.status === "pending" ? "in_progress" : "done")}>
             {task.status === "pending" ? "بدء" : "إنهاء"}
@@ -191,7 +190,7 @@ function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr })
       )}
 
       {/* Time Progress Bar — مؤشر بصري للوقت المتبقي */}
-      {task.due_at && task.time_status && task.time_status !== "none" && task.status !== "done" && task.status !== "canceled" && (() => {
+      {task.due_at && task.time_status && task.time_status !== "none" && task.status !== "done" && (() => {
         const cfg = TIME_STATUS_CFG[task.time_status] || TIME_STATUS_CFG.normal;
         const barColors = { overdue:"bg-red-500", critical:"bg-red-400", warning:"bg-amber-400", soon:"bg-yellow-400", normal:"bg-emerald-400" };
         const barWidth = { overdue:"w-full", critical:"w-[10%]", warning:"w-[25%]", soon:"w-[50%]", normal:"w-[85%]" };
@@ -408,11 +407,11 @@ export default function TasksPage({ department }) {
 
   // ── Stats Row ──────────────────────────────────────────────
   const STATS = [
-    { label: "الكل",        value: stats.total    || 0, color: "#6b7280", key: "all" },
-    { label: "انتظار",      value: stats.pending  || 0, color: STATUS_CFG.pending.color, key: "pending" },
+    { label: "الكل",        value: (stats.pending||0) + (stats.in_progress||0) + (stats.overdue||0), color: "#6b7280", key: "all" },
+    { label: "انتظار",      value: stats.pending     || 0, color: STATUS_CFG.pending.color,     key: "pending" },
     { label: "جارية",       value: stats.in_progress || 0, color: STATUS_CFG.in_progress.color, key: "in_progress" },
-    { label: "مكتملة",      value: stats.done     || 0, color: STATUS_CFG.done.color, key: "done" },
-    { label: "متأخرة",      value: stats.overdue  || 0, color: STATUS_CFG.overdue.color, key: "overdue" },
+    { label: "مكتملة",      value: stats.done        || 0, color: STATUS_CFG.done.color,        key: "done" },
+    { label: "متأخرة",      value: stats.overdue     || 0, color: STATUS_CFG.overdue.color,     key: "overdue" },
   ];
 
   if (loading) return (
@@ -606,7 +605,7 @@ export default function TasksPage({ department }) {
                         </TableCell>
                       )}
                       {/* زر تحديث للموظف */}
-                      {!isManager && t.status !== "done" && t.status !== "canceled" && (
+                      {!isManager && t.status !== "done" && (
                         <TableCell className="text-center">
                           <Button size="sm" variant="outline" className="h-7 text-[11px]"
                             onClick={() => handleStatusChange(t.id, t.status === "pending" ? "in_progress" : "done")}>

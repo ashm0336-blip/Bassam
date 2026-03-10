@@ -34,7 +34,7 @@ def get_time_status(due_at_str, status):
     - normal     : أكثر من 24 ساعة
     - none       : لا يوجد موعد
     """
-    if status in ("done", "canceled"):
+    if status in ("done",):
         return "none"
     due = parse_due(due_at_str)
     if not due:
@@ -129,16 +129,16 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
 
     tasks = await db.tasks.find(query, {"_id": 0}).to_list(1000)
 
+    # الإجمالي يعرض فقط المهام النشطة (بدون المحذوفة — لا يوجد ملغاة)
     total    = len(tasks)
     pending  = sum(1 for t in tasks if t.get("status") == "pending")
     progress = sum(1 for t in tasks if t.get("status") == "in_progress")
     done     = sum(1 for t in tasks if t.get("status") == "done")
-    canceled = sum(1 for t in tasks if t.get("status") == "canceled")
     overdue  = sum(1 for t in tasks
                    if get_time_status(t.get("due_at"), t.get("status", "")) == "overdue")
 
     return {"total": total, "pending": pending, "in_progress": progress,
-            "done": done, "canceled": canceled, "overdue": overdue}
+            "done": done, "overdue": overdue}
 
 
 # ── POST: إنشاء مهمة ────────────────────────────────────────────
@@ -230,9 +230,10 @@ async def update_task_status(task_id: str, data: TaskStatusUpdate, user: dict = 
             raise HTTPException(status_code=403, detail="لا يمكنك تعديل هذه المهمة")
 
     STATUS_LABELS = {
-        "pending": "قيد الانتظار", "in_progress": "جارية",
-        "done": "مكتملة", "canceled": "ملغاة"
+        "pending": "قيد الانتظار", "in_progress": "جارية", "done": "مكتملة"
     }
+    if data.status not in STATUS_LABELS:
+        raise HTTPException(status_code=400, detail="حالة غير صحيحة")
     update = {
         "status": data.status,
         "updated_at": now_iso(),

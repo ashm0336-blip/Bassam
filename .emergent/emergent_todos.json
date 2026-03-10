@@ -1,18 +1,10 @@
 [
   {
-    "content": "Backend: نموذج Task + API endpoints كاملة",
+    "content": "Backend: حذف حالة canceled + تحديث الإحصائيات",
     "status": "completed"
   },
   {
-    "content": "Frontend: TasksPage.jsx (Kanban + List + نموذج تكليف متعدد)",
-    "status": "completed"
-  },
-  {
-    "content": "استبدال TransactionsPage بـ TasksPage في كل الإدارات",
-    "status": "completed"
-  },
-  {
-    "content": "ربط الإشعارات (جرس + صوت) عند إنشاء مهمة",
+    "content": "Frontend: حذف حالة ملغاة من كل مكان",
     "status": "completed"
   }
 ]
