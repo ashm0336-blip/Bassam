@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -6,6 +6,7 @@ import {
   Plus, LayoutGrid, List, Clock, CheckCircle2, Loader2, Trash2,
   Edit, AlertTriangle, XCircle, ChevronDown, Users, Zap, Calendar,
   ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
+  Flame, TimerOff, Timer, AlarmClock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,18 +97,43 @@ function AssigneeAvatars({ assignees, max = 3 }) {
   );
 }
 
-function DueBadge({ dueAt }) {
+// ── Time Status Config ────────────────────────────────────────
+const TIME_STATUS_CFG = {
+  overdue:  { label: "متأخرة!",         bg: "bg-red-100",    text: "text-red-700",    border: "border-red-300",    Icon: TimerOff,    pulse: true  },
+  critical: { label: "أقل من ساعة",     bg: "bg-red-50",     text: "text-red-600",    border: "border-red-200",    Icon: Flame,       pulse: true  },
+  warning:  { label: "قريب",            bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200",  Icon: AlarmClock,  pulse: false },
+  soon:     { label: "اليوم",           bg: "bg-yellow-50",  text: "text-yellow-700", border: "border-yellow-200", Icon: Timer,       pulse: false },
+  normal:   { label: "",                bg: "bg-slate-50",   text: "text-slate-500",  border: "border-slate-200",  Icon: Calendar,    pulse: false },
+  none:     { label: "",                bg: "",              text: "",                border: "",                  Icon: null,        pulse: false },
+};
+
+function formatRemaining(minutes) {
+  if (minutes === null || minutes === undefined) return "";
+  const abs = Math.abs(minutes);
+  if (abs < 60) return `${abs} د`;
+  if (abs < 1440) return `${Math.floor(abs / 60)} س ${abs % 60 > 0 ? `${abs % 60}د` : ""}`;
+  return `${Math.floor(abs / 1440)} يوم`;
+}
+
+function DueBadge({ dueAt, timeStatus, remainingMinutes }) {
   if (!dueAt) return null;
-  const due = new Date(dueAt);
-  const now = new Date();
-  const diffH = (due - now) / 36e5;
-  const isOverdue = diffH < 0;
-  const isSoon = diffH >= 0 && diffH < 24;
+  const cfg = TIME_STATUS_CFG[timeStatus] || TIME_STATUS_CFG.normal;
+  if (!cfg.Icon) return null;
+
+  const isLate = timeStatus === "overdue";
+  const abs = Math.abs(remainingMinutes || 0);
+  const label = isLate
+    ? `تأخر ${formatRemaining(abs)}`
+    : timeStatus === "normal"
+    ? formatRemaining(remainingMinutes)
+    : cfg.label;
+
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md
-      ${isOverdue ? "bg-red-100 text-red-700" : isSoon ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
-      <Calendar className="w-3 h-3" />
-      {isOverdue ? "متأخرة" : due.toLocaleDateString("ar-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border
+      ${cfg.bg} ${cfg.text} ${cfg.border}
+      ${cfg.pulse ? "animate-pulse" : ""}`}>
+      <cfg.Icon className="w-3 h-3 flex-shrink-0" />
+      {label}
     </span>
   );
 }
@@ -165,11 +191,33 @@ function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr })
         <p className="text-[11px] text-muted-foreground line-clamp-2">{task.description}</p>
       )}
 
+      {/* Time Progress Bar — مؤشر بصري للوقت المتبقي */}
+      {task.due_at && task.time_status && task.time_status !== "none" && task.status !== "done" && task.status !== "canceled" && (() => {
+        const cfg = TIME_STATUS_CFG[task.time_status] || TIME_STATUS_CFG.normal;
+        const barColors = { overdue:"bg-red-500", critical:"bg-red-400", warning:"bg-amber-400", soon:"bg-yellow-400", normal:"bg-emerald-400" };
+        const barWidth = { overdue:"w-full", critical:"w-[10%]", warning:"w-[25%]", soon:"w-[50%]", normal:"w-[85%]" };
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] font-bold flex items-center gap-1 ${cfg.text}`}>
+                <cfg.Icon className={`w-3 h-3 ${cfg.pulse ? "animate-pulse" : ""}`} />
+                {task.time_status === "overdue"
+                  ? `تأخر ${formatRemaining(Math.abs(task.remaining_minutes || 0))}`
+                  : `متبقي ${formatRemaining(task.remaining_minutes || 0)}`}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all ${barColors[task.time_status] || "bg-emerald-400"} ${barWidth[task.time_status] || "w-full"}`} />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-slate-100">
         <AssigneeAvatars assignees={task.assignees_info || []} />
         <div className="flex items-center gap-1">
-          <DueBadge dueAt={task.due_at} />
+          <DueBadge dueAt={task.due_at} timeStatus={task.time_status} remainingMinutes={task.remaining_minutes} />
         </div>
       </div>
 
@@ -252,10 +300,20 @@ export default function TasksPage({ department }) {
     if (form.assignee_ids.length === 0) return toast.error("يجب اختيار موظف واحد على الأقل");
     setSubmitting(true);
     try {
-      const payload = { ...form, department: dept, due_at: form.due_at || null };
+      // تحويل التاريخ من datetime-local (توقيت السعودية) إلى ISO UTC
+      let dueIso = null;
+      if (form.due_at) {
+        try {
+          // المستخدم يدخل بتوقيت السعودية — نطرح 3 ساعات للحصول على UTC
+          const local = new Date(form.due_at);
+          const utc = new Date(local.getTime() - 3 * 60 * 60 * 1000);
+          dueIso = utc.toISOString();
+        } catch { dueIso = null; }
+      }
+      const payload = { ...form, department: dept, due_at: dueIso };
       if (editTask) {
         await axios.put(`${API}/tasks/${editTask.id}`, payload, { headers: { Authorization: `Bearer ${token()}` } });
-        toast.success("تم تحديث المهمة");
+        toast.success("تم تحديث المهمة ✅");
       } else {
         await axios.post(`${API}/tasks`, payload, { headers: { Authorization: `Bearer ${token()}` } });
         toast.success(`✅ تم إنشاء المهمة وتنبيه ${form.assignee_ids.length} موظف`);
@@ -270,11 +328,21 @@ export default function TasksPage({ department }) {
 
   const handleEdit = (task) => {
     setEditTask(task);
+    // تحويل due_at إلى صيغة datetime-local (yyyy-MM-ddTHH:mm) بتوقيت السعودية
+    let dueLocal = "";
+    if (task.due_at) {
+      try {
+        const dt = new Date(task.due_at);
+        // تحويل لتوقيت السعودية UTC+3
+        const sa = new Date(dt.getTime() + 3 * 60 * 60 * 1000);
+        dueLocal = sa.toISOString().slice(0, 16);
+      } catch { dueLocal = ""; }
+    }
     setForm({
       title: task.title,
       description: task.description || "",
       priority: task.priority,
-      due_at: task.due_at ? task.due_at.slice(0, 16) : "",
+      due_at: dueLocal,
       assignee_ids: task.assignee_ids || [],
     });
     setDialogOpen(true);
@@ -481,7 +549,7 @@ export default function TasksPage({ department }) {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center"><DueBadge dueAt={t.due_at} /></TableCell>
+                      <TableCell className="text-center"><DueBadge dueAt={t.due_at} timeStatus={t.time_status} remainingMinutes={t.remaining_minutes} /></TableCell>
                       <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
                       {isManager && (
                         <TableCell className="text-center">

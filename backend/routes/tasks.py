@@ -12,10 +12,48 @@ router = APIRouter()
 
 SA_TZ = timezone(timedelta(hours=3))
 
+def parse_due(due_str):
+    """تحويل تاريخ الانتهاء إلى datetime مع timezone دائماً"""
+    if not due_str:
+        return None
+    try:
+        dt = datetime.fromisoformat(due_str.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
+
+def get_time_status(due_at_str, status):
+    """
+    إرجاع حالة الوقت المتبقي:
+    - overdue    : انتهى الوقت
+    - critical   : أقل من ساعة
+    - warning    : أقل من 3 ساعات
+    - soon       : أقل من 24 ساعة
+    - normal     : أكثر من 24 ساعة
+    - none       : لا يوجد موعد
+    """
+    if status in ("done", "canceled"):
+        return "none"
+    due = parse_due(due_at_str)
+    if not due:
+        return "none"
+    now = datetime.now(timezone.utc)
+    diff_h = (due - now).total_seconds() / 3600
+    if diff_h < 0:
+        return "overdue"
+    if diff_h < 1:
+        return "critical"
+    if diff_h < 3:
+        return "warning"
+    if diff_h < 24:
+        return "soon"
+    return "normal"
+
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
-def today_str():
     return datetime.now(SA_TZ).strftime("%Y-%m-%d")
 
 MANAGER_ROLES = {"system_admin", "general_manager", "department_manager"}
@@ -56,11 +94,19 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
 
     for t in tasks:
         t["assignees_info"] = [emp_map.get(eid, {"name": eid}) for eid in t.get("assignee_ids", [])]
-        # حساب حالة التأخير
-        if t.get("due_at") and t.get("status") not in ("done", "canceled"):
-            due = datetime.fromisoformat(t["due_at"].replace("Z", "+00:00"))
-            if due < datetime.now(timezone.utc):
-                t["status"] = "overdue"
+        # حساب حالة الوقت وإضافة time_status
+        ts = get_time_status(t.get("due_at"), t.get("status", ""))
+        t["time_status"] = ts
+        # تحديث الحالة إلى overdue تلقائياً
+        if ts == "overdue" and t.get("status") not in ("done", "canceled"):
+            t["status"] = "overdue"
+        # إضافة الوقت المتبقي بالدقائق للفرونتند
+        due = parse_due(t.get("due_at"))
+        if due:
+            diff_mins = int((due - datetime.now(timezone.utc)).total_seconds() / 60)
+            t["remaining_minutes"] = diff_mins
+        else:
+            t["remaining_minutes"] = None
 
     return tasks
 
@@ -82,17 +128,14 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
             query["assignee_ids"] = {"$in": [emp["id"]]}
 
     tasks = await db.tasks.find(query, {"_id": 0}).to_list(1000)
-    now = datetime.now(timezone.utc)
 
-    # تحديث الحالة المتأخرة
     total    = len(tasks)
     pending  = sum(1 for t in tasks if t.get("status") == "pending")
     progress = sum(1 for t in tasks if t.get("status") == "in_progress")
     done     = sum(1 for t in tasks if t.get("status") == "done")
     canceled = sum(1 for t in tasks if t.get("status") == "canceled")
     overdue  = sum(1 for t in tasks
-                   if t.get("due_at") and t.get("status") not in ("done", "canceled")
-                   and datetime.fromisoformat(t["due_at"].replace("Z", "+00:00")) < now)
+                   if get_time_status(t.get("due_at"), t.get("status", "")) == "overdue")
 
     return {"total": total, "pending": pending, "in_progress": progress,
             "done": done, "canceled": canceled, "overdue": overdue}
