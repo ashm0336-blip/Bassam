@@ -7,6 +7,7 @@ import {
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
   Archive, Phone, Briefcase, Zap, Shield, HardHat, Check, X, Info,
   KeyRound, ShieldCheck, ShieldX, ShieldOff, UserPlus, MoreVertical, Activity, Tag,
+  Download, Upload,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -690,11 +691,66 @@ export default function EmployeeManagement({ department }) {
               : (isAr?'البيانات الأساسية للموظفين':'Base employee data')}
           </p>
         </div>
-        {canAddEmp && (
-          <Button size="sm" onClick={()=>handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
-            <Plus className="w-4 h-4 ml-1"/>{isAr?'موظف جديد':'New'}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Export */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" data-testid="export-employees-btn">
+                <Download className="w-4 h-4 ml-1"/>{isAr?'تصدير':'Export'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => {
+                const link = document.createElement('a');
+                link.href = `${API}/employees/export?department=${department}`;
+                link.setAttribute('download', '');
+                const token = localStorage.getItem('token');
+                fetch(`${API}/employees/export?department=${department}`, { headers: { Authorization: `Bearer ${token}` } })
+                  .then(res => res.blob())
+                  .then(blob => { const url = URL.createObjectURL(blob); link.href = url; link.click(); URL.revokeObjectURL(url); toast.success(isAr?'تم تصدير الملف':'Exported'); })
+                  .catch(() => toast.error(isAr?'خطأ في التصدير':'Export error'));
+              }}>
+                <Download className="w-4 h-4 ml-2"/>{isAr?'تصدير Excel':'Export Excel'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                fetch(`${API}/employees/export/template`)
+                  .then(res => res.blob())
+                  .then(blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'employee_template.xlsx'; a.click(); URL.revokeObjectURL(url); toast.success(isAr?'تم تحميل القالب':'Template downloaded'); })
+                  .catch(() => toast.error(isAr?'خطأ':'Error'));
+              }}>
+                <FileText className="w-4 h-4 ml-2"/>{isAr?'تحميل قالب الاستيراد':'Download Template'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* Import */}
+          {canAddEmp && (
+            <Button variant="outline" size="sm" onClick={() => document.getElementById('import-excel-input').click()} data-testid="import-employees-btn">
+              <Upload className="w-4 h-4 ml-1"/>{isAr?'استيراد':'Import'}
+            </Button>
+          )}
+          <input id="import-excel-input" type="file" accept=".xlsx,.xls" className="hidden" onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('department', department);
+            try {
+              const token = localStorage.getItem('token');
+              const res = await axios.post(`${API}/employees/import`, formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
+              toast.success(`${isAr?'تم استيراد':'Imported'} ${res.data.created} ${isAr?'موظف':'employees'}${res.data.skipped > 0 ? ` (${isAr?'تخطي':'skipped'} ${res.data.skipped})` : ''}`);
+              if (res.data.errors?.length > 0) toast.warning(`${res.data.errors.length} ${isAr?'أخطاء':'errors'}`);
+              fetchEmployees();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || (isAr?'خطأ في الاستيراد':'Import error'));
+            }
+            e.target.value = '';
+          }} />
+          {canAddEmp && (
+            <Button size="sm" onClick={()=>handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
+              <Plus className="w-4 h-4 ml-1"/>{isAr?'موظف جديد':'New'}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Employees Table */}
