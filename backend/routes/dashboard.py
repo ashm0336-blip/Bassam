@@ -36,45 +36,81 @@ async def get_dashboard_stats():
 
 @router.get("/dashboard/departments")
 async def get_departments():
-    plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
-    gates = await db.gates.find({}, {"_id": 0}).to_list(200)
-    mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
+    """ملخص حالة كل إدارة: الموظفين + حالة الجدول + مداومون/راحة من الجدول المعتمد"""
+    # اليوم بالعربي
+    day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
+    today_ar = day_map.get(datetime.now().weekday(), "")
+    current_month = datetime.now().strftime("%Y-%m")
 
-    async def get_dept_employee_stats(dept_name):
-        employees = await db.employees.find({"department": dept_name, "is_active": True}, {"_id": 0}).to_list(1000)
-        shift_1 = sum(1 for e in employees if e.get("shift") == "الأولى")
-        shift_2 = sum(1 for e in employees if e.get("shift") == "الثانية")
-        shift_3 = sum(1 for e in employees if e.get("shift") == "الثالثة")
-        shift_4 = sum(1 for e in employees if e.get("shift") == "الرابعة")
-        locations = set(e.get("location", "") for e in employees if e.get("location"))
-        with_location = sum(1 for e in employees if e.get("location"))
-        return {"total": len(employees), "shifts": {"الأولى": shift_1, "الثانية": shift_2, "الثالثة": shift_3, "الرابعة": shift_4}, "locations_count": len(locations), "employees_with_location": with_location}
+    # جلب جداول الشهر الحالي لكل الإدارات
+    all_schedules = await db.monthly_schedules.find(
+        {"month": current_month}, {"_id": 0}
+    ).to_list(20)
+    schedule_map = {s.get("department"): s for s in all_schedules}
 
-    planning_stats = await get_dept_employee_stats("planning")
-    plazas_stats = await get_dept_employee_stats("plazas")
-    gates_stats = await get_dept_employee_stats("gates")
-    crowd_stats = await get_dept_employee_stats("crowd_services")
-    mataf_stats = await get_dept_employee_stats("mataf")
+    # جلب كل الموظفين
+    all_employees = await db.employees.find({}, {"_id": 0}).to_list(2000)
 
-    plazas_crowd = sum(p.get("current_crowd", 0) for p in plazas)
-    plazas_max = sum(p.get("max_capacity", 0) for p in plazas) or 1
-    gates_flow = sum(g.get("current_flow", 0) for g in gates)
-    gates_max = sum(g.get("max_flow", 0) for g in gates) or 1
-    mataf_crowd = sum(m.get("current_crowd", 0) for m in mataf)
-    mataf_max = sum(m.get("max_capacity", 0) for m in mataf) or 1
+    def get_dept_summary(dept_key):
+        # الموظفون المسجلون في الإدارة
+        dept_emps = [e for e in all_employees if e.get("department") == dept_key]
+        total = len(dept_emps)
 
-    def get_status(pct):
-        if pct < 70: return "normal"
-        if pct < 85: return "warning"
-        return "critical"
+        # حالة الجدول
+        sched = schedule_map.get(dept_key)
+        schedule_status = sched.get("status") if sched else None  # None = لا يوجد, draft, active
+        is_approved = schedule_status == "active"
 
-    return [
-        {"id": "planning", "name": "إدارة تخطيط خدمات الحشود", "name_en": "Crowd Planning", "icon": "ClipboardList", "current_crowd": plazas_crowd // 4, "max_capacity": plazas_max // 4, "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0, "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0), "active_staff": planning_stats["total"], "employee_stats": planning_stats, "incidents_today": 0},
-        {"id": "plazas", "name": "إدارة الساحات", "name_en": "Plazas Management", "icon": "LayoutGrid", "current_crowd": plazas_crowd, "max_capacity": plazas_max, "percentage": round((plazas_crowd / plazas_max) * 100, 1) if plazas_max else 0, "status": get_status((plazas_crowd / plazas_max) * 100 if plazas_max else 0), "active_staff": plazas_stats["total"], "employee_stats": plazas_stats, "incidents_today": 0},
-        {"id": "gates", "name": "إدارة الأبواب", "name_en": "Gates Management", "icon": "DoorOpen", "current_crowd": gates_flow, "max_capacity": gates_max, "percentage": round((gates_flow / gates_max) * 100, 1) if gates_max else 0, "status": get_status((gates_flow / gates_max) * 100 if gates_max else 0), "active_staff": gates_stats["total"], "employee_stats": gates_stats, "incidents_today": 0},
-        {"id": "crowd_services", "name": "إدارة خدمات حشود الحرم", "name_en": "Haram Crowd Services", "icon": "Users", "current_crowd": plazas_crowd + mataf_crowd, "max_capacity": plazas_max + mataf_max, "percentage": round(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100, 1) if (plazas_max + mataf_max) else 0, "status": get_status(((plazas_crowd + mataf_crowd) / (plazas_max + mataf_max)) * 100 if (plazas_max + mataf_max) else 0), "active_staff": crowd_stats["total"], "employee_stats": crowd_stats, "incidents_today": 0},
-        {"id": "mataf", "name": "إدارة صحن المطاف", "name_en": "Mataf Management", "icon": "Circle", "current_crowd": mataf_crowd, "max_capacity": mataf_max, "percentage": round((mataf_crowd / mataf_max) * 100, 1) if mataf_max else 0, "status": get_status((mataf_crowd / mataf_max) * 100 if mataf_max else 0), "active_staff": mataf_stats["total"], "employee_stats": mataf_stats, "incidents_today": 0},
+        # بناء خريطة التعيينات من الجدول المعتمد فقط
+        assignment_map = {}
+        if is_approved and sched:
+            for a in sched.get("assignments", []):
+                assignment_map[a["employee_id"]] = a
+
+        # حساب مداومون/راحة فقط من الجدول المعتمد
+        working = 0
+        on_rest = 0
+        tasked = 0
+        if is_approved:
+            for e in dept_emps:
+                a = assignment_map.get(e.get("id", ""))
+                rest_days = a["rest_days"] if a else []
+                if today_ar and today_ar in rest_days:
+                    on_rest += 1
+                else:
+                    working += 1
+                if a and a.get("is_tasked"):
+                    tasked += 1
+
+        # نوع التوظيف
+        permanent = sum(1 for e in dept_emps if (e.get("employment_type") or "permanent") == "permanent")
+        seasonal  = sum(1 for e in dept_emps if e.get("employment_type") == "seasonal")
+        temporary = sum(1 for e in dept_emps if e.get("employment_type") == "temporary")
+
+        return {
+            "total": total,
+            "working": working,
+            "on_rest": on_rest,
+            "tasked": tasked,
+            "permanent": permanent,
+            "seasonal": seasonal,
+            "temporary": temporary,
+            "schedule_status": schedule_status,  # None / "draft" / "active"
+        }
+
+    DEPTS = [
+        {"id": "planning",       "name": "إدارة تخطيط خدمات الحشود", "route": "/planning",       "icon": "ClipboardList"},
+        {"id": "gates",          "name": "إدارة الأبواب",             "route": "/gates",          "icon": "DoorOpen"},
+        {"id": "plazas",         "name": "إدارة الساحات",             "route": "/plazas",         "icon": "LayoutGrid"},
+        {"id": "crowd_services", "name": "إدارة خدمات حشود الحرم",   "route": "/crowd-services", "icon": "Users"},
+        {"id": "mataf",          "name": "إدارة صحن المطاف",          "route": "/mataf",          "icon": "Circle"},
     ]
+
+    result = []
+    for d in DEPTS:
+        summary = get_dept_summary(d["id"])
+        result.append({**d, **summary})
+    return result
 
 
 @router.get("/dashboard/crowd-hourly")
