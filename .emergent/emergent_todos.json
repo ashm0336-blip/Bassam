@@ -4,7 +4,7 @@
     "status": "completed"
   },
   {
-    "content": "P1-5: إصلاح نظرة عامة في لوحة الأدمن (توصيات + تنبيهات ذكية)",
+    "content": "P1-5: إصلاح نظرة عامة في لوحة الأدمن",
     "status": "completed"
   },
   {
@@ -20,11 +20,11 @@
     "status": "completed"
   },
   {
-    "content": "P1-11: تصدير التقارير PDF/Excel (كان موجود)",
+    "content": "P1-11: تصدير التقارير PDF/Excel",
     "status": "completed"
   },
   {
     "content": "End to end testing",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]

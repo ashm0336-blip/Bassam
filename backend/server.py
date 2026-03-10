@@ -87,6 +87,7 @@ async def serve_frontend_with_settings(request: Request):
 
 # Health check endpoint
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
     try:
         await db.command("ping")
