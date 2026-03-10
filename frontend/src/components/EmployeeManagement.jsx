@@ -683,7 +683,7 @@ export default function EmployeeManagement({ department }) {
   // canUnlock: فقط مدير الإدارة والأدمن يقدرون يفتحون الجدول
   const canUnlock = user?.role === 'system_admin' || user?.role === 'department_manager';
   const canViewEmp = canRead('edit_employees') || canRead('add_employees');
-  const canAddEmp = canWrite('add_employees');
+  const canAddEmp = canWrite('add_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
   const canDeleteEmp = canWrite('delete_employees');
   const canManageAccounts = canWrite('manage_accounts');
   const canResetPins = canWrite('reset_pins');
