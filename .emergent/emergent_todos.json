@@ -24,7 +24,11 @@
     "status": "completed"
   },
   {
+    "content": "Seed database with sidebar menu, dropdown options, zone categories",
+    "status": "completed"
+  },
+  {
     "content": "Ask user about what features to complete from PRD task list",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
