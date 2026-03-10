@@ -1,0 +1,30 @@
+[
+  {
+    "content": "Copy backend files from GitHub repo to /app",
+    "status": "completed"
+  },
+  {
+    "content": "Copy frontend files from GitHub repo to /app",
+    "status": "completed"
+  },
+  {
+    "content": "Add missing env variables (JWT_SECRET, etc.)",
+    "status": "completed"
+  },
+  {
+    "content": "Install missing backend dependencies",
+    "status": "completed"
+  },
+  {
+    "content": "Install missing frontend dependencies",
+    "status": "completed"
+  },
+  {
+    "content": "Verify services are running correctly",
+    "status": "completed"
+  },
+  {
+    "content": "Ask user about what features to complete from PRD task list",
+    "status": "in_progress"
+  }
+]

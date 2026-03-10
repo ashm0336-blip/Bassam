@@ -2,114 +2,458 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --background: 60 9% 97%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 160 100% 15%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 48% 56%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 60 10% 94%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 39 45% 82%;
+    --accent-foreground: 200 18% 26%;
+    --destructive: 0 72% 35%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 160 100% 15%;
+    --radius: 0.5rem;
+    --chart-1: 160 100% 15%;
+    --chart-2: 42 48% 56%;
+    --chart-3: 39 45% 72%;
+    --chart-4: 160 50% 30%;
+    --chart-5: 42 38% 46%;
+  }
+
+  .dark {
+    /* ── Forest Night Palette - Night at Al-Haram ── */
+    --background: 160 30% 7%;
+    --foreground: 160 18% 92%;
+    --card: 160 28% 10%;
+    --card-foreground: 160 18% 92%;
+    --popover: 160 28% 11%;
+    --popover-foreground: 160 18% 92%;
+    --primary: 160 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 48% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 160 20% 15%;
+    --muted-foreground: 155 12% 58%;
+    --accent: 160 30% 16%;
+    --accent-foreground: 42 60% 75%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 160 18% 18%;
+    --input: 160 18% 18%;
+    --ring: 160 65% 42%;
+    --chart-1: 160 65% 42%;
+    --chart-2: 42 48% 50%;
+    --chart-3: 160 40% 55%;
+    --chart-4: 160 50% 35%;
+    --chart-5: 42 40% 40%;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth dark mode transition for all elements */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
+html {
+  direction: rtl;
+}
+
 body {
-    margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 0.25s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
 }
 
 code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: 'IBM Plex Mono', source-code-pro, Menlo, Monaco, Consolas, monospace;
 }
 
 @layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
-        --chart-2: 173 58% 39%;
-        --chart-3: 197 37% 24%;
-        --chart-4: 43 74% 66%;
-        --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-    }
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
-    }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F0F0E8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5A059;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B08A40;
+}
+
+/* Custom Selection */
+::selection {
+  background-color: rgba(197, 160, 89, 0.3);
+  color: #004D38;
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.85); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tabSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* ── CSS Variables for responsive map height ── */
+:root {
+  --map-container-h: min(680px, calc(100vh - 260px));
+  --bottom-nav-h: 64px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --map-container-h: min(450px, calc(100svh - 340px));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --map-container-h: min(560px, calc(100vh - 280px));
+  }
+}
+
+/* ── No Scrollbar utility ── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Safe area padding for mobile bottom nav ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Glass effect ── */
+.glass {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Bottom Nav active indicator ── */
+.bottom-nav-item-active::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #004D38;
+  margin: 1px auto 0;
+}
+
+/* ── Mobile drawer backdrop ── */
+@keyframes drawerSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.drawer-slide-up {
+  animation: drawerSlideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Mobile Responsive Utilities */
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+  }
+  
+  /* Smaller text on mobile */
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+  
+  /* Stack columns on mobile */
+  .mobile-stack {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Scrollable tables on mobile */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Compact cards on mobile */
+  .card-compact-mobile .p-6 {
+    padding: 1rem !important;
+  }
+  
+  .card-compact-mobile .p-5 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Smaller gaps on mobile */
+  .gap-mobile-sm {
+    gap: 0.5rem !important;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-2-col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Gold gradient for special elements */
+.gold-gradient {
+  background: linear-gradient(135deg, #C5A059 0%, #E6D5B8 50%, #C5A059 100%);
+}
+
+/* Emerald gradient */
+.emerald-gradient {
+  background: linear-gradient(180deg, #004D38 0%, #002E22 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — Global Utility Overrides
+   Automatically applies dark styling to all hardcoded Tailwind
+   color classes without modifying individual component files.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── White / Light Backgrounds ── */
+.dark .bg-white { background-color: hsl(var(--card)); }
+.dark .bg-slate-50 { background-color: hsl(160 22% 10%); }
+.dark .bg-slate-100 { background-color: hsl(160 18% 13%); }
+.dark .bg-slate-200 { background-color: hsl(160 15% 18%); }
+.dark .bg-slate-800 { background-color: hsl(160 15% 20%); }
+.dark .bg-gray-50  { background-color: hsl(160 22% 10%); }
+.dark .bg-gray-100 { background-color: hsl(160 18% 13%); }
+
+/* ── Gradient → solid in dark ── */
+.dark .bg-gradient-to-l { background-image: none; }
+.dark .bg-gradient-to-r { background-image: none; }
+.dark .bg-gradient-to-b { background-image: none; }
+.dark .from-slate-50    { background-color: hsl(160 22% 10%); }
+.dark .from-white       { background-color: hsl(var(--card)); }
+.dark .to-white         { background-color: hsl(var(--card)); }
+
+/* ── Text Colors ── */
+.dark .text-slate-900 { color: hsl(160 15% 92%); }
+.dark .text-slate-800 { color: hsl(160 12% 85%); }
+.dark .text-slate-700 { color: hsl(155 10% 75%); }
+.dark .text-slate-600 { color: hsl(155 10% 65%); }
+.dark .text-slate-500 { color: hsl(155 8% 55%); }
+.dark .text-slate-400 { color: hsl(155 8% 48%); }
+.dark .text-slate-300 { color: hsl(155 6% 42%); }
+.dark .text-gray-700  { color: hsl(155 10% 75%); }
+.dark .text-gray-600  { color: hsl(155 10% 65%); }
+.dark .text-gray-500  { color: hsl(155 8% 55%); }
+
+/* ── Border Colors ── */
+.dark .border-slate-100 { border-color: hsl(160 15% 15%); }
+.dark .border-slate-200 { border-color: hsl(160 15% 20%); }
+.dark .border-slate-300 { border-color: hsl(160 12% 25%); }
+.dark .border-slate-400 { border-color: hsl(160 10% 30%); }
+.dark .border-gray-200  { border-color: hsl(160 15% 20%); }
+
+/* ── Emerald (Primary) ── */
+.dark .bg-emerald-50   { background-color: hsl(160 30% 12%); }
+/* Override Tailwind dark: variant classes for SessionHeader (dark:bg-emerald-50 generates .dark\:bg-emerald-50) */
+.dark .dark\:bg-emerald-50  { background-color: hsl(160 30% 12%) !important; }
+.dark .dark\:bg-amber-50    { background-color: hsl(38 28% 12%) !important; }
+.dark .dark\:border-emerald-200\/20 { border-color: hsl(160 28% 18% / 0.2) !important; }
+.dark .dark\:border-amber-200\/20   { border-color: hsl(38 25% 18% / 0.2) !important; }
+.dark .bg-emerald-100  { background-color: hsl(160 28% 16%); }
+.dark .bg-emerald-600  { background-color: hsl(160 55% 35%); }
+.dark .bg-emerald-700  { background-color: hsl(160 55% 28%); }
+.dark .text-emerald-600 { color: hsl(160 60% 48%); }
+.dark .text-emerald-700 { color: hsl(160 58% 52%); }
+.dark .text-emerald-800 { color: hsl(160 56% 58%); }
+.dark .border-emerald-100 { border-color: hsl(160 22% 16%); }
+.dark .border-emerald-200 { border-color: hsl(160 28% 20%); }
+.dark .border-emerald-300 { border-color: hsl(160 32% 26%); }
+.dark .ring-emerald-200   { --tw-ring-color: hsl(160 28% 20%); }
+
+/* ── Blue ── */
+.dark .bg-blue-50    { background-color: hsl(220 30% 13%); }
+.dark .text-blue-400 { color: hsl(220 68% 62%); }
+.dark .text-blue-300 { color: hsl(220 65% 68%); }
+.dark .border-blue-300 { border-color: hsl(220 30% 26%); }
+.dark .border-blue-400 { border-color: hsl(220 35% 32%); }
+.dark .ring-blue-200   { --tw-ring-color: hsl(220 30% 22%); }
+
+/* ── Amber / Orange ── */
+.dark .bg-amber-50   { background-color: hsl(38 28% 12%); }
+.dark .bg-amber-100  { background-color: hsl(38 25% 16%); }
+.dark .text-amber-600 { color: hsl(38 80% 55%); }
+.dark .text-amber-700 { color: hsl(38 82% 60%); }
+.dark .border-amber-100 { border-color: hsl(38 20% 18%); }
+.dark .border-amber-200 { border-color: hsl(38 25% 22%); }
+.dark .border-amber-400 { border-color: hsl(38 45% 36%); }
+.dark .bg-orange-50  { background-color: hsl(25 28% 12%); }
+
+/* ── Red / Destructive ── */
+.dark .bg-red-50    { background-color: hsl(0 28% 12%); }
+.dark .text-red-500 { color: hsl(0 72% 58%); }
+.dark .text-red-600 { color: hsl(0 68% 55%); }
+.dark .border-red-100 { border-color: hsl(0 20% 18%); }
+.dark .border-red-200 { border-color: hsl(0 25% 22%); }
+.dark .border-red-300 { border-color: hsl(0 30% 26%); }
+
+/* ── Violet / Purple ── */
+.dark .bg-violet-50   { background-color: hsl(270 28% 13%); }
+.dark .text-violet-600 { color: hsl(270 68% 65%); }
+.dark .bg-violet-600  { background-color: hsl(270 55% 45%); }
+.dark .bg-violet-700  { background-color: hsl(270 55% 38%); }
+
+/* ── Indigo ── */
+.dark .bg-indigo-50  { background-color: hsl(240 28% 13%); }
+
+/* ── Shadow overrides ── */
+.dark .shadow-sm  { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+.dark .shadow-md  { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+.dark .shadow-lg  { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55); }
+.dark .shadow-xl  { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); }
+
+/* ── Shadow colors (emerald glow in dark) ── */
+.dark .shadow-emerald-200 { box-shadow: 0 4px 14px rgba(0, 163, 92, 0.25); }
+.dark .shadow-amber-200   { box-shadow: 0 4px 14px rgba(197, 160, 89, 0.25); }
+
+/* ── Backdrop / Overlay ── */
+.dark .bg-white\/90  { background-color: hsl(160 25% 10% / 0.92); }
+.dark .bg-white\/95  { background-color: hsl(160 25% 10% / 0.96); }
+.dark .bg-white\/98  { background-color: hsl(160 25% 10% / 0.98); }
+.dark .bg-black\/50  { background-color: rgba(0, 0, 0, 0.65); }
+
+/* ── Dark mode scrollbar ── */
+.dark ::-webkit-scrollbar-track { background: hsl(160 22% 11%); }
+.dark ::-webkit-scrollbar-thumb { background: hsl(160 20% 26%); }
+.dark ::-webkit-scrollbar-thumb:hover { background: hsl(42 48% 42%); }
+
+/* ── Dark mode selection ── */
+.dark ::selection {
+  background-color: hsl(160 40% 22%);
+  color: hsl(160 18% 92%);
+}
+
+/* ── Specific component patterns ── */
+/* Prayer sessions bar */
+.dark [data-testid="prayer-sessions-bar"] {
+  background: hsl(160 22% 10%);
+  border-color: hsl(160 18% 18%);
+}
+/* Map / Stats / Density / Employees side panels */
+.dark [data-testid="map-stats-panel"],
+.dark [data-testid="density-side-panel"],
+.dark [data-testid="employees-panel"] {
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+/* Archive sidebar calendar */
+.dark [data-testid="archive-sidebar"] {
+  background-color: hsl(var(--card));
+}
+/* Daily tabs bar */
+.dark [data-testid="daily-tabs-bar"] {
+  background-color: hsl(160 22% 10%) !important;
+  border-color: hsl(160 18% 18%) !important;
+}
+/* Heatmap container background */
+.dark [data-testid="density-heatmap-container"],
+.dark [data-testid="zone-employees-tab"] > .absolute.inset-0 {
+  background-color: hsl(160 22% 9%) !important;
+}
+/* Bypass confirmation popup */
+.dark [data-testid="daily-sessions-page"] .bg-white.rounded-xl.border-amber-400 {
+  background-color: hsl(38 25% 12%) !important;
+}
+/* Popover content dark */
+.dark [data-radix-popper-content-wrapper] .bg-white {
+  background-color: hsl(var(--popover));
 }
 
 @layer base {
-    * {
-        @apply border-border;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
-}
-
-@layer base {
-    [data-debug-wrapper="true"] {
-        display: contents !important;
-    }
-
-    [data-debug-wrapper="true"] > * {
-        margin-left: inherit;
-        margin-right: inherit;
-        margin-top: inherit;
-        margin-bottom: inherit;
-        padding-left: inherit;
-        padding-right: inherit;
-        padding-top: inherit;
-        padding-bottom: inherit;
-        column-gap: inherit;
-        row-gap: inherit;
-        gap: inherit;
-        border-left-width: inherit;
-        border-right-width: inherit;
-        border-top-width: inherit;
-        border-bottom-width: inherit;
-        border-left-style: inherit;
-        border-right-style: inherit;
-        border-top-style: inherit;
-        border-bottom-style: inherit;
-        border-left-color: inherit;
-        border-right-color: inherit;
-        border-top-color: inherit;
-        border-bottom-color: inherit;
-    }
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
 }

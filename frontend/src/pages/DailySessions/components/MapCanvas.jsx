@@ -1,0 +1,658 @@
+import { useState, useRef } from "react";
+import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/context/LanguageContext";
+import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES, PRAYER_TIMES } from "../constants";
+import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
+import { useZoneEmployees } from "./useZoneEmployees";
+import { ZonePatternDefs } from "./ZonePatterns";
+
+// Quick color swatches for common zone colors
+
+function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isAr, onEdit, onCopy, onSmooth, onRemove }) {
+  if (!zone?.polygon_points?.length || !mapContainerRef.current) return null;
+
+  const pts = zone.polygon_points;
+  const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+  const minY = Math.min(...pts.map(p => p.y));
+
+  const containerRect = mapContainerRef.current.getBoundingClientRect();
+  const cw = containerRect.width, ch = containerRect.height;
+  let imgLeft = 0, imgTop = 0, imgW = cw, imgH = ch;
+  if (imgRatio) {
+    if (cw / ch > imgRatio) { imgW = ch * imgRatio; imgH = ch; imgLeft = (cw - imgW) / 2; }
+    else { imgW = cw; imgH = cw / imgRatio; imgTop = (ch - imgH) / 2; }
+  }
+  // SVG coords (0-100) → container screen position
+  const imgX = (cx / 100) * imgW + imgLeft;
+  const imgY = (minY / 100) * imgH + imgTop;
+  let posX = imgX * zoom + panOffset.x;
+  let posY = imgY * zoom + panOffset.y - 52;
+
+  posX = Math.max(100, Math.min(posX, containerRect.width - 100));
+  if (posY < 10) posY = imgY * zoom + panOffset.y + 20;
+
+  const btnClass = "flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-all hover:scale-105 active:scale-95";
+
+  return (
+    <div
+      className="absolute z-50 pointer-events-auto"
+      style={{ left: posX, top: posY, transform: "translateX(-50%)" }}
+      data-testid="floating-toolbar"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-white/97 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200/80 px-1.5 py-1 flex items-center gap-0.5" style={{ direction: "rtl" }}>
+        <button onClick={onEdit} className={`${btnClass} text-blue-600 hover:bg-blue-50`} data-testid="float-edit-btn" title={isAr ? "تعديل البيانات" : "Edit Data"}>
+          <Edit2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تعديل" : "Edit"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onCopy} className={`${btnClass} text-violet-600 hover:bg-violet-50`} data-testid="float-copy-btn" title={isAr ? "نسخ المنطقة" : "Copy Zone"}>
+          <Copy className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "نسخ" : "Copy"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onSmooth} className={`${btnClass} text-emerald-600 hover:bg-emerald-50`} data-testid="float-smooth-btn" title={isAr ? "تنعيم الزوايا" : "Smooth"}>
+          <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
+        </button>
+        <div className="w-px h-5 bg-slate-200" />
+        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
+          <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
+        </button>
+      </div>
+      {/* Arrow pointer */}
+      <div className="flex justify-center"><div className="w-2.5 h-2.5 bg-white border-b border-r border-slate-200/80 rotate-45 -mt-[5px]" /></div>
+    </div>
+  );
+}
+
+export function MapCanvas({
+  selectedFloor, activeSession, sessionZones, activeZones, removedZones,
+  mapMode, zoom, setZoom, panOffset, setPanOffset, zoomRef, svgRef, mapContainerRef,
+  drawingPoints, setDrawingPoints, selectedZoneId, setSelectedZoneId,
+  draggingPoint, setDraggingPoint, hoveredPoint, setHoveredPoint,
+  mousePos, setMousePos, nearStart, setNearStart,
+  rectStart, setRectStart, rectEnd, setRectEnd,
+  isRotating, setIsRotating, isDraggingZone, setIsDraggingZone,
+  dragZoneStart, setDragZoneStart, isDrawingFreehand, setIsDrawingFreehand,
+  freehandPoints, setFreehandPoints, isPanning, setIsPanning, panStart, setPanStart,
+  imgRatio, setImgRatio, newZoneForm,
+  setActiveSession, setSelectedZone, setShowZoneDialog, setShowNewZoneDialog,
+  ZONE_TYPES, wheelRef, onMapMouseUp,
+  handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
+  addDrawingPoint, onEditStart, setMapMode,
+  activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
+  readOnly = false,
+}) {
+  const { language } = useLanguage();
+  const isAr = language === "ar";
+
+  const [hoveredZone, setHoveredZone] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const zoneEmployeeMap = useZoneEmployees(activeZones);
+
+  // Extract clientX/clientY from mouse or touch events
+  const getClientXY = (e) => {
+    if (e.touches && e.touches.length > 0) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches.length > 0) return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
+  };
+
+  const getMousePercent = (e) => {
+    if (!mapContainerRef.current) return { x: 0, y: 0 };
+    const { clientX, clientY } = getClientXY(e);
+    const rect = mapContainerRef.current.getBoundingClientRect();
+    // Position relative to the map container (CSS pixels, DPR-independent)
+    const lx = clientX - rect.left;
+    const ly = clientY - rect.top;
+    // Undo the CSS transform: translate(panOffset.x, panOffset.y) scale(zoom) with transformOrigin "0 0"
+    const cx = (lx - panOffset.x) / zoom;
+    const cy = (ly - panOffset.y) / zoom;
+    // Dimensions of the container at zoom=1 (the transform uses the un-zoomed size)
+    const cw = rect.width;
+    const ch = rect.height;
+    // Calculate the image container offset within the flex-centered wrapper
+    let imgLeft = 0, imgTop = 0, imgW = cw, imgH = ch;
+    if (imgRatio) {
+      if (cw / ch > imgRatio) {
+        imgW = ch * imgRatio; imgH = ch;
+        imgLeft = (cw - imgW) / 2;
+      } else {
+        imgW = cw; imgH = cw / imgRatio;
+        imgTop = (ch - imgH) / 2;
+      }
+    }
+    // Convert to SVG percentage coordinates (viewBox 0 0 100 100)
+    const svgX = ((cx - imgLeft) / imgW) * 100;
+    const svgY = ((cy - imgTop) / imgH) * 100;
+    return { x: Math.max(0, Math.min(100, svgX)), y: Math.max(0, Math.min(100, svgY)) };
+  };
+
+  const hasPannedRef = useRef(false);
+  const touchStartPixelRef = useRef({ x: 0, y: 0 });
+  // Double-tap detection & click/dblclick suppression after touch
+  const lastTapRef = useRef({ time: 0, zoneId: null });
+  const skipNextClickRef = useRef(false);
+  const skipNextDblClickRef = useRef(false);
+  // Synchronous mirrors of parent state for touch event handlers (avoids stale closure on tablet)
+  const interactionRef = useRef({
+    draggingPoint: null,
+    isRotating: false,
+    isDraggingZone: false,
+    dragZoneStart: null,
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+  });
+
+  const handlePointerDown = (e, isTouch = false) => {
+    if (!isTouch && e.button !== 0) return;
+    if (!isTouch) e.preventDefault();
+    hasPannedRef.current = false;
+    const { clientX, clientY } = getClientXY(e);
+    if (isTouch) touchStartPixelRef.current = { x: clientX, y: clientY };
+    const pos = getMousePercent(e);
+    if (activeSession?.status === "completed" || readOnly) {
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    } else if (mapMode === "pan") {
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    } else if (DRAG_SHAPE_MODES.includes(mapMode)) {
+      setRectStart(pos); setRectEnd(pos);
+    } else if (mapMode === "freehand") {
+      setIsDrawingFreehand(true); setFreehandPoints([pos]);
+    } else if (mapMode === "edit" && activeSession?.status === "draft" && !readOnly) {
+      if (selectedZoneId) {
+        const zone = sessionZones.find(z => z.id === selectedZoneId);
+        if (zone?.polygon_points) {
+          onEditStart(selectedZoneId);
+          const rotHandle = getRotationHandle(zone.polygon_points, zoom);
+          const touchMultiplier = isTouch ? 2.5 : 1;
+          if (rotHandle && getDistance(pos, rotHandle) < (2.5 * touchMultiplier / Math.max(zoom, 0.5))) {
+            interactionRef.current.isRotating = true;
+            setIsRotating(true);
+            return;
+          }
+          const hitRadius = (2 * touchMultiplier) / Math.max(zoom, 0.5);
+          const hitIndex = zone.polygon_points.findIndex(p => getDistance(pos, p) < hitRadius);
+          if (hitIndex !== -1) {
+            interactionRef.current.draggingPoint = hitIndex;
+            setDraggingPoint(hitIndex); setHoveredPoint(hitIndex);
+            return;
+          }
+          const pts = zone.polygon_points;
+          const midRadius = (1.5 * touchMultiplier) / Math.max(zoom, 0.5);
+          for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2;
+            if (getDistance(pos, { x: mx, y: my }) < midRadius) {
+              const newPoints = [...pts]; newPoints.splice(j, 0, { x: pos.x, y: pos.y });
+              setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPoints } : z) }));
+              interactionRef.current.draggingPoint = j;
+              setDraggingPoint(j); setHoveredPoint(j);
+              return;
+            }
+          }
+          if (isPointInPolygon(pos, zone.polygon_points)) {
+            interactionRef.current.isDraggingZone = true;
+            interactionRef.current.dragZoneStart = pos;
+            setIsDraggingZone(true); setDragZoneStart(pos);
+            return;
+          }
+        }
+      }
+      // Pan fallback: nothing was hit (empty space or no zone selected)
+      interactionRef.current.isPanning = true;
+      interactionRef.current.panStart = { x: clientX - panOffset.x, y: clientY - panOffset.y };
+      setIsPanning(true);
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    }
+  };
+
+  const handleMouseDown = (e) => handlePointerDown(e, false);
+  const handleTouchStart = (e) => { if (e.touches.length !== 1) return; handlePointerDown(e, true); };
+
+  const handlePointerMove = (e) => {
+    const { clientX, clientY } = getClientXY(e);
+    const pos = getMousePercent(e);
+    setMousePos(pos);
+    // Use interactionRef for synchronous state access (avoids stale closure on tablet)
+    const iRef = interactionRef.current;
+    if (iRef.isPanning) {
+      // Only mark as panned if finger moved more than 10px (prevents false positives on tablet taps)
+      if (Math.hypot(clientX - touchStartPixelRef.current.x, clientY - touchStartPixelRef.current.y) > 10) {
+        hasPannedRef.current = true;
+      }
+      setPanOffset({ x: clientX - iRef.panStart.x, y: clientY - iRef.panStart.y });
+      return;
+    }
+    if (DRAG_SHAPE_MODES.includes(mapMode) && rectStart) { setRectEnd(pos); return; }
+    if (mapMode === "freehand" && isDrawingFreehand) { setFreehandPoints(prev => [...prev, pos]); return; }
+    if (iRef.isRotating && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (zone?.polygon_points) {
+        const center = { x: zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length, y: zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length };
+        const angle = Math.atan2(pos.y - center.y, pos.x - center.x) - Math.atan2(mousePos.y - center.y, mousePos.x - center.x);
+        const cos = Math.cos(angle), sin = Math.sin(angle);
+        const newPts = zone.polygon_points.map(p => ({ x: center.x + (p.x-center.x)*cos - (p.y-center.y)*sin, y: center.y + (p.x-center.x)*sin + (p.y-center.y)*cos }));
+        setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPts } : z) }));
+      }
+      return;
+    }
+    if (iRef.isDraggingZone && selectedZoneId && iRef.dragZoneStart) {
+      const dx = pos.x - iRef.dragZoneStart.x, dy = pos.y - iRef.dragZoneStart.y;
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      if (zone?.polygon_points) {
+        const newPts = zone.polygon_points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+        setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => z.id === selectedZoneId ? { ...z, polygon_points: newPts } : z) }));
+        iRef.dragZoneStart = pos;
+        setDragZoneStart(pos);
+      }
+      return;
+    }
+    if (iRef.draggingPoint !== null && selectedZoneId) {
+      setActiveSession(prev => ({ ...prev, zones: prev.zones.map(z => {
+        if (z.id !== selectedZoneId) return z;
+        const newPts = [...z.polygon_points]; newPts[iRef.draggingPoint] = { x: pos.x, y: pos.y };
+        return { ...z, polygon_points: newPts };
+      })}));
+      return;
+    }
+    if (mapMode === "edit" && selectedZoneId) {
+      const zone = sessionZones.find(z => z.id === selectedZoneId);
+      const hitRadius = 2 / Math.max(zoom, 0.5);
+      const hit = zone?.polygon_points?.findIndex(p => getDistance(pos, p) < hitRadius) ?? -1;
+      setHoveredPoint(hit !== -1 ? hit : null);
+    }
+    if (mapMode === "draw" && drawingPoints.length >= 3) setNearStart(getDistance(pos, drawingPoints[0]) < 1.2);
+    if (mapMode !== "draw" && iRef.draggingPoint === null && !iRef.isPanning && !iRef.isRotating && !iRef.isDraggingZone) {
+      if (mapContainerRef.current) {
+        const rect = mapContainerRef.current.getBoundingClientRect();
+        setTooltipPos({ x: clientX - rect.left + 16, y: clientY - rect.top - 10 });
+      }
+      let found = null;
+      for (const zone of sessionZones) {
+        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
+      }
+      if (found?.id !== hoveredZone?.id) setHoveredZone(found || null);
+    } else if (hoveredZone) setHoveredZone(null);
+  };
+
+  const handleMouseMove = (e) => handlePointerMove(e);
+  const handleTouchMove = (e) => {
+    if (e.touches.length !== 1) return; // multi-touch handled by pinch-to-zoom
+    handlePointerMove(e);
+  };
+
+  const handleMouseUp = () => {
+    interactionRef.current = { draggingPoint: null, isRotating: false, isDraggingZone: false, dragZoneStart: null, isPanning: false, panStart: { x: 0, y: 0 } };
+    onMapMouseUp();
+  };
+  const handleTouchEnd = (e) => {
+    interactionRef.current = { draggingPoint: null, isRotating: false, isDraggingZone: false, dragZoneStart: null, isPanning: false, panStart: { x: 0, y: 0 } };
+
+    const wasInteracting = draggingPoint !== null || isRotating || isDraggingZone;
+    const wasDragShape = DRAG_SHAPE_MODES.includes(mapMode) && rectStart;
+
+    if (!hasPannedRef.current && !wasInteracting && !wasDragShape && activeSession) {
+      const pos = getMousePercent(e);
+      skipNextClickRef.current = true; // suppress synthesized click
+
+      if (mapMode === "draw" && activeSession?.status === "draft") {
+        // Draw mode: tap adds a point
+        if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); }
+        else { addDrawingPoint({ x: pos.x, y: pos.y }); }
+      } else {
+        // Edit / pan / view: single-tap = tooltip, double-tap = edit mode
+        const now = Date.now();
+        let tappedZone = null;
+        for (const zone of sessionZones) {
+          if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { tappedZone = zone; break; }
+        }
+        const isDoubleTap = (now - lastTapRef.current.time) < 350 && lastTapRef.current.zoneId === (tappedZone?.id ?? null);
+        lastTapRef.current = { time: now, zoneId: tappedZone?.id ?? null };
+
+        if (isDoubleTap && tappedZone && activeSession?.status === "draft" && !readOnly) {
+          // Double-tap → select zone + show floating toolbar (open dialog via toolbar)
+          setMapMode("edit");
+          setSelectedZoneId(tappedZone.id);
+          setHoveredZone(null);
+          skipNextDblClickRef.current = true; // prevent dblclick event from opening dialog
+        } else if (tappedZone) {
+          // Single tap → show tooltip (sticky on touch)
+          if (mapContainerRef.current) {
+            const { clientX, clientY } = getClientXY(e);
+            const rect = mapContainerRef.current.getBoundingClientRect();
+            setTooltipPos({ x: clientX - rect.left + 16, y: clientY - rect.top - 10 });
+          }
+          setHoveredZone(tappedZone);
+          setSelectedZoneId(null); // not in edit mode on single tap
+        } else {
+          // Tap empty space → clear tooltip & deselect
+          setHoveredZone(null);
+          setSelectedZoneId(null);
+        }
+      }
+    }
+
+    onMapMouseUp();
+  };
+
+  const handleClick = (e) => {
+    // Suppress click events generated after touch interactions (handled in handleTouchEnd)
+    if (skipNextClickRef.current) { skipNextClickRef.current = false; return; }
+    if (isPanning || draggingPoint !== null || hasPannedRef.current) return;
+    if (activeSession?.status === "completed") return;
+    e.preventDefault();
+    const pos = getMousePercent(e);
+    if (mapMode === "draw" && activeSession?.status === "draft") {
+      if (drawingPoints.length >= 3 && nearStart) { setShowNewZoneDialog(true); return; }
+      addDrawingPoint({ x: pos.x, y: pos.y });
+    } else if (mapMode === "edit" && activeSession?.status === "draft" && !readOnly) {
+      // Find which zone was clicked (zone-level onClick removed, handled here)
+      let found = null;
+      for (const zone of sessionZones) {
+        if (!zone.is_removed && isPointInPolygon(pos, zone.polygon_points)) { found = zone; break; }
+      }
+      setSelectedZoneId(found?.id || null);
+    }
+  };
+
+  // Double-click on vertex to delete it
+  const handleDoubleClickVertex = (e, zoneId, pointIndex) => {
+    e.stopPropagation();
+    if (activeSession?.status !== "draft" || readOnly) return;
+    const zone = sessionZones.find(z => z.id === zoneId);
+    if (!zone?.polygon_points || zone.polygon_points.length <= 3) return; // Keep minimum 3 points
+    handleDeletePoint(zoneId, pointIndex);
+  };
+
+  if (!selectedFloor?.image_url) {
+    return <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? "لا توجد صورة خريطة" : "No map image"}</CardContent></Card>;
+  }
+
+  const cursorStyle = activeSession?.status === "completed"
+    ? (isPanning ? "grabbing" : "grab")
+    : (["draw", ...DRAG_SHAPE_MODES, "freehand"].includes(mapMode) ? "crosshair" : mapMode === "edit" ? (isPanning ? "grabbing" : draggingPoint !== null || isRotating || isDraggingZone ? "grabbing" : "grab") : (isPanning ? "grabbing" : "grab"));
+
+  const selectedZoneData = selectedZoneId ? sessionZones.find(z => z.id === selectedZoneId) : null;
+  const showFloatingToolbar = selectedZoneId && mapMode === "edit" && activeSession?.status === "draft" && !readOnly && selectedZoneData && !draggingPoint && !isRotating && !isDraggingZone;
+
+  return (
+    <Card className="overflow-hidden border-0 shadow-none rounded-none h-full">
+      <CardContent className="p-0 h-full">
+        <div ref={wheelRef} data-testid="session-map-container" className="relative bg-slate-100 overflow-hidden h-full"
+          style={{ minHeight: "500px", cursor: cursorStyle, touchAction: "none" }}
+          onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}
+          onClick={handleClick}>
+
+          {/* Zoom controls overlay - top left, matching density/employees style */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm" onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <button onClick={() => { if (!mapContainerRef.current) return; const r = mapContainerRef.current.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.3, Math.min(20, p*0.8)); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({x: cx-s*(cx-o.x), y: cy-s*(cy-o.y)})); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-out-btn"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
+            <span className="text-xs w-10 text-center font-mono">{Math.round(zoom * 100)}%</span>
+            <button onClick={() => { if (!mapContainerRef.current) return; const r = mapContainerRef.current.getBoundingClientRect(); const cx = r.width/2, cy = r.height/2; const p = zoomRef.current; const nz = Math.max(0.3, Math.min(20, p*1.25)); const s = nz/p; zoomRef.current = nz; setZoom(nz); setPanOffset(o => ({x: cx-s*(cx-o.x), y: cy-s*(cy-o.y)})); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-in-btn"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
+            <button onClick={() => { zoomRef.current = 1; setZoom(1); setPanOffset({ x: 0, y: 0 }); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100 transition-all" data-testid="zoom-reset-btn"><Maximize2 className="w-4 h-4 text-slate-600" /></button>
+          </div>
+          <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {(() => {
+              const ce = mapContainerRef.current;
+              let ws = { position: "relative", width: "100%", height: "100%" };
+              if (imgRatio && ce) { const cw = ce.clientWidth, ch = ce.clientHeight; if (cw/ch > imgRatio) ws = { position: "relative", height: "100%", width: ch * imgRatio }; else ws = { position: "relative", width: "100%", height: cw / imgRatio }; }
+              return (
+                <div style={ws}>
+                  <img src={selectedFloor.image_url} alt="" style={{ width: "100%", height: "100%", display: "block", imageRendering: "high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth / e.target.naturalHeight)} />
+                  <svg ref={svgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="session-map-svg">
+                    <ZonePatternDefs zones={sessionZones} />
+                    {activeZones.map(zone => {
+                      const isSelected = zone.id === selectedZoneId;
+                      const usePattern = zone.fill_type === "pattern" && zone.pattern_type;
+                      const fillValue = usePattern ? `url(#zone-pattern-${zone.id})` : zone.fill_color;
+                      const strokeDash = isSelected && mapMode === "edit" ? "none"
+                        : (zone.stroke_style === "solid" ? "none"
+                        : zone.stroke_style === "dotted" ? "0.5 0.8"
+                        : zone.stroke_style === "dash-dot" ? "2 0.6 0.5 0.6"
+                        : "2 1");
+                      // Prayer density overlay
+                      const prayerCount = densityEdits?.[zone.id]?.prayer_counts?.[activePrayer] ?? zone.prayer_counts?.[activePrayer] ?? 0;
+                      const prayerDensity = activePrayer && zone.max_capacity > 0 ? getDensityLevel(prayerCount, zone.max_capacity) : null;
+                      return (
+                        <g key={zone.id} data-testid={`session-zone-${zone.id}`} data-zone-id={zone.id}
+                          onMouseEnter={() => { if (mapMode !== "draw" && draggingPoint === null && !isSelected) setHoveredZone(zone); }}
+                          onMouseLeave={() => setHoveredZone(null)}
+                          onDoubleClick={(e) => {
+                            if (skipNextDblClickRef.current) { skipNextDblClickRef.current = false; return; }
+                            if (activeSession?.status !== "draft" || readOnly) return;
+                            e.stopPropagation();
+                            if (mapMode === "pan") {
+                              setMapMode("edit");
+                              setSelectedZoneId(zone.id);
+                            } else if (mapMode === "edit" && isSelected) {
+                              setSelectedZone(zone);
+                              setShowZoneDialog(true);
+                            } else if (mapMode === "edit" && !isSelected) {
+                              setSelectedZoneId(zone.id);
+                            }
+                          }}
+                          style={{ cursor: mapMode === "edit" && activeSession?.status === "draft" && !readOnly ? (isSelected ? "move" : "pointer") : "inherit" }}>
+                          <path d={getPath(zone.polygon_points)}
+                            fill={fillValue}
+                            fillOpacity={isSelected ? (zone.opacity || 0.4) * 0.6 : (zone.opacity || 0.4)}
+                            stroke={isSelected && mapMode === "edit" ? "#3b82f6" : (zone.stroke_color || "#000000")}
+                            strokeWidth={isSelected && mapMode === "edit" ? 0.6 : (zone.stroke_width ?? 0.3)}
+                            strokeOpacity={isSelected && mapMode === "edit" ? 1 : (zone.stroke_opacity ?? 1)}
+                            strokeDasharray={strokeDash}
+                            vectorEffect="non-scaling-stroke" />
+                          {isSelected && (
+                            <path d={getPath(zone.polygon_points)} fill="none"
+                              stroke="#3b82f6" strokeWidth="1.8" strokeOpacity="0.5"
+                              strokeDasharray="5 3"
+                              vectorEffect="non-scaling-stroke" pointerEvents="none" />
+                          )}
+                          {/* Prayer density overlay - subtle color tint per prayer */}
+                          {prayerDensity && prayerCount > 0 && !isSelected && (
+                            <path d={getPath(zone.polygon_points)}
+                              fill={prayerDensity.color}
+                              fillOpacity={0.22}
+                              stroke="none"
+                              pointerEvents="none" />
+                          )}
+                          {/* Vertex handles - PPT style white squares */}
+                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
+                            const isActive = i === draggingPoint || i === hoveredPoint;
+                            return (
+                              <g key={`v-${i}`} style={{ cursor: "crosshair" }}
+                                onDoubleClick={(e) => handleDoubleClickVertex(e, zone.id, i)}>
+                                {isActive && <circle cx={pt.x} cy={pt.y} r="0.5" fill="#3b82f6" fillOpacity="0.12" pointerEvents="none" />}
+                                <rect x={pt.x - (isActive ? 0.24 : 0.16)} y={pt.y - (isActive ? 0.24 : 0.16)}
+                                  width={isActive ? 0.48 : 0.32} height={isActive ? 0.48 : 0.32}
+                                  fill="white" stroke="#3b82f6" strokeWidth={isActive ? "0.08" : "0.05"}
+                                  vectorEffect="non-scaling-stroke" pointerEvents="all"
+                                  style={{ filter: isActive ? "drop-shadow(0 0 2px rgba(59,130,246,0.6))" : "none" }} />
+                              </g>
+                            );
+                          })}
+                          {/* Midpoint handles */}
+                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && zone.polygon_points?.map((pt, i) => {
+                            const j = (i + 1) % zone.polygon_points.length;
+                            const nx = zone.polygon_points[j];
+                            const mx = (pt.x + nx.x) / 2, my = (pt.y + nx.y) / 2;
+                            return <circle key={`m-${i}`} cx={mx} cy={my} r="0.12" fill="white" stroke="#3b82f6" strokeWidth="0.04" vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none" style={{ cursor: "crosshair" }} />;
+                          })}
+                          {/* Green rotation handle */}
+                          {isSelected && mapMode === "edit" && activeSession?.status === "draft" && (() => {
+                            const rh = getRotationHandle(zone.polygon_points, zoom);
+                            if (!rh) return null;
+                            return (
+                              <g data-testid="rotation-handle" style={{ cursor: "grab" }}>
+                                <line x1={rh.cx} y1={Math.min(...zone.polygon_points.map(p => p.y))} x2={rh.x} y2={rh.y} stroke="#22c55e" strokeWidth="0.25" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" opacity="0.5" pointerEvents="none" />
+                                <circle cx={rh.x} cy={rh.y} r="0.3" fill="#22c55e" stroke="white" strokeWidth="0.07" vectorEffect="non-scaling-stroke" opacity="0.9" pointerEvents="none" />
+                                <g transform={`translate(${rh.x}, ${rh.y})`} pointerEvents="none">
+                                  <path d="M -0.12 -0.06 A 0.12 0.12 0 1 1 0.06 -0.12" fill="none" stroke="white" strokeWidth="0.04" vectorEffect="non-scaling-stroke" />
+                                  <path d="M 0.06 -0.12 L 0.14 -0.07 L 0.05 -0.04" fill="white" stroke="none" />
+                                </g>
+                              </g>
+                            );
+                          })()}
+                        </g>
+                      );
+                    })}
+                    {removedZones.map(zone => (
+                      <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { if (activeSession?.status === "draft" && !readOnly) { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }} style={{ cursor: activeSession?.status === "draft" && !readOnly ? "pointer" : "default" }}>
+                        <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity={0.08} stroke="#ef4444" strokeWidth={0.5} strokeOpacity={0.4} strokeDasharray="2 1.5" vectorEffect="non-scaling-stroke" />
+                        {zone.polygon_points?.length > 0 && (() => { const cx2 = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy2 = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx2-0.8} y1={cy2-0.8} x2={cx2+0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx2+0.8} y1={cy2-0.8} x2={cx2-0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
+                      </g>
+                    ))}
+                    {mapMode === "draw" && drawingPoints.length > 0 && (
+                      <g data-testid="drawing-layer">
+                        <path d={getPath(drawingPoints, false)} fill="none" stroke="#3b82f6" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                        <line x1={drawingPoints[drawingPoints.length-1].x} y1={drawingPoints[drawingPoints.length-1].y} x2={mousePos.x} y2={mousePos.y} stroke="#3b82f6" strokeWidth="0.4" strokeDasharray="1 0.5" vectorEffect="non-scaling-stroke" />
+                        {nearStart && drawingPoints.length >= 3 && <path d={getPath(drawingPoints)} fill={newZoneForm.fill_color} fillOpacity={0.3} stroke="#22c55e" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />}
+                        {drawingPoints.map((pt, i) => {
+                          const isStart = i === 0;
+                          const r = isStart ? (nearStart ? 0.3 : 0.15) : DRAW_POINT_RADIUS;
+                          return <circle key={i} cx={pt.x} cy={pt.y} r={r} fill={isStart ? (nearStart ? "#22c55e" : "#ef4444") : "#3b82f6"} fillOpacity={isStart ? 0.8 : 0.25} stroke="white" strokeWidth="0.08" vectorEffect="non-scaling-stroke" />;
+                        })}
+                      </g>
+                    )}
+                    {DRAG_SHAPE_MODES.includes(mapMode) && rectStart && rectEnd && (() => {
+                      const previewPts = generateShapeFromDrag(mapMode, rectStart, rectEnd);
+                      if (!previewPts) return null;
+                      const colors = { rect: "#3b82f6", circle: "#06b6d4", ellipse: "#8b5cf6", triangle: "#f59e0b", pentagon: "#10b981", hexagon: "#6366f1", star: "#ec4899", diamond: "#14b8a6", lshape: "#f97316", ushape: "#8b5cf6" };
+                      return <path d={getPath(previewPts)} fill={newZoneForm.fill_color} fillOpacity={0.2} stroke={colors[mapMode] || "#3b82f6"} strokeWidth="0.6" strokeDasharray="1.5 0.8" vectorEffect="non-scaling-stroke" data-testid="shape-preview" />;
+                    })()}
+                    {mapMode === "freehand" && isDrawingFreehand && freehandPoints.length > 1 && (
+                      <path d={getPath(freehandPoints, false)} fill="none" stroke="#ec4899" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" data-testid="freehand-preview" />
+                    )}
+                  </svg>
+                </div>
+              );
+            })()}
+          </div>
+          {/* Floating Toolbar above selected zone */}
+          {showFloatingToolbar && (
+            <FloatingToolbar
+              zone={selectedZoneData}
+              mapContainerRef={mapContainerRef}
+              zoom={zoom}
+              panOffset={panOffset}
+              imgRatio={imgRatio}
+              isAr={isAr}
+              onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
+              onCopy={handleCopyZone}
+              onSmooth={handleSmoothZone}
+              onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
+            />
+          )}
+          {/* Tooltip: shows on hover (desktop) or after single tap (tablet) */}
+          {hoveredZone && !draggingPoint && !isDraggingZone && !isRotating && hoveredZone.id !== selectedZoneId && <ZoneTooltip zone={hoveredZone} pos={tooltipPos} ZONE_TYPES={ZONE_TYPES} isAr={isAr} zoneEmployeeMap={zoneEmployeeMap} activePrayer={activePrayer} densityEdits={densityEdits} />}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ZoneTooltip({ zone, pos, ZONE_TYPES, isAr, zoneEmployeeMap, activePrayer, densityEdits }) {
+  const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+  const cl = CHANGE_LABELS[zone.change_type] || CHANGE_LABELS.unchanged;
+  const hasChange = zone.change_type && zone.change_type !== "unchanged";
+  const capacity = zone.max_capacity || 0;
+  const area = zone.area_sqm || 0;
+  const currentCount = zone.current_count || 0;
+  const utilPct = capacity > 0 ? Math.round((currentCount / capacity) * 100) : 0;
+  const densityInfo = getDensityLevel(currentCount, capacity);
+  const zoneData = zoneEmployeeMap?.[zone.zone_code];
+  const staffCount = zoneData?.count || 0;
+  const staffList = zoneData?.employees || [];
+
+  // Prayer-specific data
+  const prayerInfo = activePrayer ? PRAYER_TIMES.find(p => p.key === activePrayer) : null;
+  const prayerCount = densityEdits?.[zone.id]?.prayer_counts?.[activePrayer] ?? zone.prayer_counts?.[activePrayer] ?? 0;
+  const prayerDensity = prayerInfo && capacity > 0 ? getDensityLevel(prayerCount, capacity) : null;
+  const prayerPct = capacity > 0 ? Math.round((prayerCount / capacity) * 100) : 0;
+
+  const SHIFT_COLORS = { "الأولى": "#3b82f6", "الثانية": "#22c55e", "الثالثة": "#f97316", "الرابعة": "#8b5cf6" };
+
+  return (
+    <div className="absolute pointer-events-none z-50" style={{ left: pos.x, top: pos.y }} data-testid="zone-hover-tooltip">
+      <div className="bg-white/97 backdrop-blur-md rounded-xl shadow-2xl border overflow-hidden min-w-[240px]" style={{ direction: "rtl" }}>
+        <div className="h-1.5" style={{ backgroundColor: zone.fill_color }} />
+        <div className="p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold shadow-sm" style={{ backgroundColor: zone.fill_color }}>{ti?.icon || "?"}</div>
+              <span className="font-bold text-sm">{zone.zone_code}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {prayerInfo && <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 font-semibold text-emerald-700">{prayerInfo.icon} {isAr ? prayerInfo.label_ar : prayerInfo.label_en}</span>}
+              {hasChange && <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr ? cl.ar : cl.en}</span>}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-800">{isAr ? zone.name_ar : zone.name_en}</p>
+            {ti && <p className="text-[10px] font-medium mt-0.5" style={{ color: ti.color }}>{isAr ? ti.label_ar : ti.label_en}</p>}
+          </div>
+          {(area > 0 || capacity > 0) && (
+            <>
+              <div className="border-t border-dashed border-slate-200" />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {area > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] font-bold flex-shrink-0">م²</span><span className="text-[11px] text-slate-600">{area.toLocaleString()} {isAr ? "م²" : "m²"}</span></div>}
+                {capacity > 0 && <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[8px] font-bold flex-shrink-0">S</span><span className="text-[11px] text-slate-600">{capacity.toLocaleString()} {isAr ? "مصلي" : "cap"}</span></div>}
+              </div>
+            </>
+          )}
+          {/* Prayer-specific occupancy */}
+          {prayerDensity && capacity > 0 && (
+            <div className="rounded-lg p-2 border" style={{ backgroundColor: prayerDensity.color + '10', borderColor: prayerDensity.color + '40' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-semibold" style={{ color: prayerDensity.color }}>{isAr ? `إشغال ${prayerInfo?.label_ar}` : `${prayerInfo?.label_en} occupancy`}</span>
+                <span className="text-[11px] font-bold font-mono" style={{ color: prayerDensity.color }}>{prayerCount.toLocaleString()} / {capacity.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(prayerPct, 100)}%`, backgroundColor: prayerDensity.color }} /></div>
+                <span className="text-[10px] font-bold font-mono" style={{ color: prayerDensity.color }}>{prayerPct}%</span>
+              </div>
+            </div>
+          )}
+          {currentCount > 0 && capacity > 0 && (
+            <div className="flex items-center gap-2 pt-0.5">
+              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${Math.min(utilPct, 100)}%`, backgroundColor: densityInfo.color }} /></div>
+              <span className="text-[10px] font-bold font-mono" style={{ color: densityInfo.color }}>{utilPct}%</span>
+            </div>
+          )}
+          {/* Staff section */}
+          <div className="border-t border-dashed border-slate-200 pt-1.5">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-slate-500">{isAr ? "الموظفين" : "Staff"}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${staffCount > 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{staffCount}</span>
+            </div>
+            {staffList.length > 0 ? (
+              <div className="space-y-1">
+                {staffList.slice(0, 4).map(emp => (
+                  <div key={emp.id} className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0" style={{ backgroundColor: SHIFT_COLORS[emp.shift] || "#94a3b8" }}>{emp.name.charAt(0)}</div>
+                    <span className="text-[10px] text-slate-700 font-medium">{emp.name}</span>
+                    <span className="text-[8px] text-slate-400 mr-auto">{emp.shift}</span>
+                  </div>
+                ))}
+                {staffList.length > 4 && <p className="text-[9px] text-slate-400">+{staffList.length - 4} {isAr ? "آخرين" : "more"}</p>}
+              </div>
+            ) : (
+              <p className="text-[10px] text-amber-600 font-medium">{isAr ? "بدون موظفين!" : "No staff!"}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${zone.is_removed ? "bg-red-500" : "bg-emerald-500"}`} />
+            <span className={`text-[10px] font-semibold ${zone.is_removed ? "text-red-500" : "text-emerald-600"}`}>{zone.is_removed ? (isAr ? "مزالة" : "Removed") : (isAr ? "نشطة" : "Active")}</span>
+          </div>
+          {zone.daily_note && <div className="p-1.5 bg-slate-50 rounded text-[10px] text-slate-500 line-clamp-2 border-r-2 border-slate-300">{zone.daily_note}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
