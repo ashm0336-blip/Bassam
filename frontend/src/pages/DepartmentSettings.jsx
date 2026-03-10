@@ -145,8 +145,8 @@ export default function DepartmentSettings({ department }) {
         maps: mapsCount
       }));
 
-      // Fetch categories count for plazas
-      if (department === 'plazas') {
+      // Fetch categories count for plazas and haram_map
+      if (department === 'plazas' || department === 'haram_map') {
         const token = localStorage.getItem("token");
         const catRes = await axios.get(`${API}/admin/zone-categories`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -236,7 +236,7 @@ export default function DepartmentSettings({ department }) {
   if (department === 'gates') {
     tabs.push({ id: 'gates_data', label: language === 'ar' ? 'الأبواب' : 'Gates', icon: DoorOpen, count: counts.gates });
   }
-  if (department === 'plazas') {
+  if (department === 'plazas' || department === 'haram_map') {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
   }
 
@@ -333,7 +333,7 @@ export default function DepartmentSettings({ department }) {
           </Card>
         )}
 
-        {activeTab === 'zone_categories' && department === 'plazas' && (
+        {activeTab === 'zone_categories' && (department === 'plazas' || department === 'haram_map') && (
           <ZoneCategoryManager />
         )}
       </div>
