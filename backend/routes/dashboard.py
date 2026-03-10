@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 
 from database import db
@@ -37,10 +37,11 @@ async def get_dashboard_stats():
 @router.get("/dashboard/departments")
 async def get_departments():
     """ملخص حالة كل إدارة: الموظفين + حالة الجدول + مداومون/راحة من الجدول المعتمد"""
-    # اليوم بالعربي
+    # اليوم بتوقيت السعودية (UTC+3) — مهم لتجنب الخطأ بعد منتصف الليل
+    SA_TZ = timezone(timedelta(hours=3))
     day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
-    today_ar = day_map.get(datetime.now().weekday(), "")
-    current_month = datetime.now().strftime("%Y-%m")
+    today_ar = day_map.get(datetime.now(SA_TZ).weekday(), "")
+    current_month = datetime.now(SA_TZ).strftime("%Y-%m")
 
     # جلب جداول الشهر الحالي لكل الإدارات
     all_schedules = await db.monthly_schedules.find(

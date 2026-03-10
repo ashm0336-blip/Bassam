@@ -1,6 +1,6 @@
 """Dashboard Ops endpoint — unified data for the operations-room dashboard"""
 from fastapi import APIRouter
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from database import db
 
 router = APIRouter()
@@ -19,12 +19,13 @@ async def get_ops_dashboard():
     open_gates = [g for g in gates if g.get("status") == "مفتوح"]
     closed_gates = [g for g in gates if g.get("status") != "مفتوح"]
 
-    # Today's day in Arabic
+    # اليوم بتوقيت السعودية (UTC+3) — مهم لتجنب الخطأ بعد منتصف الليل
+    SA_TZ = timezone(timedelta(hours=3))
     day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
-    today_ar = day_map.get(datetime.now().weekday(), "")
+    today_ar = day_map.get(datetime.now(SA_TZ).weekday(), "")
 
     # جلب الجداول المعتمدة (active) للشهر الحالي لكل الإدارات
-    current_month = datetime.now().strftime("%Y-%m")
+    current_month = datetime.now(SA_TZ).strftime("%Y-%m")
     active_schedules = await db.monthly_schedules.find(
         {"month": current_month, "status": "active"}, {"_id": 0}
     ).to_list(20)
@@ -122,7 +123,6 @@ async def get_ops_dashboard():
         smart_alerts.append({"type": "danger", "icon": "AlertTriangle", "message": f"{len(high_density)} ساحة تتجاوز 80% من الطاقة", "count": len(high_density), "action": "عرض الساحات", "href": "/plazas"})
 
     # Expiring contracts
-    from datetime import timedelta
     soon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()[:10]
     expiring = [e for e in employees if e.get("contract_end") and e["contract_end"] <= soon]
     if expiring:
