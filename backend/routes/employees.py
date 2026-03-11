@@ -6,6 +6,7 @@ import uuid
 from database import db
 from auth import get_current_user, require_admin, log_activity, check_department_access, hash_password
 from models import EmployeeCreate, EmployeeUpdate, MonthlyScheduleCreate, ScheduleAssignmentUpdate
+from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
 
 router = APIRouter()
 
@@ -83,6 +84,51 @@ async def check_national_id(national_id: str, exclude_emp_id: Optional[str] = No
         query["id"] = {"$ne": exclude_emp_id}
     existing = await db.employees.find_one(query, {"_id": 0, "id": 1})
     return {"available": existing is None}
+
+
+
+@router.get("/employees/availability")
+async def get_employees_availability(department: str, user: dict = Depends(get_current_user)):
+    """
+    يعيد قائمة الموظفين مع حالة توفرهم الحالية:
+      on_duty_now  → مداوم الآن
+      off_shift    → خارج الوردية
+      on_rest      → في راحة
+      no_schedule  → غير محدد (لا جدول معتمد)
+    """
+    now_sa = get_sa_now()
+    current_month = now_sa.strftime("%Y-%m")
+
+    # جلب البيانات بالتوازي
+    employees  = await db.employees.find({"department": department}, {"_id": 0}).to_list(500)
+    schedule   = await db.monthly_schedules.find_one(
+        {"department": department, "month": current_month, "status": "active"}, {"_id": 0}
+    )
+    shifts_raw = await db.department_settings.find(
+        {"department": department, "setting_type": "shifts"}, {"_id": 0}
+    ).to_list(50)
+
+    status_map = build_employee_statuses(employees, schedule, shifts_raw)
+    aggregated = aggregate_statuses(status_map)
+
+    result = []
+    for emp in employees:
+        s = status_map.get(emp["id"], "no_schedule")
+        result.append({
+            "id":           emp["id"],
+            "name":         emp.get("name", ""),
+            "job_title":    emp.get("job_title", ""),
+            "shift":        emp.get("shift", ""),
+            "employment_type": emp.get("employment_type", "permanent"),
+            "availability_status": s,
+        })
+
+    # ترتيب: مداوم أولاً، ثم خارج الوردية، ثم غير محدد، ثم راحة
+    order = {"on_duty_now": 0, "off_shift": 1, "no_schedule": 2, "on_rest": 3}
+    result.sort(key=lambda x: order.get(x["availability_status"], 4))
+
+    return {"employees": result, "summary": aggregated, "schedule_status": schedule.get("status") if schedule else None}
+
 
 
 @router.get("/employees")

@@ -286,13 +286,19 @@ export default function TasksPage({ department }) {
 
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState({});
-  const [employees, setEmployees] = useState([]);  // كل موظفي الإدارة
-  const [activeSchedule, setActiveSchedule] = useState(null); // الجدول المعتمد
+  const [employees, setEmployees] = useState([]);
+  const [availability, setAvailability] = useState({}); // id → availability_status
+  const [availSummary, setAvailSummary] = useState({});
+  const [activeSchedule, setActiveSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("kanban"); // kanban | list
+  const [viewMode, setViewMode] = useState("kanban");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
+
+  // تجاوز الطوارئ
+  const [emergencyOverride, setEmergencyOverride] = useState(false);
+  const [emergencyReason, setEmergencyReason] = useState("");
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -325,20 +331,27 @@ export default function TasksPage({ department }) {
     try {
       const currentMonth = new Date().toLocaleDateString("en-CA", {
         timeZone: "Asia/Riyadh"
-      }).slice(0, 7); // yyyy-MM بتوقيت السعودية
-      const [empRes, schedRes] = await Promise.all([
+      }).slice(0, 7);
+      const [empRes, schedRes, availRes] = await Promise.all([
         axios.get(`${API}/employees?department=${dept}`, {
           headers: { Authorization: `Bearer ${token()}` }
         }),
         axios.get(`${API}/schedules/${dept}/${currentMonth}`, {
           headers: { Authorization: `Bearer ${token()}` }
         }).catch(() => ({ data: null })),
+        axios.get(`${API}/employees/availability?department=${dept}`, {
+          headers: { Authorization: `Bearer ${token()}` }
+        }).catch(() => ({ data: null })),
       ]);
       setEmployees(empRes.data);
       const sched = schedRes.data;
-      // نستخدم أي جدول (مسودة أو معتمد) لمعرفة أيام الراحة في التكليف
-      // الاعتماد يؤثر على الإحصائيات الرسمية فقط، لكن التشغيل اليومي يبقى واضح
       setActiveSchedule(sched || null);
+      if (availRes.data) {
+        const map = {};
+        (availRes.data.employees || []).forEach(e => { map[e.id] = e.availability_status; });
+        setAvailability(map);
+        setAvailSummary(availRes.data.summary || {});
+      }
     } catch { }
   }, [dept, isManager]);
 
@@ -349,26 +362,38 @@ export default function TasksPage({ department }) {
     return () => clearInterval(interval);
   }, [fetchTasks, fetchEmployees]);
 
-  // ── تصنيف الموظفين: مداوم / في راحة / غير محدد ──────────────
-  const todayAr = (() => {
-    const map = { Saturday:"السبت", Sunday:"الأحد", Monday:"الإثنين", Tuesday:"الثلاثاء",
-                  Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
-    return map[new Date().toLocaleDateString("en-US", { weekday:"long", timeZone:"Asia/Riyadh" })] || "";
-  })();
+  // ── تصنيف الموظفين حسب حالة التوفر (shift-aware) ──────────────
+  const scheduleStatus = activeSchedule?.status || null;
 
-  const scheduleStatus = activeSchedule?.status || null; // "active" | "draft" | null
-
+  // دمج availability من الـ API مع بيانات الموظفين
   const enrichedEmployees = employees.map(emp => {
-    if (!activeSchedule) return { ...emp, dutyStatus: "no_schedule" };
-    const assignment = activeSchedule.assignments?.find(a => a.employee_id === emp.id);
-    if (!assignment) return { ...emp, dutyStatus: "no_schedule" };
-    const onRest = (assignment.rest_days || []).includes(todayAr);
-    return { ...emp, dutyStatus: onRest ? "rest" : "working" };
+    const avStatus = availability[emp.id] || "no_schedule";
+    // للتوافق مع الكود القديم
+    let dutyStatus = "no_schedule";
+    if (avStatus === "on_duty_now")  dutyStatus = "on_duty_now";
+    else if (avStatus === "off_shift") dutyStatus = "off_shift";
+    else if (avStatus === "on_rest")   dutyStatus = "rest";
+    else {
+      // fallback على بيانات الجدول المحلي
+      const todayAr = (() => {
+        const map = { Saturday:"السبت", Sunday:"الأحد", Monday:"الإثنين", Tuesday:"الثلاثاء",
+                      Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
+        return map[new Date().toLocaleDateString("en-US", { weekday:"long", timeZone:"Asia/Riyadh" })] || "";
+      })();
+      if (activeSchedule) {
+        const a = activeSchedule.assignments?.find(a => a.employee_id === emp.id);
+        if (a && (a.rest_days || []).includes(todayAr)) dutyStatus = "rest";
+        else if (a) dutyStatus = "working";
+      }
+    }
+    return { ...emp, dutyStatus, availStatus: avStatus };
   });
 
-  // الأولوية: مداومون أولاً، ثم غير محدد، ثم في راحة
+  // ترتيب: مداوم الآن → خارج الوردية → غير محدد → في راحة
   const sortedEmployees = [
-    ...enrichedEmployees.filter(e => e.dutyStatus === "working"),
+    ...enrichedEmployees.filter(e => e.dutyStatus === "on_duty_now"),
+    ...enrichedEmployees.filter(e => e.dutyStatus === "working"),    // fallback
+    ...enrichedEmployees.filter(e => e.dutyStatus === "off_shift"),
     ...enrichedEmployees.filter(e => e.dutyStatus === "no_schedule"),
     ...enrichedEmployees.filter(e => e.dutyStatus === "rest"),
   ];
@@ -765,7 +790,7 @@ export default function TasksPage({ department }) {
               </div>
             </div>
 
-            {/* Assignees — multi-select */}
+            {/* Assignees — smart multi-select with shift-aware status */}
             <div>
               <Label className="text-sm font-semibold flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-primary" />
@@ -776,7 +801,7 @@ export default function TasksPage({ department }) {
                   </span>
                 )}
               </Label>
-              {/* بادج حالة الجدول */}
+
               {scheduleStatus === "draft" && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
                   <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -789,87 +814,80 @@ export default function TasksPage({ department }) {
                   لا يوجد جدول شهري — جميع الموظفين متاحون
                 </div>
               )}
+
+              {/* تجاوز طارئ للمدير */}
+              {isManager && sortedEmployees.some(e => e.dutyStatus === "rest") && (
+                <div className="mt-1.5 space-y-1">
+                  <div
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-all"
+                    style={emergencyOverride ? {backgroundColor:"#fef2f2",borderColor:"#fca5a5",color:"#dc2626"} : {backgroundColor:"#f8fafc",borderColor:"#e2e8f0",color:"#64748b"}}
+                    onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
+                    onClick={e=>{e.preventDefault();e.stopPropagation();setEmergencyOverride(!emergencyOverride);if(emergencyOverride)setEmergencyReason("");}}>
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${emergencyOverride?"bg-red-500 border-red-500":"border-slate-300 bg-white"}`}>
+                      {emergencyOverride&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
+                    </div>
+                    <span className="text-[10px] font-semibold">🚨 تجاوز طارئ — تكليف موظف في راحة</span>
+                  </div>
+                  {emergencyOverride && (
+                    <input value={emergencyReason} onChange={e=>setEmergencyReason(e.target.value)}
+                      className="w-full h-8 px-3 text-xs rounded-lg border border-red-300 focus:outline-none focus:ring-1 focus:ring-red-200"
+                      placeholder="سبب الطوارئ (مطلوب لتوثيق التجاوز)..." />
+                  )}
+                </div>
+              )}
+
               <div className="mt-2 border rounded-xl overflow-hidden">
                 {employees.length === 0 ? (
                   <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون في هذه الإدارة</p>
                 ) : (
                   <div className="max-h-56 overflow-y-auto divide-y">
-                    {/* Select All — المداومون فقط */}
-                    {activeSchedule && (
-                      <div
-                        className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 cursor-pointer select-none"
-                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-                        onClick={e => {
-                          e.preventDefault(); e.stopPropagation();
-                          const workingIds = sortedEmployees.filter(e => e.dutyStatus === "working").map(e => e.id);
-                          setForm(f => ({
-                            ...f,
-                            assignee_ids: f.assignee_ids.length === workingIds.length && workingIds.every(id => f.assignee_ids.includes(id))
-                              ? [] : workingIds
-                          }));
+                    {activeSchedule && sortedEmployees.some(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working") && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 cursor-pointer select-none"
+                        onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
+                        onClick={e=>{
+                          e.preventDefault();e.stopPropagation();
+                          const ids=sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").map(e=>e.id);
+                          setForm(f=>({...f,assignee_ids:ids.every(id=>f.assignee_ids.includes(id))?[]:ids}));
                         }}>
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
-                          ${sortedEmployees.filter(e => e.dutyStatus === "working").every(e => form.assignee_ids.includes(e.id)) && sortedEmployees.filter(e => e.dutyStatus === "working").length > 0
-                            ? "bg-emerald-600 border-emerald-600" : "border-slate-300 bg-white"}`}>
-                          {sortedEmployees.filter(e => e.dutyStatus === "working").every(e => form.assignee_ids.includes(e.id)) && sortedEmployees.filter(e => e.dutyStatus === "working").length > 0
-                            && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length>0?"bg-emerald-600 border-emerald-600":"border-slate-300 bg-white"}`}>
+                          {sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length>0&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
                         </div>
-                        <span className="text-xs font-semibold text-emerald-700">تحديد المداومين فقط</span>
-                        <span className="text-[10px] text-emerald-600 mr-auto">
-                          {sortedEmployees.filter(e => e.dutyStatus === "working").length} مداوم
-                        </span>
+                        <span className="text-xs font-semibold text-emerald-700">تحديد المداومين الآن</span>
+                        <span className="text-[10px] text-emerald-600 mr-auto">{sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length} متاح</span>
                       </div>
                     )}
 
-                    {sortedEmployees.map(emp => {
-                      const isSelected = form.assignee_ids.includes(emp.id);
-                      const isRest = emp.dutyStatus === "rest";
-                      const statusLabel = emp.dutyStatus === "working"
-                        ? { text: "مداوم", cls: "bg-emerald-100 text-emerald-700" }
-                        : emp.dutyStatus === "rest"
-                        ? { text: "في راحة", cls: "bg-amber-100 text-amber-700" }
-                        : null;
-
+                    {sortedEmployees.map(emp=>{
+                      const isSelected=form.assignee_ids.includes(emp.id);
+                      const isRest=emp.dutyStatus==="rest";
+                      const isOffShift=emp.dutyStatus==="off_shift";
+                      const canSelect=!isRest||(isRest&&emergencyOverride);
+                      const SL={"on_duty_now":{text:"مداوم الآن",cls:"bg-emerald-100 text-emerald-700"},"working":{text:"مداوم",cls:"bg-emerald-100 text-emerald-700"},"off_shift":{text:"خارج الوردية",cls:"bg-yellow-100 text-yellow-700"},"rest":{text:"في راحة",cls:"bg-amber-100 text-amber-700"}};
+                      const sl=SL[emp.dutyStatus];
                       return (
                         <div key={emp.id}
                           className={`flex items-center gap-3 px-3 py-2.5 select-none transition-colors
-                            ${isRest ? "opacity-50 bg-slate-50" : "cursor-pointer hover:bg-muted/30"}
-                            ${isSelected ? "bg-primary/5" : ""}`}
-                          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-                          onClick={e => {
-                            e.preventDefault(); e.stopPropagation();
-                            if (isRest) return; // في الراحة لا يُكلَّف
-                            toggleAssignee(emp.id);
-                          }}
-                          title={isRest ? "الموظف في راحة اليوم" : emp.name}
+                            ${!canSelect?"opacity-40 bg-slate-50":isOffShift&&!isSelected?"bg-yellow-50/30 cursor-pointer hover:bg-yellow-50":"cursor-pointer hover:bg-muted/30"}
+                            ${isSelected?"bg-primary/5":""}`}
+                          onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
+                          onClick={e=>{e.preventDefault();e.stopPropagation();if(!canSelect)return;toggleAssignee(emp.id);}}
+                          title={!canSelect?"في راحة — فعّل تجاوز الطوارئ للتكليف":isOffShift?"خارج ورديته الحالية ⚠️":emp.name}
                           data-testid={`assignee-${emp.id}`}>
-
-                          {/* Custom Checkbox */}
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
-                            ${isSelected ? "bg-primary border-primary" : isRest ? "border-slate-200 bg-slate-100" : "border-slate-300 bg-white"}`}>
-                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected?(isRest&&emergencyOverride?"bg-red-500 border-red-500":"bg-primary border-primary"):!canSelect?"border-slate-200 bg-slate-100":"border-slate-300 bg-white"}`}>
+                            {isSelected&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
                           </div>
-
-                          {/* Avatar */}
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
-                            ${isRest ? "bg-slate-200 text-slate-400" : "bg-primary/15 text-primary"}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${isRest?"bg-slate-200 text-slate-400":isOffShift?"bg-yellow-100 text-yellow-700":"bg-primary/15 text-primary"}`}>
                             {emp.name.charAt(0)}
                           </div>
-
-                          {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium truncate ${isRest ? "text-slate-400" : ""}`}>{emp.name}</p>
+                            <p className={`text-sm font-medium truncate ${!canSelect?"text-slate-400":""}`}>{emp.name}</p>
                             <p className="text-[10px] text-muted-foreground truncate">{emp.job_title}</p>
                           </div>
-
-                          {/* Status Badges */}
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            {statusLabel && (
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusLabel.cls}`}>
-                                {statusLabel.text}
-                              </span>
-                            )}
-                            {isRest && <span title="في راحة — غير متاح للتكليف">🚫</span>}
+                            {sl&&<span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${sl.cls}`}>{sl.text}</span>}
+                            {isRest&&!emergencyOverride&&<span>🚫</span>}
+                            {isRest&&emergencyOverride&&<span>🚨</span>}
+                            {isOffShift&&<span>⚠️</span>}
                           </div>
                         </div>
                       );
@@ -877,13 +895,20 @@ export default function TasksPage({ department }) {
                   </div>
                 )}
               </div>
+
+              {form.assignee_ids.some(id=>{const e=enrichedEmployees.find(e=>e.id===id);return e&&e.dutyStatus==="off_shift";})&&(
+                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  تنبيه: يوجد موظف خارج ورديته الحالية — سيُوثَّق في سجل المهمة
+                </div>
+              )}
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>إلغاء</Button>
-              <Button type="submit" disabled={submitting} className="gap-1.5 bg-primary" data-testid="submit-task-btn">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {editTask ? "حفظ التعديل" : "إنشاء المهمة"}
+              <Button type="button" variant="outline" onClick={()=>setDialogOpen(false)}>إلغاء</Button>
+              <Button type="submit" disabled={submitting||(emergencyOverride&&!emergencyReason.trim())} className="gap-1.5 bg-primary" data-testid="submit-task-btn">
+                {submitting?<Loader2 className="w-4 h-4 animate-spin"/>:<Plus className="w-4 h-4"/>}
+                {editTask?"حفظ التعديل":"إنشاء المهمة"}
               </Button>
             </DialogFooter>
           </form>
@@ -892,3 +917,4 @@ export default function TasksPage({ department }) {
     </div>
   );
 }
+

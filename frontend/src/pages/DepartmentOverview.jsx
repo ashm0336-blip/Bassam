@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, Clock, Coffee, Zap, ShieldCheck, ShieldX, ShieldOff, UserPlus,
   CalendarDays, TrendingUp, TrendingDown, AlertTriangle, Activity,
-  UserCheck, UserX, RefreshCw, Briefcase, ArrowLeft, Award,
+  UserCheck, UserX, RefreshCw, Briefcase, ArrowLeft, Award, Tag,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,6 +113,8 @@ export default function DepartmentOverview({ department = "planning" }) {
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [availSummary, setAvailSummary] = useState(null);
+  const [taskStats, setTaskStats] = useState(null);
 
   const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
   const monthLabel = `${MONTH_AR[new Date().getMonth()]} ${new Date().getFullYear()}`;
@@ -121,12 +123,16 @@ export default function DepartmentOverview({ department = "planning" }) {
   const fetchData = useCallback(async (silent=false) => {
     if (!silent) setLoading(true); else setRefreshing(true);
     try {
-      const [empRes, schedRes] = await Promise.allSettled([
+      const [empRes, schedRes, availRes, tasksRes] = await Promise.allSettled([
         axios.get(`${API}/employees?department=${department}`, getAuth()),
         axios.get(`${API}/schedules/${department}/${monthKey}`, getAuth()),
+        axios.get(`${API}/employees/availability?department=${department}`, getAuth()),
+        axios.get(`${API}/tasks/stats?department=${department}`, getAuth()),
       ]);
       if (empRes.status === "fulfilled") setEmployees(empRes.value.data || []);
       if (schedRes.status === "fulfilled") setSchedule(schedRes.value.data);
+      if (availRes.status === "fulfilled" && availRes.value.data?.summary) setAvailSummary(availRes.value.data.summary);
+      if (tasksRes.status === "fulfilled") setTaskStats(tasksRes.value.data);
     } catch {}
     finally { setLoading(false); setRefreshing(false); setLastRefresh(new Date()); }
   }, [department, monthKey]);
@@ -273,9 +279,11 @@ export default function DepartmentOverview({ department = "planning" }) {
         <div className="relative mt-5 grid grid-cols-4 gap-3">
           {[
             { label:"إجمالي", value:stats.total, icon:"👥" },
-            { label:TODAY_AR ? `مداومون (${TODAY_AR})` : "مداومون اليوم", value:stats.working, icon:"✅" },
-            { label:"في راحة", value:stats.onRest, icon:"☕" },
-            { label:"التوفر", value:`${stats.availabilityPct}%`, icon:"📊" },
+            { label: availSummary ? "مداوم الآن" : (TODAY_AR ? `مداومون (${TODAY_AR})` : "مداومون اليوم"),
+              value: availSummary ? (availSummary.on_duty_now || 0) : stats.working, icon:"✅" },
+            { label: availSummary ? "خارج الوردية" : "في راحة",
+              value: availSummary ? (availSummary.off_shift || 0) : stats.onRest, icon: availSummary ? "⚠️" : "☕" },
+            { label:"في راحة", value: availSummary ? (availSummary.on_rest || 0) : stats.onRest, icon:"☕" },
           ].map((item,i) => (
             <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
               <p className="text-xl mb-0.5">{item.icon}</p>
@@ -292,11 +300,12 @@ export default function DepartmentOverview({ department = "planning" }) {
           color="#004D38"
           sub={`${stats.permanent} دائم • ${stats.seasonal} موسمي • ${stats.temporary} مؤقت`}
           badge={stats.temporary > 0 ? `${stats.temporary} مؤقت` : undefined}/>
-        <KpiCard icon={UserCheck} label="مداومون اليوم" value={stats.working}
+        <KpiCard icon={UserCheck}
+          label={availSummary ? "مداوم الآن" : "مداومون اليوم"}
+          value={availSummary ? (availSummary.on_duty_now || 0) : stats.working}
           color="#0f766e"
-          sub={`من أصل ${stats.total} موظف`}
-          trend={stats.availabilityPct >= 80 ? stats.availabilityPct - 80 : stats.availabilityPct - 80}/>
-        <KpiCard icon={Coffee} label="في راحة اليوم" value={stats.onRest}
+          sub={availSummary ? `${availSummary.off_shift||0} خارج الوردية` : `من أصل ${stats.total} موظف`}/>
+        <KpiCard icon={Coffee} label="في راحة اليوم" value={availSummary ? (availSummary.on_rest||0) : stats.onRest}
           color="#d97706"
           sub={stats.onRest > 0 ? `${TODAY_AR} — يوم إجازتهم` : "لا إجازات اليوم"}/>
         <KpiCard icon={Zap} label="مكلفون هذا الشهر" value={stats.tasked}
@@ -304,6 +313,41 @@ export default function DepartmentOverview({ department = "planning" }) {
           badge={stats.tasked > 0 ? `${monthLabel}` : undefined}
           sub={stats.tasked > 0 ? "ساعات إضافية مكلفة" : "لا تكليفات هذا الشهر"}/>
       </div>
+
+      {/* ══ مهام الإدارة ════════════════════════════════════ */}
+      {taskStats && taskStats.total > 0 && (
+        <div className="bg-card rounded-2xl p-5 shadow-sm border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7c3aed20" }}>
+                <Tag className="w-4 h-4" style={{ color: "#7c3aed" }} />
+              </div>
+              <div>
+                <h3 className="font-cairo font-bold text-sm">مهام الإدارة</h3>
+                <p className="text-[10px] text-muted-foreground">{taskStats.total} مهمة إجمالاً</p>
+              </div>
+            </div>
+            {taskStats.early > 0 && (
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                ⭐ {taskStats.early} مبكر
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label:"انتظار",  value: taskStats.pending||0,    color:"#64748b", bg:"#f8fafc" },
+              { label:"جارية",   value: taskStats.in_progress||0, color:"#2563eb", bg:"#eff6ff" },
+              { label:"منجزة",   value: taskStats.done||0,        color:"#059669", bg:"#ecfdf5" },
+              { label:"متأخرة",  value: taskStats.overdue||0,     color:"#dc2626", bg:"#fef2f2" },
+            ].map((s,i) => (
+              <div key={i} className="text-center py-3 rounded-xl border" style={{ backgroundColor: s.bg }}>
+                <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-[10px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ══ MIDDLE ROW ═══════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

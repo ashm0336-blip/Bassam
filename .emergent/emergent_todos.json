@@ -1,14 +1,22 @@
 [
   {
-    "content": "Backend: حساب أداء الإنجاز",
+    "content": "Backend: خدمة حساب حالة الموظف",
     "status": "completed"
   },
   {
-    "content": "Frontend: بادج أداء + إحصائيات",
+    "content": "Backend: تحديث dashboard/ops و departments",
     "status": "completed"
   },
   {
-    "content": "Frontend: إحصائيات أداء الموظفين",
+    "content": "Frontend TasksPage: تكليف ذكي + تجاوز طارئ",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend Dashboard: KPIs جديدة",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend DepartmentOverview: widgets حالة الوردية + مهام اليوم",
     "status": "completed"
   }
 ]

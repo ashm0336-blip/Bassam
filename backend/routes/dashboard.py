@@ -6,6 +6,7 @@ import uuid
 from database import db
 from auth import get_current_user, log_activity
 from models import StatusCheck, StatusCheckCreate, AlertUpdate
+from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
 
 router = APIRouter()
 
@@ -36,51 +37,48 @@ async def get_dashboard_stats():
 
 @router.get("/dashboard/departments")
 async def get_departments():
-    """ملخص حالة كل إدارة: الموظفين + حالة الجدول + مداومون/راحة من الجدول المعتمد"""
-    # اليوم بتوقيت السعودية (UTC+3) — مهم لتجنب الخطأ بعد منتصف الليل
-    SA_TZ = timezone(timedelta(hours=3))
-    day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
-    today_ar = day_map.get(datetime.now(SA_TZ).weekday(), "")
-    current_month = datetime.now(SA_TZ).strftime("%Y-%m")
+    """ملخص حالة كل إدارة: موظفين + جدول + حالة الوردية + مهام اليوم"""
+    now_sa = get_sa_now()
+    current_month = now_sa.strftime("%Y-%m")
 
-    # جلب جداول الشهر الحالي لكل الإدارات
-    all_schedules = await db.monthly_schedules.find(
-        {"month": current_month}, {"_id": 0}
-    ).to_list(20)
-    schedule_map = {s.get("department"): s for s in all_schedules}
+    # جلب كل البيانات مرة واحدة
+    all_schedules  = await db.monthly_schedules.find({"month": current_month}, {"_id": 0}).to_list(20)
+    all_employees  = await db.employees.find({}, {"_id": 0}).to_list(2000)
+    all_shifts     = await db.department_settings.find({"setting_type": "shifts"}, {"_id": 0}).to_list(200)
+    all_tasks      = await db.tasks.find({}, {"_id": 0, "department":1, "status":1, "completion_performance":1}).to_list(5000)
 
-    # جلب كل الموظفين
-    all_employees = await db.employees.find({}, {"_id": 0}).to_list(2000)
+    schedule_map   = {s.get("department"): s for s in all_schedules}
+    # خريطة الورديات: dept → list of shift configs
+    shifts_by_dept = {}
+    for s in all_shifts:
+        d = s.get("department", "")
+        shifts_by_dept.setdefault(d, []).append(s)
 
-    def get_dept_summary(dept_key):
-        # الموظفون المسجلون في الإدارة
+    async def get_dept_summary(dept_key):
         dept_emps = [e for e in all_employees if e.get("department") == dept_key]
         total = len(dept_emps)
 
-        # حالة الجدول
         sched = schedule_map.get(dept_key)
-        schedule_status = sched.get("status") if sched else None  # None = لا يوجد, draft, active
+        schedule_status = sched.get("status") if sched else None
         is_approved = schedule_status == "active"
 
-        # بناء خريطة التعيينات من الجدول المعتمد فقط
-        assignment_map = {}
+        # ── حالة الموظفين (shift-aware للجدول المعتمد فقط) ─────────
+        if is_approved:
+            shifts_raw = shifts_by_dept.get(dept_key, [])
+            status_map = build_employee_statuses(dept_emps, sched, shifts_raw)
+            agg = aggregate_statuses(status_map)
+            on_duty_now = agg["on_duty_now"]
+            off_shift   = agg["off_shift"]
+            on_rest     = agg["on_rest"]
+            working     = on_duty_now  # للتوافق مع الكود القديم
+        else:
+            on_duty_now = off_shift = on_rest = working = 0
+
+        # عدد المكلفين من الجدول المعتمد
+        tasked = 0
         if is_approved and sched:
             for a in sched.get("assignments", []):
-                assignment_map[a["employee_id"]] = a
-
-        # حساب مداومون/راحة فقط من الجدول المعتمد
-        working = 0
-        on_rest = 0
-        tasked = 0
-        if is_approved:
-            for e in dept_emps:
-                a = assignment_map.get(e.get("id", ""))
-                rest_days = a["rest_days"] if a else []
-                if today_ar and today_ar in rest_days:
-                    on_rest += 1
-                else:
-                    working += 1
-                if a and a.get("is_tasked"):
+                if a.get("is_tasked"):
                     tasked += 1
 
         # نوع التوظيف
@@ -88,15 +86,33 @@ async def get_departments():
         seasonal  = sum(1 for e in dept_emps if e.get("employment_type") == "seasonal")
         temporary = sum(1 for e in dept_emps if e.get("employment_type") == "temporary")
 
+        # ── إحصائيات مهام الإدارة ────────────────────────────────────
+        dept_tasks = [t for t in all_tasks if t.get("department") == dept_key]
+        tasks_pending  = sum(1 for t in dept_tasks if t.get("status") == "pending")
+        tasks_progress = sum(1 for t in dept_tasks if t.get("status") == "in_progress")
+        tasks_done     = sum(1 for t in dept_tasks if t.get("status") == "done")
+        tasks_overdue  = sum(1 for t in dept_tasks if t.get("status") == "overdue")
+        tasks_early    = sum(1 for t in dept_tasks if t.get("completion_performance") == "early")
+
         return {
-            "total": total,
-            "working": working,
-            "on_rest": on_rest,
-            "tasked": tasked,
-            "permanent": permanent,
-            "seasonal": seasonal,
-            "temporary": temporary,
-            "schedule_status": schedule_status,  # None / "draft" / "active"
+            "total":         total,
+            "on_duty_now":   on_duty_now,
+            "off_shift":     off_shift,
+            "on_rest":       on_rest,
+            "working":       working,    # للتوافق
+            "tasked":        tasked,
+            "permanent":     permanent,
+            "seasonal":      seasonal,
+            "temporary":     temporary,
+            "schedule_status": schedule_status,
+            "tasks": {
+                "pending":   tasks_pending,
+                "progress":  tasks_progress,
+                "done":      tasks_done,
+                "overdue":   tasks_overdue,
+                "early":     tasks_early,
+                "total":     len(dept_tasks),
+            }
         }
 
     DEPTS = [
@@ -110,9 +126,10 @@ async def get_departments():
 
     result = []
     for d in DEPTS:
-        summary = get_dept_summary(d["id"])
+        summary = await get_dept_summary(d["id"])
         result.append({**d, **summary})
     return result
+
 
 
 @router.get("/dashboard/crowd-hourly")

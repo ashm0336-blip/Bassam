@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 from database import db
+from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
 
 router = APIRouter()
 
@@ -19,52 +20,53 @@ async def get_ops_dashboard():
     open_gates = [g for g in gates if g.get("status") == "مفتوح"]
     closed_gates = [g for g in gates if g.get("status") != "مفتوح"]
 
-    # اليوم بتوقيت السعودية (UTC+3) — مهم لتجنب الخطأ بعد منتصف الليل
-    SA_TZ = timezone(timedelta(hours=3))
-    day_map = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
-    today_ar = day_map.get(datetime.now(SA_TZ).weekday(), "")
+    # الوقت الحالي بتوقيت السعودية
+    now_sa = get_sa_now()
+    current_month = now_sa.strftime("%Y-%m")
 
-    # جلب الجداول المعتمدة (active) للشهر الحالي لكل الإدارات
-    current_month = datetime.now(SA_TZ).strftime("%Y-%m")
+    # جلب الجداول المعتمدة + إعدادات الورديات
     active_schedules = await db.monthly_schedules.find(
         {"month": current_month, "status": "active"}, {"_id": 0}
     ).to_list(20)
+    all_shifts_raw = await db.department_settings.find({"setting_type": "shifts"}, {"_id": 0}).to_list(200)
 
-    # الإدارات التي عندها جداول معتمدة هذا الشهر
-    approved_departments = {sched.get("department") for sched in active_schedules}
+    # إحصائيات حالة الموظفين (shift-aware) من كل الإدارات المعتمدة
+    approved_departments = {s.get("department") for s in active_schedules}
+    schedule_by_dept = {s.get("department"): s for s in active_schedules}
+    shifts_by_dept = {}
+    for s in all_shifts_raw:
+        shifts_by_dept.setdefault(s.get("department",""), []).append(s)
 
-    # بناء خريطة تعيينات من الجداول المعتمدة: employee_id → assignment
-    active_assignment_map = {}
-    for sched in active_schedules:
-        for a in sched.get("assignments", []):
-            active_assignment_map[a["employee_id"]] = a
-
-    # القاعدة: الموظف "نشط" فقط إذا:
-    # 1. إدارته عندها جدول معتمد هذا الشهر
-    # 2. وليس في أيام راحته اليوم (من الجدول المعتمد)
-    # إذا الإدارة ما عندها جدول معتمد → الموظف لا يُحسب نشطاً
+    total_on_duty   = 0
+    total_off_shift = 0
+    total_on_rest   = 0
     active_employees = []
     on_rest_list = []
-    for e in employees:
-        dept = e.get("department", "")
-        # إذا الإدارة ما عندها جدول معتمد → تجاهل الموظف من الإحصائيات
-        if dept not in approved_departments:
+    shifts_dist = {}
+
+    for dept in approved_departments:
+        dept_emps = [e for e in employees if e.get("department") == dept]
+        sched = schedule_by_dept.get(dept)
+        shifts_raw = shifts_by_dept.get(dept, [])
+        if not dept_emps or not sched:
             continue
-        a = active_assignment_map.get(e.get("id", ""))
-        rest_days = a["rest_days"] if a else []
-        if today_ar and today_ar in rest_days:
-            on_rest_list.append(e)
-        else:
-            active_employees.append(e)
+        status_map = build_employee_statuses(dept_emps, sched, shifts_raw)
+        for e in dept_emps:
+            st = status_map.get(e["id"], "no_schedule")
+            if st == "on_duty_now":
+                total_on_duty += 1
+                active_employees.append(e)
+                # توزيع الوردية
+                assignment = next((a for a in sched.get("assignments",[]) if a["employee_id"]==e["id"]), None)
+                shift = (assignment.get("shift") if assignment else None) or e.get("shift") or "غير محدد"
+                shifts_dist[shift] = shifts_dist.get(shift, 0) + 1
+            elif st == "off_shift":
+                total_off_shift += 1
+            elif st == "on_rest":
+                total_on_rest += 1
+                on_rest_list.append(e)
 
-    # Shift distribution — من الجداول المعتمدة فقط
-    shifts = {}
-    for e in active_employees:
-        a = active_assignment_map.get(e.get("id", ""))
-        shift = a["shift"] if a and a.get("shift") else "غير محدد"
-        shifts[shift] = shifts.get(shift, 0) + 1
-
-    # إجمالي الموظفين حسب الإدارة — كل الموظفين (ليس مرتبطاً بالجدول)
+    # إجمالي الموظفين حسب الإدارة
     dept_emp = {}
     for e in employees:
         d = e.get("department", "other")
@@ -75,18 +77,19 @@ async def get_ops_dashboard():
     crowd_pct = round(total_crowd / total_cap * 100, 1) if total_cap else 0
 
     kpis = {
-        "total_gates": len(gates),
-        "open_gates": len(open_gates),
-        "closed_gates": len(closed_gates),
-        "total_employees": len(employees),
-        "active_employees": len(active_employees),
-        "on_rest": len(on_rest_list),
-        "total_crowd": total_crowd,
-        "total_capacity": total_cap,
+        "total_gates":      len(gates),
+        "open_gates":       len(open_gates),
+        "closed_gates":     len(closed_gates),
+        "total_employees":  len(employees),
+        "active_employees": total_on_duty,
+        "off_shift":        total_off_shift,
+        "on_rest":          total_on_rest,
+        "total_crowd":      total_crowd,
+        "total_capacity":   total_cap,
         "crowd_percentage": crowd_pct,
-        "active_alerts": len(alerts),
-        "critical_alerts": len([a for a in alerts if a.get("priority") == "critical"]),
-        "shift_distribution": shifts,
+        "active_alerts":    len(alerts),
+        "critical_alerts":  len([a for a in alerts if a.get("priority") == "critical"]),
+        "shift_distribution": shifts_dist,
         "department_employees": dept_emp,
     }
 

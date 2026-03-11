@@ -175,13 +175,33 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── KPI Gauges ── */}
+      {/* ── KPI Gauges — حالة الموظفين حسب الوردية ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <GaugeCard icon={DoorOpen} label="الأبواب المفتوحة" value={kpis.open_gates} total={kpis.total_gates} unit="باب" color="#059669" />
-        <GaugeCard icon={Users} label="الموظفين النشطين" value={kpis.active_employees} total={kpis.total_employees} unit="موظف" color="#2563eb" sub={`في الخدمة الآن`} />
+        <GaugeCard icon={Users} label="مداومون الآن" value={kpis.active_employees} total={kpis.total_employees} unit="موظف" color="#2563eb"
+          sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج وردية` : "في الخدمة الآن"} />
         <GaugeCard icon={TrendingUp} label="نسبة الإشغال" value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={kpis.crowd_percentage > 80 ? '#ef4444' : kpis.crowd_percentage > 60 ? '#f59e0b' : '#22c55e'} sub={`${kpis.total_crowd?.toLocaleString('ar-SA')} زائر`} />
         <GaugeCard icon={AlertTriangle} label="التنبيهات النشطة" value={kpis.active_alerts} total={kpis.active_alerts + 5} unit="" color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'} sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرج` : 'لا توجد حالات حرجة'} />
       </div>
+
+      {/* ── شريط تفصيلي للموظفين (يظهر فقط إذا يوجد بيانات) ── */}
+      {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "مداوم الآن",    value: kpis.active_employees, color: "#059669", bg: "bg-emerald-50", border: "border-emerald-200", desc: "داخل ساعات وردیته" },
+            { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "#d97706", bg: "bg-amber-50",   border: "border-amber-200",   desc: "يوم عمل — خارج الوقت" },
+            { label: "في راحة",       value: kpis.on_rest || 0,     color: "#6b7280", bg: "bg-slate-50",   border: "border-slate-200",   desc: "إجازة أسبوعية" },
+          ].map((s, i) => (
+            <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${s.bg} ${s.border}`}>
+              <span className="font-black text-2xl" style={{ color: s.color }}>{s.value}</span>
+              <div>
+                <p className="text-xs font-bold text-foreground">{s.label}</p>
+                <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Smart Alerts ── */}
       {smart_alerts.length > 0 && (
@@ -377,16 +397,20 @@ export default function Dashboard() {
                       <span className="font-bold text-sm" style={{ color: clr.accent }}>{dept.total}</span>
                     </div>
 
-                    {/* مداومون / راحة — فقط من الجدول المعتمد */}
+                    {/* حالة الوردية الآن — من الجدول المعتمد */}
                     {schedStatus === "active" ? (
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div className="text-center py-1.5 rounded-lg border" style={{ background: clr.light, borderColor: clr.border }}>
-                          <p className="text-[10px] text-slate-500">مداومون</p>
-                          <p className="font-bold text-base" style={{ color: clr.accent }}>{dept.working}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        <div className="text-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                          <p className="text-[9px] text-slate-500">مداوم الآن</p>
+                          <p className="font-bold text-sm text-emerald-700">{dept.on_duty_now || dept.working}</p>
                         </div>
                         <div className="text-center py-1.5 rounded-lg bg-amber-50 border border-amber-200">
-                          <p className="text-[10px] text-slate-500">في راحة</p>
-                          <p className="font-bold text-base text-amber-600">{dept.on_rest}</p>
+                          <p className="text-[9px] text-slate-500">خارج الوردية</p>
+                          <p className="font-bold text-sm text-amber-600">{dept.off_shift || 0}</p>
+                        </div>
+                        <div className="text-center py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+                          <p className="text-[9px] text-slate-500">في راحة</p>
+                          <p className="font-bold text-sm text-slate-500">{dept.on_rest}</p>
                         </div>
                       </div>
                     ) : (
@@ -397,13 +421,14 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    {/* مكلفون — فقط من الجدول المعتمد */}
-                    {schedStatus === "active" && dept.tasked > 0 && (
-                      <div className="flex items-center justify-between px-2">
-                        <span className="text-[10px] text-slate-500">مكلفون هذا الشهر</span>
-                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                          {dept.tasked}
-                        </span>
+                    {/* مهام الإدارة */}
+                    {dept.tasks && dept.tasks.total > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap px-1">
+                        <span className="text-[9px] text-slate-400">المهام:</span>
+                        {dept.tasks.progress > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">{dept.tasks.progress} جارية</span>}
+                        {dept.tasks.overdue > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{dept.tasks.overdue} متأخرة</span>}
+                        {dept.tasks.done > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{dept.tasks.done} منجزة</span>}
+                        {dept.tasks.pending > 0 && !dept.tasks.progress && !dept.tasks.overdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{dept.tasks.pending} انتظار</span>}
                       </div>
                     )}
                   </div>
