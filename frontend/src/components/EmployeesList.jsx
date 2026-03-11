@@ -522,27 +522,95 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   return (
     <div className="space-y-5 font-cairo" data-testid="employees-list">
 
-      {/* ── Stats bar ────────────────────────────────────── */}
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-        {[
-          { label:"الكل",    value:stats.total,     color:"#6b7280", bg:"#f8fafc" },
-          { label:"نشط",     value:stats.active,    color:"#059669", bg:"#ecfdf5" },
-          { label:"معلق",    value:stats.pending,   color:"#d97706", bg:"#fffbeb" },
-          { label:"مجمَّد",  value:stats.frozen,    color:"#2563eb", bg:"#eff6ff" },
-          { label:"دائم",    value:stats.permanent, color:"#059669", bg:"#f0fdf4" },
-          { label:"موسمي",   value:stats.seasonal,  color:"#0284c7", bg:"#f0f9ff" },
-          { label:"مؤقت",    value:stats.temporary, color:"#7c3aed", bg:"#faf5ff" },
-        ].map((s,i) => (
-          <div key={i} className="rounded-xl border p-2.5 text-center transition-all hover:shadow-sm cursor-pointer"
-            style={{ backgroundColor: s.bg, borderColor: s.color+"30" }}
-            onClick={() => {
-              if (i < 4) setFilterStatus(["all","active","pending","frozen"][i] || "all");
-              else setFilterType(["all","permanent","seasonal","temporary"][i-4] || "all");
-            }}>
-            <p className="text-2xl font-black leading-none" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-[9px] font-semibold mt-0.5 text-slate-500">{s.label}</p>
-          </div>
-        ))}
+      {/* ── Stats Cards — تصميم خرافي ──────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2.5">
+        {(() => {
+          const total = stats.total || 1; // تجنب القسمة على صفر
+          const ITEMS = [
+            {
+              label:"إجمالي",      value:stats.total,     color:"#475569",
+              Icon:Users,          desc:"كل الموظفين",
+              bg:"from-slate-50 to-slate-100/50",  border:"#cbd5e1",
+              filter:() => { setFilterStatus("all"); setFilterType("all"); },
+            },
+            {
+              label:"نشط",         value:stats.active,    color:"#059669",
+              Icon:ShieldCheck,    desc:"حساب مفعّل",
+              bg:"from-emerald-50 to-green-50/50",  border:"#a7f3d0",
+              filter:() => setFilterStatus("active"),
+            },
+            {
+              label:"معلق",        value:stats.pending,   color:"#d97706",
+              Icon:ShieldOff,      desc:"بانتظار التفعيل",
+              bg:"from-amber-50 to-yellow-50/50",   border:"#fcd34d",
+              filter:() => setFilterStatus("pending"),
+            },
+            {
+              label:"مجمَّد",      value:stats.frozen,    color:"#2563eb",
+              Icon:ShieldX,        desc:"موقوف مؤقتاً",
+              bg:"from-blue-50 to-indigo-50/50",    border:"#bfdbfe",
+              filter:() => setFilterStatus("frozen"),
+            },
+            {
+              label:"دائم",        value:stats.permanent, color:"#047857",
+              Icon:UserCheck,      desc:"توظيف ثابت",
+              bg:"from-teal-50 to-emerald-50/50",   border:"#a7f3d0",
+              filter:() => setFilterType("permanent"),
+            },
+            {
+              label:"موسمي",       value:stats.seasonal,  color:"#0284c7",
+              Icon:Calendar,       desc:"موسم محدد",
+              bg:"from-sky-50 to-blue-50/50",       border:"#bae6fd",
+              filter:() => setFilterType("seasonal"),
+            },
+            {
+              label:"مؤقت",        value:stats.temporary, color:"#7c3aed",
+              Icon:Clock,          desc:"عقد مؤقت",
+              bg:"from-violet-50 to-purple-50/50",  border:"#c4b5fd",
+              filter:() => setFilterType("temporary"),
+            },
+          ];
+          return ITEMS.map((s, i) => {
+            const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+            return (
+              <button key={i}
+                onClick={s.filter}
+                className={`group relative overflow-hidden rounded-2xl border p-3 text-right transition-all duration-200
+                  hover:scale-[1.03] hover:shadow-lg active:scale-[0.98] bg-gradient-to-br ${s.bg}`}
+                style={{ borderColor: s.color + "40" }}>
+
+                {/* خلفية دائرة ديكورية */}
+                <div className="absolute -left-3 -bottom-3 w-12 h-12 rounded-full opacity-10 transition-all group-hover:opacity-20"
+                  style={{ backgroundColor: s.color }} />
+
+                {/* أيقونة + عدد */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm"
+                    style={{ backgroundColor: s.color + "20" }}>
+                    <s.Icon className="w-4 h-4" style={{ color: s.color }} />
+                  </div>
+                  <span className="text-2xl font-black leading-none tabular-nums"
+                    style={{ color: s.color }}>
+                    {s.value}
+                  </span>
+                </div>
+
+                {/* الاسم والوصف */}
+                <div className="mb-2">
+                  <p className="text-[11px] font-bold text-slate-700 leading-tight">{s.label}</p>
+                  <p className="text-[9px] text-slate-400">{s.desc}</p>
+                </div>
+
+                {/* شريط progress */}
+                <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: s.color }} />
+                </div>
+                <p className="text-[8px] text-slate-400 mt-0.5 text-left">{pct}%</p>
+              </button>
+            );
+          });
+        })()}
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────── */}

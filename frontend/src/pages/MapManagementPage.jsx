@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
-  Plus, Trash2, Save, X, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon
+  Plus, Trash2, Save, X, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
+  CheckCircle2, AlertTriangle, BarChart3, ArrowUpDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -206,25 +207,79 @@ export default function MapManagementPage({ department = "plazas" }) {
         </div>
       </div>
 
-      {/* Floor Stats */}
+      {/* Floor Stats — تصميم خرافي */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: isAr ? "إجمالي الطوابق" : "Total Floors", value: floors.length, color: "#2563eb", bg: "#eff6ff", Icon: Layers },
-          { label: isAr ? "بصورة" : "With Image", value: floors.filter(f => f.image_url).length, color: "#059669", bg: "#ecfdf5", Icon: Layers },
-          { label: isAr ? "بدون صورة" : "No Image", value: floors.filter(f => !f.image_url).length, color: "#d97706", bg: "#fffbeb", Icon: Layers },
-          { label: isAr ? "نطاق الأدوار" : "Floor Range",
-            value: floors.length > 0 ? `${Math.min(...floors.map(f=>f.floor_number))}←${Math.max(...floors.map(f=>f.floor_number))}` : "—",
-            color: "#7c3aed", bg: "#f5f3ff", Icon: Layers },
-        ].map((s, i) => (
-          <div key={i} className="rounded-2xl border p-4 shadow-sm hover:shadow-md transition-all"
-            style={{ backgroundColor: s.bg, borderColor: s.color + "30" }}>
-            <p className="text-[11px] font-semibold text-slate-500 mb-1">{s.label}</p>
-            <p className="text-2xl font-black leading-none" style={{ color: s.color }}
-              data-testid={i === 0 ? "total-floors-count" : undefined}>
-              {s.value}
-            </p>
-          </div>
-        ))}
+          {
+            label: isAr ? "إجمالي الطوابق" : "Total Floors",
+            value: floors.length,
+            desc: isAr ? "كل الطوابق المضافة" : "All floors",
+            color: "#2563eb", grad: "from-blue-50 to-indigo-50/60", border: "#bfdbfe",
+            Icon: Layers, testId: "total-floors-count",
+          },
+          {
+            label: isAr ? "بصورة" : "With Image",
+            value: floors.filter(f => f.image_url).length,
+            desc: isAr ? "طابق بخريطة محملة" : "Floors with map",
+            color: "#059669", grad: "from-emerald-50 to-green-50/60", border: "#a7f3d0",
+            Icon: CheckCircle2,
+          },
+          {
+            label: isAr ? "بدون صورة" : "No Image",
+            value: floors.filter(f => !f.image_url).length,
+            desc: isAr ? "يحتاج تحميل خريطة" : "Needs map upload",
+            color: "#d97706", grad: "from-amber-50 to-yellow-50/60", border: "#fcd34d",
+            Icon: AlertTriangle,
+          },
+          {
+            label: isAr ? "نطاق الأدوار" : "Floor Range",
+            value: floors.length > 0
+              ? `${Math.min(...floors.map(f=>f.floor_number))} ← ${Math.max(...floors.map(f=>f.floor_number))}`
+              : "—",
+            desc: isAr ? "من الأدنى للأعلى" : "Lowest to highest",
+            color: "#7c3aed", grad: "from-violet-50 to-purple-50/60", border: "#c4b5fd",
+            Icon: ArrowUpDown,
+          },
+        ].map((s, i) => {
+          const pct = floors.length > 0 && typeof s.value === "number"
+            ? Math.round((s.value / floors.length) * 100) : null;
+          return (
+            <div key={i}
+              className={`group relative overflow-hidden rounded-2xl border p-4 bg-gradient-to-br ${s.grad}
+                hover:scale-[1.02] hover:shadow-lg transition-all duration-200 cursor-default`}
+              style={{ borderColor: s.color + "40" }}>
+
+              {/* دائرة ديكورية */}
+              <div className="absolute -left-4 -bottom-4 w-16 h-16 rounded-full opacity-[0.08] group-hover:opacity-[0.15] transition-opacity"
+                style={{ backgroundColor: s.color }} />
+
+              {/* أيقونة */}
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm mb-3"
+                style={{ backgroundColor: s.color + "20" }}>
+                <s.Icon className="w-4.5 h-4.5" style={{ color: s.color }} />
+              </div>
+
+              {/* العدد */}
+              <p className="text-3xl font-black leading-none tabular-nums mb-1"
+                style={{ color: s.color }}
+                data-testid={s.testId}>
+                {s.value}
+              </p>
+
+              {/* الاسم + الوصف */}
+              <p className="text-[11px] font-bold text-slate-700 leading-tight">{s.label}</p>
+              <p className="text-[9px] text-slate-400 mt-0.5">{s.desc}</p>
+
+              {/* progress bar (فقط للأرقام) */}
+              {pct !== null && (
+                <div className="mt-2.5 h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: s.color }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Floors Grid */}
