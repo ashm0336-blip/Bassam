@@ -717,13 +717,13 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                       <span className="text-sm font-bold text-foreground">الموظف</span>
                     </div>
                   </TableHead>
-                  {/* رقم الهوية */}
+                  {/* رقم الجوال */}
                   <TableHead className="text-center py-2.5 w-36">
                     <div className="flex flex-col items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
-                        <Hash className="w-4 h-4 text-slate-600"/>
+                      <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shadow-sm">
+                        <Phone className="w-4 h-4 text-sky-600"/>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-600">رقم الهوية</span>
+                      <span className="text-[11px] font-semibold text-slate-600">رقم الجوال</span>
                     </div>
                   </TableHead>
                   {/* المسمى */}
@@ -783,13 +783,25 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                     <TableCell className="text-right py-2">
                       <div className="flex items-center gap-2.5">
                         <AvatarInitial name={emp.name} size="sm" />
-                        <div>
-                          <p className="font-bold text-sm">{emp.name}</p>
-                          {emp.employee_number && <p className="text-[10px] text-muted-foreground">#{emp.employee_number}</p>}
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm leading-tight">{emp.name}</p>
+                          {emp.employee_number && (
+                            <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                              <Hash className="w-2.5 h-2.5"/>{emp.employee_number}
+                            </p>
+                          )}
+                          {emp.national_id && (
+                            <p className="text-[10px] text-slate-400 flex items-center gap-0.5 mt-0.5">
+                              <User className="w-2.5 h-2.5"/>{emp.national_id}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm font-mono text-slate-500">{emp.national_id || "—"}</TableCell>
+                    {/* رقم الجوال بدل رقم الهوية */}
+                    <TableCell className="text-center text-sm font-mono text-sky-600">
+                      {emp.contact_phone || emp.phone || "—"}
+                    </TableCell>
                     <TableCell className="text-center text-xs text-slate-600">{emp.job_title || "—"}</TableCell>
                     <TableCell className="text-center"><EmpTypeBadge type={emp.employment_type} /></TableCell>
                     {/* الحساب — نفس أيقونات EmployeeManagement */}
