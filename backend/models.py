@@ -763,8 +763,8 @@ class SessionZone(BaseModel):
     fill_color: str = "#22c55e"
     fill_type: str = "solid"
     pattern_type: Optional[str] = None
-    pattern_fg_color: str = "#000000"
-    pattern_bg_color: str = "#ffffff"
+    pattern_fg_color: Optional[str] = "#000000"
+    pattern_bg_color: Optional[str] = "#ffffff"
     stroke_color: str = "#000000"
     opacity: float = 0.4
     stroke_opacity: float = 1.0

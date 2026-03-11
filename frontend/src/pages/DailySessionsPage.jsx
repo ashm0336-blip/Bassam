@@ -619,7 +619,10 @@ export default function DailySessionsPage() {
       setNewZoneForm({ zone_code: "", name_ar: "", name_en: "", zone_type: "men_prayer", fill_color: "#22c55e", area_sqm: 0, per_person_sqm: 0.8, max_capacity: 0, length_m: "", width_m: "", carpet_length: "1.2", carpet_width: "0.7", daily_note: "" });
       setMapMode("edit");
       toast.success(isAr ? "تم إضافة المنطقة" : "Zone added");
-    } catch (e) { toast.error(isAr ? "تعذرت الإضافة" : "Error adding zone"); }
+    } catch (e) {
+      console.error("Zone add error:", e?.response?.data || e?.message || e);
+      toast.error(e?.response?.data?.detail || (isAr ? "تعذرت الإضافة" : "Error adding zone"));
+    }
   };
 
   // Map mouse up handler (shared between MapCanvas callback and save logic)
