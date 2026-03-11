@@ -184,22 +184,24 @@ export default function Dashboard() {
         <GaugeCard icon={AlertTriangle} label="التنبيهات النشطة" value={kpis.active_alerts} total={kpis.active_alerts + 5} unit="" color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'} sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرج` : 'لا توجد حالات حرجة'} />
       </div>
 
-      {/* ── شريط تفصيلي للموظفين (يظهر فقط إذا يوجد بيانات) ── */}
+      {/* ── شريط تفصيلي للموظفين — horizontal scroll on mobile ── */}
       {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "مداوم الآن",    value: kpis.active_employees, color: "#059669", bg: "bg-emerald-50", border: "border-emerald-200", desc: "داخل ساعات وردیته" },
-            { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "#d97706", bg: "bg-amber-50",   border: "border-amber-200",   desc: "يوم عمل — خارج الوقت" },
-            { label: "في راحة",       value: kpis.on_rest || 0,     color: "#6b7280", bg: "bg-slate-50",   border: "border-slate-200",   desc: "إجازة أسبوعية" },
-          ].map((s, i) => (
-            <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${s.bg} ${s.border}`}>
-              <span className="font-black text-2xl" style={{ color: s.color }}>{s.value}</span>
-              <div>
-                <p className="text-xs font-bold text-foreground">{s.label}</p>
-                <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+          <div className="flex sm:grid sm:grid-cols-3 gap-2 min-w-max sm:min-w-0">
+            {[
+              { label: "مداوم الآن",    value: kpis.active_employees, color: "#059669", bg: "bg-emerald-50", border: "border-emerald-200", desc: "داخل ساعات ورديته" },
+              { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "#d97706", bg: "bg-amber-50",   border: "border-amber-200",   desc: "يوم عمل — خارج الوقت" },
+              { label: "في راحة",       value: kpis.on_rest || 0,     color: "#6b7280", bg: "bg-slate-50",   border: "border-slate-200",   desc: "إجازة أسبوعية" },
+            ].map((s, i) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border flex-shrink-0 sm:flex-shrink w-[160px] sm:w-auto ${s.bg} ${s.border}`}>
+                <span className="font-black text-2xl" style={{ color: s.color }}>{s.value}</span>
+                <div>
+                  <p className="text-xs font-bold text-foreground">{s.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -338,117 +340,106 @@ export default function Dashboard() {
             <BarChart3 className="w-3.5 h-3.5" /> تقرير مفصل
           </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          {deptStats.map((dept, i) => {
-            const DEPT_COLORS = {
-              planning:       { accent: "#7c3aed", light: "#f5f3ff", border: "#c4b5fd" },
-              gates:          { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
-              plazas:         { accent: "#0f766e", light: "#f0fdfa", border: "#99f6e4" },
-              haram_map:      { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
-              crowd_services: { accent: "#b45309", light: "#fffbeb", border: "#fcd34d" },
-              mataf:          { accent: "#be123c", light: "#fff1f2", border: "#fecdd3" },
-            };
-            const DEPT_ICONS = {
-              planning: "📋", gates: "🚪", plazas: "⛩️",
-              haram_map: "🕌", crowd_services: "👥", mataf: "🕋"
-            };
-            const clr = DEPT_COLORS[dept.id] || { accent: "#6b7280", light: "#f9fafb", border: "#e5e7eb" };
-            const icon = DEPT_ICONS[dept.id] || "🏢";
-
-            // حالة الجدول
-            const schedStatus = dept.schedule_status;
-            const schedBadge = schedStatus === "active"
-              ? { label: "جدول معتمد ✓", bg: "#dcfce7", color: "#166534", border: "#86efac" }
-              : schedStatus === "draft"
-              ? { label: "مسودة", bg: "#fef9c3", color: "#854d0e", border: "#fde047" }
-              : { label: "لا يوجد جدول", bg: "#f1f5f9", color: "#64748b", border: "#cbd5e1" };
-
-            return (
-              <Card
-                key={i}
-                className="border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.99]"
-                style={{ borderColor: clr.border, borderWidth: "1.5px" }}
-                onClick={() => navigate(dept.route)}
-                data-testid={`dept-card-${dept.id}`}
-              >
-                <CardContent className="p-0">
-                  {/* Header */}
-                  <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-2"
-                    style={{ background: `linear-gradient(135deg, ${clr.light}, white)` }}>
-                    <span className="text-2xl">{icon}</span>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border"
-                      style={{ background: schedBadge.bg, color: schedBadge.color, borderColor: schedBadge.border }}>
-                      {schedBadge.label}
-                    </span>
-                  </div>
-
-                  {/* Name */}
-                  <div className="px-4 pb-2">
-                    <h3 className="font-cairo font-bold text-sm leading-tight" style={{ color: clr.accent }}>
-                      {dept.name}
-                    </h3>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="px-4 pb-3 space-y-2">
-                    {/* إجمالي الموظفين */}
-                    <div className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-slate-50 border border-slate-100">
-                      <span className="text-[10px] text-slate-500">إجمالي الموظفين</span>
-                      <span className="font-bold text-sm" style={{ color: clr.accent }}>{dept.total}</span>
-                    </div>
-
-                    {/* حالة الوردية الآن — من الجدول المعتمد */}
-                    {schedStatus === "active" ? (
-                      <div className="grid grid-cols-3 gap-1">
-                        <div className="text-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                          <p className="text-[9px] text-slate-500">مداوم الآن</p>
-                          <p className="font-bold text-sm text-emerald-700">{dept.on_duty_now || dept.working}</p>
-                        </div>
-                        <div className="text-center py-1.5 rounded-lg bg-amber-50 border border-amber-200">
-                          <p className="text-[9px] text-slate-500">خارج الوردية</p>
-                          <p className="font-bold text-sm text-amber-600">{dept.off_shift || 0}</p>
-                        </div>
-                        <div className="text-center py-1.5 rounded-lg bg-slate-50 border border-slate-200">
-                          <p className="text-[9px] text-slate-500">في راحة</p>
-                          <p className="font-bold text-sm text-slate-500">{dept.on_rest}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-2 rounded-lg bg-slate-50 border border-slate-100">
-                        <p className="text-[10px] text-slate-400">
-                          {schedStatus === "draft" ? "⏳ في انتظار اعتماد الجدول" : "لم يُنشأ جدول بعد"}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* مهام الإدارة */}
-                    {dept.tasks && dept.tasks.total > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap px-1">
-                        <span className="text-[9px] text-slate-400">المهام:</span>
-                        {dept.tasks.progress > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">{dept.tasks.progress} جارية</span>}
-                        {dept.tasks.overdue > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{dept.tasks.overdue} متأخرة</span>}
-                        {dept.tasks.done > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{dept.tasks.done} منجزة</span>}
-                        {dept.tasks.pending > 0 && !dept.tasks.progress && !dept.tasks.overdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{dept.tasks.pending} انتظار</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Footer - نوع التوظيف */}
-                  <div className="px-3 py-2 border-t flex items-center justify-between" style={{ borderColor: clr.border }}>
-                    <div className="flex gap-2">
-                      {dept.permanent > 0 && <span className="text-[9px] text-emerald-700 font-medium">دائم: {dept.permanent}</span>}
-                      {dept.seasonal  > 0 && <span className="text-[9px] text-sky-700 font-medium">موسمي: {dept.seasonal}</span>}
-                      {dept.temporary > 0 && <span className="text-[9px] text-purple-700 font-medium">مؤقت: {dept.temporary}</span>}
-                      {dept.total === 0 && <span className="text-[9px] text-slate-400">لا يوجد موظفون</span>}
-                    </div>
-                    <span className="text-[9px] font-bold" style={{ color: clr.accent }}>نظرة عامة ←</span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* Mobile: horizontal scroll  |  Desktop: grid */}
+        <div className="sm:hidden overflow-x-auto pb-2 -mx-3 px-3">
+          <div className="flex gap-3 min-w-max">
+            {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} compact/>)}
+          </div>
+        </div>
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate}/>)}
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Department Card Component ─────────────────────────────────
+function DeptCard({ dept, navigate, compact = false }) {
+  const DEPT_COLORS = {
+    planning:       { accent: "#7c3aed", light: "#f5f3ff", border: "#c4b5fd" },
+    gates:          { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
+    plazas:         { accent: "#0f766e", light: "#f0fdfa", border: "#99f6e4" },
+    haram_map:      { accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
+    crowd_services: { accent: "#b45309", light: "#fffbeb", border: "#fcd34d" },
+    mataf:          { accent: "#be123c", light: "#fff1f2", border: "#fecdd3" },
+  };
+  const DEPT_ICONS = { planning:"📋", gates:"🚪", plazas:"⛩️", haram_map:"🕌", crowd_services:"👥", mataf:"🕋" };
+  const clr = DEPT_COLORS[dept.id] || { accent:"#6b7280", light:"#f9fafb", border:"#e5e7eb" };
+  const icon = DEPT_ICONS[dept.id] || "🏢";
+  const schedStatus = dept.schedule_status;
+  const schedBadge = schedStatus === "active"
+    ? { label: "معتمد ✓", bg: "#dcfce7", color: "#166534", border: "#86efac" }
+    : schedStatus === "draft"
+    ? { label: "مسودة", bg: "#fef9c3", color: "#854d0e", border: "#fde047" }
+    : { label: "لا جدول", bg: "#f1f5f9", color: "#64748b", border: "#cbd5e1" };
+
+  return (
+    <Card
+      className={`border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.99] ${compact ? "w-[160px] flex-shrink-0" : ""}`}
+      style={{ borderColor: clr.border, borderWidth: "1.5px" }}
+      onClick={() => navigate(dept.route)}
+      data-testid={`dept-card-${dept.id}`}
+    >
+      <CardContent className="p-0">
+        {/* Header */}
+        <div className="px-3 pt-3 pb-1.5 flex items-start justify-between gap-1"
+          style={{ background: `linear-gradient(135deg, ${clr.light}, white)` }}>
+          <span className={compact ? "text-xl" : "text-2xl"}>{icon}</span>
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full border leading-tight text-center"
+            style={{ background: schedBadge.bg, color: schedBadge.color, borderColor: schedBadge.border }}>
+            {schedBadge.label}
+          </span>
+        </div>
+        {/* Name */}
+        <div className="px-3 pb-1.5">
+          <h3 className="font-cairo font-bold text-xs leading-snug" style={{ color: clr.accent }}>
+            {dept.name}
+          </h3>
+        </div>
+        {/* Stats */}
+        <div className="px-3 pb-2.5 space-y-1.5">
+          <div className="flex items-center justify-between py-1 px-1.5 rounded-lg bg-slate-50 border border-slate-100">
+            <span className="text-[9px] text-slate-500">إجمالي</span>
+            <span className="font-bold text-sm" style={{ color: clr.accent }}>{dept.total}</span>
+          </div>
+          {schedStatus === "active" ? (
+            <div className="grid grid-cols-3 gap-1">
+              <div className="text-center py-1 rounded-lg bg-emerald-50 border border-emerald-200">
+                <p className="text-[7px] text-slate-500 leading-tight">مداوم</p>
+                <p className="font-bold text-xs text-emerald-700">{dept.on_duty_now || dept.working}</p>
+              </div>
+              <div className="text-center py-1 rounded-lg bg-amber-50 border border-amber-200">
+                <p className="text-[7px] text-slate-500 leading-tight">خارج</p>
+                <p className="font-bold text-xs text-amber-600">{dept.off_shift || 0}</p>
+              </div>
+              <div className="text-center py-1 rounded-lg bg-slate-50 border border-slate-200">
+                <p className="text-[7px] text-slate-500 leading-tight">راحة</p>
+                <p className="font-bold text-xs text-slate-500">{dept.on_rest}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-1.5 rounded-lg bg-slate-50 border border-slate-100">
+              <p className="text-[9px] text-slate-400">{schedStatus === "draft" ? "⏳ مسودة" : "لا جدول"}</p>
+            </div>
+          )}
+          {dept.tasks && dept.tasks.total > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              {dept.tasks.progress > 0 && <span className="text-[8px] font-bold px-1 py-0.5 rounded-full bg-blue-100 text-blue-700">{dept.tasks.progress} جارية</span>}
+              {dept.tasks.overdue > 0 && <span className="text-[8px] font-bold px-1 py-0.5 rounded-full bg-red-100 text-red-700">{dept.tasks.overdue} متأخرة</span>}
+              {dept.tasks.done > 0 && <span className="text-[8px] font-bold px-1 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{dept.tasks.done} ✅</span>}
+            </div>
+          )}
+        </div>
+        {/* Footer */}
+        <div className="px-3 py-1.5 border-t flex items-center justify-between" style={{ borderColor: clr.border }}>
+          <div className="flex gap-1.5">
+            {dept.permanent > 0 && <span className="text-[8px] text-emerald-700">دائم:{dept.permanent}</span>}
+            {dept.total === 0 && <span className="text-[8px] text-slate-400">لا موظفين</span>}
+          </div>
+          <span className="text-[8px] font-bold" style={{ color: clr.accent }}>←</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

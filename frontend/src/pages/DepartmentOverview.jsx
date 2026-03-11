@@ -52,28 +52,28 @@ function AnimatedNumber({ value, duration = 800 }) {
 // ── Big KPI Card ─────────────────────────────────────────────
 function KpiCard({ icon: Icon, label, value, sub, color, badge, trend }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 border-0 shadow-lg bg-card`}
+    <div className="relative overflow-hidden rounded-2xl p-3 sm:p-5 border-0 shadow-lg bg-card"
       style={{ boxShadow: `0 4px 24px ${color}22` }}>
-      <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ background: color }}/>
+      <div className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 rounded-l-2xl" style={{ background: color }}/>
       <div className="absolute -left-8 -top-8 w-24 h-24 rounded-full opacity-[0.06]" style={{ background: color }}/>
       <div className="flex items-start justify-between">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
+        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm sm:shadow-md"
           style={{ background: `${color}20`, color }}>
-          <Icon className="w-5 h-5"/>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5"/>
         </div>
         {badge && (
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full"
+          <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full"
             style={{ background: `${color}15`, color }}>{badge}</span>
         )}
       </div>
-      <div className="mt-3">
-        <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">{label}</p>
-        <p className="text-4xl font-black leading-none" style={{ color }}>
+      <div className="mt-2 sm:mt-3">
+        <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mb-0.5">{label}</p>
+        <p className="text-2xl sm:text-4xl font-black leading-none" style={{ color }}>
           <AnimatedNumber value={value}/>
         </p>
-        {sub && <p className="text-[11px] text-muted-foreground mt-1.5">{sub}</p>}
+        {sub && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{sub}</p>}
         {trend !== undefined && (
-          <div className="flex items-center gap-1 mt-1.5">
+          <div className="flex items-center gap-1 mt-1">
             {trend >= 0
               ? <TrendingUp className="w-3 h-3 text-emerald-500"/>
               : <TrendingDown className="w-3 h-3 text-red-500"/>}

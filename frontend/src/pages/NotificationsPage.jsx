@@ -142,12 +142,14 @@ export default function NotificationsPage() {
   };
 
   const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    // دعم كلا الحقلين received_at و timestamp
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
-    
     if (minutes < 1) return language === 'ar' ? 'الآن' : 'Now';
     if (minutes < 60) return language === 'ar' ? `منذ ${minutes} دقيقة` : `${minutes}m ago`;
     if (hours < 24) return language === 'ar' ? `منذ ${hours} ساعة` : `${hours}h ago`;
@@ -304,7 +306,7 @@ export default function NotificationsPage() {
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span>{DEPARTMENTS[alert.department]?.[language] || alert.department}</span>
                           <span>•</span>
-                          <span>{formatTime(alert.timestamp)}</span>
+                          <span>{formatTime(alert.received_at || alert.timestamp)}</span>
                         </div>
                         {canAddAlerts() && (
                           <Button
