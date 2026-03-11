@@ -283,7 +283,9 @@ export default function TasksPage({ department }) {
       ]);
       setEmployees(empRes.data);
       const sched = schedRes.data;
-      setActiveSchedule(sched?.status === "active" ? sched : null);
+      // نستخدم أي جدول (مسودة أو معتمد) لمعرفة أيام الراحة في التكليف
+      // الاعتماد يؤثر على الإحصائيات الرسمية فقط، لكن التشغيل اليومي يبقى واضح
+      setActiveSchedule(sched || null);
     } catch { }
   }, [dept, isManager]);
 
@@ -300,6 +302,8 @@ export default function TasksPage({ department }) {
                   Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
     return map[new Date().toLocaleDateString("en-US", { weekday:"long", timeZone:"Asia/Riyadh" })] || "";
   })();
+
+  const scheduleStatus = activeSchedule?.status || null; // "active" | "draft" | null
 
   const enrichedEmployees = employees.map(emp => {
     if (!activeSchedule) return { ...emp, dutyStatus: "no_schedule" };
@@ -692,6 +696,19 @@ export default function TasksPage({ department }) {
                   </span>
                 )}
               </Label>
+              {/* بادج حالة الجدول */}
+              {scheduleStatus === "draft" && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  الجدول مسودة — أيام الراحة مؤقتة وقابلة للتغيير حتى الاعتماد
+                </div>
+              )}
+              {!scheduleStatus && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-500">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                  لا يوجد جدول شهري — جميع الموظفين متاحون
+                </div>
+              )}
               <div className="mt-2 border rounded-xl overflow-hidden">
                 {employees.length === 0 ? (
                   <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون في هذه الإدارة</p>
