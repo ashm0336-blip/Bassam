@@ -267,6 +267,8 @@ export default function TasksPage({ department }) {
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("all");
+  const [filterStatus, setFilterStatus]   = useState("all");   // فلتر الحالة
+  const [subView, setSubView]             = useState("kanban"); // kanban | list
 
   const emptyForm = { title:"", description:"", priority:"normal", due_at:"", assignee_ids:[], work_date: today };
   const [form, setForm] = useState(emptyForm);
@@ -418,8 +420,19 @@ export default function TasksPage({ department }) {
   const filtered = tasks.filter(t => {
     if (filterPriority !== "all" && t.priority !== filterPriority) return false;
     if (search && !t.title.includes(search) && !t.description?.includes(search)) return false;
+    if (filterStatus !== "all" && t.status !== filterStatus) return false;
     return true;
   });
+
+  // Day stats تفصيلية
+  const dayStats = {
+    total:      tasks.length,
+    pending:    tasks.filter(t=>t.status==="pending").length,
+    in_progress:tasks.filter(t=>t.status==="in_progress").length,
+    done:       tasks.filter(t=>t.status==="done").length,
+    overdue:    tasks.filter(t=>t.status==="overdue").length,
+    early:      tasks.filter(t=>t.completion_performance==="early").length,
+  };
 
   // Day navigation
   const navigate = (dir) => {
@@ -508,31 +521,74 @@ export default function TasksPage({ department }) {
               </div>
 
               {/* Day stats bar */}
-              {dayTotal > 0 && (
+              {dayStats.total > 0 && (
                 <div className="mt-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground">{dayDone}/{dayTotal} منجزة</span>
-                    <span className="text-[11px] font-bold text-primary">{dayPct}%</span>
+                    <span className="text-[11px] text-muted-foreground">{dayStats.done}/{dayStats.total} منجزة</span>
+                    <span className="text-[11px] font-bold text-primary">{dayStats.total > 0 ? Math.round(dayStats.done/dayStats.total*100) : 0}%</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-700"
-                      style={{ width:`${dayPct}%` }}/>
+                      style={{ width:`${dayStats.total > 0 ? Math.round(dayStats.done/dayStats.total*100) : 0}%` }}/>
                   </div>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    {dayOverdue > 0 && <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5"><TimerOff className="w-3 h-3"/>{dayOverdue} متأخرة</span>}
-                    {dayEarly  > 0 && <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-3 h-3"/>{dayEarly} مبكر</span>}
-                    {dayDone === dayTotal && dayTotal > 0 && <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5"><Trophy className="w-3 h-3"/>يوم مثالي! 🎉</span>}
+                    {dayStats.overdue > 0 && <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5"><TimerOff className="w-3 h-3"/>{dayStats.overdue} متأخرة</span>}
+                    {dayStats.early  > 0 && <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-3 h-3"/>{dayStats.early} مبكر ⭐</span>}
+                    {dayStats.done === dayStats.total && dayStats.total > 0 && <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5"><Trophy className="w-3 h-3"/>يوم مثالي! 🎉</span>}
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Filters */}
+          {/* ── Stats chips + subview toggle ── */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Stats clickable */}
+            {[
+              { key:"all",         label:"الكل",     value: dayStats.total,       color:"#6b7280" },
+              { key:"pending",     label:"انتظار",   value: dayStats.pending,     color: STATUS_CFG.pending.color },
+              { key:"in_progress", label:"جارية",    value: dayStats.in_progress, color: STATUS_CFG.in_progress.color },
+              { key:"done",        label:"مكتملة",   value: dayStats.done,        color: STATUS_CFG.done.color },
+              { key:"overdue",     label:"متأخرة",   value: dayStats.overdue,     color: STATUS_CFG.overdue.color },
+              ...(dayStats.early > 0 ? [{ key:"early_only", label:"مبكر ⭐", value: dayStats.early, color:"#d97706" }] : []),
+            ].map(s => (
+              <button key={s.key}
+                onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key === "early_only" ? "done_early" : s.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all
+                  ${filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early") ? "shadow-md scale-105" : "hover:shadow-sm"}`}
+                style={(filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early"))
+                  ? { backgroundColor: s.color+"15", borderColor: s.color, color: s.color }
+                  : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
+                <span className="font-bold text-sm" style={{ color: s.color }}>{s.value}</span>
+                {s.label}
+              </button>
+            ))}
+
+            {/* Spacer */}
+            <div className="flex-1"/>
+
+            {/* SubView toggle: لوحة | قائمة */}
+            <div className="flex border rounded-lg overflow-hidden shadow-sm">
+              <button onClick={()=>setSubView("kanban")}
+                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                  ${subView==="kanban"?"bg-primary text-white":"hover:bg-muted text-muted-foreground"}`}
+                data-testid="subview-kanban">
+                <LayoutGrid className="w-3.5 h-3.5"/>لوحة
+              </button>
+              <button onClick={()=>setSubView("list")}
+                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                  ${subView==="list"?"bg-primary text-white":"hover:bg-muted text-muted-foreground"}`}
+                data-testid="subview-list">
+                <List className="w-3.5 h-3.5"/>قائمة
+              </button>
+            </div>
+          </div>
+
+          {/* ── Search + Priority filter ── */}
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-[180px]">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
-              <Input value={search} onChange={e=>setSearch(e.target.value)} className="h-8 text-sm pr-9" placeholder="بحث..."/>
+              <Input value={search} onChange={e=>setSearch(e.target.value)} className="h-8 text-sm pr-9" placeholder="بحث في مهام اليوم..."/>
             </div>
             <Select value={filterPriority} onValueChange={setFilterPriority}>
               <SelectTrigger className="h-8 w-36 text-xs"><Filter className="w-3 h-3 ml-1"/><SelectValue placeholder="الأولوية"/></SelectTrigger>
@@ -543,29 +599,126 @@ export default function TasksPage({ department }) {
             </Select>
           </div>
 
-          {/* Tasks */}
+          {/* ── Tasks content ── */}
           {loading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-primary"/></div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 space-y-3">
               <div className="text-5xl">📋</div>
-              <p className="font-cairo font-bold text-muted-foreground">لا توجد مهام لهذا اليوم</p>
-              {isManager && !isFuture(selectedDate) && (
+              <p className="font-cairo font-bold text-muted-foreground">
+                {filterStatus !== "all" ? "لا توجد مهام بهذه الحالة" : "لا توجد مهام لهذا اليوم"}
+              </p>
+              {isManager && filterStatus === "all" && !isFuture(selectedDate) && (
                 <Button size="sm" onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }} className="gap-1">
                   <Plus className="w-3.5 h-3.5"/>إضافة مهمة
                 </Button>
               )}
-              {isFuture(selectedDate) && isManager && (
+              {isFuture(selectedDate) && isManager && filterStatus === "all" && (
                 <p className="text-xs text-muted-foreground">يمكنك التخطيط المسبق وإضافة مهام للمستقبل</p>
               )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filtered.map(t=>(
-                <TaskCard key={t.id} task={t} canManage={isManager}
-                  onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
-              ))}
+          ) : subView === "kanban" ? (
+            /* ── KANBAN ── */
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[200px]">
+              {[
+                { key:"pending",     ...STATUS_CFG.pending },
+                { key:"in_progress", ...STATUS_CFG.in_progress },
+                { key:"done",        ...STATUS_CFG.done },
+                { key:"overdue",     ...STATUS_CFG.overdue },
+              ].map(col => {
+                const colTasks = filtered.filter(t => t.status === col.key);
+                return (
+                  <div key={col.key} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border font-medium text-sm"
+                      style={{ backgroundColor: col.bg, borderColor: col.border, color: col.color }}>
+                      <col.Icon className="w-4 h-4"/>
+                      <span>{col.label}</span>
+                      <span className="mr-auto font-bold text-xs px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: col.color+"20", color: col.color }}>
+                        {colTasks.length}
+                      </span>
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      {colTasks.length === 0 ? (
+                        <div className="text-center py-6 text-xs text-muted-foreground border-2 border-dashed rounded-xl">لا توجد مهام</div>
+                      ) : colTasks.map(t=>(
+                        <TaskCard key={t.id} task={t} canManage={isManager}
+                          onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          ) : (
+            /* ── LIST ── */
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead className="text-right">المهمة</TableHead>
+                        <TableHead className="text-center">الأولوية</TableHead>
+                        <TableHead className="text-center">الحالة</TableHead>
+                        <TableHead className="text-center">الموظفون</TableHead>
+                        <TableHead className="text-center">الأداء</TableHead>
+                        <TableHead className="text-center">بواسطة</TableHead>
+                        {isManager && <TableHead className="text-center w-20">⋯</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map(t=>(
+                        <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
+                          <TableCell className="text-right">
+                            <p className="font-semibold text-sm">{t.title}</p>
+                            {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
+                          </TableCell>
+                          <TableCell className="text-center"><PriorityBadge priority={t.priority}/></TableCell>
+                          <TableCell className="text-center"><StatusBadge status={t.status}/></TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <AssigneeAvatars assignees={t.assignees_info||[]}/>
+                              <span className="text-[9px] text-muted-foreground">{(t.assignees_info||[]).map(a=>a.name).join("، ")}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <PerformanceBadge performance={t.completion_performance} delta={t.completion_delta_minutes}/>
+                          </TableCell>
+                          <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
+                          {isManager && (
+                            <TableCell className="text-center">
+                              <div className="flex items-center gap-1 justify-center">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={()=>handleEdit(t)}><Edit className="w-3.5 h-3.5"/></Button>
+                                <Select value={t.status} onValueChange={v=>handleStatus(t.id,v)}>
+                                  <SelectTrigger className="h-7 w-7 border-0 p-0 bg-transparent">
+                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400"/>
+                                  </SelectTrigger>
+                                  <SelectContent dir="rtl">
+                                    {Object.entries(STATUS_CFG).filter(([k])=>k!=="overdue").map(([k,v])=>(
+                                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={()=>handleDelete(t.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                              </div>
+                            </TableCell>
+                          )}
+                          {!isManager && t.status !== "done" && (
+                            <TableCell className="text-center">
+                              <Button size="sm" variant="outline" className="h-7 text-[11px]"
+                                onClick={()=>handleStatus(t.id, t.status==="pending"?"in_progress":"done")}>
+                                {t.status==="pending"?"بدء":"إنهاء"}
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       )}
