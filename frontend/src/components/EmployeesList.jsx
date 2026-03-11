@@ -11,7 +11,7 @@ import {
   Plus, Search, LayoutGrid, List, Download, Upload, FileText,
   Edit, Trash2, ShieldCheck, ShieldX, ShieldOff, UserPlus, KeyRound,
   Loader2, MoreVertical, User, Briefcase, Calendar, Hash,
-  RefreshCw, Filter, ChevronDown, Phone, Building2,
+  RefreshCw, Filter, ChevronDown, Phone, Building2, Shield,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,107 @@ const ROLE_CFG = {
   admin_staff:        { label:"موظف إداري",      color:"#6b7280" },
 };
 
+// ── Account Status Icon (نفس تصميم EmployeeManagement بالضبط) ──
+function AccountStatusIcon({ emp, canManageAccounts, canResetPins, onAccountAction, isAr }) {
+  const acStatus = emp.account_status;
+  if (!emp.national_id) return (
+    <div className="flex items-center justify-center"
+      title={isAr ? 'لا رقم هوية — أضفه لإنشاء حساب' : 'No national ID'}>
+      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
+        <ShieldOff className="w-3.5 h-3.5 text-slate-300" />
+      </div>
+    </div>
+  );
+  const cfgs = {
+    active:     { cls:'bg-emerald-100 text-emerald-600 ring-emerald-200', Icon:ShieldCheck, tip:isAr?'نشط — انقر للتجميد مؤقتاً':'Active — click to freeze',  action:'freeze-account'    },
+    pending:    { cls:'bg-amber-100 text-amber-600 ring-amber-200',       Icon:ShieldOff,   tip:isAr?'معلق — انقر للتفعيل':'Pending — click to activate',       action:'activate-account'  },
+    frozen:     { cls:'bg-blue-100 text-blue-600 ring-blue-200',          Icon:ShieldX,     tip:isAr?'مجمَّد — انقر للتفعيل':'Frozen — click to activate',       action:'activate-account'  },
+    terminated: { cls:'bg-red-100 text-red-400 ring-red-100',             Icon:ShieldX,     tip:isAr?'منتهي الخدمة':'Service terminated',                       action:null                },
+    no_account: { cls:'bg-slate-100 text-slate-400 ring-slate-100',       Icon:UserPlus,    tip:isAr?'انقر لإنشاء حساب':'Create account',                       action:'activate-account'  },
+  };
+  const cfg = cfgs[acStatus] || cfgs.no_account;
+  const { Icon } = cfg;
+  return (
+    <div className="flex items-center gap-1 justify-center">
+      <button type="button" disabled={!canManageAccounts || acStatus === 'terminated'}
+        onClick={() => canManageAccounts && cfg.action && onAccountAction(emp.id, cfg.action, emp.name)}
+        title={cfg.tip} data-testid={`account-icon-${emp.id}`}
+        className={`w-7 h-7 rounded-full flex items-center justify-center ring-1 transition-all ${cfg.cls}
+          ${canManageAccounts && cfg.action ? 'cursor-pointer hover:scale-110 hover:shadow-sm' : 'cursor-default'}`}>
+        <Icon className="w-3.5 h-3.5" />
+      </button>
+      {canResetPins && (acStatus === 'active' || acStatus === 'frozen') && (
+        <button type="button"
+          onClick={() => onAccountAction(emp.id, 'reset-pin', emp.name)}
+          title={isAr ? 'إعادة تعيين PIN' : 'Reset PIN'}
+          data-testid={`reset-pin-icon-${emp.id}`}
+          className="w-6 h-6 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center hover:bg-amber-100 hover:scale-110 transition-all ring-1 ring-amber-100 cursor-pointer">
+          <KeyRound className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Role Selector (نفس تصميم EmployeeManagement بالضبط) ──────────
+const ROLE_COLORS = {
+  general_manager:    '#7c3aed',
+  department_manager: '#1d4ed8',
+  shift_supervisor:   '#0f766e',
+  field_staff:        '#047857',
+  admin_staff:        '#64748b',
+};
+const ROLE_LABELS_MAP = {
+  general_manager:    'مدير عام',
+  department_manager: 'مدير إدارة',
+  shift_supervisor:   'مشرف وردية',
+  field_staff:        'موظف ميداني',
+  admin_staff:        'موظف إداري',
+};
+const ALL_ASSIGNABLE_ROLES = [
+  { value: 'general_manager',    ar: 'مدير عام',      level: 4 },
+  { value: 'department_manager', ar: 'مدير إدارة',    level: 3 },
+  { value: 'shift_supervisor',   ar: 'مشرف وردية',   level: 2 },
+  { value: 'field_staff',        ar: 'موظف ميداني',  level: 1 },
+  { value: 'admin_staff',        ar: 'موظف إداري',   level: 1 },
+];
+
+function RoleSelector({ emp, canChangeRoles, myLevel, onChangeRole, isAr }) {
+  if (!emp.user_id) return <span className="text-[9px] text-slate-400" title="فعّل الحساب أولاً">—</span>;
+  const currentRole = emp.user_role || 'field_staff';
+  const assignable = ALL_ASSIGNABLE_ROLES.filter(r => r.level < myLevel);
+  if (!canChangeRoles) {
+    return (
+      <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
+        {ROLE_LABELS_MAP[currentRole] || currentRole}
+      </span>
+    );
+  }
+  return assignable.length > 0 ? (
+    <Select value={currentRole} onValueChange={(r) => onChangeRole(emp, r)}>
+      <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[90px] justify-center"
+        style={{ color: ROLE_COLORS[currentRole] }}
+        data-testid={`role-select-${emp.id}`}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent dir="rtl">
+        {assignable.map(r => (
+          <SelectItem key={r.value} value={r.value} className="text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3 h-3" style={{ color: ROLE_COLORS[r.value] }} />
+              {r.ar}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  ) : (
+    <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
+      {ROLE_LABELS_MAP[currentRole] || currentRole}
+    </span>
+  );
+}
+
 // ── Sub-components ────────────────────────────────────────────
 
 function AccountBadge({ status }) {
@@ -92,8 +193,8 @@ function AvatarInitial({ name, size = "md" }) {
 }
 
 // ── Employee Card (Cards View) ─────────────────────────────────
-function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles,
-    onEdit, onDelete, onAccountAction, isAr }) {
+function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
+    onEdit, onDelete, onAccountAction, onChangeRole, isAr }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
 
@@ -195,21 +296,22 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
         </div>
 
         {/* Account status footer */}
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <AccountBadge status={emp.account_status} />
-          {/* Quick action button */}
-          {canManageAccounts && hasNatId && (
-            <button
-              onClick={() => {
-                if (emp.account_status === "active") onAccountAction(emp.id, "freeze-account", emp.name);
-                else if (["pending","frozen","no_account"].includes(emp.account_status)) onAccountAction(emp.id, "activate-account", emp.name);
-              }}
-              className="text-[10px] font-medium px-2 py-1 rounded-lg transition-all hover:opacity-80"
-              style={{ color: acCfg.color, backgroundColor: acCfg.bg, border: `1px solid ${acCfg.border}` }}>
-              {emp.account_status === "active" ? "تجميد" :
-               ["pending","frozen","no_account"].includes(emp.account_status) ? "تفعيل" : "—"}
-            </button>
-          )}
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          {/* Account + Role row */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] text-slate-400 font-medium">الحساب</span>
+              <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts}
+                canResetPins={canResetPins} onAccountAction={onAccountAction} isAr={isAr}/>
+            </div>
+            {canChangeRoles && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] text-slate-400 font-medium">الصلاحيات</span>
+                <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
+                  myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr}/>
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -254,6 +356,8 @@ export default function EmployeesList({ department }) {
   const canManage    = canWrite("manage_accounts");
   const canResetPins = canWrite("reset_pins");
   const canChangeRoles = canWrite("change_roles");
+  const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
+  const myLevel = ROLE_HIERARCHY[user?.role] || 0;
 
   // ── Fetch ──────────────────────────────────────────────────
   const fetchEmployees = useCallback(async () => {
@@ -302,6 +406,16 @@ export default function EmployeesList({ department }) {
       toast.success("تم تنفيذ العملية بنجاح");
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشلت العملية"); }
+  };
+
+  // ── Change Role ────────────────────────────────────────────
+  const handleChangeRole = async (emp, newRole) => {
+    if (!window.confirm(`تغيير صلاحية "${emp.name}" إلى "${ROLE_LABELS_MAP[newRole] || newRole}"؟`)) return;
+    try {
+      await axios.put(`${API}/employees/${emp.id}`, { user_role: newRole }, headers());
+      toast.success(`تم تغيير الصلاحية إلى: ${ROLE_LABELS_MAP[newRole] || newRole}`);
+      fetchEmployees();
+    } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير الصلاحية"); }
   };
 
   // ── Save Employee ──────────────────────────────────────────
@@ -502,10 +616,12 @@ export default function EmployeesList({ department }) {
           {filtered.map(emp => (
             <EmployeeCard key={emp.id} emp={emp}
               canEdit={canEdit} canDelete={canDelete}
-              canManageAccounts={canManage} canResetPins={canResetPins} canChangeRoles={canChangeRoles}
+              canManageAccounts={canManage} canResetPins={canResetPins}
+              canChangeRoles={canChangeRoles} myLevel={myLevel}
               onEdit={(e) => { setEditEmp(e); setForm({ name:e.name||"", employee_number:e.employee_number||"", national_id:e.national_id||"", job_title:e.job_title||"", employment_type:e.employment_type||"permanent", phone:e.phone||"", user_role:e.user_role||"field_staff", contract_start:e.contract_start||"", contract_end:e.contract_end||"" }); setEmpDialog(true); }}
               onDelete={(e) => { setDeleteTarget(e); setDeleteDialog(true); }}
               onAccountAction={handleAccountAction}
+              onChangeRole={handleChangeRole}
               isAr={isAr} />
           ))}
         </div>
@@ -522,8 +638,24 @@ export default function EmployeesList({ department }) {
                   <TableHead className="text-center">رقم الهوية</TableHead>
                   <TableHead className="text-center">المسمى</TableHead>
                   <TableHead className="text-center">النوع</TableHead>
-                  <TableHead className="text-center">الدور</TableHead>
-                  <TableHead className="text-center">حالة الحساب</TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-7 h-7 rounded-xl bg-emerald-100 flex items-center justify-center">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600"/>
+                      </div>
+                      <span className="text-[10px] font-semibold text-slate-600">الحساب</span>
+                    </div>
+                  </TableHead>
+                  {canChangeRoles && (
+                    <TableHead className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="w-7 h-7 rounded-xl bg-violet-100 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-violet-600"/>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-600">الصلاحيات</span>
+                      </div>
+                    </TableHead>
+                  )}
                   <TableHead className="text-center w-20">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -542,14 +674,18 @@ export default function EmployeesList({ department }) {
                     <TableCell className="text-center text-sm font-mono">{emp.national_id || "—"}</TableCell>
                     <TableCell className="text-center text-xs">{emp.job_title || "—"}</TableCell>
                     <TableCell className="text-center"><EmpTypeBadge type={emp.employment_type} /></TableCell>
+                    {/* الحساب — نفس أيقونات EmployeeManagement */}
                     <TableCell className="text-center">
-                      <span className="text-[10px] font-medium text-slate-500">
-                        {ROLE_CFG[emp.user_role]?.label || "—"}
-                      </span>
+                      <AccountStatusIcon emp={emp} canManageAccounts={canManage}
+                        canResetPins={canResetPins} onAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
-                    <TableCell className="text-center">
-                      <AccountBadge status={emp.account_status} />
-                    </TableCell>
+                    {/* الصلاحيات — نفس dropdown EmployeeManagement */}
+                    {canChangeRoles && (
+                      <TableCell className="text-center">
+                        <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
+                          myLevel={myLevel} onChangeRole={handleChangeRole} isAr={isAr}/>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-1 justify-center">
                         {canEdit && (
@@ -558,19 +694,11 @@ export default function EmployeesList({ department }) {
                             <Edit className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        {canManage && emp.national_id && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" dir="rtl" className="font-cairo">
-                              {emp.account_status === "active" && <DropdownMenuItem onClick={() => handleAccountAction(emp.id,"freeze-account",emp.name)} className="text-blue-600"><ShieldX className="w-4 h-4 ml-2"/>تجميد</DropdownMenuItem>}
-                              {["pending","frozen","no_account"].includes(emp.account_status||"no_account") && <DropdownMenuItem onClick={() => handleAccountAction(emp.id,"activate-account",emp.name)} className="text-emerald-600"><ShieldCheck className="w-4 h-4 ml-2"/>تفعيل</DropdownMenuItem>}
-                              {canResetPins && (emp.account_status==="active"||emp.account_status==="frozen") && <DropdownMenuItem onClick={() => handleAccountAction(emp.id,"reset-pin",emp.name)}><KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة PIN</DropdownMenuItem>}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        {canDelete && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive"
+                            onClick={() => { setDeleteTarget(emp); setDeleteDialog(true); }}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>
