@@ -871,24 +871,6 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحالة':'Status'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-2.5 w-24">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
-                        <ShieldCheck className="w-4 h-4 text-emerald-600"/>
-                      </div>
-                      <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحساب':'Account'}</span>
-                    </div>
-                  </TableHead>
-                  {canChangeRoles && (
-                    <TableHead className="text-center py-2.5 w-28">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
-                          <Shield className="w-4 h-4 text-violet-600"/>
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-600">{isAr?'الصلاحيات':'Role'}</span>
-                      </div>
-                    </TableHead>
-                  )}
                   <TableHead className="text-center py-2.5 w-14">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
@@ -1045,61 +1027,6 @@ export default function EmployeeManagement({ department }) {
                         </span>
                       )}
                     </TableCell>
-
-                    {/* Account — smart icon */}
-                    <TableCell className="text-center">
-                      <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts} canResetPins={canResetPins}
-                        handleAccountAction={handleAccountAction} isAr={isAr}/>
-                    </TableCell>
-
-                    {/* Role / Permissions — admin & gm only */}
-                    {canChangeRoles && (
-                      <TableCell className="text-center">
-                        {emp.user_id ? (() => {
-                          const ROLE_COLORS = {
-                            general_manager:    '#7c3aed',
-                            department_manager: '#1d4ed8',
-                            shift_supervisor:   '#0f766e',
-                            field_staff:        '#047857',
-                            admin_staff:        '#64748b',
-                          };
-                          const ROLE_LABELS = {
-                            general_manager:    'مدير عام',
-                            department_manager: 'مدير إدارة',
-                            shift_supervisor:   'مشرف وردية',
-                            field_staff:        'موظف ميداني',
-                            admin_staff:        'موظف إداري',
-                          };
-                          const currentRole = emp.user_role || 'field_staff';
-                          return ASSIGNABLE_ROLES.length > 0 ? (
-                            <Select value={currentRole}
-                              onValueChange={(newRole) => handleChangeRole(emp, newRole)}>
-                              <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[90px] justify-center"
-                                style={{ color: ROLE_COLORS[currentRole] }}
-                                data-testid={`role-select-${emp.id}`}>
-                                <SelectValue/>
-                              </SelectTrigger>
-                              <SelectContent dir="rtl">
-                                {ASSIGNABLE_ROLES.map(r => (
-                                  <SelectItem key={r.value} value={r.value} className="text-[11px]">
-                                    <div className="flex items-center gap-1.5">
-                                      <Shield className="w-3 h-3" style={{ color: ROLE_COLORS[r.value] }}/>
-                                      {r.ar}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
-                              {ROLE_LABELS[currentRole] || currentRole}
-                            </span>
-                          );
-                        })() : (
-                          <span className="text-[9px] text-slate-400" title="فعّل الحساب أولاً">—</span>
-                        )}
-                      </TableCell>
-                    )}
 
                     {/* Actions — ⋮ dropdown */}
                     <TableCell className="text-center">
