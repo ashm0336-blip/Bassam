@@ -326,7 +326,7 @@ export const Layout = () => {
       {/* Mobile sidebar */}
       <aside 
         className={`
-          fixed inset-y-0 right-0 w-72 bg-card z-50 transform transition-transform duration-300
+          fixed top-0 right-0 bottom-[60px] w-72 bg-card z-50 flex flex-col transform transition-transform duration-300
           lg:hidden
           ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}
         `}
@@ -358,7 +358,7 @@ export const Layout = () => {
           </p>
         </div>
 
-        <ScrollArea className="flex-1 py-4 h-[calc(100vh-280px)]">
+        <ScrollArea className="flex-1 py-4 overflow-y-auto">
           <nav className="space-y-1 px-3">
             {navigation.map((item) => (
               <NavItem 
@@ -385,7 +385,7 @@ export const Layout = () => {
         </ScrollArea>
 
         {/* User info + action buttons at bottom of mobile sidebar */}
-        <div className="border-t border-border pb-20">
+        <div className="border-t border-border mt-auto">
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="font-cairo font-semibold text-primary">
