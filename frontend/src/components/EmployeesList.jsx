@@ -10,7 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import {
   Plus, Search, LayoutGrid, List, Download, Upload, FileText,
   Edit, Trash2, ShieldCheck, ShieldX, ShieldOff, UserPlus, KeyRound,
-  Loader2, MoreVertical, User, Briefcase, Calendar, Hash,
+  Loader2, MoreVertical, User, Users, Briefcase, Calendar, Hash,
   RefreshCw, Filter, ChevronDown, Phone, Building2, Shield,
   Check, X, Info, UserCheck, CalendarDays, Clock, Zap,
 } from "lucide-react";
@@ -686,48 +686,92 @@ export default function EmployeesList({ department }) {
       {view === "list" && filtered.length > 0 && (
         <Card>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[900px]">
               <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead className="text-right">الموظف</TableHead>
-                  <TableHead className="text-center">رقم الهوية</TableHead>
-                  <TableHead className="text-center">المسمى</TableHead>
-                  <TableHead className="text-center">النوع</TableHead>
-                  <TableHead className="text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-7 h-7 rounded-xl bg-emerald-100 flex items-center justify-center">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600"/>
+                <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
+                  {/* الموظف */}
+                  <TableHead className="text-right py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <Users className="w-4 h-4 text-primary"/>
                       </div>
-                      <span className="text-[10px] font-semibold text-slate-600">الحساب</span>
+                      <span className="text-sm font-bold text-foreground">الموظف</span>
                     </div>
                   </TableHead>
+                  {/* رقم الهوية */}
+                  <TableHead className="text-center py-2.5 w-36">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                        <Hash className="w-4 h-4 text-slate-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">رقم الهوية</span>
+                    </div>
+                  </TableHead>
+                  {/* المسمى */}
+                  <TableHead className="text-center py-2.5 w-40">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
+                        <Briefcase className="w-4 h-4 text-blue-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">المسمى</span>
+                    </div>
+                  </TableHead>
+                  {/* النوع */}
+                  <TableHead className="text-center py-2.5 w-24">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center shadow-sm">
+                        <User className="w-4 h-4 text-indigo-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">النوع</span>
+                    </div>
+                  </TableHead>
+                  {/* الحساب */}
+                  <TableHead className="text-center py-2.5 w-28">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">الحساب</span>
+                    </div>
+                  </TableHead>
+                  {/* الصلاحيات */}
                   {canChangeRoles && (
-                    <TableHead className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-7 h-7 rounded-xl bg-violet-100 flex items-center justify-center">
-                          <Shield className="w-3.5 h-3.5 text-violet-600"/>
+                    <TableHead className="text-center py-2.5 w-32">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
+                          <Shield className="w-4 h-4 text-violet-600"/>
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-600">الصلاحيات</span>
+                        <span className="text-[11px] font-semibold text-slate-600">الصلاحيات</span>
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="text-center w-20">إجراءات</TableHead>
+                  {/* إجراءات */}
+                  <TableHead className="text-center py-2.5 w-16">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                        <MoreVertical className="w-4 h-4 text-slate-500"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-400">⋯</span>
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map(emp => (
-                  <TableRow key={emp.id} className="hover:bg-muted/20" data-testid={`emp-row-${emp.id}`}>
-                    <TableCell>
+                  <TableRow key={emp.id}
+                    className="hover:bg-muted/50 transition-colors [&>td]:py-1.5"
+                    data-testid={`emp-row-${emp.id}`}>
+                    <TableCell className="text-right py-2">
                       <div className="flex items-center gap-2.5">
                         <AvatarInitial name={emp.name} size="sm" />
                         <div>
-                          <p className="font-semibold text-sm">{emp.name}</p>
+                          <p className="font-bold text-sm">{emp.name}</p>
                           {emp.employee_number && <p className="text-[10px] text-muted-foreground">#{emp.employee_number}</p>}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm font-mono">{emp.national_id || "—"}</TableCell>
-                    <TableCell className="text-center text-xs">{emp.job_title || "—"}</TableCell>
+                    <TableCell className="text-center text-sm font-mono text-slate-500">{emp.national_id || "—"}</TableCell>
+                    <TableCell className="text-center text-xs text-slate-600">{emp.job_title || "—"}</TableCell>
                     <TableCell className="text-center"><EmpTypeBadge type={emp.employment_type} /></TableCell>
                     {/* الحساب — نفس أيقونات EmployeeManagement */}
                     <TableCell className="text-center">
