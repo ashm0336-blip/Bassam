@@ -76,7 +76,7 @@ function SettingsTabButton({ icon: Icon, label, count, isActive, onClick, theme 
       </span>
       {count !== undefined && count !== null && (
         <span
-          className={`absolute -top-1 -left-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+          className={`absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
           style={{ backgroundColor: isActive ? theme.accent : '#9ca3af' }}
         >
           {count}
@@ -106,7 +106,7 @@ export default function DepartmentSettings({ department }) {
   const [employeeVersion, setEmployeeVersion] = useState(0);
 
   const [shifts, setShifts] = useState([]);
-  const [counts, setCounts] = useState({ employees: 0, shifts: 0, gates: 0, maps: 0, categories: 0 });
+  const [counts, setCounts] = useState({ employees: 0, shifts: 0, gates: 0, maps: 0, categories: 0, schedule: null });
 
   const [formData, setFormData] = useState({
     value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: 0
@@ -150,6 +150,27 @@ export default function DepartmentSettings({ department }) {
         gates: gatesCount,
         maps: mapsCount
       }));
+
+      // جلب الجدول الشهري الحالي لعرض badge ذكي
+      try {
+        const SA_TZ_OFFSET = 3 * 60;
+        const now = new Date(Date.now() + SA_TZ_OFFSET * 60 * 1000);
+        const currentMonth = now.toISOString().slice(0, 7);
+        const schedRes = await axios.get(`${API}/schedules/${department}/${currentMonth}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: null }));
+        const sched = schedRes.data;
+        if (sched) {
+          const assignedCount = sched.assignments?.length || 0;
+          // badge: لو معتمد → عدد الموظفين، لو مسودة → "مسودة"
+          setCounts(prev => ({
+            ...prev,
+            schedule: sched.status === 'active' ? assignedCount : 'مسودة'
+          }));
+        } else {
+          setCounts(prev => ({ ...prev, schedule: null }));
+        }
+      } catch { /* لا جدول */ }
 
       // Fetch categories count for plazas and haram_map
       if (department === 'plazas' || department === 'haram_map') {
@@ -237,7 +258,7 @@ export default function DepartmentSettings({ department }) {
   // Build tabs list — order: الموظفون → الجدول الشهري → الورديات → الخرائط → (dept-specific)
   const tabs = [];
   tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون'       : 'Staff',    icon: Users,       count: counts.employees });
-  tabs.push({ id: 'employees',      label: language === 'ar' ? 'الجدول الشهري'  : 'Schedule', icon: CalendarDays, count: null });
+  tabs.push({ id: 'employees',      label: language === 'ar' ? 'الجدول الشهري'  : 'Schedule', icon: CalendarDays, count: counts.schedule });
   tabs.push({ id: 'shifts',         label: language === 'ar' ? 'الورديات'       : 'Shifts',   icon: Clock,       count: counts.shifts   });
   tabs.push({ id: 'maps',           label: language === 'ar' ? 'الخرائط'        : 'Maps',     icon: Layers,      count: counts.maps     });
   if (department === 'gates') {
