@@ -206,28 +206,41 @@ function TaskCard({ task, canManage, onEdit, onDelete, onStatus }) {
 }
 
 // ── Calendar Cell ──────────────────────────────────────────────
-function CalendarCell({ date, data, isSelected, isToday, isFuture, onClick }) {
+function CalendarCell({ date, data, isSelected, isToday, isFuture, onClick, onAdd }) {
   const dayNum = parseInt(date.split("-")[2]);
   const dayOfWeek = new Date(date+"T00:00:00").getDay();
   const cfg = data ? (DAY_STATUS_CFG[data.day_status] || DAY_STATUS_CFG.empty) : DAY_STATUS_CFG.empty;
   const hasData = data && data.total > 0;
   return (
-    <button onClick={()=>onClick(date)}
-      className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all border
-        ${isSelected ? "ring-2 ring-primary ring-offset-1 scale-105 shadow-md" : "hover:scale-105 hover:shadow-sm"}
-        ${isFuture ? "opacity-40" : ""}`}
-      style={hasData ? { backgroundColor: cfg.bg, borderColor: cfg.border } : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
-      title={hasData ? `${data.total} مهمة | ${data.done} منجزة | ${data.pct}%` : "لا مهام"}>
-      {isToday && <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary"/>}
-      <span className={`text-sm font-bold leading-none ${isSelected?"text-primary":isFuture?"text-slate-300":"text-slate-700"}`}>{dayNum}</span>
-      <span className="text-[8px] text-slate-400">{DAY_NAMES[dayOfWeek]}</span>
-      {hasData && (
-        <div className="flex items-center gap-0.5">
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.dot }}/>
-          <span className="text-[8px] font-bold" style={{ color: cfg.dot }}>{data.pct}%</span>
-        </div>
+    <div className="relative group">
+      <button onClick={()=>onClick(date)}
+        className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all border
+          ${isSelected ? "ring-2 ring-primary ring-offset-1 scale-105 shadow-md" : "hover:scale-105 hover:shadow-sm"}`}
+        style={hasData ? { backgroundColor: cfg.bg, borderColor: cfg.border } : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
+        title={hasData ? `${data.total} مهمة | ${data.done} منجزة | ${data.pct}%` : isFuture ? "اضغط للتخطيط المسبق" : "اضغط لعرض المهام"}>
+        {isToday && <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary"/>}
+        <span className={`text-sm font-bold leading-none ${isSelected?"text-primary":isFuture?"text-slate-400":"text-slate-700"}`}>{dayNum}</span>
+        <span className="text-[8px] text-slate-400">{DAY_NAMES[dayOfWeek]}</span>
+        {hasData && (
+          <div className="flex items-center gap-0.5">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.dot }}/>
+            <span className="text-[8px] font-bold" style={{ color: cfg.dot }}>{data.pct}%</span>
+          </div>
+        )}
+        {isFuture && !hasData && (
+          <span className="text-[8px] text-slate-300">📅</span>
+        )}
+      </button>
+      {/* زر + للإضافة السريعة عند hover */}
+      {onAdd && !isSelected && (
+        <button onClick={e=>{ e.stopPropagation(); onAdd(date); }}
+          className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center
+            shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 z-10"
+          title={`إضافة مهمة ليوم ${date}`}>
+          <Plus className="w-3 h-3"/>
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -604,17 +617,24 @@ export default function TasksPage({ department }) {
             <div className="flex items-center justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-primary"/></div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 space-y-3">
-              <div className="text-5xl">📋</div>
+              <div className="text-5xl">{isFuture(selectedDate) ? "📅" : "📋"}</div>
               <p className="font-cairo font-bold text-muted-foreground">
-                {filterStatus !== "all" ? "لا توجد مهام بهذه الحالة" : "لا توجد مهام لهذا اليوم"}
+                {filterStatus !== "all"
+                  ? "لا توجد مهام بهذه الحالة"
+                  : isFuture(selectedDate)
+                  ? "لا توجد مهام مخططة لهذا اليوم بعد"
+                  : "لا توجد مهام لهذا اليوم"}
               </p>
-              {isManager && filterStatus === "all" && !isFuture(selectedDate) && (
-                <Button size="sm" onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }} className="gap-1">
-                  <Plus className="w-3.5 h-3.5"/>إضافة مهمة
-                </Button>
-              )}
-              {isFuture(selectedDate) && isManager && filterStatus === "all" && (
-                <p className="text-xs text-muted-foreground">يمكنك التخطيط المسبق وإضافة مهام للمستقبل</p>
+              {isManager && filterStatus === "all" && (
+                <div className="space-y-2">
+                  <Button size="sm" onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }} className="gap-1.5">
+                    <Plus className="w-3.5 h-3.5"/>
+                    {isFuture(selectedDate) ? `تخطيط مسبق ليوم ${selectedDate}` : "إضافة مهمة"}
+                  </Button>
+                  {isFuture(selectedDate) && (
+                    <p className="text-[10px] text-muted-foreground">💡 يمكنك التخطيط مسبقاً لأي يوم قادم</p>
+                  )}
+                </div>
               )}
             </div>
           ) : subView === "kanban" ? (
@@ -769,7 +789,8 @@ export default function TasksPage({ department }) {
                     <CalendarCell key={i} date={date} data={monthData[date]}
                       isSelected={date===selectedDate} isToday={date===today}
                       isFuture={isFuture(date)}
-                      onClick={(d)=>{ setSelectedDate(d); setView("day"); }}/>
+                      onClick={(d)=>{ setSelectedDate(d); setView("day"); }}
+                      onAdd={isManager ? (d)=>{ setSelectedDate(d); setEditTask(null); setForm({...emptyForm,work_date:d}); setDialogOpen(true); } : null}/>
                   ) : <div key={i}/>)}
                 </div>
               )}
