@@ -106,7 +106,7 @@ function QuickAssignSearch({ activeZones, zoneEmployeeMap, unassignedEmployees, 
   );
 }
 
-export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession, ZONE_TYPES, selectedFloor, imgRatio, panelCollapsed, onPanelToggle, readOnly = false }) {
+export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession, ZONE_TYPES, selectedFloor, imgRatio, department, panelCollapsed, onPanelToggle, readOnly = false }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const isMobile = useIsMobile();
@@ -185,15 +185,16 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
   useEffect(() => {
+    const dept = department || selectedFloor?.department || "haram_map";
     const fetch = async () => {
       try {
-        const res = await axios.get(`${API}/employees?department=plazas`, getAuthHeaders());
+        const res = await axios.get(`${API}/employees?department=${dept}`, getAuthHeaders());
         setEmployees(res.data.filter(e => e.is_active));
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
     fetch();
-  }, []);
+  }, [department, selectedFloor?.department]);
 
   const filteredEmployees = useMemo(() => {
     // Only show non-admin-staff employees with active contracts
@@ -423,10 +424,16 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
 
   if (employees.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed py-12 text-center">
-        <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-        <h3 className="font-cairo font-semibold text-slate-600 mb-1">{isAr ? "لا يوجد موظفين" : "No employees"}</h3>
-        <p className="text-xs text-muted-foreground">{isAr ? "أضف موظفين من إعدادات القسم أولاً" : "Add from settings first"}</p>
+      <div className="rounded-xl border-2 border-dashed py-8 text-center space-y-3">
+        <Users className="w-12 h-12 mx-auto text-slate-300" />
+        <div>
+          <h3 className="font-cairo font-semibold text-slate-600 mb-1">{isAr ? "لا يوجد موظفون في هذه الإدارة بعد" : "No employees yet"}</h3>
+          <p className="text-xs text-muted-foreground mb-3">{isAr ? "لإضافة موظفين: اذهب إلى إعدادات الإدارة ← تبويب الموظفين ← أضف موظفاً جديداً" : "Go to Department Settings → Employees tab to add staff"}</p>
+        </div>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 font-cairo">
+          <span>🔧</span>
+          <span>{isAr ? "الإعدادات ← الموظفين ← موظف جديد" : "Settings → Employees → Add New"}</span>
+        </div>
       </div>
     );
   }

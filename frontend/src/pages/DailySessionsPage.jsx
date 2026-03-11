@@ -1322,6 +1322,7 @@ export default function DailySessionsPage() {
                   <ZoneEmployeesTab activeZones={activeZones} activeSession={activeSession}
                     setActiveSession={setActiveSession}
                     ZONE_TYPES={ZONE_TYPES} selectedFloor={selectedFloor} imgRatio={imgRatio}
+                    department={selectedFloor?.department || "haram_map"}
                     panelCollapsed={employeesPanelCollapsed}
                     onPanelToggle={() => setEmployeesPanelCollapsed(p => !p)}
                     readOnly={!canDistribute}
