@@ -5,7 +5,7 @@ import uuid
 import copy
 
 from database import db
-from auth import require_admin, log_activity
+from auth import require_department_manager, log_activity
 from models import (
     SessionZone, MapSession, MapSessionCreate, MapSessionUpdate, SessionZoneUpdate,
     GateSession, GateSessionCreate, GateSessionUpdate, SessionGateUpdate,
@@ -70,7 +70,7 @@ def _clone_zones_from_source(source_zones):
 
 
 @router.post("/admin/map-sessions")
-async def create_map_session(data: MapSessionCreate, admin: dict = Depends(require_admin)):
+async def create_map_session(data: MapSessionCreate, admin: dict = Depends(require_department_manager)):
     # For prayer sessions: check uniqueness by date + floor + prayer
     if data.session_type == "prayer" and data.prayer:
         existing = await db.map_sessions.find_one({"date": data.date, "floor_id": data.floor_id, "prayer": data.prayer}, {"_id": 0})
@@ -142,7 +142,7 @@ async def create_map_session(data: MapSessionCreate, admin: dict = Depends(requi
 
 
 @router.put("/admin/map-sessions/{session_id}")
-async def update_map_session(session_id: str, data: MapSessionUpdate, admin: dict = Depends(require_admin)):
+async def update_map_session(session_id: str, data: MapSessionUpdate, admin: dict = Depends(require_department_manager)):
     existing = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -154,7 +154,7 @@ async def update_map_session(session_id: str, data: MapSessionUpdate, admin: dic
 
 
 @router.delete("/admin/map-sessions/{session_id}")
-async def delete_map_session(session_id: str, admin: dict = Depends(require_admin)):
+async def delete_map_session(session_id: str, admin: dict = Depends(require_department_manager)):
     result = await db.map_sessions.delete_one({"id": session_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -163,7 +163,7 @@ async def delete_map_session(session_id: str, admin: dict = Depends(require_admi
 
 
 @router.post("/admin/map-sessions/batch")
-async def batch_create_sessions(request: Request, admin: dict = Depends(require_admin)):
+async def batch_create_sessions(request: Request, admin: dict = Depends(require_department_manager)):
     body = await request.json()
     start_date = body.get("start_date")
     end_date = body.get("end_date")
@@ -233,7 +233,7 @@ def _recalc_summary(zones):
 
 
 @router.put("/admin/map-sessions/{session_id}/zones/{zone_id}")
-async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUpdate, admin: dict = Depends(require_admin)):
+async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUpdate, admin: dict = Depends(require_department_manager)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -259,7 +259,7 @@ async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUp
 
 
 @router.post("/admin/map-sessions/{session_id}/zones")
-async def add_session_zone(session_id: str, request: Request, admin: dict = Depends(require_admin)):
+async def add_session_zone(session_id: str, request: Request, admin: dict = Depends(require_department_manager)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -285,7 +285,7 @@ async def add_session_zone(session_id: str, request: Request, admin: dict = Depe
 
 
 @router.delete("/admin/map-sessions/{session_id}/zones/{zone_id}")
-async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depends(require_admin)):
+async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depends(require_department_manager)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -298,7 +298,7 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
 
 
 @router.put("/admin/map-sessions/{session_id}/density-batch")
-async def batch_update_density(session_id: str, data: dict = Body(...), admin: dict = Depends(require_admin)):
+async def batch_update_density(session_id: str, data: dict = Body(...), admin: dict = Depends(require_department_manager)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -402,7 +402,7 @@ async def get_gate_session(session_id: str):
 
 
 @router.post("/admin/gate-sessions")
-async def create_gate_session(data: GateSessionCreate, admin: dict = Depends(require_admin)):
+async def create_gate_session(data: GateSessionCreate, admin: dict = Depends(require_department_manager)):
     existing = await db.gate_sessions.find_one({"date": data.date, "floor_id": data.floor_id}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="توجد جلسة بالفعل لهذا التاريخ والطابق")
@@ -439,7 +439,7 @@ async def create_gate_session(data: GateSessionCreate, admin: dict = Depends(req
 
 
 @router.put("/admin/gate-sessions/{session_id}")
-async def update_gate_session(session_id: str, data: GateSessionUpdate, admin: dict = Depends(require_admin)):
+async def update_gate_session(session_id: str, data: GateSessionUpdate, admin: dict = Depends(require_department_manager)):
     existing = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -450,7 +450,7 @@ async def update_gate_session(session_id: str, data: GateSessionUpdate, admin: d
 
 
 @router.delete("/admin/gate-sessions/{session_id}")
-async def delete_gate_session(session_id: str, admin: dict = Depends(require_admin)):
+async def delete_gate_session(session_id: str, admin: dict = Depends(require_department_manager)):
     result = await db.gate_sessions.delete_one({"id": session_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -458,7 +458,7 @@ async def delete_gate_session(session_id: str, admin: dict = Depends(require_adm
 
 
 @router.put("/admin/gate-sessions/{session_id}/gates/{gate_id}")
-async def update_session_gate(session_id: str, gate_id: str, data: SessionGateUpdate, admin: dict = Depends(require_admin)):
+async def update_session_gate(session_id: str, gate_id: str, data: SessionGateUpdate, admin: dict = Depends(require_department_manager)):
     session = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -486,7 +486,7 @@ async def update_session_gate(session_id: str, gate_id: str, data: SessionGateUp
 
 
 @router.post("/admin/gate-sessions/batch")
-async def batch_create_gate_sessions(request: Request, admin: dict = Depends(require_admin)):
+async def batch_create_gate_sessions(request: Request, admin: dict = Depends(require_department_manager)):
     body = await request.json()
     start_date, end_date, floor_id = body.get("start_date"), body.get("end_date"), body.get("floor_id")
     clone_from = body.get("clone_from", "master")
