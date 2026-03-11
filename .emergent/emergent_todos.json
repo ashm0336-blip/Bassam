@@ -1,22 +1,10 @@
 [
   {
-    "content": "Backend: خدمة حساب حالة الموظف",
+    "content": "Backend: work_date + endpoints",
     "status": "completed"
   },
   {
-    "content": "Backend: تحديث dashboard/ops و departments",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend TasksPage: تكليف ذكي + تجاوز طارئ",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend Dashboard: KPIs جديدة",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend DepartmentOverview: widgets حالة الوردية + مهام اليوم",
+    "content": "Frontend: TasksPage بالتقويم",
     "status": "completed"
   }
 ]

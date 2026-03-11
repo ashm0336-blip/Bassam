@@ -7,8 +7,10 @@ import {
   Edit, AlertTriangle, ChevronDown, Users, Zap, Calendar,
   ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
   Flame, TimerOff, Timer, AlarmClock, Star, Trophy, TrendingUp,
+  ChevronLeft, ChevronRight, CalendarDays, Archive, Award,
+  BarChart3, Target,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,278 +27,237 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// ── Config ────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────
 const PRIORITY_CFG = {
   low:    { label: "منخفض",  color: "#64748b", bg: "#f1f5f9", border: "#cbd5e1", Icon: ArrowUpRight },
   normal: { label: "عادي",   color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: CircleDot },
   high:   { label: "مرتفع",  color: "#d97706", bg: "#fffbeb", border: "#fcd34d", Icon: Zap },
   urgent: { label: "عاجل",   color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
 };
-
 const STATUS_CFG = {
-  pending:     { label: "قيد الانتظار", color: "#64748b", bg: "#f8fafc", border: "#e2e8f0", Icon: Clock },
-  in_progress: { label: "جارية",        color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: Loader2 },
-  done:        { label: "مكتملة",       color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", Icon: CheckCircle2 },
-  overdue:     { label: "متأخرة",       color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
+  pending:     { label: "انتظار",  color: "#64748b", bg: "#f8fafc", border: "#e2e8f0", Icon: Clock },
+  in_progress: { label: "جارية",  color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", Icon: Loader2 },
+  done:        { label: "منجزة",  color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", Icon: CheckCircle2 },
+  overdue:     { label: "متأخرة", color: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertTriangle },
 };
+const PERF_CFG = {
+  early:   { label: "مبكر",    Icon: Star,         cls: "bg-amber-50 text-amber-700 border-amber-300" },
+  on_time: { label: "في الوقت", Icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
+  late:    { label: "متأخر",   Icon: TimerOff,     cls: "bg-red-50 text-red-600 border-red-200" },
+};
+const TIME_STATUS_CFG = {
+  overdue:  { bg:"bg-red-100",    text:"text-red-700",    border:"border-red-300",    Icon: TimerOff,   pulse:true  },
+  critical: { bg:"bg-red-50",     text:"text-red-600",    border:"border-red-200",    Icon: Flame,      pulse:true  },
+  warning:  { bg:"bg-amber-50",   text:"text-amber-700",  border:"border-amber-200",  Icon: AlarmClock, pulse:false },
+  soon:     { bg:"bg-yellow-50",  text:"text-yellow-700", border:"border-yellow-200", Icon: Timer,      pulse:false },
+  normal:   { bg:"bg-slate-50",   text:"text-slate-500",  border:"border-slate-200",  Icon: Calendar,   pulse:false },
+};
+const DAY_STATUS_CFG = {
+  great:   { bg: "#dcfce7", border: "#86efac", dot: "#22c55e", label: "ممتاز" },
+  good:    { bg: "#d1fae5", border: "#6ee7b7", dot: "#10b981", label: "جيد" },
+  partial: { bg: "#fef9c3", border: "#fde047", dot: "#eab308", label: "جزئي" },
+  bad:     { bg: "#fee2e2", border: "#fca5a5", dot: "#ef4444", label: "متأخر" },
+  empty:   { bg: "#f8fafc", border: "#e2e8f0", dot: "#cbd5e1", label: "لا مهام" },
+};
+const MONTH_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
+                  "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const DAY_NAMES = ["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"];
 
-const KANBAN_COLUMNS = [
-  { key: "pending",     ...STATUS_CFG.pending },
-  { key: "in_progress", ...STATUS_CFG.in_progress },
-  { key: "done",        ...STATUS_CFG.done },
-  { key: "overdue",     ...STATUS_CFG.overdue },
-];
+// ── Helpers ────────────────────────────────────────────────────
+function getSADate(d = new Date()) {
+  return new Date(d.getTime() + 3*60*60*1000).toISOString().slice(0,10);
+}
+function getSANow() { return new Date(Date.now() + 3*60*60*1000); }
+function formatDate(d) {
+  const dt = new Date(d + "T00:00:00");
+  return dt.toLocaleDateString("ar-SA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+}
+function monthLabel(m) {
+  const [y,mo] = m.split("-");
+  return `${MONTH_AR[parseInt(mo)-1]} ${y}`;
+}
+function formatRemaining(mins) {
+  const abs = Math.abs(mins);
+  if (abs < 60) return `${abs} د`;
+  const h = Math.floor(abs/60), m = abs%60;
+  return m > 0 ? `${h}س ${m}د` : `${h} ساعة`;
+}
+function get_time_status(dueAt, status) {
+  if (status === "done" || !dueAt) return "none";
+  const due = new Date(dueAt);
+  const diffH = (due - Date.now()) / 3.6e6;
+  if (diffH < 0) return "overdue";
+  if (diffH < 1) return "critical";
+  if (diffH < 3) return "warning";
+  if (diffH < 24) return "soon";
+  return "normal";
+}
 
-// ── Sub-components ────────────────────────────────────────────
-
+// ── Sub-components ─────────────────────────────────────────────
 function PriorityBadge({ priority }) {
   const cfg = PRIORITY_CFG[priority] || PRIORITY_CFG.normal;
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
       style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
-      <cfg.Icon className="w-3 h-3" />
-      {cfg.label}
+      <cfg.Icon className="w-3 h-3"/>{cfg.label}
     </span>
   );
 }
-
 function StatusBadge({ status }) {
   const cfg = STATUS_CFG[status] || STATUS_CFG.pending;
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border"
       style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
-      <cfg.Icon className="w-3 h-3" />
-      {cfg.label}
+      <cfg.Icon className="w-3 h-3"/>{cfg.label}
     </span>
   );
 }
-
-function AssigneeAvatars({ assignees, max = 3 }) {
+function PerformanceBadge({ performance, delta }) {
+  if (!performance || performance === "no_due") return null;
+  const cfg = PERF_CFG[performance];
+  if (!cfg) return null;
+  const label = performance === "early" && delta ? `مبكر بـ ${formatRemaining(Math.abs(delta))}`
+    : performance === "late" && delta ? `تأخر ${formatRemaining(Math.abs(delta))}`
+    : cfg.label;
+  return <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${cfg.cls}`}><cfg.Icon className="w-3 h-3"/>{label}</span>;
+}
+function AssigneeAvatars({ assignees, max=3 }) {
   const shown = assignees.slice(0, max);
-  const rest = assignees.length - max;
   return (
-    <div className="flex items-center -space-x-1 rtl:space-x-reverse">
-      {shown.map((a, i) => (
-        <div key={i} title={a.name}
-          className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm">
-          {a.name?.charAt(0) || "؟"}
+    <div className="flex -space-x-1 rtl:space-x-reverse">
+      {shown.map((a,i) => (
+        <div key={i} title={a.name} className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold border-2 border-white shadow-sm">
+          {a.name?.charAt(0)||"؟"}
         </div>
       ))}
-      {rest > 0 && (
-        <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-bold border-2 border-white">
-          +{rest}
-        </div>
-      )}
+      {assignees.length > max && <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-bold border-2 border-white">+{assignees.length-max}</div>}
     </div>
   );
 }
 
-// ── Time Status Config ────────────────────────────────────────
-const TIME_STATUS_CFG = {
-  overdue:  { label: "متأخرة!",         bg: "bg-red-100",    text: "text-red-700",    border: "border-red-300",    Icon: TimerOff,    pulse: true  },
-  critical: { label: "أقل من ساعة",     bg: "bg-red-50",     text: "text-red-600",    border: "border-red-200",    Icon: Flame,       pulse: true  },
-  warning:  { label: "قريب",            bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200",  Icon: AlarmClock,  pulse: false },
-  soon:     { label: "اليوم",           bg: "bg-yellow-50",  text: "text-yellow-700", border: "border-yellow-200", Icon: Timer,       pulse: false },
-  normal:   { label: "",                bg: "bg-slate-50",   text: "text-slate-500",  border: "border-slate-200",  Icon: Calendar,    pulse: false },
-  none:     { label: "",                bg: "",              text: "",                border: "",                  Icon: null,        pulse: false },
-};
-
-function formatRemaining(minutes) {
-  if (minutes === null || minutes === undefined) return "";
-  const abs = Math.abs(minutes);
-  if (abs < 60) return `${abs} د`;
-  if (abs < 1440) return `${Math.floor(abs / 60)} س ${abs % 60 > 0 ? `${abs % 60}د` : ""}`;
-  return `${Math.floor(abs / 1440)} يوم`;
-}
-
-function DueBadge({ dueAt, timeStatus, remainingMinutes }) {
-  if (!dueAt) return null;
-  const cfg = TIME_STATUS_CFG[timeStatus] || TIME_STATUS_CFG.normal;
-  if (!cfg.Icon) return null;
-
-  const isLate = timeStatus === "overdue";
-  const abs = Math.abs(remainingMinutes || 0);
-  const label = isLate
-    ? `تأخر ${formatRemaining(abs)}`
-    : timeStatus === "normal"
-    ? formatRemaining(remainingMinutes)
-    : cfg.label;
-
+// ── Task Card (minimal, for day view) ─────────────────────────
+function TaskCard({ task, canManage, onEdit, onDelete, onStatus }) {
+  const ts = get_time_status(task.due_at, task.status);
+  const tsCfg = TIME_STATUS_CFG[ts];
+  const isDone = task.status === "done";
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border
-      ${cfg.bg} ${cfg.text} ${cfg.border}
-      ${cfg.pulse ? "animate-pulse" : ""}`}>
-      <cfg.Icon className="w-3 h-3 flex-shrink-0" />
-      {label}
-    </span>
-  );
-}
-
-// ── Performance Badge (للمهام المكتملة) ─────────────────────────
-const PERF_CFG = {
-  early:   { label: "مبكر", Icon: Star,        cls: "bg-amber-50 text-amber-700 border-amber-300",  glow: "shadow-amber-200" },
-  on_time: { label: "في الوقت", Icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-700 border-emerald-300", glow: "" },
-  late:    { label: "متأخر",   Icon: TimerOff,  cls: "bg-red-50 text-red-600 border-red-200",        glow: "" },
-  no_due:  { label: "منجزة",   Icon: CheckCircle2, cls: "bg-slate-50 text-slate-500 border-slate-200", glow: "" },
-};
-
-function formatDelta(mins) {
-  if (!mins) return "";
-  const abs = Math.abs(mins);
-  if (abs < 60) return `${abs} د`;
-  const h = Math.floor(abs / 60), m = abs % 60;
-  return m > 0 ? `${h}س ${m}د` : `${h} ساعة`;
-}
-
-function PerformanceBadge({ performance, deltaMinutes }) {
-  if (!performance || performance === "no_due") return null;
-  const cfg = PERF_CFG[performance] || PERF_CFG.no_due;
-  const delta = deltaMinutes ? formatDelta(deltaMinutes) : "";
-  const label = performance === "early"
-    ? `مبكر ${delta ? `بـ ${delta}` : ""}`
-    : performance === "late"
-    ? `تأخر ${delta}`
-    : "في الوقت";
-
-  return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border shadow-sm
-      ${cfg.cls} ${cfg.glow}`}>
-      <cfg.Icon className="w-3 h-3 flex-shrink-0" />
-      {label}
-    </span>
-  );
-}
-
-// ── Kanban Card ───────────────────────────────────────────────
-function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr }) {
-  const pri = PRIORITY_CFG[task.priority] || PRIORITY_CFG.normal;
-  return (
-    <div className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 p-3 space-y-2.5 cursor-default"
-      style={{ borderLeftWidth: "3px", borderLeftColor: pri.color }}
+    <div className={`group bg-white rounded-xl border shadow-sm hover:shadow-md transition-all p-3 space-y-2
+      ${isDone ? "opacity-80" : ""}`}
+      style={{ borderLeftWidth: "3px", borderLeftColor: PRIORITY_CFG[task.priority]?.color || "#6b7280" }}
       data-testid={`task-card-${task.id}`}>
-
-      {/* Header: priority + actions */}
       <div className="flex items-start justify-between gap-2">
-        <PriorityBadge priority={task.priority} />
-        {canManage && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-slate-100">
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-44">
-              <DropdownMenuItem onClick={() => onEdit(task)}><Edit className="w-3.5 h-3.5 ml-2" />تعديل</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {["pending", "in_progress", "done"].map(s => (
-                <DropdownMenuItem key={s} onClick={() => onStatusChange(task.id, s)}
-                  disabled={task.status === s}
-                  className={task.status === s ? "opacity-50" : ""}>
-                  {(() => { const SCfg = STATUS_CFG[s]; return <SCfg.Icon className="w-3.5 h-3.5 ml-2" />; })()}
-                  {STATUS_CFG[s].label}
+        <PriorityBadge priority={task.priority}/>
+        <div className="flex items-center gap-1">
+          <StatusBadge status={task.status}/>
+          {canManage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400"/>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-44">
+                <DropdownMenuItem onClick={()=>onEdit(task)}><Edit className="w-3.5 h-3.5 ml-2"/>تعديل</DropdownMenuItem>
+                <DropdownMenuSeparator/>
+                {["pending","in_progress","done"].map(s=>(
+                  <DropdownMenuItem key={s} onClick={()=>onStatus(task.id,s)} disabled={task.status===s} className={task.status===s?"opacity-50":""}>
+                    {(()=>{const C=STATUS_CFG[s];return <C.Icon className="w-3.5 h-3.5 ml-2"/>;})()}{STATUS_CFG[s].label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator/>
+                <DropdownMenuItem onClick={()=>onDelete(task.id)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="w-3.5 h-3.5 ml-2"/>حذف
                 </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive focus:text-destructive">
-                <Trash2 className="w-3.5 h-3.5 ml-2" />حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        {/* زر تحديث للموظف */}
-        {!canManage && task.status !== "done" && (
-          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
-            onClick={() => onStatusChange(task.id, task.status === "pending" ? "in_progress" : "done")}>
-            {task.status === "pending" ? "بدء" : "إنهاء"}
-          </Button>
-        )}
-      </div>
-
-      {/* Title */}
-      <p className="font-cairo font-semibold text-sm text-foreground leading-snug">{task.title}</p>
-
-      {/* Description */}
-      {task.description && (
-        <p className="text-[11px] text-muted-foreground line-clamp-2">{task.description}</p>
-      )}
-
-      {/* مؤشر أداء الإنجاز — للمهام المكتملة فقط */}
-      {task.status === "done" && task.completion_performance && (
-        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border
-          ${task.completion_performance === "early"
-            ? "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200"
-            : task.completion_performance === "late"
-            ? "bg-red-50 border-red-200"
-            : "bg-emerald-50 border-emerald-200"}`}>
-          <PerformanceBadge
-            performance={task.completion_performance}
-            deltaMinutes={task.completion_delta_minutes}
-          />
-          {task.completion_performance === "early" && (
-            <span className="text-[9px] text-amber-600 font-medium">أداء متميز ⭐</span>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {!canManage && !isDone && (
+            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
+              onClick={()=>onStatus(task.id, task.status==="pending"?"in_progress":"done")}>
+              {task.status==="pending"?"بدء":"إنهاء"}
+            </Button>
           )}
         </div>
-      )}
-
-      {/* Time Progress Bar — مؤشر بصري للوقت المتبقي */}
-      {task.due_at && task.time_status && task.time_status !== "none" && task.status !== "done" && (() => {
-        const cfg = TIME_STATUS_CFG[task.time_status] || TIME_STATUS_CFG.normal;
-        const barColors = { overdue:"bg-red-500", critical:"bg-red-400", warning:"bg-amber-400", soon:"bg-yellow-400", normal:"bg-emerald-400" };
-        const barWidth = { overdue:"w-full", critical:"w-[10%]", warning:"w-[25%]", soon:"w-[50%]", normal:"w-[85%]" };
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className={`text-[10px] font-bold flex items-center gap-1 ${cfg.text}`}>
-                <cfg.Icon className={`w-3 h-3 ${cfg.pulse ? "animate-pulse" : ""}`} />
-                {task.time_status === "overdue"
-                  ? `تأخر ${formatRemaining(Math.abs(task.remaining_minutes || 0))}`
-                  : `متبقي ${formatRemaining(task.remaining_minutes || 0)}`}
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full transition-all ${barColors[task.time_status] || "bg-emerald-400"} ${barWidth[task.time_status] || "w-full"}`} />
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-        <AssigneeAvatars assignees={task.assignees_info || []} />
-        <div className="flex items-center gap-1">
-          <DueBadge dueAt={task.due_at} timeStatus={task.time_status} remainingMinutes={task.remaining_minutes} />
-        </div>
       </div>
-
-      <p className="text-[9px] text-muted-foreground">بواسطة: {task.created_by}</p>
+      <p className="font-cairo font-semibold text-sm">{task.title}</p>
+      {task.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{task.description}</p>}
+      {/* Performance badge for done tasks */}
+      {isDone && task.completion_performance && (
+        <PerformanceBadge performance={task.completion_performance} delta={task.completion_delta_minutes}/>
+      )}
+      {/* Time progress */}
+      {!isDone && ts && ts !== "none" && tsCfg && (
+        <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${tsCfg.bg} ${tsCfg.text} ${tsCfg.border} ${tsCfg.pulse?"animate-pulse":""}`}>
+          <tsCfg.Icon className="w-3 h-3"/>
+          {ts==="overdue" ? `تأخر ${formatRemaining(Math.abs(task.remaining_minutes||0))}` : `متبقي ${formatRemaining(task.remaining_minutes||0)}`}
+        </div>
+      )}
+      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+        <AssigneeAvatars assignees={task.assignees_info||[]}/>
+        <span className="text-[9px] text-muted-foreground">{task.created_by}</span>
+      </div>
     </div>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────
+// ── Calendar Cell ──────────────────────────────────────────────
+function CalendarCell({ date, data, isSelected, isToday, isFuture, onClick }) {
+  const dayNum = parseInt(date.split("-")[2]);
+  const dayOfWeek = new Date(date+"T00:00:00").getDay();
+  const cfg = data ? (DAY_STATUS_CFG[data.day_status] || DAY_STATUS_CFG.empty) : DAY_STATUS_CFG.empty;
+  const hasData = data && data.total > 0;
+  return (
+    <button onClick={()=>onClick(date)}
+      className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all border
+        ${isSelected ? "ring-2 ring-primary ring-offset-1 scale-105 shadow-md" : "hover:scale-105 hover:shadow-sm"}
+        ${isFuture ? "opacity-40" : ""}`}
+      style={hasData ? { backgroundColor: cfg.bg, borderColor: cfg.border } : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
+      title={hasData ? `${data.total} مهمة | ${data.done} منجزة | ${data.pct}%` : "لا مهام"}>
+      {isToday && <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary"/>}
+      <span className={`text-sm font-bold leading-none ${isSelected?"text-primary":isFuture?"text-slate-300":"text-slate-700"}`}>{dayNum}</span>
+      <span className="text-[8px] text-slate-400">{DAY_NAMES[dayOfWeek]}</span>
+      {hasData && (
+        <div className="flex items-center gap-0.5">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.dot }}/>
+          <span className="text-[8px] font-bold" style={{ color: cfg.dot }}>{data.pct}%</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
 export default function TasksPage({ department }) {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isAr = language === "ar";
   const isManager = ["system_admin", "general_manager", "department_manager"].includes(user?.role);
 
+  const dept = department || user?.department;
+  const token = () => localStorage.getItem("token");
+  const today = getSADate();
+
+  // ── State ──────────────────────────────────────────────────
+  const [view, setView] = useState("day");          // day | calendar | archive
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [currentMonth, setCurrentMonth] = useState(today.slice(0,7));
+
   const [tasks, setTasks] = useState([]);
+  const [calendarData, setCalendarData] = useState({});
+  const [archiveData, setArchiveData] = useState([]);
   const [stats, setStats] = useState({});
   const [employees, setEmployees] = useState([]);
-  const [availability, setAvailability] = useState({}); // id → availability_status
-  const [availSummary, setAvailSummary] = useState({});
+  const [availability, setAvailability] = useState({});
   const [activeSchedule, setActiveSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("kanban");
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
+  const [calLoading, setCalLoading] = useState(false);
 
-  // تجاوز الطوارئ
+  // Emergency override
   const [emergencyOverride, setEmergencyOverride] = useState(false);
   const [emergencyReason, setEmergencyReason] = useState("");
 
@@ -304,107 +265,82 @@ export default function TasksPage({ department }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterPriority, setFilterPriority] = useState("all");
 
-  // Form
-  const emptyForm = { title: "", description: "", priority: "normal", due_at: "", assignee_ids: [] };
+  const emptyForm = { title:"", description:"", priority:"normal", due_at:"", assignee_ids:[], work_date: today };
   const [form, setForm] = useState(emptyForm);
 
-  const dept = department || user?.department;
-  const token = () => localStorage.getItem("token");
-
   // ── Fetch ──────────────────────────────────────────────────
-  const fetchTasks = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
+  const fetchTasks = useCallback(async (date=selectedDate) => {
+    setLoading(true);
     try {
       const [tRes, sRes] = await Promise.all([
-        axios.get(`${API}/tasks?department=${dept}`, { headers: { Authorization: `Bearer ${token()}` } }),
-        axios.get(`${API}/tasks/stats?department=${dept}`, { headers: { Authorization: `Bearer ${token()}` } }),
+        axios.get(`${API}/tasks?department=${dept}&work_date=${date}`, { headers:{ Authorization:`Bearer ${token()}` } }),
+        axios.get(`${API}/tasks/stats?department=${dept}`, { headers:{ Authorization:`Bearer ${token()}` } }),
       ]);
       setTasks(tRes.data);
       setStats(sRes.data);
     } catch { toast.error("فشل في جلب المهام"); }
     finally { setLoading(false); }
+  }, [dept, selectedDate]);
+
+  const fetchCalendar = useCallback(async (month=currentMonth) => {
+    setCalLoading(true);
+    try {
+      const res = await axios.get(`${API}/tasks/calendar?department=${dept}&month=${month}`, { headers:{ Authorization:`Bearer ${token()}` } });
+      setCalendarData(prev => ({ ...prev, [month]: res.data }));
+    } catch {} finally { setCalLoading(false); }
+  }, [dept, currentMonth]);
+
+  const fetchArchive = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/tasks/archive?department=${dept}`, { headers:{ Authorization:`Bearer ${token()}` } });
+      setArchiveData(res.data);
+    } catch {}
   }, [dept]);
 
   const fetchEmployees = useCallback(async () => {
     if (!isManager) return;
     try {
-      const currentMonth = new Date().toLocaleDateString("en-CA", {
-        timeZone: "Asia/Riyadh"
-      }).slice(0, 7);
+      const mo = new Date().toLocaleDateString("en-CA", { timeZone:"Asia/Riyadh" }).slice(0,7);
       const [empRes, schedRes, availRes] = await Promise.all([
-        axios.get(`${API}/employees?department=${dept}`, {
-          headers: { Authorization: `Bearer ${token()}` }
-        }),
-        axios.get(`${API}/schedules/${dept}/${currentMonth}`, {
-          headers: { Authorization: `Bearer ${token()}` }
-        }).catch(() => ({ data: null })),
-        axios.get(`${API}/employees/availability?department=${dept}`, {
-          headers: { Authorization: `Bearer ${token()}` }
-        }).catch(() => ({ data: null })),
+        axios.get(`${API}/employees?department=${dept}`, { headers:{ Authorization:`Bearer ${token()}` } }),
+        axios.get(`${API}/schedules/${dept}/${mo}`, { headers:{ Authorization:`Bearer ${token()}` } }).catch(()=>({data:null})),
+        axios.get(`${API}/employees/availability?department=${dept}`, { headers:{ Authorization:`Bearer ${token()}` } }).catch(()=>({data:null})),
       ]);
       setEmployees(empRes.data);
-      const sched = schedRes.data;
-      setActiveSchedule(sched || null);
+      setActiveSchedule(schedRes.data || null);
       if (availRes.data) {
         const map = {};
-        (availRes.data.employees || []).forEach(e => { map[e.id] = e.availability_status; });
+        (availRes.data.employees||[]).forEach(e=>{ map[e.id]=e.availability_status; });
         setAvailability(map);
-        setAvailSummary(availRes.data.summary || {});
       }
-    } catch { }
+    } catch {}
   }, [dept, isManager]);
 
-  useEffect(() => {
-    fetchTasks();
-    fetchEmployees();
-    const interval = setInterval(() => fetchTasks(true), 30000);
-    return () => clearInterval(interval);
-  }, [fetchTasks, fetchEmployees]);
+  useEffect(() => { fetchTasks(selectedDate); }, [selectedDate, dept]);
+  useEffect(() => { if (view==="calendar") fetchCalendar(currentMonth); }, [currentMonth, view, dept]);
+  useEffect(() => { if (view==="archive") fetchArchive(); }, [view, dept]);
+  useEffect(() => { fetchEmployees(); }, [dept]);
 
-  // ── تصنيف الموظفين حسب حالة التوفر (shift-aware) ──────────────
-  const scheduleStatus = activeSchedule?.status || null;
-
-  // دمج availability من الـ API مع بيانات الموظفين
-  const enrichedEmployees = employees.map(emp => {
-    const avStatus = availability[emp.id] || "no_schedule";
-    // للتوافق مع الكود القديم
-    let dutyStatus = "no_schedule";
-    if (avStatus === "on_duty_now")  dutyStatus = "on_duty_now";
-    else if (avStatus === "off_shift") dutyStatus = "off_shift";
-    else if (avStatus === "on_rest")   dutyStatus = "rest";
-    else {
-      // fallback على بيانات الجدول المحلي
-      const todayAr = (() => {
-        const map = { Saturday:"السبت", Sunday:"الأحد", Monday:"الإثنين", Tuesday:"الثلاثاء",
-                      Wednesday:"الأربعاء", Thursday:"الخميس", Friday:"الجمعة" };
-        return map[new Date().toLocaleDateString("en-US", { weekday:"long", timeZone:"Asia/Riyadh" })] || "";
-      })();
-      if (activeSchedule) {
-        const a = activeSchedule.assignments?.find(a => a.employee_id === emp.id);
-        if (a && (a.rest_days || []).includes(todayAr)) dutyStatus = "rest";
-        else if (a) dutyStatus = "working";
-      }
+  // ── Calendar grid ──────────────────────────────────────────
+  const calGrid = (() => {
+    const [y,m] = currentMonth.split("-").map(Number);
+    const firstDay = new Date(y, m-1, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const cells = [];
+    for (let i=0; i<firstDay; i++) cells.push(null);
+    for (let d=1; d<=daysInMonth; d++) {
+      cells.push(`${currentMonth}-${String(d).padStart(2,"0")}`);
     }
-    return { ...emp, dutyStatus, availStatus: avStatus };
-  });
+    return cells;
+  })();
 
-  // ترتيب: مداوم الآن → خارج الوردية → غير محدد → في راحة
-  const sortedEmployees = [
-    ...enrichedEmployees.filter(e => e.dutyStatus === "on_duty_now"),
-    ...enrichedEmployees.filter(e => e.dutyStatus === "working"),    // fallback
-    ...enrichedEmployees.filter(e => e.dutyStatus === "off_shift"),
-    ...enrichedEmployees.filter(e => e.dutyStatus === "no_schedule"),
-    ...enrichedEmployees.filter(e => e.dutyStatus === "rest"),
-  ];
-
-  // ── Filtered tasks ─────────────────────────────────────────
-  const filtered = tasks.filter(t => {
-    if (filterStatus !== "all" && t.status !== filterStatus) return false;
-    if (filterPriority !== "all" && t.priority !== filterPriority) return false;
-    if (search && !t.title.includes(search) && !t.description?.includes(search)) return false;
-    return true;
-  });
+  const monthData = calendarData[currentMonth] || {};
+  const monthTotal = Object.values(monthData).reduce((s,d)=>s+d.total,0);
+  const monthDone  = Object.values(monthData).reduce((s,d)=>s+d.done,0);
+  const monthPct   = monthTotal > 0 ? Math.round(monthDone/monthTotal*100) : 0;
 
   // ── Submit ─────────────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -413,99 +349,97 @@ export default function TasksPage({ department }) {
     if (form.assignee_ids.length === 0) return toast.error("يجب اختيار موظف واحد على الأقل");
     setSubmitting(true);
     try {
-      // تحويل التاريخ من datetime-local إلى ISO UTC
-      // نضيف +03:00 صراحةً حتى المتصفح يعرف إنها SA، ثم يحوّلها لـ UTC تلقائياً
       let dueIso = null;
       if (form.due_at) {
-        try {
-          dueIso = new Date(form.due_at + ":00+03:00").toISOString();
-        } catch { dueIso = null; }
+        try { dueIso = new Date(form.due_at + ":00+03:00").toISOString(); } catch {}
       }
       const payload = { ...form, department: dept, due_at: dueIso };
       if (editTask) {
-        await axios.put(`${API}/tasks/${editTask.id}`, payload, { headers: { Authorization: `Bearer ${token()}` } });
+        await axios.put(`${API}/tasks/${editTask.id}`, payload, { headers:{ Authorization:`Bearer ${token()}` } });
         toast.success("تم تحديث المهمة ✅");
       } else {
-        await axios.post(`${API}/tasks`, payload, { headers: { Authorization: `Bearer ${token()}` } });
-        toast.success(`✅ تم إنشاء المهمة وتنبيه ${form.assignee_ids.length} موظف`);
+        await axios.post(`${API}/tasks`, payload, { headers:{ Authorization:`Bearer ${token()}` } });
+        toast.success(`✅ تم إنشاء المهمة لـ ${formatDate(form.work_date)}`);
       }
-      setDialogOpen(false);
-      setForm(emptyForm);
-      setEditTask(null);
-      fetchTasks();
-    } catch (err) { toast.error(err.response?.data?.detail || "فشل الحفظ"); }
+      setDialogOpen(false); setForm({ ...emptyForm, work_date: selectedDate }); setEditTask(null);
+      fetchTasks(selectedDate);
+      if (view==="calendar") fetchCalendar(currentMonth);
+      fetchArchive();
+    } catch(err) { toast.error(err.response?.data?.detail || "فشل الحفظ"); }
     finally { setSubmitting(false); }
   };
 
   const handleEdit = (task) => {
     setEditTask(task);
-    // تحويل due_at إلى صيغة datetime-local (yyyy-MM-ddTHH:mm) بتوقيت السعودية
     let dueLocal = "";
     if (task.due_at) {
-      try {
-        const dt = new Date(task.due_at);
-        // تحويل لتوقيت السعودية UTC+3
-        const sa = new Date(dt.getTime() + 3 * 60 * 60 * 1000);
-        dueLocal = sa.toISOString().slice(0, 16);
-      } catch { dueLocal = ""; }
+      try { const sa = new Date(new Date(task.due_at).getTime()+3*60*60*1000); dueLocal = sa.toISOString().slice(0,16); } catch {}
     }
-    setForm({
-      title: task.title,
-      description: task.description || "",
-      priority: task.priority,
-      due_at: dueLocal,
-      assignee_ids: task.assignee_ids || [],
-    });
+    setForm({ title:task.title, description:task.description||"", priority:task.priority,
+      due_at:dueLocal, assignee_ids:task.assignee_ids||[], work_date:task.work_date||selectedDate });
     setDialogOpen(true);
   };
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (id) => {
     if (!confirm("هل أنت متأكد من حذف المهمة؟")) return;
     try {
-      await axios.delete(`${API}/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token()}` } });
+      await axios.delete(`${API}/tasks/${id}`, { headers:{ Authorization:`Bearer ${token()}` } });
       toast.success("تم حذف المهمة");
-      fetchTasks();
+      fetchTasks(selectedDate);
+      if (view==="calendar") fetchCalendar(currentMonth);
     } catch { toast.error("فشل الحذف"); }
   };
 
-  const handleStatusChange = async (taskId, status) => {
+  const handleStatus = async (id, status) => {
     try {
-      await axios.put(`${API}/tasks/${taskId}/status`, { status }, { headers: { Authorization: `Bearer ${token()}` } });
-      toast.success(`تم تحديث الحالة إلى: ${STATUS_CFG[status]?.label}`);
-      fetchTasks();
-    } catch (err) { toast.error(err.response?.data?.detail || "فشل التحديث"); }
+      const res = await axios.put(`${API}/tasks/${id}/status`, { status }, { headers:{ Authorization:`Bearer ${token()}` } });
+      toast.success(res.data?.message || `تم التحديث`);
+      fetchTasks(selectedDate);
+      if (view==="calendar") fetchCalendar(currentMonth);
+    } catch(err) { toast.error(err.response?.data?.detail || "فشل التحديث"); }
   };
 
-  const toggleAssignee = (empId) => {
-    setForm(f => ({
-      ...f,
-      assignee_ids: f.assignee_ids.includes(empId)
-        ? f.assignee_ids.filter(id => id !== empId)
-        : [...f.assignee_ids, empId],
-    }));
+  const toggleAssignee = (id) => setForm(f=>({
+    ...f, assignee_ids: f.assignee_ids.includes(id) ? f.assignee_ids.filter(x=>x!==id) : [...f.assignee_ids, id]
+  }));
+
+  // Employee status helpers
+  const scheduleStatus = activeSchedule?.status || null;
+  const sortedEmployees = employees.map(emp => {
+    const av = availability[emp.id] || "no_schedule";
+    const dutyStatus = av === "on_duty_now" ? "on_duty_now" : av === "off_shift" ? "off_shift" : av === "on_rest" ? "rest" : "no_schedule";
+    return { ...emp, dutyStatus };
+  }).sort((a,b) => {
+    const o = { on_duty_now:0, no_schedule:1, off_shift:2, rest:3 };
+    return (o[a.dutyStatus]||4) - (o[b.dutyStatus]||4);
+  });
+
+  // Filtered tasks for day view
+  const filtered = tasks.filter(t => {
+    if (filterPriority !== "all" && t.priority !== filterPriority) return false;
+    if (search && !t.title.includes(search) && !t.description?.includes(search)) return false;
+    return true;
+  });
+
+  // Day navigation
+  const navigate = (dir) => {
+    const d = new Date(selectedDate + "T00:00:00");
+    d.setDate(d.getDate() + dir);
+    const nd = getSADate(new Date(d.getTime() + 3*60*60*1000));
+    setSelectedDate(nd);
+    const nm = nd.slice(0,7);
+    if (nm !== currentMonth) setCurrentMonth(nm);
   };
 
-  // ── Stats Row ──────────────────────────────────────────────
-  const STATS = [
-    { label: "الكل",       value: (stats.pending||0) + (stats.in_progress||0) + (stats.overdue||0), color: "#6b7280",                       key: "all" },
-    { label: "انتظار",     value: stats.pending     || 0, color: STATUS_CFG.pending.color,                                                   key: "pending" },
-    { label: "جارية",      value: stats.in_progress || 0, color: STATUS_CFG.in_progress.color,                                              key: "in_progress" },
-    { label: "مكتملة",     value: stats.done        || 0, color: STATUS_CFG.done.color,                                                     key: "done" },
-    { label: "متأخرة",     value: stats.overdue     || 0, color: STATUS_CFG.overdue.color,                                                  key: "overdue" },
-  ];
+  const isToday = selectedDate === today;
+  const isFuture = (d) => d > today;
 
-  // ── إحصائيات الأداء (تظهر فقط إذا يوجد مهام مكتملة بموعد) ───
-  const PERF_STATS = stats.done > 0 && (stats.early || stats.on_time || stats.late_done) ? [
-    { label: "مبكر ⭐",   value: stats.early    || 0, color: "#d97706", bg: "bg-amber-50",   border: "border-amber-200" },
-    { label: "في الوقت ✅", value: stats.on_time  || 0, color: "#059669", bg: "bg-emerald-50", border: "border-emerald-200" },
-    { label: "متأخر ⚠️",   value: stats.late_done|| 0, color: "#dc2626", bg: "bg-red-50",     border: "border-red-200" },
-  ] : [];
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
+  // Day stats
+  const dayTotal = tasks.length;
+  const dayDone  = tasks.filter(t=>t.status==="done").length;
+  const dayPct   = dayTotal > 0 ? Math.round(dayDone/dayTotal*100) : 0;
+  const dayOverdue = tasks.filter(t=>t.status==="overdue").length;
+  const dayEarly = tasks.filter(t=>t.completion_performance==="early").length;
 
   return (
     <div className="space-y-4 font-cairo" data-testid="tasks-page">
@@ -514,313 +448,338 @@ export default function TasksPage({ department }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-cairo font-bold text-lg flex items-center gap-2">
-            <Tag className="w-5 h-5 text-primary" />
+            <Tag className="w-5 h-5 text-primary"/>
             المهام اليومية
           </h2>
           <p className="text-xs text-muted-foreground">
-            {isManager ? "إدارة وتكليف المهام لموظفي الإدارة" : "مهامك المكلف بها"}
+            {isManager ? "إدارة وتتبع مهام الإدارة بالتاريخ" : "مهامك اليومية"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchTasks()}
-            className="gap-1.5 text-xs h-8" data-testid="refresh-tasks">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </Button>
-          {/* Toggle View */}
-          <div className="flex border rounded-lg overflow-hidden">
-            <button onClick={() => setViewMode("kanban")}
-              className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
-                ${viewMode === "kanban" ? "bg-primary text-white" : "hover:bg-muted text-muted-foreground"}`}
-              data-testid="view-kanban">
-              <LayoutGrid className="w-3.5 h-3.5" /> لوحة
-            </button>
-            <button onClick={() => setViewMode("list")}
-              className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
-                ${viewMode === "list" ? "bg-primary text-white" : "hover:bg-muted text-muted-foreground"}`}
-              data-testid="view-list">
-              <List className="w-3.5 h-3.5" /> قائمة
-            </button>
+          {/* View toggle */}
+          <div className="flex border rounded-xl overflow-hidden shadow-sm">
+            {[
+              { id:"day",      Icon:CalendarDays, label:"اليوم" },
+              { id:"calendar", Icon:LayoutGrid,   label:"التقويم" },
+              { id:"archive",  Icon:Archive,      label:"الأرشيف" },
+            ].map(v=>(
+              <button key={v.id} onClick={()=>setView(v.id)}
+                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all
+                  ${view===v.id?"bg-primary text-white shadow-sm":"hover:bg-muted text-muted-foreground"}`}
+                data-testid={`view-${v.id}`}>
+                <v.Icon className="w-3.5 h-3.5"/>{v.label}
+              </button>
+            ))}
           </div>
-          {isManager && (
-            <Button size="sm" className="gap-1.5 bg-primary h-8" onClick={() => { setEditTask(null); setForm(emptyForm); setDialogOpen(true); }}
+          {isManager && view !== "archive" && (
+            <Button size="sm" className="gap-1.5 bg-primary h-8"
+              onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }}
               data-testid="create-task-btn">
-              <Plus className="w-4 h-4" /> مهمة جديدة
+              <Plus className="w-4 h-4"/>مهمة جديدة
             </Button>
           )}
         </div>
       </div>
 
-      {/* ── Stats ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2">
-        {STATS.map(s => (
-          <button key={s.key}
-            onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all
-              ${filterStatus === s.key ? "shadow-md scale-105" : "hover:shadow-sm"}`}
-            style={filterStatus === s.key
-              ? { backgroundColor: s.color + "15", borderColor: s.color, color: s.color }
-              : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
-            <span className="font-bold text-base" style={{ color: s.color }}>{s.value}</span>
-            {s.label}
-          </button>
-        ))}
-      </div>
+      {/* ══════════════════════════════════════════════════════
+          VIEW: DAY
+      ══════════════════════════════════════════════════════ */}
+      {view === "day" && (
+        <div className="space-y-4">
+          {/* Day navigator */}
+          <Card className="border-2 border-primary/10 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <button onClick={()=>navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <ChevronRight className="w-4 h-4 text-muted-foreground"/>
+                </button>
+                <div className="flex-1 text-center">
+                  <p className="font-cairo font-bold text-base text-foreground">{formatDate(selectedDate)}</p>
+                  {isToday && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">اليوم</span>}
+                </div>
+                <button onClick={()=>navigate(+1)} disabled={isToday}
+                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors disabled:opacity-30">
+                  <ChevronLeft className="w-4 h-4 text-muted-foreground"/>
+                </button>
+                <button onClick={()=>setSelectedDate(today)} disabled={isToday}
+                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all disabled:opacity-30 hover:bg-primary/5 text-primary border-primary/30">
+                  اليوم
+                </button>
+              </div>
 
-      {/* ── إحصائيات الأداء (تظهر فقط عند وجود مهام مكتملة بموعد) ── */}
-      {PERF_STATS.length > 0 && (
-        <div className="flex items-center gap-2 p-3 rounded-xl border bg-gradient-to-r from-slate-50 to-white">
-          <TrendingUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
-          <span className="text-[11px] text-slate-500 font-medium ml-1">تقييم الأداء:</span>
-          {PERF_STATS.map((p, i) => (
-            <span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${p.bg} ${p.border}`}
-              style={{ color: p.color }}>
-              <span className="font-black text-sm">{p.value}</span>
-              {p.label}
-            </span>
-          ))}
+              {/* Day stats bar */}
+              {dayTotal > 0 && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] text-muted-foreground">{dayDone}/{dayTotal} منجزة</span>
+                    <span className="text-[11px] font-bold text-primary">{dayPct}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-700"
+                      style={{ width:`${dayPct}%` }}/>
+                  </div>
+                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+                    {dayOverdue > 0 && <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5"><TimerOff className="w-3 h-3"/>{dayOverdue} متأخرة</span>}
+                    {dayEarly  > 0 && <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-3 h-3"/>{dayEarly} مبكر</span>}
+                    {dayDone === dayTotal && dayTotal > 0 && <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5"><Trophy className="w-3 h-3"/>يوم مثالي! 🎉</span>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"/>
+              <Input value={search} onChange={e=>setSearch(e.target.value)} className="h-8 text-sm pr-9" placeholder="بحث..."/>
+            </div>
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="h-8 w-36 text-xs"><Filter className="w-3 h-3 ml-1"/><SelectValue placeholder="الأولوية"/></SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="all">كل الأولويات</SelectItem>
+                {Object.entries(PRIORITY_CFG).map(([k,v])=><SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tasks */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-primary"/></div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 space-y-3">
+              <div className="text-5xl">📋</div>
+              <p className="font-cairo font-bold text-muted-foreground">لا توجد مهام لهذا اليوم</p>
+              {isManager && !isFuture(selectedDate) && (
+                <Button size="sm" onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }} className="gap-1">
+                  <Plus className="w-3.5 h-3.5"/>إضافة مهمة
+                </Button>
+              )}
+              {isFuture(selectedDate) && isManager && (
+                <p className="text-xs text-muted-foreground">يمكنك التخطيط المسبق وإضافة مهام للمستقبل</p>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filtered.map(t=>(
+                <TaskCard key={t.id} task={t} canManage={isManager}
+                  onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Filters ───────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input value={search} onChange={e => setSearch(e.target.value)}
-            className="h-8 text-sm pr-9" placeholder="بحث في المهام..." />
-        </div>
-        <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="h-8 w-36 text-xs">
-            <Filter className="w-3 h-3 ml-1" /><SelectValue placeholder="الأولوية" />
-          </SelectTrigger>
-          <SelectContent dir="rtl">
-            <SelectItem value="all">كل الأولويات</SelectItem>
-            {Object.entries(PRIORITY_CFG).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* ── Kanban View ───────────────────────────────────── */}
-      {viewMode === "kanban" && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]" data-testid="kanban-board">
-          {KANBAN_COLUMNS.map(col => {
-            const colTasks = filtered.filter(t => t.status === col.key);
-            return (
-              <div key={col.key} className="flex flex-col gap-3">
-                {/* Column Header */}
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border font-medium text-sm"
-                  style={{ backgroundColor: col.bg, borderColor: col.border, color: col.color }}>
-                  <col.Icon className="w-4 h-4" />
-                  <span>{col.label}</span>
-                  <span className="mr-auto font-bold text-xs px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: col.color + "20", color: col.color }}>
-                    {colTasks.length}
-                  </span>
-                </div>
-                {/* Tasks */}
-                <div className="space-y-2 flex-1">
-                  {colTasks.length === 0 && (
-                    <div className="text-center py-8 text-xs text-muted-foreground border-2 border-dashed rounded-xl">
-                      لا توجد مهام
+      {/* ══════════════════════════════════════════════════════
+          VIEW: CALENDAR
+      ══════════════════════════════════════════════════════ */}
+      {view === "calendar" && (
+        <div className="space-y-4">
+          {/* Month navigator */}
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={()=>{ const [y,m]=currentMonth.split("-").map(Number); const d=new Date(y,m-2,1); setCurrentMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }}
+                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <ChevronRight className="w-4 h-4 text-muted-foreground"/>
+                </button>
+                <div className="text-center">
+                  <p className="font-cairo font-bold text-base">{monthLabel(currentMonth)}</p>
+                  {monthTotal > 0 && (
+                    <div className="flex items-center gap-2 justify-center mt-0.5">
+                      <span className="text-[10px] text-muted-foreground">{monthTotal} مهمة</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${monthPct>=80?"bg-emerald-100 text-emerald-700":monthPct>=50?"bg-amber-100 text-amber-700":"bg-red-100 text-red-600"}`}>
+                        {monthPct}% إنجاز
+                      </span>
                     </div>
                   )}
-                  {colTasks.map(t => (
-                    <KanbanCard key={t.id} task={t} canManage={isManager}
-                      onEdit={handleEdit} onDelete={handleDelete}
-                      onStatusChange={handleStatusChange} isAr={isAr} />
-                  ))}
                 </div>
+                <button onClick={()=>{ const [y,m]=currentMonth.split("-").map(Number); const d=new Date(y,m,1); setCurrentMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }}
+                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <ChevronLeft className="w-4 h-4 text-muted-foreground"/>
+                </button>
               </div>
-            );
-          })}
+
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"].map(d=>(
+                  <div key={d} className="text-center text-[10px] font-bold text-muted-foreground py-1">{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              {calLoading ? (
+                <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary"/></div>
+              ) : (
+                <div className="grid grid-cols-7 gap-1">
+                  {calGrid.map((date, i) => date ? (
+                    <CalendarCell key={i} date={date} data={monthData[date]}
+                      isSelected={date===selectedDate} isToday={date===today}
+                      isFuture={isFuture(date)}
+                      onClick={(d)=>{ setSelectedDate(d); setView("day"); }}/>
+                  ) : <div key={i}/>)}
+                </div>
+              )}
+
+              {/* Legend */}
+              <div className="flex items-center gap-3 mt-3 pt-3 border-t flex-wrap">
+                {Object.entries(DAY_STATUS_CFG).map(([k,v])=>(
+                  <div key={k} className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: v.dot }}/>
+                    <span className="text-[9px] text-muted-foreground">{v.label}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* ── List View ─────────────────────────────────────── */}
-      {viewMode === "list" && (
-        <Card data-testid="tasks-list">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="text-right">المهمة</TableHead>
-                    <TableHead className="text-center">الأولوية</TableHead>
-                    <TableHead className="text-center">الحالة</TableHead>
-                    <TableHead className="text-center">الموظفون</TableHead>
-                    <TableHead className="text-center">الموعد</TableHead>
-                    <TableHead className="text-center">بواسطة</TableHead>
-                    {isManager && <TableHead className="text-center w-20">إجراء</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <Tag className="w-8 h-8 opacity-30" />
-                          <p>لا توجد مهام حالياً</p>
-                          {isManager && <Button size="sm" onClick={() => { setEditTask(null); setForm(emptyForm); setDialogOpen(true); }} className="mt-2 gap-1"><Plus className="w-3.5 h-3.5"/>أنشئ مهمة</Button>}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {filtered.map(t => (
-                    <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
-                      <TableCell className="text-right">
-                        <p className="font-semibold text-sm">{t.title}</p>
-                        {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
-                      </TableCell>
-                      <TableCell className="text-center"><PriorityBadge priority={t.priority} /></TableCell>
-                      <TableCell className="text-center"><StatusBadge status={t.status} /></TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <AssigneeAvatars assignees={t.assignees_info || []} />
-                          <span className="text-[9px] text-muted-foreground">
-                            {(t.assignees_info || []).map(a => a.name).join("، ")}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <DueBadge dueAt={t.due_at} timeStatus={t.time_status} remainingMinutes={t.remaining_minutes} />
-                          {t.status === "done" && t.completion_performance && (
-                            <PerformanceBadge performance={t.completion_performance} deltaMinutes={t.completion_delta_minutes} />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
-                      {isManager && (
-                        <TableCell className="text-center">
-                          <div className="flex items-center gap-1 justify-center">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}>
-                              <Edit className="w-3.5 h-3.5" />
-                            </Button>
-                            <Select value={t.status} onValueChange={v => handleStatusChange(t.id, v)}>
-                              <SelectTrigger className="h-7 w-7 border-0 p-0 bg-transparent">
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                              </SelectTrigger>
-                              <SelectContent dir="rtl">
-                                {Object.entries(STATUS_CFG).filter(([k]) => k !== "overdue").map(([k, v]) => (
-                                  <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(t.id)}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                      {/* زر تحديث للموظف */}
-                      {!isManager && t.status !== "done" && (
-                        <TableCell className="text-center">
-                          <Button size="sm" variant="outline" className="h-7 text-[11px]"
-                            onClick={() => handleStatusChange(t.id, t.status === "pending" ? "in_progress" : "done")}>
-                            {t.status === "pending" ? "بدء" : "إنهاء"}
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      {/* ══════════════════════════════════════════════════════
+          VIEW: ARCHIVE
+      ══════════════════════════════════════════════════════ */}
+      {view === "archive" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Archive className="w-4 h-4"/>
+            <span>أرشيف المهام حسب الشهر — اضغط لعرض التفاصيل</span>
+          </div>
+          {archiveData.length === 0 ? (
+            <div className="text-center py-16 space-y-2">
+              <div className="text-5xl">🗄️</div>
+              <p className="font-cairo font-bold text-muted-foreground">لا يوجد أرشيف بعد</p>
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="space-y-2">
+              {archiveData.map(m => {
+                const isPerfect = m.pct === 100;
+                const isGood    = m.pct >= 70;
+                return (
+                  <button key={m.month} onClick={()=>{ setCurrentMonth(m.month); setView("calendar"); }}
+                    className="w-full text-right p-4 rounded-xl border bg-card hover:shadow-md transition-all hover:border-primary/30 group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl
+                          ${isPerfect?"bg-amber-100":isGood?"bg-emerald-100":"bg-slate-100"}`}>
+                          {isPerfect?"🏆":isGood?"✅":"📋"}
+                        </div>
+                        <div>
+                          <p className="font-cairo font-bold text-sm">{monthLabel(m.month)}</p>
+                          <p className="text-[10px] text-muted-foreground">{m.total} مهمة إجمالاً</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-left">
+                          <p className={`text-xl font-black ${isPerfect?"text-amber-600":isGood?"text-emerald-600":"text-slate-600"}`}>{m.pct}%</p>
+                          <p className="text-[10px] text-muted-foreground">{m.done}/{m.total} منجزة</p>
+                        </div>
+                        <div className="space-y-1">
+                          {m.early > 0 && <span className="block text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">⭐ {m.early} مبكر</span>}
+                          {m.overdue > 0 && <span className="block text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">⚠️ {m.overdue} متأخرة</span>}
+                        </div>
+                        <ChevronLeft className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"/>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all"
+                        style={{ width:`${m.pct}%`, background: isPerfect?"#f59e0b":isGood?"#10b981":"#6b7280" }}/>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── Task Dialog ───────────────────────────────────── */}
-      <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) { setEditTask(null); setForm(emptyForm); } }}>
+      <Dialog open={dialogOpen} onOpenChange={v=>{ setDialogOpen(v); if(!v){setEditTask(null);setForm({...emptyForm,work_date:selectedDate});} }}>
         <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto font-cairo" dir="rtl">
           <DialogHeader>
             <DialogTitle className="font-cairo text-lg flex items-center gap-2">
-              <Tag className="w-5 h-5 text-primary" />
+              <Tag className="w-5 h-5 text-primary"/>
               {editTask ? "تعديل المهمة" : "إنشاء مهمة جديدة"}
             </DialogTitle>
           </DialogHeader>
-
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+
+            {/* Work Date */}
+            <div>
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <CalendarDays className="w-4 h-4 text-primary"/>
+                تاريخ المهمة
+              </Label>
+              <Input type="date" value={form.work_date}
+                onChange={e=>setForm({...form,work_date:e.target.value})}
+                className="mt-1 h-9" dir="ltr"
+                data-testid="task-work-date-input"/>
+              {form.work_date && form.work_date !== today && (
+                <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3"/>
+                  {isFuture(form.work_date) ? "📅 تخطيط مسبق" : "📂 مهمة لتاريخ سابق"}
+                </p>
+              )}
+            </div>
 
             {/* Title */}
             <div>
               <Label className="text-sm font-semibold">عنوان المهمة *</Label>
-              <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required className="mt-1" placeholder="مثال: تفتيش بوابة الملك فهد"
-                data-testid="task-title-input" />
+              <Input value={form.title} onChange={e=>setForm({...form,title:e.target.value})}
+                required className="mt-1" placeholder="مثال: جولة تفتيشية على البوابات"
+                data-testid="task-title-input"/>
             </div>
 
             {/* Description */}
             <div>
               <Label className="text-sm font-semibold">التفاصيل (اختياري)</Label>
-              <Textarea value={form.description}
-                onChange={e => setForm({ ...form, description: e.target.value })}
-                className="mt-1 resize-none" rows={2}
-                placeholder="وصف تفصيلي للمهمة..."
-                data-testid="task-desc-input" />
+              <Textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})}
+                className="mt-1 resize-none" rows={2} placeholder="وصف تفصيلي..." data-testid="task-desc-input"/>
             </div>
 
             {/* Priority + Due */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm font-semibold">الأولوية</Label>
-                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={form.priority} onValueChange={v=>setForm({...form,priority:v})}>
+                  <SelectTrigger className="mt-1"><SelectValue/></SelectTrigger>
                   <SelectContent dir="rtl">
-                    {Object.entries(PRIORITY_CFG).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>
-                        <div className="flex items-center gap-2">
-                          <v.Icon className="w-3.5 h-3.5" style={{ color: v.color }} />
-                          {v.label}
-                        </div>
-                      </SelectItem>
+                    {Object.entries(PRIORITY_CFG).map(([k,v])=>(
+                      <SelectItem key={k} value={k}><div className="flex items-center gap-2"><v.Icon className="w-3.5 h-3.5" style={{color:v.color}}/>{v.label}</div></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-sm font-semibold">الموعد النهائي</Label>
-                <Input type="datetime-local" value={form.due_at}
-                  onChange={e => setForm({ ...form, due_at: e.target.value })}
-                  className="mt-1 text-sm" dir="ltr"
-                  data-testid="task-due-input" />
+                <Input type="datetime-local" value={form.due_at} onChange={e=>setForm({...form,due_at:e.target.value})}
+                  className="mt-1 text-sm" dir="ltr" data-testid="task-due-input"/>
               </div>
             </div>
 
-            {/* Assignees — smart multi-select with shift-aware status */}
+            {/* Assignees */}
             <div>
               <Label className="text-sm font-semibold flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-primary" />
+                <Users className="w-4 h-4 text-primary"/>
                 الموظفون المكلفون *
                 {form.assignee_ids.length > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                    {form.assignee_ids.length} محدد
-                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{form.assignee_ids.length} محدد</span>
                 )}
               </Label>
-
               {scheduleStatus === "draft" && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                  الجدول مسودة — أيام الراحة مؤقتة وقابلة للتغيير حتى الاعتماد
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0"/>الجدول مسودة — أيام الراحة مؤقتة
                 </div>
               )}
               {!scheduleStatus && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-500">
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                  لا يوجد جدول شهري — جميع الموظفين متاحون
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0"/>لا يوجد جدول — جميع الموظفين متاحون
                 </div>
               )}
-
-              {/* تجاوز طارئ للمدير */}
-              {isManager && sortedEmployees.some(e => e.dutyStatus === "rest") && (
+              {isManager && sortedEmployees.some(e=>e.dutyStatus==="rest") && (
                 <div className="mt-1.5 space-y-1">
-                  <div
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-all"
-                    style={emergencyOverride ? {backgroundColor:"#fef2f2",borderColor:"#fca5a5",color:"#dc2626"} : {backgroundColor:"#f8fafc",borderColor:"#e2e8f0",color:"#64748b"}}
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none"
+                    style={emergencyOverride?{backgroundColor:"#fef2f2",borderColor:"#fca5a5",color:"#dc2626"}:{backgroundColor:"#f8fafc",borderColor:"#e2e8f0",color:"#64748b"}}
                     onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
                     onClick={e=>{e.preventDefault();e.stopPropagation();setEmergencyOverride(!emergencyOverride);if(emergencyOverride)setEmergencyReason("");}}>
                     <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${emergencyOverride?"bg-red-500 border-red-500":"border-slate-300 bg-white"}`}>
@@ -831,54 +790,42 @@ export default function TasksPage({ department }) {
                   {emergencyOverride && (
                     <input value={emergencyReason} onChange={e=>setEmergencyReason(e.target.value)}
                       className="w-full h-8 px-3 text-xs rounded-lg border border-red-300 focus:outline-none focus:ring-1 focus:ring-red-200"
-                      placeholder="سبب الطوارئ (مطلوب لتوثيق التجاوز)..." />
+                      placeholder="سبب الطوارئ (مطلوب)..."/>
                   )}
                 </div>
               )}
-
               <div className="mt-2 border rounded-xl overflow-hidden">
                 {employees.length === 0 ? (
-                  <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون في هذه الإدارة</p>
+                  <p className="text-center py-4 text-sm text-muted-foreground">لا يوجد موظفون</p>
                 ) : (
-                  <div className="max-h-56 overflow-y-auto divide-y">
-                    {activeSchedule && sortedEmployees.some(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working") && (
+                  <div className="max-h-48 overflow-y-auto divide-y">
+                    {activeSchedule && sortedEmployees.some(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working"||e.dutyStatus==="no_schedule") && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 cursor-pointer select-none"
                         onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
-                        onClick={e=>{
-                          e.preventDefault();e.stopPropagation();
-                          const ids=sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").map(e=>e.id);
-                          setForm(f=>({...f,assignee_ids:ids.every(id=>f.assignee_ids.includes(id))?[]:ids}));
-                        }}>
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length>0?"bg-emerald-600 border-emerald-600":"border-slate-300 bg-white"}`}>
-                          {sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length>0&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
+                        onClick={e=>{e.preventDefault();e.stopPropagation();const ids=sortedEmployees.filter(e=>e.dutyStatus!=="rest").map(e=>e.id);setForm(f=>({...f,assignee_ids:ids.every(id=>f.assignee_ids.includes(id))?[]:ids}));}}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${sortedEmployees.filter(e=>e.dutyStatus!=="rest").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus!=="rest").length>0?"bg-emerald-600 border-emerald-600":"border-slate-300 bg-white"}`}>
+                          {sortedEmployees.filter(e=>e.dutyStatus!=="rest").every(e=>form.assignee_ids.includes(e.id))&&sortedEmployees.filter(e=>e.dutyStatus!=="rest").length>0&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
                         </div>
-                        <span className="text-xs font-semibold text-emerald-700">تحديد المداومين الآن</span>
-                        <span className="text-[10px] text-emerald-600 mr-auto">{sortedEmployees.filter(e=>e.dutyStatus==="on_duty_now"||e.dutyStatus==="working").length} متاح</span>
+                        <span className="text-xs font-semibold text-emerald-700">تحديد المتاحين</span>
+                        <span className="text-[10px] text-emerald-600 mr-auto">{sortedEmployees.filter(e=>e.dutyStatus!=="rest").length} متاح</span>
                       </div>
                     )}
-
                     {sortedEmployees.map(emp=>{
                       const isSelected=form.assignee_ids.includes(emp.id);
                       const isRest=emp.dutyStatus==="rest";
-                      const isOffShift=emp.dutyStatus==="off_shift";
                       const canSelect=!isRest||(isRest&&emergencyOverride);
                       const SL={"on_duty_now":{text:"مداوم الآن",cls:"bg-emerald-100 text-emerald-700"},"working":{text:"مداوم",cls:"bg-emerald-100 text-emerald-700"},"off_shift":{text:"خارج الوردية",cls:"bg-yellow-100 text-yellow-700"},"rest":{text:"في راحة",cls:"bg-amber-100 text-amber-700"}};
                       const sl=SL[emp.dutyStatus];
                       return (
                         <div key={emp.id}
-                          className={`flex items-center gap-3 px-3 py-2.5 select-none transition-colors
-                            ${!canSelect?"opacity-40 bg-slate-50":isOffShift&&!isSelected?"bg-yellow-50/30 cursor-pointer hover:bg-yellow-50":"cursor-pointer hover:bg-muted/30"}
-                            ${isSelected?"bg-primary/5":""}`}
+                          className={`flex items-center gap-3 px-3 py-2.5 select-none transition-colors ${!canSelect?"opacity-40 bg-slate-50":"cursor-pointer hover:bg-muted/30"} ${isSelected?"bg-primary/5":""}`}
                           onMouseDown={e=>{e.preventDefault();e.stopPropagation();}}
                           onClick={e=>{e.preventDefault();e.stopPropagation();if(!canSelect)return;toggleAssignee(emp.id);}}
-                          title={!canSelect?"في راحة — فعّل تجاوز الطوارئ للتكليف":isOffShift?"خارج ورديته الحالية ⚠️":emp.name}
                           data-testid={`assignee-${emp.id}`}>
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected?(isRest&&emergencyOverride?"bg-red-500 border-red-500":"bg-primary border-primary"):!canSelect?"border-slate-200 bg-slate-100":"border-slate-300 bg-white"}`}>
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${isSelected?(isRest&&emergencyOverride?"bg-red-500 border-red-500":"bg-primary border-primary"):!canSelect?"border-slate-200 bg-slate-100":"border-slate-300 bg-white"}`}>
                             {isSelected&&<svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
                           </div>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${isRest?"bg-slate-200 text-slate-400":isOffShift?"bg-yellow-100 text-yellow-700":"bg-primary/15 text-primary"}`}>
-                            {emp.name.charAt(0)}
-                          </div>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${isRest?"bg-slate-200 text-slate-400":"bg-primary/15 text-primary"}`}>{emp.name.charAt(0)}</div>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-medium truncate ${!canSelect?"text-slate-400":""}`}>{emp.name}</p>
                             <p className="text-[10px] text-muted-foreground truncate">{emp.job_title}</p>
@@ -887,7 +834,6 @@ export default function TasksPage({ department }) {
                             {sl&&<span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${sl.cls}`}>{sl.text}</span>}
                             {isRest&&!emergencyOverride&&<span>🚫</span>}
                             {isRest&&emergencyOverride&&<span>🚨</span>}
-                            {isOffShift&&<span>⚠️</span>}
                           </div>
                         </div>
                       );
@@ -895,13 +841,6 @@ export default function TasksPage({ department }) {
                   </div>
                 )}
               </div>
-
-              {form.assignee_ids.some(id=>{const e=enrichedEmployees.find(e=>e.id===id);return e&&e.dutyStatus==="off_shift";})&&(
-                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                  تنبيه: يوجد موظف خارج ورديته الحالية — سيُوثَّق في سجل المهمة
-                </div>
-              )}
             </div>
 
             <DialogFooter>
@@ -917,4 +856,3 @@ export default function TasksPage({ department }) {
     </div>
   );
 }
-

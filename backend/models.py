@@ -886,9 +886,10 @@ class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     department: str
-    assignee_ids: List[str]          # يدعم موظف واحد أو أكثر
-    priority: str = "normal"         # low | normal | high | urgent
-    due_at: Optional[str] = None     # ISO datetime
+    assignee_ids: List[str]
+    priority: str = "normal"
+    due_at: Optional[str] = None
+    work_date: Optional[str] = None   # YYYY-MM-DD — تاريخ العمل (يوم المهمة)
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -896,6 +897,7 @@ class TaskUpdate(BaseModel):
     assignee_ids: Optional[List[str]] = None
     priority: Optional[str] = None
     due_at: Optional[str] = None
+    work_date: Optional[str] = None
     status: Optional[str] = None
 
 class TaskStatusUpdate(BaseModel):

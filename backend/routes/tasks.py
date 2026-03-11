@@ -59,22 +59,22 @@ def now_iso():
 MANAGER_ROLES = {"system_admin", "general_manager", "department_manager"}
 
 
-# ── GET: جلب المهام ─────────────────────────────────────────────
+# ── GET: جلب المهام (مع فلترة بالتاريخ/الشهر) ───────────────────
 @router.get("/tasks")
 async def get_tasks(department: Optional[str] = None, status: Optional[str] = None,
+                    work_date: Optional[str] = None,   # YYYY-MM-DD  فلتر يوم محدد
+                    month: Optional[str] = None,        # YYYY-MM     فلتر شهر
                     user: dict = Depends(get_current_user)):
     role = user.get("role", "")
     query = {}
 
     if role in MANAGER_ROLES:
-        # المدير يرى كل مهام إدارته
         dept = department or user.get("department")
         if role != "system_admin" and dept:
             query["department"] = dept
         elif department:
             query["department"] = department
     else:
-        # الموظف يرى مهامه فقط
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
         if not emp:
             return []
@@ -83,7 +83,14 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
     if status:
         query["status"] = status
 
-    tasks = await db.tasks.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    # فلتر التاريخ
+    if work_date:
+        query["work_date"] = work_date
+    elif month:
+        # كل أيام الشهر
+        query["work_date"] = {"$regex": f"^{month}"}
+
+    tasks = await db.tasks.find(query, {"_id": 0}).sort([("work_date", -1), ("created_at", -1)]).to_list(1000)
 
     # إضافة بيانات الموظفين للعرض
     all_emp_ids = list({eid for t in tasks for eid in t.get("assignee_ids", [])})
@@ -149,6 +156,117 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
             "early": early, "on_time": on_time, "late_done": late_done}
 
 
+# ── GET: بيانات التقويم الشهري ───────────────────────────────────
+@router.get("/tasks/calendar")
+async def get_tasks_calendar(department: str, month: str,
+                              user: dict = Depends(get_current_user)):
+    """
+    يعيد ملخصاً لكل يوم في الشهر:
+    {
+      "2026-03-01": { "total": 3, "done": 2, "pending": 1, "overdue": 0, "pct": 67 },
+      ...
+    }
+    """
+    role = user.get("role", "")
+    query = {"work_date": {"$regex": f"^{month}"}}
+
+    if role in MANAGER_ROLES:
+        dept = department or user.get("department")
+        if role != "system_admin" and dept:
+            query["department"] = dept
+    else:
+        emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
+        if not emp:
+            return {}
+        query["assignee_ids"] = {"$in": [emp["id"]]}
+
+    tasks = await db.tasks.find(query, {"_id": 0,
+        "work_date": 1, "status": 1, "due_at": 1, "completion_performance": 1
+    }).to_list(2000)
+
+    # تجميع حسب اليوم
+    calendar = {}
+    for t in tasks:
+        d = t.get("work_date", "")
+        if not d:
+            continue
+        if d not in calendar:
+            calendar[d] = {"total": 0, "done": 0, "pending": 0,
+                           "in_progress": 0, "overdue": 0, "early": 0}
+        calendar[d]["total"] += 1
+        st = t.get("status", "pending")
+        # فحص التأخير
+        if st not in ("done",) and get_time_status(t.get("due_at"), st) == "overdue":
+            st = "overdue"
+        calendar[d][st] = calendar[d].get(st, 0) + 1
+        if t.get("completion_performance") == "early":
+            calendar[d]["early"] += 1
+
+    # إضافة نسبة الإنجاز
+    for d in calendar:
+        total = calendar[d]["total"]
+        done  = calendar[d]["done"]
+        over  = calendar[d]["overdue"]
+        calendar[d]["pct"] = round(done / total * 100) if total else 0
+        # تصنيف اليوم: great | good | partial | bad | empty
+        if total == 0:
+            calendar[d]["day_status"] = "empty"
+        elif done == total:
+            calendar[d]["day_status"] = "great"
+        elif over > 0:
+            calendar[d]["day_status"] = "bad"
+        elif done >= total * 0.5:
+            calendar[d]["day_status"] = "good"
+        else:
+            calendar[d]["day_status"] = "partial"
+
+    return calendar
+
+
+# ── GET: أرشيف الأشهر ────────────────────────────────────────────
+@router.get("/tasks/archive")
+async def get_tasks_archive(department: str, user: dict = Depends(get_current_user)):
+    """
+    يعيد ملخصاً لكل شهر فيه مهام: [ { month, total, done, pct, early } ]
+    """
+    role = user.get("role", "")
+    query = {}
+    if role in MANAGER_ROLES:
+        dept = department or user.get("department")
+        if role != "system_admin" and dept:
+            query["department"] = dept
+    else:
+        emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
+        if not emp:
+            return []
+        query["assignee_ids"] = {"$in": [emp["id"]]}
+
+    tasks = await db.tasks.find(query, {"_id": 0,
+        "work_date": 1, "status": 1, "completion_performance": 1
+    }).to_list(5000)
+
+    months = {}
+    for t in tasks:
+        d = t.get("work_date", "")
+        m = d[:7] if d else ""  # YYYY-MM
+        if not m:
+            continue
+        if m not in months:
+            months[m] = {"month": m, "total": 0, "done": 0, "early": 0, "overdue": 0}
+        months[m]["total"] += 1
+        if t.get("status") == "done":
+            months[m]["done"] += 1
+        if t.get("status") == "overdue":
+            months[m]["overdue"] += 1
+        if t.get("completion_performance") == "early":
+            months[m]["early"] += 1
+
+    result = sorted(months.values(), key=lambda x: x["month"], reverse=True)
+    for r in result:
+        r["pct"] = round(r["done"] / r["total"] * 100) if r["total"] else 0
+    return result
+
+
 # ── POST: إنشاء مهمة ────────────────────────────────────────────
 @router.post("/tasks")
 async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
@@ -158,6 +276,8 @@ async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="يجب تحديد موظف واحد على الأقل")
 
     task_id = str(uuid.uuid4())
+    # work_date: تاريخ المهمة (اليوم بتوقيت SA إذا لم يُحدد)
+    work_date = data.work_date or datetime.now(SA_TZ).strftime("%Y-%m-%d")
     task = {
         "id": task_id,
         "title": data.title,
@@ -167,6 +287,7 @@ async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
         "priority": data.priority,
         "status": "pending",
         "due_at": data.due_at,
+        "work_date": work_date,
         "created_by": user.get("name", user.get("email", "")),
         "created_by_id": user.get("id"),
         "created_at": now_iso(),
@@ -175,7 +296,7 @@ async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
             "action": "created",
             "by": user.get("name", ""),
             "at": now_iso(),
-            "note": "تم إنشاء المهمة"
+            "note": f"تم إنشاء المهمة ليوم {work_date}"
         }]
     }
     await db.tasks.insert_one(task)
