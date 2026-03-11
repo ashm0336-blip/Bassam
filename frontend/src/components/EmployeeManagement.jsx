@@ -570,8 +570,104 @@ export default function EmployeeManagement({ department }) {
         canUnlock={canUnlock} isReadOnly={!canEdit} language={language}
       />
 
-      {/* Employee Table only — stats moved to نظرة عامة */}
-      {/* Header + Add */}
+      {/* ── Stats Cards الجدول الشهري ──────────────────────────── */}
+      {(() => {
+        const isApproved = schedule?.status === 'active';
+        const isDraft    = schedule?.status === 'draft';
+        const total      = statistics.total;
+
+        const CARDS = [
+          {
+            label: "إجمالي الموظفين", value: total,
+            desc: "على رأس العمل",
+            color: "#2563eb", grad: "from-blue-50 to-indigo-50/60", border: "#bfdbfe",
+            Icon: Users,
+          },
+          {
+            label: isApproved ? "مداومون اليوم" : "مداومون",
+            value: isApproved ? statistics.active : (isDraft ? "—" : total),
+            desc: isApproved ? `من أصل ${total}` : (isDraft ? "اعتمد الجدول أولاً" : "بيانات أساسية"),
+            color: "#059669", grad: "from-emerald-50 to-green-50/60", border: "#a7f3d0",
+            Icon: UserCheck,
+          },
+          {
+            label: "في راحة",
+            value: isApproved ? statistics.onRest : "—",
+            desc: isApproved ? "إجازة أسبوعية" : "من الجدول المعتمد",
+            color: "#d97706", grad: "from-amber-50 to-yellow-50/60", border: "#fcd34d",
+            Icon: Coffee,
+          },
+          {
+            label: "مكلفون",
+            value: isApproved ? statistics.tasked : "—",
+            desc: isApproved ? `${getMonthLabel(selectedMonth)}` : "من الجدول المعتمد",
+            color: "#7c3aed", grad: "from-violet-50 to-purple-50/60", border: "#c4b5fd",
+            Icon: Zap,
+          },
+          {
+            label: "ميدانيون",
+            value: statistics.fieldOps,
+            desc: "موظفو الخدمة الميدانية",
+            color: "#0f766e", grad: "from-teal-50 to-emerald-50/60", border: "#99f6e4",
+            Icon: UserCheck,
+          },
+          {
+            label: "دائم",
+            value: statistics.permanent,
+            desc: "توظيف دائم",
+            color: "#047857", grad: "from-green-50 to-teal-50/60", border: "#86efac",
+            Icon: Users,
+          },
+          {
+            label: "دور الجدول",
+            value: schedule
+              ? (schedule.status === 'active' ? '✅ معتمد' : '⏳ مسودة')
+              : '—',
+            desc: schedule ? getMonthLabel(selectedMonth) : "لا يوجد جدول",
+            color: schedule?.status === 'active' ? "#059669" : schedule?.status === 'draft' ? "#d97706" : "#6b7280",
+            grad: schedule?.status === 'active' ? "from-emerald-50 to-green-50/60" : "from-amber-50 to-yellow-50/60",
+            border: schedule?.status === 'active' ? "#a7f3d0" : "#fcd34d",
+            Icon: CalendarDays,
+            isText: true,
+          },
+        ];
+
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2.5">
+            {CARDS.map((s, i) => {
+              const pct = !s.isText && total > 0 && typeof s.value === 'number'
+                ? Math.round((s.value / total) * 100) : null;
+              return (
+                <div key={i}
+                  className={`group relative overflow-hidden rounded-2xl border p-3 bg-gradient-to-br ${s.grad}
+                    hover:scale-[1.02] hover:shadow-lg transition-all duration-200`}
+                  style={{ borderColor: s.color + "40" }}>
+                  <div className="absolute -left-3 -bottom-3 w-12 h-12 rounded-full opacity-[0.08] group-hover:opacity-[0.15] transition-opacity"
+                    style={{ backgroundColor: s.color }} />
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm mb-2"
+                    style={{ backgroundColor: s.color + "20" }}>
+                    <s.Icon className="w-4 h-4" style={{ color: s.color }} />
+                  </div>
+                  <p className={`font-black leading-none mb-1 tabular-nums ${s.isText ? "text-base" : "text-2xl"}`}
+                    style={{ color: s.color }}>
+                    {s.value}
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-700 leading-tight">{s.label}</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5 leading-tight">{s.desc}</p>
+                  {pct !== null && (
+                    <div className="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, backgroundColor: s.color }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Employee Table — Header + Actions */}
       <div className="flex items-center justify-between">
         <div className="text-right flex-1">
           <h2 className="font-cairo font-bold text-lg">{isAr?'جدول الموظفين':'Staff Schedule'}</h2>
