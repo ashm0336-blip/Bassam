@@ -3,7 +3,7 @@
  * بيانات ثابتة + إدارة حسابات (تنشيط/تجميد/صلاحيات/كلمة مرور)
  * عرض: بطاقات | قائمة
  */
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,6 +12,7 @@ import {
   Edit, Trash2, ShieldCheck, ShieldX, ShieldOff, UserPlus, KeyRound,
   Loader2, MoreVertical, User, Briefcase, Calendar, Hash,
   RefreshCw, Filter, ChevronDown, Phone, Building2, Shield,
+  Check, X, Info, UserCheck, CalendarDays, Clock, Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,17 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// ── Config ────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────
+const EMPLOYMENT_TYPES = [
+  { value: "permanent", label_ar: "دائم",   label_en: "Permanent", color: "#004D38", bg: "#ecfdf5", border: "#a7f3d0" },
+  { value: "seasonal",  label_ar: "موسمي",  label_en: "Seasonal",  color: "#0284c7", bg: "#e0f2fe", border: "#7dd3fc" },
+  { value: "temporary", label_ar: "مؤقت",   label_en: "Temporary", color: "#9333ea", bg: "#faf5ff", border: "#d8b4fe" },
+];
+const SEASONS = [
+  { value: "ramadan", label_ar: "رمضان", label_en: "Ramadan" },
+  { value: "hajj",    label_ar: "حج",    label_en: "Hajj" },
+  { value: "umrah",   label_ar: "عمرة",  label_en: "Umrah" },
+];
 const ACCOUNT_STATUS_CFG = {
   active:     { label:"نشط",        color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", Icon:ShieldCheck },
   pending:    { label:"معلق",       color:"#d97706", bg:"#fffbeb", border:"#fcd34d", Icon:ShieldOff   },
@@ -339,13 +350,28 @@ export default function EmployeesList({ department }) {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [saving, setSaving]           = useState(false);
+  const [nationalIdStatus, setNationalIdStatus] = useState(null);
+  const nationalIdTimerRef = useRef(null);
 
   const emptyForm = {
     name:"", employee_number:"", national_id:"", job_title:"",
-    employment_type:"permanent", phone:"", user_role:"field_staff",
-    contract_start:"", contract_end:"",
+    employment_type:"permanent", contact_phone:"", user_role:"field_staff",
+    season:"", contract_end:"",
   };
   const [form, setForm] = useState(emptyForm);
+
+  // Live national ID check
+  const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
+    if (!id || id.length < 10) { setNationalIdStatus(id.length > 0 ? 'too_short' : null); return; }
+    if (id.length > 10) { setNationalIdStatus('too_long'); return; }
+    if (!/^[12]\d{9}$/.test(id)) { setNationalIdStatus('format_error'); return; }
+    setNationalIdStatus('checking');
+    try {
+      const url = `${API}/employees/check-national-id?national_id=${id}${excludeEmpId?`&exclude_emp_id=${excludeEmpId}`:''}`;
+      const res = await axios.get(url, headers());
+      setNationalIdStatus(res.data.available ? 'available' : 'taken');
+    } catch { setNationalIdStatus(null); }
+  }, []);
 
   // Permissions
   const canWrite = (perm) => user?.permissions?.[perm] === "write" || user?.role === "system_admin";
@@ -418,18 +444,47 @@ export default function EmployeesList({ department }) {
     } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير الصلاحية"); }
   };
 
+  // ── Open Dialog ───────────────────────────────────────────
+  const handleOpenDialog = (emp=null) => {
+    setNationalIdStatus(null);
+    if (emp) {
+      setEditEmp(emp);
+      setForm({
+        name: emp.name||"", employee_number: emp.employee_number||"",
+        national_id: emp.national_id||"", job_title: emp.job_title||"",
+        employment_type: emp.employment_type||"permanent",
+        contact_phone: emp.contact_phone||emp.phone||"",
+        user_role: emp.user_role||"field_staff",
+        season: emp.season||"", contract_end: emp.contract_end||"",
+      });
+    } else {
+      setEditEmp(null);
+      setForm(emptyForm);
+    }
+    setEmpDialog(true);
+  };
+
   // ── Save Employee ──────────────────────────────────────────
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error("الاسم مطلوب");
+    if (!form.employee_number.trim()) return toast.error("الرقم الوظيفي مطلوب");
+    if (!form.job_title.trim()) return toast.error("المسمى الوظيفي مطلوب");
     setSaving(true);
     try {
-      const payload = { ...form, department };
+      const payload = {
+        name: form.name, employee_number: form.employee_number,
+        job_title: form.job_title, contact_phone: form.contact_phone||undefined,
+        national_id: form.national_id||undefined,
+        employment_type: form.employment_type,
+        season: form.season||undefined, contract_end: form.contract_end||undefined,
+        department,
+      };
       if (editEmp) {
         await axios.put(`${API}/employees/${editEmp.id}`, payload, headers());
         toast.success("تم تحديث بيانات الموظف ✅");
       } else {
-        await axios.post(`${API}/employees`, payload, headers());
+        await axios.post(`${API}/employees`, { ...payload, shift:"", rest_days:[] }, headers());
         toast.success("تم إضافة الموظف بنجاح ✅");
       }
       setEmpDialog(false);
@@ -583,7 +638,7 @@ export default function EmployeesList({ department }) {
 
         {/* Add Employee */}
         {canAdd && (
-          <Button size="sm" className="h-9 gap-1.5" onClick={() => { setEditEmp(null); setForm(emptyForm); setEmpDialog(true); }}
+          <Button size="sm" className="h-9 gap-1.5" onClick={() => handleOpenDialog()}
             data-testid="add-employee-btn">
             <Plus className="w-4 h-4" />موظف جديد
           </Button>
@@ -603,7 +658,7 @@ export default function EmployeesList({ department }) {
             {employees.length === 0 ? "لا يوجد موظفون بعد في هذه الإدارة" : "لا نتائج تطابق البحث"}
           </p>
           {canAdd && employees.length === 0 && (
-            <Button size="sm" onClick={() => { setEditEmp(null); setForm(emptyForm); setEmpDialog(true); }} className="gap-1.5">
+            <Button size="sm" onClick={() => handleOpenDialog()} className="gap-1.5">
               <Plus className="w-3.5 h-3.5" />إضافة أول موظف
             </Button>
           )}
@@ -618,7 +673,7 @@ export default function EmployeesList({ department }) {
               canEdit={canEdit} canDelete={canDelete}
               canManageAccounts={canManage} canResetPins={canResetPins}
               canChangeRoles={canChangeRoles} myLevel={myLevel}
-              onEdit={(e) => { setEditEmp(e); setForm({ name:e.name||"", employee_number:e.employee_number||"", national_id:e.national_id||"", job_title:e.job_title||"", employment_type:e.employment_type||"permanent", phone:e.phone||"", user_role:e.user_role||"field_staff", contract_start:e.contract_start||"", contract_end:e.contract_end||"" }); setEmpDialog(true); }}
+              onEdit={(e) => handleOpenDialog(e)}
               onDelete={(e) => { setDeleteTarget(e); setDeleteDialog(true); }}
               onAccountAction={handleAccountAction}
               onChangeRole={handleChangeRole}
@@ -690,7 +745,7 @@ export default function EmployeesList({ department }) {
                       <div className="flex items-center gap-1 justify-center">
                         {canEdit && (
                           <Button variant="ghost" size="icon" className="h-7 w-7"
-                            onClick={() => { setEditEmp(emp); setForm({ name:emp.name||"", employee_number:emp.employee_number||"", national_id:emp.national_id||"", job_title:emp.job_title||"", employment_type:emp.employment_type||"permanent", phone:emp.phone||"", user_role:emp.user_role||"field_staff", contract_start:emp.contract_start||"", contract_end:emp.contract_end||"" }); setEmpDialog(true); }}>
+                            onClick={() => handleOpenDialog(emp)}>
                             <Edit className="w-3.5 h-3.5" />
                           </Button>
                         )}
@@ -712,70 +767,143 @@ export default function EmployeesList({ department }) {
 
       {/* ── Add/Edit Employee Dialog ──────────────────────── */}
       <Dialog open={empDialog} onOpenChange={v => { setEmpDialog(v); if (!v) { setEditEmp(null); setForm(emptyForm); } }}>
-        <DialogContent className="sm:max-w-[580px] font-cairo max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto font-cairo" dir="rtl" data-testid="employee-dialog">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <User className="w-5 h-5 text-primary" />
+            <DialogTitle className="font-cairo text-lg">
               {editEmp ? "تعديل بيانات الموظف" : "إضافة موظف جديد"}
             </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">البيانات الأساسية الثابتة — الوردية والراحات تُدار من الجدول الشهري</p>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label className="text-sm font-semibold">الاسم الكامل *</Label>
-                <Input value={form.name} onChange={e => setForm({...form, name:e.target.value})} required className="mt-1" placeholder="مثال: محمد عبدالله الأحمدي" data-testid="emp-name-input" />
+
+            {/* Row 1: Name + Number */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] font-semibold">اسم الموظف *</Label>
+                <Input value={form.name} onChange={e=>setForm({...form,name:e.target.value})}
+                  required className="mt-1 h-9" placeholder="الاسم الكامل"
+                  data-testid="employee-name-input"/>
               </div>
               <div>
-                <Label className="text-sm font-semibold">رقم الهوية الوطنية</Label>
-                <Input value={form.national_id} onChange={e => setForm({...form, national_id:e.target.value})} className="mt-1 font-mono" placeholder="10xxxxxxxx" data-testid="emp-national-id-input" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">رقم الموظف</Label>
-                <Input value={form.employee_number} onChange={e => setForm({...form, employee_number:e.target.value})} className="mt-1" placeholder="EMP-001" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">المسمى الوظيفي</Label>
-                <Input value={form.job_title} onChange={e => setForm({...form, job_title:e.target.value})} className="mt-1" placeholder="مثال: مشرف ميداني" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">رقم الجوال</Label>
-                <Input value={form.phone} onChange={e => setForm({...form, phone:e.target.value})} className="mt-1 font-mono" placeholder="05xxxxxxxx" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">نوع التوظيف</Label>
-                <Select value={form.employment_type} onValueChange={v => setForm({...form, employment_type:v})}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent dir="rtl">
-                    <SelectItem value="permanent">دائم</SelectItem>
-                    <SelectItem value="seasonal">موسمي</SelectItem>
-                    <SelectItem value="temporary">مؤقت</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">الدور في النظام</Label>
-                <Select value={form.user_role} onValueChange={v => setForm({...form, user_role:v})}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent dir="rtl">
-                    <SelectItem value="field_staff">موظف ميداني</SelectItem>
-                    <SelectItem value="shift_supervisor">مشرف وردية</SelectItem>
-                    <SelectItem value="admin_staff">موظف إداري</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">تاريخ بداية العقد</Label>
-                <Input type="date" value={form.contract_start} onChange={e => setForm({...form, contract_start:e.target.value})} className="mt-1" dir="ltr" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">تاريخ انتهاء العقد</Label>
-                <Input type="date" value={form.contract_end} onChange={e => setForm({...form, contract_end:e.target.value})} className="mt-1" dir="ltr" />
+                <Label className="text-[11px] font-semibold">الرقم الوظيفي *</Label>
+                <Input value={form.employee_number} onChange={e=>setForm({...form,employee_number:e.target.value})}
+                  required className="mt-1 h-9 font-mono" placeholder="EMP-001"
+                  data-testid="employee-number-input"/>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEmpDialog(false)}>إلغاء</Button>
-              <Button type="submit" disabled={saving} className="gap-1.5" data-testid="save-employee-btn">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+
+            {/* National ID with live check */}
+            <div>
+              <Label className="text-[11px] font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-500"/>رقم الهوية الوطنية
+                <span className="text-slate-400 font-normal text-[10px]">10 أرقام — لتسجيل الدخول</span>
+              </Label>
+              <Input value={form.national_id}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g,'').slice(0,10);
+                  setForm({...form, national_id: val});
+                  clearTimeout(nationalIdTimerRef.current);
+                  nationalIdTimerRef.current = setTimeout(() => checkNationalId(val, editEmp?.id||null), 500);
+                }}
+                className={`mt-1 h-9 font-mono tracking-widest text-center transition-colors
+                  ${nationalIdStatus==='available' ? 'border-emerald-400 ring-1 ring-emerald-200' :
+                    nationalIdStatus==='taken' ? 'border-red-400 ring-1 ring-red-200' :
+                    nationalIdStatus==='format_error'||nationalIdStatus==='too_long' ? 'border-amber-400 ring-1 ring-amber-200' : ''}`}
+                placeholder="1xxxxxxxxx" maxLength={10} inputMode="numeric"
+                data-testid="employee-national-id-input"/>
+              <div className="mt-1 min-h-[16px]">
+                {nationalIdStatus === 'checking'      && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/>جاري التحقق...</p>}
+                {nationalIdStatus === 'available'     && <p className="text-[10px] text-emerald-600 flex items-center gap-1"><Check className="w-3 h-3"/>رقم الهوية متاح — سيُنشأ حساب تلقائياً</p>}
+                {nationalIdStatus === 'taken'         && <p className="text-[10px] text-red-600 flex items-center gap-1"><X className="w-3 h-3"/>رقم الهوية مسجل مسبقاً في النظام</p>}
+                {nationalIdStatus === 'too_short' && form.national_id.length > 0 && <p className="text-[10px] text-amber-600 flex items-center gap-1"><Info className="w-3 h-3"/>{10 - form.national_id.length} أرقام متبقية</p>}
+                {nationalIdStatus === 'too_long'      && <p className="text-[10px] text-red-600 flex items-center gap-1"><X className="w-3 h-3"/>رقم الهوية يجب أن يكون 10 أرقام بالضبط</p>}
+                {nationalIdStatus === 'format_error'  && <p className="text-[10px] text-amber-600 flex items-center gap-1"><Info className="w-3 h-3"/>رقم الهوية يجب أن يبدأ بـ 1 أو 2</p>}
+              </div>
+            </div>
+
+            {/* Row 2: Job Title + Phone */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] font-semibold">المسمى الوظيفي *</Label>
+                <Input value={form.job_title} onChange={e=>setForm({...form,job_title:e.target.value})}
+                  required className="mt-1 h-9" placeholder="مثال: مشرف ميداني"
+                  data-testid="employee-jobtitle-input"/>
+              </div>
+              <div>
+                <Label className="text-[11px] font-semibold flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-slate-400"/>رقم التواصل
+                </Label>
+                <Input value={form.contact_phone} onChange={e=>setForm({...form,contact_phone:e.target.value})}
+                  className="mt-1 h-9 font-mono" placeholder="05xxxxxxxx" type="tel"
+                  data-testid="employee-phone-input"/>
+              </div>
+            </div>
+
+            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent"/>
+
+            {/* Employment Type — card buttons */}
+            <div>
+              <Label className="text-[11px] font-semibold mb-2 block">نوع التوظيف</Label>
+              <div className="flex gap-2">
+                {EMPLOYMENT_TYPES.map(et=>(
+                  <button key={et.value} type="button"
+                    onClick={()=>setForm({...form,employment_type:et.value,season:'',contract_end:''})}
+                    data-testid={`employment-type-${et.value}`}
+                    className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1
+                      ${form.employment_type===et.value ? 'shadow-md' : 'border-border hover:border-slate-300'}`}
+                    style={form.employment_type===et.value?{borderColor:et.color,backgroundColor:et.bg,color:et.color}:{}}>
+                    {et.value==='permanent'?<UserCheck className="w-4 h-4"/>:et.value==='seasonal'?<CalendarDays className="w-4 h-4"/>:<Clock className="w-4 h-4"/>}
+                    <span className="text-[10px] font-bold">{et.label_ar}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seasonal details */}
+            {form.employment_type==='seasonal' && (
+              <div className="rounded-xl border-2 border-sky-200 bg-sky-50 p-3 space-y-3">
+                <p className="text-[10px] font-bold text-sky-700 flex items-center gap-1"><Info className="w-3 h-3"/>تفاصيل الموسم</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] font-semibold">الموسم</Label>
+                    <Select value={form.season} onValueChange={v=>setForm({...form,season:v})}>
+                      <SelectTrigger className="h-8 mt-1 text-[11px]"><SelectValue placeholder="اختر..."/></SelectTrigger>
+                      <SelectContent dir="rtl">
+                        {SEASONS.map(s=><SelectItem key={s.value} value={s.value}>{s.label_ar}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-semibold">تاريخ انتهاء العقد</Label>
+                    <Input type="date" value={form.contract_end} onChange={e=>setForm({...form,contract_end:e.target.value})} className="h-8 mt-1 text-[11px]" dir="ltr"/>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Temporary contract */}
+            {form.employment_type==='temporary' && (
+              <div className="rounded-xl border-2 border-purple-200 bg-purple-50 p-3">
+                <p className="text-[10px] font-bold text-purple-700 flex items-center gap-1 mb-2"><Info className="w-3 h-3"/>تفاصيل العقد المؤقت</p>
+                <div>
+                  <Label className="text-[10px] font-semibold">تاريخ انتهاء العقد *</Label>
+                  <Input type="date" value={form.contract_end} onChange={e=>setForm({...form,contract_end:e.target.value})} className="h-8 mt-1 text-[11px]" required dir="ltr"/>
+                </div>
+              </div>
+            )}
+
+            {/* Info note */}
+            {form.employment_type==='permanent' && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-2.5 flex items-start gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0"/>
+                <p className="text-[10px] text-amber-700 leading-relaxed">حالة التكليف (مكلف / غير مكلف) تُحدَّد شهرياً من الجدول الشهري مباشرة</p>
+              </div>
+            )}
+
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={()=>setEmpDialog(false)}>إلغاء</Button>
+              <Button type="submit" disabled={saving} className="bg-primary" data-testid="save-employee-btn">
+                {saving && <Loader2 className="w-4 h-4 animate-spin ml-1"/>}
                 {editEmp ? "حفظ التعديلات" : "إضافة الموظف"}
               </Button>
             </DialogFooter>

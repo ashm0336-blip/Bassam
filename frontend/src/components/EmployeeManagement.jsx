@@ -798,11 +798,6 @@ export default function EmployeeManagement({ department }) {
             }
             e.target.value = '';
           }} />
-          {canAddEmp && (
-            <Button size="sm" onClick={()=>handleOpenDialog()} className="bg-primary" data-testid="add-employee-btn">
-              <Plus className="w-4 h-4 ml-1"/>{isAr?'موظف جديد':'New'}
-            </Button>
-          )}
         </div>
       </div>
 
