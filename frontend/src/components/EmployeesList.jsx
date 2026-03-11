@@ -330,7 +330,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
 }
 
 // ── Main Component ────────────────────────────────────────────
-export default function EmployeesList({ department }) {
+export default function EmployeesList({ department, onEmployeeAdded }) {
   const { user } = useAuth();
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -486,6 +486,8 @@ export default function EmployeesList({ department }) {
       } else {
         await axios.post(`${API}/employees`, { ...payload, shift:"", rest_days:[] }, headers());
         toast.success("تم إضافة الموظف بنجاح ✅");
+        // إشعار الجدول الشهري لإعادة جلب البيانات تلقائياً
+        if (onEmployeeAdded) onEmployeeAdded();
       }
       setEmpDialog(false);
       setEditEmp(null);
@@ -495,10 +497,27 @@ export default function EmployeesList({ department }) {
     finally { setSaving(false); }
   };
 
-  // ── Delete Employee ────────────────────────────────────────
+  // ── Delete Employee (مع تحذير إذا له جدول شهري) ────────────
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
+      // تحقق هل الموظف في جدول شهري حالي
+      const currentMonth = new Date().toLocaleDateString("en-CA", { timeZone:"Asia/Riyadh" }).slice(0,7);
+      let hasSchedule = false;
+      try {
+        const res = await axios.get(`${API}/schedules/${department}/${currentMonth}`, headers());
+        const sched = res.data;
+        if (sched?.assignments?.some(a => a.employee_id === deleteTarget.id)) {
+          hasSchedule = true;
+        }
+      } catch { /* لا جدول = لا مشكلة */ }
+
+      const confirmMsg = hasSchedule
+        ? `تحذير: الموظف "${deleteTarget.name}" مضمَّن في جدول ${currentMonth} الحالي!\n\nهل أنت متأكد من الحذف النهائي؟ سيتم إزالته من الجدول.`
+        : `هل أنت متأكد من حذف الموظف "${deleteTarget.name}" نهائياً؟\nسيتم حذف حسابه وبيانات تسجيل الدخول.`;
+
+      if (!window.confirm(confirmMsg)) return;
+
       await axios.delete(`${API}/employees/${deleteTarget.id}`, headers());
       toast.success("تم حذف الموظف");
       setDeleteDialog(false);

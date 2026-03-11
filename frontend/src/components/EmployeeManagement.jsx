@@ -178,55 +178,6 @@ function AccountStatusIcon({ emp, canManageAccounts, canResetPins, handleAccount
 }
 
 // ── Actions ⋮ Dropdown ────────────────────────────────────────
-function ActionsMenu({ emp, canEdit, canDeleteEmp, canManageAccounts, canResetPins, handleOpenDialog, handleAccountAction, setSelectedEmployee, setDeleteDialogOpen, isAr }) {
-  if (!canEdit && !canDeleteEmp && !canManageAccounts) return null;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-slate-100"
-          data-testid={`actions-menu-${emp.id}`}>
-          <MoreVertical className="w-4 h-4 text-slate-500" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" side="bottom" className="w-48 font-cairo" dir="rtl">
-        {canEdit && (
-          <DropdownMenuItem onClick={() => handleOpenDialog(emp)} data-testid={`edit-emp-${emp.id}`}>
-            <Edit className="w-4 h-4 ml-2 text-slate-500"/>{isAr?'تعديل البيانات':'Edit'}
-          </DropdownMenuItem>
-        )}
-        {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
-          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
-            <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>{isAr?'إعادة تعيين PIN':'Reset PIN'}
-          </DropdownMenuItem>
-        )}
-        {canManageAccounts && <>
-        <DropdownMenuSeparator/>
-        {emp.account_status==='active' && (
-          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)} className="text-blue-600 focus:text-blue-700">
-            <ShieldX className="w-4 h-4 ml-2"/>{isAr?'تجميد الحساب مؤقتاً':'Freeze Account'}
-          </DropdownMenuItem>
-        )}
-        {(emp.account_status==='pending'||emp.account_status==='frozen'||emp.account_status==='no_account') && (
-          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'activate-account',emp.name)} className="text-emerald-600 focus:text-emerald-700">
-            <ShieldCheck className="w-4 h-4 ml-2"/>{isAr?'تفعيل الحساب':'Activate Account'}
-          </DropdownMenuItem>
-        )}
-        {emp.account_status!=='terminated' && (
-          <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'terminate-account',emp.name)} className="text-orange-600 focus:text-orange-700">
-            <ShieldOff className="w-4 h-4 ml-2"/>{isAr?'إنهاء الخدمة':'Terminate Service'}
-          </DropdownMenuItem>
-        )}
-        </>}
-        {canDeleteEmp && <>
-        <DropdownMenuSeparator/>
-        <DropdownMenuItem onClick={()=>{setSelectedEmployee(emp);setDeleteDialogOpen(true);}} className="text-destructive focus:text-destructive">
-          <Trash2 className="w-4 h-4 ml-2"/>{isAr?'حذف الموظف نهائياً':'Delete Employee'}
-        </DropdownMenuItem>
-        </>}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 // Employment type badge
 function EmpTypeBadge({ type, isAr }) {
@@ -387,39 +338,15 @@ export default function EmployeeManagement({ department }) {
   // Roles this user can assign (can't assign >= own level)
   const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
   const myLevel = ROLE_HIERARCHY[user?.role] || 0;
-  const ASSIGNABLE_ROLES = [
-    { value: 'general_manager',    ar: 'مدير عام',       level: 4 },
-    { value: 'department_manager', ar: 'مدير إدارة',     level: 3 },
-    { value: 'shift_supervisor',   ar: 'مشرف وردية',    level: 2 },
-    { value: 'field_staff',        ar: 'موظف ميداني',   level: 1 },
-    { value: 'admin_staff',        ar: 'موظف إداري',    level: 1 },
-  ].filter(r => r.level < myLevel);
-
   const [employees, setEmployees]           = useState([]);
   const [gates, setGates]                   = useState([]);
   const [loading, setLoading]               = useState(true);
-  const [dialogOpen, setDialogOpen]         = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editMode, setEditMode]             = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [submitting, setSubmitting]         = useState(false);
   const [shifts, setShifts]                 = useState([]);
   const [coverageLocations, setCoverageLocations] = useState([]);
   const [selectedMonth, setSelectedMonth]   = useState(getMonthKey(new Date()));
   const [schedule, setSchedule]             = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
-  const nationalIdTimerRef = useRef(null);
-
-  const emptyForm = {
-    name: "", employee_number: "", job_title: "", contact_phone: "",
-    national_id: "",
-    location: "", shift: "", rest_days: [], work_tasks: "",
-    work_type: "field", employment_type: "permanent",
-    season: "", contract_end: "",
-    department: department || user?.department || "planning",
-  };
-  const [formData, setFormData] = useState(emptyForm);
-  const [nationalIdStatus, setNationalIdStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'format_error'
 
   const todayAr = getTodayArabic();
   const currentMonthKey = getMonthKey(new Date());
@@ -455,20 +382,6 @@ export default function EmployeeManagement({ department }) {
     } catch(e) { toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
     finally { setLoading(false); }
   };
-
-  // Live national ID check (debounced)
-  const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
-    if (!id || id.length < 10) { setNationalIdStatus(id.length > 0 ? 'too_short' : null); return; }
-    if (id.length > 10) { setNationalIdStatus('too_long'); return; }
-    if (!/^[12]\d{9}$/.test(id)) { setNationalIdStatus('format_error'); return; }
-    setNationalIdStatus('checking');
-    try {
-      const token = localStorage.getItem("token");
-      const url = `${API}/employees/check-national-id?national_id=${id}${excludeEmpId?`&exclude_emp_id=${excludeEmpId}`:''}`;
-      const res = await axios.get(url, { headers:{ Authorization:`Bearer ${token}` } });
-      setNationalIdStatus(res.data.available ? 'available' : 'taken');
-    } catch { setNationalIdStatus(null); }
-  }, []);
 
   const fetchSchedule = async () => {
     setScheduleLoading(true);
@@ -588,63 +501,6 @@ export default function EmployeeManagement({ department }) {
     } catch(e) { toast.error(isAr?"فشل التحديث":"Failed"); }
   };
 
-  const handleOpenDialog = (emp=null) => {
-    if(emp) {
-      setEditMode(true); setSelectedEmployee(emp);
-      setFormData({
-        name: emp.name, employee_number: emp.employee_number||"",
-        job_title: emp.job_title, contact_phone: emp.contact_phone||"",
-        national_id: emp.national_id||"",
-        location: emp.location||"", shift: emp.shift||"",
-        rest_days: emp.rest_days||[], work_tasks: emp.work_tasks||"",
-        work_type: emp.work_type||"field",
-        employment_type: emp.employment_type||"permanent",
-        season: emp.season||"", contract_end: emp.contract_end||"",
-        department: emp.department,
-      });
-    } else {
-      setEditMode(false); setSelectedEmployee(null);
-      setFormData({ ...emptyForm, department: department||user?.department||"planning" });
-    }
-    setNationalIdStatus(null);
-    setDialogOpen(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setSubmitting(true);
-    try {
-      const token = localStorage.getItem("token");
-      const payload = {
-        name: formData.name, employee_number: formData.employee_number,
-        job_title: formData.job_title, contact_phone: formData.contact_phone||undefined,
-        national_id: formData.national_id||undefined,
-        work_type: formData.work_type, employment_type: formData.employment_type,
-        season: formData.season||undefined, contract_end: formData.contract_end||undefined,
-        work_tasks: formData.work_tasks||undefined,
-      };
-      if(editMode) {
-        await axios.put(`${API}/employees/${selectedEmployee.id}`, payload, { headers:{ Authorization:`Bearer ${token}` } });
-        toast.success(isAr?"تم تحديث الموظف":"Updated");
-      } else {
-        await axios.post(`${API}/employees`, { ...payload, department: formData.department, shift:"", rest_days:[] }, { headers:{ Authorization:`Bearer ${token}` } });
-        toast.success(isAr?"تم إضافة الموظف":"Added");
-      }
-      setDialogOpen(false); fetchEmployees(); fetchSchedule();
-    } catch(e) { toast.error(e.response?.data?.detail||(isAr?"حدث خطأ":"Error")); }
-    finally { setSubmitting(false); }
-  };
-
-  const handleDelete = async () => {
-    if(!selectedEmployee) return; setSubmitting(true);
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API}/employees/${selectedEmployee.id}`,{ headers:{ Authorization:`Bearer ${token}` } });
-      toast.success(isAr?"تم حذف الموظف":"Deleted");
-      setDeleteDialogOpen(false); fetchEmployees();
-    } catch(e) { toast.error(isAr?"حدث خطأ":"Error"); }
-    finally { setSubmitting(false); }
-  };
-
   // ── Account Management ──────────────────────────────────────
   const handleAccountAction = async (empId, action, empName) => {
     try {
@@ -658,25 +514,6 @@ export default function EmployeeManagement({ department }) {
     }
   };
 
-  // Change employee role
-  const handleChangeRole = async (emp, newRole) => {
-    if (!emp.user_id) {
-      toast.error(isAr ? "يجب تفعيل حساب الموظف أولاً" : "Activate account first");
-      return;
-    }
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.put(
-        `${API}/users/${emp.user_id}/role`,
-        { role: newRole },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(res.data?.message || "تم تغيير الدور ✅");
-      fetchEmployees();
-    } catch(e) {
-      toast.error(e.response?.data?.detail || "فشل تغيير الدور");
-    }
-  };
 
   const statistics = useMemo(() => {
     // الإحصائيات تعكس فقط بيانات الجدول المعتمد (active)
@@ -1030,232 +867,6 @@ export default function EmployeeManagement({ department }) {
           </div>
         </CardContent>
       </Card>
-
-      {/* ── Employee Dialog ──────────────────────────────────── */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto" data-testid="employee-dialog">
-          <DialogHeader>
-            <DialogTitle className="font-cairo text-lg">
-              {editMode ? (isAr?'تعديل بيانات الموظف':'Edit Employee') : (isAr?'إضافة موظف جديد':'New Employee')}
-            </DialogTitle>
-            <DialogDescription>
-              {isAr?'البيانات الأساسية الثابتة — الوردية والراحات تُدار من الجدول الشهري':'Base profile — shift & rest managed via monthly schedule'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-2">
-
-              {/* Row 1: Name + Number */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-[11px] font-semibold">{isAr?'اسم الموظف *':'Name *'}</Label>
-                  <Input value={formData.name} onChange={e=>setFormData({...formData,name:e.target.value})}
-                    required className="mt-1 h-9" placeholder={isAr?'الاسم الكامل':'Full name'}
-                    data-testid="employee-name-input"/>
-                </div>
-                <div>
-                  <Label className="text-[11px] font-semibold">{isAr?'الرقم الوظيفي *':'Employee # *'}</Label>
-                  <Input value={formData.employee_number} onChange={e=>setFormData({...formData,employee_number:e.target.value})}
-                    required className="mt-1 h-9 font-mono" placeholder="EMP-001"
-                    data-testid="employee-number-input"/>
-                </div>
-              </div>
-
-              {/* Row 1.5: National ID */}
-              <div>
-                <Label className="text-[11px] font-semibold flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-500"/>
-                  {isAr?'رقم الهوية الوطنية':'National ID'}
-                  <span className="text-slate-400 font-normal text-[10px]">{isAr?'10 أرقام — لتسجيل الدخول':'10 digits — for login'}</span>
-                </Label>
-                <Input
-                  value={formData.national_id}
-                  onChange={e => {
-                    const val = e.target.value.replace(/\D/g,'').slice(0,10);
-                    setFormData({...formData, national_id: val});
-                    // Debounced live check
-                    clearTimeout(nationalIdTimerRef.current);
-                    nationalIdTimerRef.current = setTimeout(() => {
-                      checkNationalId(val, editMode ? selectedEmployee?.id : null);
-                    }, 500);
-                  }}
-                  className={`mt-1 h-9 font-mono tracking-widest text-center transition-colors
-                    ${nationalIdStatus==='available' ? 'border-emerald-400 ring-1 ring-emerald-200' :
-                      nationalIdStatus==='taken' ? 'border-red-400 ring-1 ring-red-200' :
-                      nationalIdStatus==='format_error'||nationalIdStatus==='too_long' ? 'border-amber-400 ring-1 ring-amber-200' : ''}
-                  `}
-                  placeholder="1xxxxxxxxx"
-                  maxLength={10}
-                  inputMode="numeric"
-                  data-testid="employee-national-id-input"
-                />
-                {/* Live feedback */}
-                <div className="mt-1 min-h-[16px]">
-                  {nationalIdStatus === 'checking' && (
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin"/>جاري التحقق...
-                    </p>
-                  )}
-                  {nationalIdStatus === 'available' && (
-                    <p className="text-[10px] text-emerald-600 flex items-center gap-1">
-                      <Check className="w-3 h-3"/>رقم الهوية متاح — سيُنشأ حساب تلقائياً
-                    </p>
-                  )}
-                  {nationalIdStatus === 'taken' && (
-                    <p className="text-[10px] text-red-600 flex items-center gap-1">
-                      <X className="w-3 h-3"/>رقم الهوية مسجل مسبقاً في النظام
-                    </p>
-                  )}
-                  {nationalIdStatus === 'too_short' && formData.national_id.length > 0 && (
-                    <p className="text-[10px] text-amber-600 flex items-center gap-1">
-                      <Info className="w-3 h-3"/>{10 - formData.national_id.length} أرقام متبقية
-                    </p>
-                  )}
-                  {nationalIdStatus === 'too_long' && (
-                    <p className="text-[10px] text-red-600 flex items-center gap-1">
-                      <X className="w-3 h-3"/>رقم الهوية يجب أن يكون 10 أرقام بالضبط
-                    </p>
-                  )}
-                  {nationalIdStatus === 'format_error' && (
-                    <p className="text-[10px] text-amber-600 flex items-center gap-1">
-                      <Info className="w-3 h-3"/>رقم الهوية يجب أن يبدأ بـ 1 أو 2
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 2: Job Title + Phone */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-[11px] font-semibold">{isAr?'المسمى الوظيفي *':'Job Title *'}</Label>
-                  <Input value={formData.job_title} onChange={e=>setFormData({...formData,job_title:e.target.value})}
-                    required className="mt-1 h-9" placeholder={isAr?'مثال: محاسب حشود':'e.g. Crowd Analyst'}
-                    data-testid="employee-jobtitle-input"/>
-                </div>
-                <div>
-                  <Label className="text-[11px] font-semibold flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-slate-400"/>
-                    {isAr?'رقم التواصل':'Phone'}
-                  </Label>
-                  <Input value={formData.contact_phone} onChange={e=>setFormData({...formData,contact_phone:e.target.value})}
-                    className="mt-1 h-9 font-mono" placeholder="05xxxxxxxx" type="tel"
-                    data-testid="employee-phone-input"/>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent"/>
-
-              {/* Row 3: Employment Type (نوع التوظيف فقط — نوع العمل يُحدد من الصلاحيات) */}
-              <div>
-                <Label className="text-[11px] font-semibold mb-2 block">{isAr?'نوع التوظيف':'Employment Type'}</Label>
-                <div className="flex gap-2">
-                  {EMPLOYMENT_TYPES.map(et=>(
-                    <button key={et.value} type="button"
-                      onClick={()=>setFormData({...formData,employment_type:et.value,season:'',contract_end:''})}
-                      data-testid={`employment-type-${et.value}`}
-                      className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1
-                        ${formData.employment_type===et.value ? 'shadow-md' : 'border-border hover:border-slate-300'}`}
-                      style={formData.employment_type===et.value ? { borderColor:et.color, backgroundColor:et.bg, color:et.color } : {}}>
-                      {et.value==='permanent' ? <UserCheck className="w-4 h-4"/> : et.value==='seasonal' ? <CalendarDays className="w-4 h-4"/> : <Clock className="w-4 h-4"/>}
-                      <span className="text-[10px] font-bold">{isAr?et.label_ar:et.label_en}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Conditional: Season (seasonal only) */}
-              {formData.employment_type==='seasonal' && (
-                <div className="rounded-xl border-2 border-sky-200 bg-sky-50 p-3 space-y-3">
-                  <p className="text-[10px] font-bold text-sky-700 flex items-center gap-1">
-                    <Info className="w-3 h-3"/>
-                    {isAr?'تفاصيل الموسم':'Season Details'}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-[10px] font-semibold">{isAr?'الموسم':'Season'}</Label>
-                      <Select value={formData.season} onValueChange={v=>setFormData({...formData,season:v})}>
-                        <SelectTrigger className="h-8 mt-1 text-[11px]" data-testid="season-select">
-                          <SelectValue placeholder={isAr?'اختر...':'Select...'}/>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SEASONS.map(s=><SelectItem key={s.value} value={s.value}>{isAr?s.label_ar:s.label_en}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-[10px] font-semibold">{isAr?'تاريخ انتهاء العقد':'Contract End'}</Label>
-                      <Input type="date" value={formData.contract_end}
-                        onChange={e=>setFormData({...formData,contract_end:e.target.value})}
-                        className="h-8 mt-1 text-[11px]" data-testid="contract-end-input"/>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Conditional: Contract end (temporary only) */}
-              {formData.employment_type==='temporary' && (
-                <div className="rounded-xl border-2 border-purple-200 bg-purple-50 p-3">
-                  <p className="text-[10px] font-bold text-purple-700 flex items-center gap-1 mb-2">
-                    <Info className="w-3 h-3"/>
-                    {isAr?'تفاصيل العقد المؤقت':'Temporary Contract'}
-                  </p>
-                  <div>
-                    <Label className="text-[10px] font-semibold">{isAr?'تاريخ انتهاء العقد *':'Contract End Date *'}</Label>
-                    <Input type="date" value={formData.contract_end}
-                      onChange={e=>setFormData({...formData,contract_end:e.target.value})}
-                      className="h-8 mt-1 text-[11px]" required
-                      data-testid="contract-end-input"/>
-                  </div>
-                </div>
-              )}
-
-              {/* Note for permanent: is_tasked managed via monthly schedule */}
-              {formData.employment_type==='permanent' && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-2.5 flex items-start gap-2">
-                  <Zap className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0"/>
-                  <p className="text-[10px] text-amber-700 leading-relaxed">
-                    {isAr
-                      ? 'حالة التكليف (مكلف / غير مكلف) تُحدَّد شهرياً من الجدول الشهري مباشرة'
-                      : 'Tasked status is set monthly via the monthly schedule table'}
-                  </p>
-                </div>
-              )}
-
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button type="button" variant="outline" onClick={()=>setDialogOpen(false)}>
-                {isAr?'إلغاء':'Cancel'}
-              </Button>
-              <Button type="submit" disabled={submitting} className="bg-primary" data-testid="employee-submit-btn">
-                {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1"/>}
-                {editMode ? (isAr?'حفظ التعديلات':'Save') : (isAr?'إضافة الموظف':'Add')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-cairo">{isAr?'تأكيد الحذف':'Confirm Delete'}</DialogTitle>
-            <DialogDescription>
-              {isAr ? `هل أنت متأكد من حذف "${selectedEmployee?.name}"؟` : `Delete "${selectedEmployee?.name}"?`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={()=>setDeleteDialogOpen(false)}>{isAr?'إلغاء':'Cancel'}</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
-              {submitting && <Loader2 className="w-4 h-4 animate-spin ml-1"/>}
-              {isAr?'حذف':'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

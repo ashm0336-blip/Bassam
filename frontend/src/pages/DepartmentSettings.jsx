@@ -102,6 +102,8 @@ export default function DepartmentSettings({ department }) {
   const [editMode, setEditMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  // يتزايد كلما أُضيف موظف → يُجبر EmployeeManagement على إعادة جلب البيانات
+  const [employeeVersion, setEmployeeVersion] = useState(0);
 
   const [shifts, setShifts] = useState([]);
   const [counts, setCounts] = useState({ employees: 0, shifts: 0, gates: 0, maps: 0, categories: 0 });
@@ -274,8 +276,8 @@ export default function DepartmentSettings({ department }) {
 
       {/* Tab Content */}
       <div className="transition-all duration-300">
-        {activeTab === 'employees_list' && <EmployeesList department={department} />}
-        {activeTab === 'employees' && <EmployeeManagement department={department} />}
+        {activeTab === 'employees_list' && <EmployeesList department={department} onEmployeeAdded={() => setEmployeeVersion(v => v+1)} />}
+        {activeTab === 'employees' && <EmployeeManagement department={department} key={`schedule-${employeeVersion}`} />}
 
         {activeTab === 'maps' && department === 'gates' && <GateMapPage />}
         {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} />}
