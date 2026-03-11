@@ -335,14 +335,12 @@ export default function TasksPage({ department }) {
     if (form.assignee_ids.length === 0) return toast.error("يجب اختيار موظف واحد على الأقل");
     setSubmitting(true);
     try {
-      // تحويل التاريخ من datetime-local (توقيت السعودية) إلى ISO UTC
+      // تحويل التاريخ من datetime-local إلى ISO UTC
+      // نضيف +03:00 صراحةً حتى المتصفح يعرف إنها SA، ثم يحوّلها لـ UTC تلقائياً
       let dueIso = null;
       if (form.due_at) {
         try {
-          // المستخدم يدخل بتوقيت السعودية — نطرح 3 ساعات للحصول على UTC
-          const local = new Date(form.due_at);
-          const utc = new Date(local.getTime() - 3 * 60 * 60 * 1000);
-          dueIso = utc.toISOString();
+          dueIso = new Date(form.due_at + ":00+03:00").toISOString();
         } catch { dueIso = null; }
       }
       const payload = { ...form, department: dept, due_at: dueIso };
