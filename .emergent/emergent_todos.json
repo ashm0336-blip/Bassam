@@ -1,18 +1,14 @@
 [
   {
-    "content": "حذف الملفات غير المستخدمة (4 ملفات)",
+    "content": "Backend: حساب أداء الإنجاز",
     "status": "completed"
   },
   {
-    "content": "تنظيف PlanningDepartment / CrowdServices / Mataf / Plazas / Gates من الكود الميت",
+    "content": "Frontend: بادج أداء + إحصائيات",
     "status": "completed"
   },
   {
-    "content": "تنظيف App.js من imports غير مستخدمة",
-    "status": "completed"
-  },
-  {
-    "content": "حذف Backend endpoints غير مستخدمة",
+    "content": "Frontend: إحصائيات أداء الموظفين",
     "status": "completed"
   }
 ]

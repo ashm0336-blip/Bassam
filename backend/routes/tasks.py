@@ -98,7 +98,7 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
         ts = get_time_status(t.get("due_at"), t.get("status", ""))
         t["time_status"] = ts
         # تحديث الحالة إلى overdue تلقائياً
-        if ts == "overdue" and t.get("status") not in ("done", "canceled"):
+        if ts == "overdue" and t.get("status") not in ("done",):
             t["status"] = "overdue"
         # إضافة الوقت المتبقي بالدقائق للفرونتند
         due = parse_due(t.get("due_at"))
@@ -107,6 +107,10 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
             t["remaining_minutes"] = diff_mins
         else:
             t["remaining_minutes"] = None
+        # بيانات الأداء للمهام المكتملة
+        if t.get("status") == "done":
+            t.setdefault("completion_performance", "no_due")
+            t.setdefault("completion_delta_minutes", None)
 
     return tasks
 
@@ -129,16 +133,20 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
 
     tasks = await db.tasks.find(query, {"_id": 0}).to_list(1000)
 
-    # الإجمالي يعرض فقط المهام النشطة (بدون المحذوفة — لا يوجد ملغاة)
     total    = len(tasks)
     pending  = sum(1 for t in tasks if t.get("status") == "pending")
     progress = sum(1 for t in tasks if t.get("status") == "in_progress")
     done     = sum(1 for t in tasks if t.get("status") == "done")
     overdue  = sum(1 for t in tasks
                    if get_time_status(t.get("due_at"), t.get("status", "")) == "overdue")
+    # إحصائيات الأداء للمهام المنجزة
+    early    = sum(1 for t in tasks if t.get("status") == "done" and t.get("completion_performance") == "early")
+    on_time  = sum(1 for t in tasks if t.get("status") == "done" and t.get("completion_performance") == "on_time")
+    late_done = sum(1 for t in tasks if t.get("status") == "done" and t.get("completion_performance") == "late")
 
     return {"total": total, "pending": pending, "in_progress": progress,
-            "done": done, "overdue": overdue}
+            "done": done, "overdue": overdue,
+            "early": early, "on_time": on_time, "late_done": late_done}
 
 
 # ── POST: إنشاء مهمة ────────────────────────────────────────────
@@ -234,43 +242,88 @@ async def update_task_status(task_id: str, data: TaskStatusUpdate, user: dict = 
     }
     if data.status not in STATUS_LABELS:
         raise HTTPException(status_code=400, detail="حالة غير صحيحة")
+
+    now = datetime.now(timezone.utc)
     update = {
         "status": data.status,
-        "updated_at": now_iso(),
+        "updated_at": now.isoformat(),
     }
+
+    # ── حساب الأداء عند الإنجاز ──────────────────────────────────
+    performance_data = {}
     if data.status == "done":
-        update["completed_at"] = now_iso()
+        completed_at = now
+        update["completed_at"] = completed_at.isoformat()
+
+        due = parse_due(task.get("due_at"))
+        if due:
+            # الفرق بالدقائق (موجب = أُنجز قبل الموعد، سالب = بعده)
+            delta_mins = int((due - completed_at).total_seconds() / 60)
+            update["completion_delta_minutes"] = delta_mins
+
+            if delta_mins > 15:
+                perf = "early"        # مبكر (أكثر من 15 دقيقة قبل)
+            elif delta_mins >= -15:
+                perf = "on_time"      # في الوقت (هامش ±15 دقيقة)
+            else:
+                perf = "late"         # متأخر
+            update["completion_performance"] = perf
+            performance_data = {"performance": perf, "delta_mins": delta_mins}
+        else:
+            # لا يوجد موعد → لا تقييم وقتي
+            update["completion_performance"] = "no_due"
+            performance_data = {"performance": "no_due", "delta_mins": None}
+
+    # ── وصف الأداء للإشعار ──────────────────────────────────────
+    perf_desc = ""
+    if performance_data:
+        p = performance_data["performance"]
+        dm = performance_data.get("delta_mins")
+        if p == "early" and dm:
+            h, m = divmod(abs(dm), 60)
+            t_str = f"{h} س {m} د" if h else f"{m} د"
+            perf_desc = f" — أُنجزت قبل الموعد بـ {t_str} ⭐"
+        elif p == "late" and dm:
+            h, m = divmod(abs(dm), 60)
+            t_str = f"{h} س {m} د" if h else f"{m} د"
+            perf_desc = f" — تأخرت {t_str}"
+        elif p == "on_time":
+            perf_desc = " — في الوقت المحدد ✅"
 
     history_entry = {
         "action": "status_changed",
         "by": user.get("name", ""),
-        "at": now_iso(),
-        "note": data.note or f"تم تغيير الحالة إلى: {STATUS_LABELS.get(data.status, data.status)}"
+        "at": now.isoformat(),
+        "note": data.note or f"تم تغيير الحالة إلى: {STATUS_LABELS.get(data.status, data.status)}{perf_desc}"
     }
     await db.tasks.update_one({"id": task_id}, {
         "$set": update,
         "$push": {"history": history_entry}
     })
 
-    # إشعار للمدير عند اكتمال المهمة
+    # ── إشعار للمدير عند اكتمال المهمة (مع نتيجة الأداء) ──────────
     if data.status == "done" and task.get("created_by_id"):
-        creator = await db.users.find_one({"id": task["created_by_id"]}, {"_id": 0})
-        if creator:
-            alert = {
-                "id": str(uuid.uuid4()),
-                "type": "task_done",
-                "title": f"✅ مهمة مكتملة: {task['title']}",
-                "message": f"أتم {user.get('name', 'الموظف')} المهمة بنجاح",
-                "priority": "normal",
-                "department": task.get("department"),
-                "task_id": task_id,
-                "target_user_id": task["created_by_id"],
-                "is_read": False,
-                "received_at": now_iso(),
-            }
-            await db.alerts.insert_one(alert)
+        p = performance_data.get("performance", "")
+        perf_icons = {"early": "⭐", "on_time": "✅", "late": "⚠️", "no_due": "✅"}
+        icon = perf_icons.get(p, "✅")
+        alert = {
+            "id": str(uuid.uuid4()),
+            "type": "task_done",
+            "title": f"{icon} مهمة مكتملة: {task['title']}",
+            "message": f"أتم {user.get('name', 'الموظف')} المهمة{perf_desc}",
+            "priority": "high" if p == "early" else "normal",
+            "department": task.get("department"),
+            "task_id": task_id,
+            "target_user_id": task["created_by_id"],
+            "is_read": False,
+            "received_at": now.isoformat(),
+        }
+        await db.alerts.insert_one(alert)
 
-    return {"message": f"تم تحديث الحالة إلى: {STATUS_LABELS.get(data.status, data.status)}"}
+    return {
+        "message": f"تم تحديث الحالة إلى: {STATUS_LABELS.get(data.status, data.status)}{perf_desc}",
+        **performance_data
+    }
 
 
 # ── DELETE: حذف مهمة ────────────────────────────────────────────

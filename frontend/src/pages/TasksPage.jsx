@@ -6,7 +6,7 @@ import {
   Plus, LayoutGrid, List, Clock, CheckCircle2, Loader2, Trash2,
   Edit, AlertTriangle, ChevronDown, Users, Zap, Calendar,
   ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
-  Flame, TimerOff, Timer, AlarmClock,
+  Flame, TimerOff, Timer, AlarmClock, Star, Trophy, TrendingUp,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,41 @@ function DueBadge({ dueAt, timeStatus, remainingMinutes }) {
   );
 }
 
+// ── Performance Badge (للمهام المكتملة) ─────────────────────────
+const PERF_CFG = {
+  early:   { label: "مبكر", Icon: Star,        cls: "bg-amber-50 text-amber-700 border-amber-300",  glow: "shadow-amber-200" },
+  on_time: { label: "في الوقت", Icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-700 border-emerald-300", glow: "" },
+  late:    { label: "متأخر",   Icon: TimerOff,  cls: "bg-red-50 text-red-600 border-red-200",        glow: "" },
+  no_due:  { label: "منجزة",   Icon: CheckCircle2, cls: "bg-slate-50 text-slate-500 border-slate-200", glow: "" },
+};
+
+function formatDelta(mins) {
+  if (!mins) return "";
+  const abs = Math.abs(mins);
+  if (abs < 60) return `${abs} د`;
+  const h = Math.floor(abs / 60), m = abs % 60;
+  return m > 0 ? `${h}س ${m}د` : `${h} ساعة`;
+}
+
+function PerformanceBadge({ performance, deltaMinutes }) {
+  if (!performance || performance === "no_due") return null;
+  const cfg = PERF_CFG[performance] || PERF_CFG.no_due;
+  const delta = deltaMinutes ? formatDelta(deltaMinutes) : "";
+  const label = performance === "early"
+    ? `مبكر ${delta ? `بـ ${delta}` : ""}`
+    : performance === "late"
+    ? `تأخر ${delta}`
+    : "في الوقت";
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border shadow-sm
+      ${cfg.cls} ${cfg.glow}`}>
+      <cfg.Icon className="w-3 h-3 flex-shrink-0" />
+      {label}
+    </span>
+  );
+}
+
 // ── Kanban Card ───────────────────────────────────────────────
 function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr }) {
   const pri = PRIORITY_CFG[task.priority] || PRIORITY_CFG.normal;
@@ -187,6 +222,24 @@ function KanbanCard({ task, canManage, onEdit, onDelete, onStatusChange, isAr })
       {/* Description */}
       {task.description && (
         <p className="text-[11px] text-muted-foreground line-clamp-2">{task.description}</p>
+      )}
+
+      {/* مؤشر أداء الإنجاز — للمهام المكتملة فقط */}
+      {task.status === "done" && task.completion_performance && (
+        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border
+          ${task.completion_performance === "early"
+            ? "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200"
+            : task.completion_performance === "late"
+            ? "bg-red-50 border-red-200"
+            : "bg-emerald-50 border-emerald-200"}`}>
+          <PerformanceBadge
+            performance={task.completion_performance}
+            deltaMinutes={task.completion_delta_minutes}
+          />
+          {task.completion_performance === "early" && (
+            <span className="text-[9px] text-amber-600 font-medium">أداء متميز ⭐</span>
+          )}
+        </div>
       )}
 
       {/* Time Progress Bar — مؤشر بصري للوقت المتبقي */}
@@ -409,12 +462,19 @@ export default function TasksPage({ department }) {
 
   // ── Stats Row ──────────────────────────────────────────────
   const STATS = [
-    { label: "الكل",        value: (stats.pending||0) + (stats.in_progress||0) + (stats.overdue||0), color: "#6b7280", key: "all" },
-    { label: "انتظار",      value: stats.pending     || 0, color: STATUS_CFG.pending.color,     key: "pending" },
-    { label: "جارية",       value: stats.in_progress || 0, color: STATUS_CFG.in_progress.color, key: "in_progress" },
-    { label: "مكتملة",      value: stats.done        || 0, color: STATUS_CFG.done.color,        key: "done" },
-    { label: "متأخرة",      value: stats.overdue     || 0, color: STATUS_CFG.overdue.color,     key: "overdue" },
+    { label: "الكل",       value: (stats.pending||0) + (stats.in_progress||0) + (stats.overdue||0), color: "#6b7280",                       key: "all" },
+    { label: "انتظار",     value: stats.pending     || 0, color: STATUS_CFG.pending.color,                                                   key: "pending" },
+    { label: "جارية",      value: stats.in_progress || 0, color: STATUS_CFG.in_progress.color,                                              key: "in_progress" },
+    { label: "مكتملة",     value: stats.done        || 0, color: STATUS_CFG.done.color,                                                     key: "done" },
+    { label: "متأخرة",     value: stats.overdue     || 0, color: STATUS_CFG.overdue.color,                                                  key: "overdue" },
   ];
+
+  // ── إحصائيات الأداء (تظهر فقط إذا يوجد مهام مكتملة بموعد) ───
+  const PERF_STATS = stats.done > 0 && (stats.early || stats.on_time || stats.late_done) ? [
+    { label: "مبكر ⭐",   value: stats.early    || 0, color: "#d97706", bg: "bg-amber-50",   border: "border-amber-200" },
+    { label: "في الوقت ✅", value: stats.on_time  || 0, color: "#059669", bg: "bg-emerald-50", border: "border-emerald-200" },
+    { label: "متأخر ⚠️",   value: stats.late_done|| 0, color: "#dc2626", bg: "bg-red-50",     border: "border-red-200" },
+  ] : [];
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[300px]">
@@ -480,6 +540,21 @@ export default function TasksPage({ department }) {
           </button>
         ))}
       </div>
+
+      {/* ── إحصائيات الأداء (تظهر فقط عند وجود مهام مكتملة بموعد) ── */}
+      {PERF_STATS.length > 0 && (
+        <div className="flex items-center gap-2 p-3 rounded-xl border bg-gradient-to-r from-slate-50 to-white">
+          <TrendingUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <span className="text-[11px] text-slate-500 font-medium ml-1">تقييم الأداء:</span>
+          {PERF_STATS.map((p, i) => (
+            <span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${p.bg} ${p.border}`}
+              style={{ color: p.color }}>
+              <span className="font-black text-sm">{p.value}</span>
+              {p.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* ── Filters ───────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2 items-center">
@@ -582,7 +657,14 @@ export default function TasksPage({ department }) {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center"><DueBadge dueAt={t.due_at} timeStatus={t.time_status} remainingMinutes={t.remaining_minutes} /></TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <DueBadge dueAt={t.due_at} timeStatus={t.time_status} remainingMinutes={t.remaining_minutes} />
+                          {t.status === "done" && t.completion_performance && (
+                            <PerformanceBadge performance={t.completion_performance} deltaMinutes={t.completion_delta_minutes} />
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
                       {isManager && (
                         <TableCell className="text-center">
