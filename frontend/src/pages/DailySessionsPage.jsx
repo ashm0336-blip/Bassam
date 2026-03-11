@@ -115,6 +115,12 @@ export default function DailySessionsPage() {
   const [isDrawingFreehand, setIsDrawingFreehand] = useState(false);
   const [freehandPoints, setFreehandPoints] = useState([]);
 
+  // Clipboard for copy/paste zones
+  const [clipboardZone, setClipboardZone] = useState(null);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, zoneId } | null
+
   // Undo/Redo stacks for drawing
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
@@ -511,24 +517,66 @@ export default function DailySessionsPage() {
     } catch (e) { toast.error(isAr ? "تعذر التنعيم" : "Smooth failed"); }
   };
 
-  const handleCopyZone = async () => {
+  const handleCopyZone = useCallback(async () => {
     if (!activeSession || !selectedZoneId) return;
-    const zone = sessionZones.find(z => z.id === selectedZoneId);
+    const allZones = activeSession?.zones || [];
+    const zone = allZones.find(z => z.id === selectedZoneId);
     if (!zone) return;
-    const newPoints = zone.polygon_points.map(p => ({ x: p.x + 4, y: p.y + 4 }));
+    setClipboardZone({ ...zone });
+    toast.success(isAr ? "✂️ تم النسخ — Ctrl+V للصق" : "Copied — Ctrl+V to paste");
+  }, [activeSession, selectedZoneId, isAr]);
+
+  const handlePasteZone = useCallback(async () => {
+    if (!activeSession || !clipboardZone) return;
+    const offset = 5;
+    const newPoints = (clipboardZone.polygon_points || []).map(p => ({ x: p.x + offset, y: p.y + offset }));
     try {
       const res = await axios.post(`${API}/admin/map-sessions/${activeSession.id}/zones`, {
-        zone_code: zone.zone_code + "-copy", name_ar: zone.name_ar + " (نسخة)", name_en: (zone.name_en || "") + " (copy)",
-        zone_type: zone.zone_type, polygon_points: newPoints, fill_color: zone.fill_color,
-        stroke_color: zone.stroke_color || "#000000", stroke_style: zone.stroke_style || "dashed",
-        opacity: zone.opacity ?? 0.4, stroke_opacity: zone.stroke_opacity ?? 1,
-        fill_type: zone.fill_type || "solid", pattern_type: zone.pattern_type || null,
-        pattern_fg_color: zone.pattern_fg_color || "#000000", pattern_bg_color: zone.pattern_bg_color || "#ffffff",
+        zone_code: clipboardZone.zone_code + "-copy",
+        name_ar: clipboardZone.name_ar + " (نسخة)",
+        name_en: (clipboardZone.name_en || "") + " (copy)",
+        zone_type: clipboardZone.zone_type,
+        polygon_points: newPoints,
+        fill_color: clipboardZone.fill_color,
+        stroke_color: clipboardZone.stroke_color || "#000000",
+        stroke_style: clipboardZone.stroke_style || "dashed",
+        opacity: clipboardZone.opacity ?? 0.4,
+        stroke_opacity: clipboardZone.stroke_opacity ?? 1,
+        fill_type: clipboardZone.fill_type || "solid",
+        pattern_type: clipboardZone.pattern_type || null,
+        pattern_fg_color: clipboardZone.pattern_fg_color || "#000000",
+        pattern_bg_color: clipboardZone.pattern_bg_color || "#ffffff",
       }, getAuthHeaders());
       setActiveSession(res.data);
-      toast.success(isAr ? "تم نسخ المنطقة" : "Zone copied");
-    } catch (e) { toast.error(isAr ? "تعذر النسخ" : "Copy failed"); }
-  };
+      toast.success(isAr ? "📋 تم اللصق" : "Pasted");
+    } catch { toast.error(isAr ? "تعذر اللصق" : "Paste failed"); }
+  }, [activeSession, clipboardZone, isAr]);
+
+  const handleCutZone = useCallback(async () => {
+    if (!activeSession || !selectedZoneId) return;
+    const allZones = activeSession?.zones || [];
+    const zone = allZones.find(z => z.id === selectedZoneId);
+    if (!zone) return;
+    setClipboardZone({ ...zone });
+    try {
+      const res = await axios.delete(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, getAuthHeaders());
+      if (res.data?.zones) setActiveSession(res.data);
+      else { const r2 = await axios.get(`${API}/map-sessions/${activeSession.id}`); setActiveSession(r2.data); }
+      setSelectedZoneId(null);
+      toast.success(isAr ? "✂️ تم القص — Ctrl+V للصق" : "Cut — Ctrl+V to paste");
+    } catch { toast.error(isAr ? "تعذر القص" : "Cut failed"); }
+  }, [activeSession, selectedZoneId, isAr]);
+
+  const handleDeleteSelectedZone = useCallback(async () => {
+    if (!activeSession || !selectedZoneId) return;
+    try {
+      const res = await axios.delete(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZoneId}`, getAuthHeaders());
+      if (res.data?.zones) setActiveSession(res.data);
+      else { const r2 = await axios.get(`${API}/map-sessions/${activeSession.id}`); setActiveSession(r2.data); }
+      setSelectedZoneId(null);
+      toast.success(isAr ? "🗑️ تم حذف المنطقة" : "Zone deleted");
+    } catch { toast.error(isAr ? "تعذر الحذف" : "Delete failed"); }
+  }, [activeSession, selectedZoneId, isAr]);
 
   // Delete a single vertex point from a zone (double-click)
   const handleDeletePoint = async (zoneId, pointIndex) => {
@@ -615,20 +663,47 @@ export default function DailySessionsPage() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ctrl+Z = Undo, Ctrl+Y or Ctrl+Shift+Z = Redo
+      // لا تتدخل إذا المستخدم يكتب في input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+
+      // Ctrl+Z = Undo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         if (mapMode === "draw" && undoStack.length > 0) undoDrawing();
         else if (mapUndoStack.length > 0) undoMapAction();
         return;
       }
+      // Ctrl+Y / Ctrl+Shift+Z = Redo
       if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
         e.preventDefault();
         if (mapMode === "draw" && redoStack.length > 0) redoDrawing();
         else if (mapRedoStack.length > 0) redoMapAction();
         return;
       }
+      // Ctrl+C = نسخ المنطقة المحددة
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        if (selectedZoneId) { e.preventDefault(); handleCopyZone(); }
+        return;
+      }
+      // Ctrl+V = لصق
+      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        if (clipboardZone) { e.preventDefault(); handlePasteZone(); }
+        return;
+      }
+      // Ctrl+X = قص
+      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+        if (selectedZoneId) { e.preventDefault(); handleCutZone(); }
+        return;
+      }
+      // Delete / Backspace = حذف المنطقة المحددة
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedZoneId && mapMode === "edit") {
+        e.preventDefault();
+        handleDeleteSelectedZone();
+        return;
+      }
+      // Escape = إلغاء / رجوع
       if (e.key === "Escape") {
+        setContextMenu(null);
         if (rectStart) { setRectStart(null); setRectEnd(null); }
         else if (drawingPoints.length > 0) { setDrawingPoints([]); setNearStart(false); }
         else if (selectedZoneId) setSelectedZoneId(null);
@@ -637,7 +712,10 @@ export default function DailySessionsPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawingPoints.length, selectedZoneId, mapMode, rectStart, undoStack.length, redoStack.length, mapUndoStack.length, mapRedoStack.length, undoDrawing, redoDrawing, undoMapAction, redoMapAction]);
+  }, [drawingPoints.length, selectedZoneId, mapMode, rectStart,
+      undoStack.length, redoStack.length, mapUndoStack.length, mapRedoStack.length,
+      undoDrawing, redoDrawing, undoMapAction, redoMapAction,
+      clipboardZone, handleCopyZone, handlePasteZone, handleCutZone, handleDeleteSelectedZone]);
 
   useEffect(() => { setDensityEdits({}); }, [activeSession?.id]);
 
@@ -1141,7 +1219,12 @@ export default function DailySessionsPage() {
                       </button>
                     </div>
                     {/* Map canvas: absolute inset-0 → always same size regardless of panel state */}
-                    <div className="absolute inset-0">
+                    <div className="absolute inset-0"
+                      onContextMenu={(e) => {
+                        if (!activeSession || activeSession.status === "completed") return;
+                        e.preventDefault();
+                        setContextMenu({ x: e.clientX, y: e.clientY, zoneId: selectedZoneId });
+                      }}>
                       <MapCanvas
                     selectedFloor={selectedFloor} activeSession={activeSession}
                     sessionZones={sessionZones} activeZones={activeZones} removedZones={removedZones}
@@ -1190,6 +1273,30 @@ export default function DailySessionsPage() {
                       onToggle={() => setStatsCollapsed(prev => !prev)}
                     />
                   </div>
+                  {/* ── Keyboard hints bar ── */}
+                  {activeSession && activeSession.status !== "completed" && (
+                    <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 border rounded-lg text-[10px] text-slate-500 flex-wrap" dir="ltr">
+                      {[
+                        { keys: ["Ctrl","C"], label: "نسخ" },
+                        { keys: ["Ctrl","V"], label: "لصق" },
+                        { keys: ["Ctrl","X"], label: "قص" },
+                        { keys: ["Del"], label: "حذف" },
+                        { keys: ["Esc"], label: "إلغاء" },
+                        { keys: ["Ctrl","Z"], label: "تراجع" },
+                        { keys: ["Ctrl","Y"], label: "إعادة" },
+                      ].map((s,i) => (
+                        <span key={i} className="flex items-center gap-1">
+                          {s.keys.map((k,j) => (
+                            <span key={j}>
+                              <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[9px] font-mono shadow-sm">{k}</kbd>
+                              {j < s.keys.length-1 && <span className="mx-0.5 text-slate-400">+</span>}
+                            </span>
+                          ))}
+                          <span className="mr-1 font-cairo text-slate-500">{s.label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
                   />
@@ -1230,6 +1337,57 @@ export default function DailySessionsPage() {
       <NewZoneDialog open={showNewZoneDialog} onOpenChange={(v) => { setShowNewZoneDialog(v); if (!v) setMapMode("edit"); }} newZoneForm={newZoneForm} setNewZoneForm={setNewZoneForm} drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints} handleSaveNewZone={handleSaveNewZone} ZONE_TYPES={ZONE_TYPES} />
       <NotesDialog open={showNotesDialog} onOpenChange={setShowNotesDialog} sessionNotes={sessionNotes} setSessionNotes={setSessionNotes} handleUpdateSession={handleUpdateSession} />
       <CompareDialog open={showCompareDialog} onOpenChange={setShowCompareDialog} compareData={compareData} ZONE_TYPES={ZONE_TYPES} />
+
+      {/* ── Context Menu (Right-Click) ── */}
+      {contextMenu && (
+        <div
+          className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-2xl py-1.5 min-w-[180px] font-cairo text-sm"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onMouseLeave={() => setContextMenu(null)}>
+          {/* عنوان المنطقة إن وجدت */}
+          {contextMenu.zoneId && (() => {
+            const z = sessionZones.find(z => z.id === contextMenu.zoneId);
+            return z ? (
+              <div className="px-3 py-1.5 text-[10px] font-bold text-primary border-b mb-1 truncate">
+                📍 {z.name_ar || z.zone_code}
+              </div>
+            ) : null;
+          })()}
+          {[
+            { icon: "📋", label: `نسخ`, shortcut: "Ctrl+C", action: () => { handleCopyZone(); setContextMenu(null); }, disabled: !contextMenu.zoneId },
+            { icon: "📌", label: `لصق`, shortcut: "Ctrl+V", action: () => { handlePasteZone(); setContextMenu(null); }, disabled: !clipboardZone },
+            { icon: "✂️", label: `قص`, shortcut: "Ctrl+X", action: () => { handleCutZone(); setContextMenu(null); }, disabled: !contextMenu.zoneId },
+            null, // فاصل
+            { icon: "🗑️", label: `حذف`, shortcut: "Del", action: () => { handleDeleteSelectedZone(); setContextMenu(null); }, disabled: !contextMenu.zoneId, danger: true },
+            null,
+            { icon: "↩️", label: `تراجع`, shortcut: "Ctrl+Z", action: () => { if (mapUndoStack.length > 0) undoMapAction(); setContextMenu(null); }, disabled: mapUndoStack.length === 0 },
+            { icon: "↪️", label: `إعادة`, shortcut: "Ctrl+Y", action: () => { if (mapRedoStack.length > 0) redoMapAction(); setContextMenu(null); }, disabled: mapRedoStack.length === 0 },
+          ].map((item, i) =>
+            item === null ? (
+              <div key={i} className="my-1 border-t border-slate-100"/>
+            ) : (
+              <button key={i}
+                disabled={item.disabled}
+                onClick={item.disabled ? undefined : item.action}
+                className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors
+                  ${item.disabled ? "opacity-40 cursor-not-allowed text-slate-400" :
+                    item.danger ? "text-red-600 hover:bg-red-50" : "text-slate-700 hover:bg-slate-50"}`}>
+                <span className="flex items-center gap-2">
+                  <span>{item.icon}</span>
+                  <span className="font-cairo">{item.label}</span>
+                </span>
+                <kbd className="text-[9px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
+                  {item.shortcut}
+                </kbd>
+              </button>
+            )
+          )}
+        </div>
+      )}
+      {/* Close context menu on outside click */}
+      {contextMenu && (
+        <div className="fixed inset-0 z-[9998]" onClick={() => setContextMenu(null)}/>
+      )}
     </div>
   );
 }
