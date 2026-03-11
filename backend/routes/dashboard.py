@@ -276,32 +276,6 @@ async def get_reports(type: Optional[str] = None, department: Optional[str] = No
     return reports
 
 
-@router.get("/planning/stats")
-async def get_planning_stats(user: dict = Depends(get_current_user)):
-    transactions = await db.transactions.find({"department": "planning"}, {"_id": 0}).to_list(1000)
-    employees = await db.employees.find({"department": "planning", "is_active": True}, {"_id": 0}).to_list(1000)
-    pending = len([t for t in transactions if t.get("status") == "pending"])
-    in_progress = len([t for t in transactions if t.get("status") == "in_progress"])
-    completed = len([t for t in transactions if t.get("status") == "completed"])
-    return {
-        "total_transactions": len(transactions), "pending_transactions": pending,
-        "in_progress_transactions": in_progress, "completed_transactions": completed,
-        "total_employees": len(employees), "active_employees": len(employees)
-    }
-
-
-@router.get("/crowd-services/stats")
-async def get_crowd_services_stats(user: dict = Depends(get_current_user)):
-    transactions = await db.transactions.find({"department": "crowd_services"}, {"_id": 0}).to_list(1000)
-    employees = await db.employees.find({"department": "crowd_services", "is_active": True}, {"_id": 0}).to_list(1000)
-    return {
-        "total_transactions": len(transactions),
-        "pending_transactions": len([t for t in transactions if t.get("status") == "pending"]),
-        "completed_transactions": len([t for t in transactions if t.get("status") == "completed"]),
-        "total_employees": len(employees)
-    }
-
-
 @router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.model_dump()

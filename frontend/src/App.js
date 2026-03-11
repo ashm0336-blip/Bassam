@@ -21,9 +21,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import AlertsPage from "@/pages/AlertsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
-// MapPage removed
 import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
-import TransactionsPage from "@/pages/TransactionsPage";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 import HaramMapPage from "@/pages/HaramMapPage";

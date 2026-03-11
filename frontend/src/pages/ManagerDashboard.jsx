@@ -39,10 +39,10 @@ export default function ManagerDashboard() {
     try {
       const token = localStorage.getItem("token");
       
-      const [gatesRes, employeesRes, transactionsRes, activityRes] = await Promise.all([
+      const [gatesRes, employeesRes, tasksRes, activityRes] = await Promise.all([
         axios.get(`${API}/gates`),
         axios.get(`${API}/employees`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/transactions/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/tasks/stats`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/activity-logs`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
@@ -66,6 +66,8 @@ export default function ManagerDashboard() {
         return acc;
       }, {});
 
+      // تحويل إحصائيات المهام لنفس تنسيق transactions القديم
+      const tasksData = tasksRes.data;
       setStats({
         gates: {
           total: gates.length,
@@ -79,7 +81,13 @@ export default function ManagerDashboard() {
           inactive: employees.length - activeEmployees.length,
           byDepartment
         },
-        transactions: transactionsRes.data,
+        transactions: {
+          total: tasksData.total || 0,
+          pending: tasksData.pending || 0,
+          in_progress: tasksData.in_progress || 0,
+          completed: tasksData.done || 0,
+          overdue: tasksData.overdue || 0,
+        },
         alerts: gatesWithoutStaff.map(g => ({
           type: 'warning',
           message: `${g.name} - باب مفتوح بدون موظفين`

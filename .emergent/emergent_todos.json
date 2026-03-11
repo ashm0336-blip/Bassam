@@ -1,10 +1,18 @@
 [
   {
-    "content": "Backend: حذف حالة canceled + تحديث الإحصائيات",
+    "content": "حذف الملفات غير المستخدمة (4 ملفات)",
     "status": "completed"
   },
   {
-    "content": "Frontend: حذف حالة ملغاة من كل مكان",
+    "content": "تنظيف PlanningDepartment / CrowdServices / Mataf / Plazas / Gates من الكود الميت",
+    "status": "completed"
+  },
+  {
+    "content": "تنظيف App.js من imports غير مستخدمة",
+    "status": "completed"
+  },
+  {
+    "content": "حذف Backend endpoints غير مستخدمة",
     "status": "completed"
   }
 ]
