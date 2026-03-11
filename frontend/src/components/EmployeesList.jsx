@@ -204,130 +204,104 @@ function AvatarInitial({ name, size = "md" }) {
 }
 
 // ── Employee Card (Cards View) ─────────────────────────────────
+
+// ── Employee Card — تصميم احترافي متناسق ──────────────────────
 function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
     onEdit, onDelete, onAccountAction, onChangeRole, isAr }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
+  const avatarColors = ["#7c3aed","#047857","#0284c7","#b45309","#dc2626","#0f766e"];
+  const avatarColor = avatarColors[(emp.name?.charCodeAt(0)||0) % avatarColors.length];
 
   return (
-    <Card className="group border hover:shadow-lg transition-all duration-200 hover:border-primary/30 overflow-hidden"
+    <Card className="group relative border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl"
+      style={{ boxShadow: `0 2px 12px ${acCfg.color}18` }}
       data-testid={`emp-card-${emp.id}`}>
-      {/* Color strip top */}
-      <div className="h-1 w-full" style={{ background: acCfg.color }} />
-      <CardContent className="p-4">
-        {/* Header: avatar + name + actions */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <AvatarInitial name={emp.name} size="md" />
-            <div className="flex-1 min-w-0">
-              <p className="font-cairo font-bold text-sm truncate">{emp.name}</p>
-              <p className="text-[11px] text-muted-foreground truncate">{emp.job_title || "—"}</p>
+      <div className="absolute right-0 top-0 bottom-0 w-1 rounded-l-full" style={{ background: acCfg.color }} />
+      <div className="absolute inset-0 opacity-[0.03] rounded-2xl"
+        style={{ background: `linear-gradient(135deg, ${acCfg.color}, transparent)` }} />
+      <CardContent className="relative p-3.5">
+        {/* الصف الأول: أفاتار + اسم + قائمة */}
+        <div className="flex items-start gap-2.5 mb-2.5">
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-md"
+              style={{ background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}cc)` }}>
+              {emp.name?.charAt(0) || "؟"}
+            </div>
+            <div className="absolute -bottom-0.5 -left-0.5 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center"
+              style={{ backgroundColor: acCfg.color }}>
+              <acCfg.Icon className="w-2 h-2 text-white" />
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-cairo font-bold text-sm leading-tight truncate">{emp.name}</p>
+            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{emp.job_title || "—"}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               {emp.employee_number && (
-                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                  <Hash className="w-3 h-3" />{emp.employee_number}
-                </p>
+                <span className="text-[9px] font-mono text-slate-400 flex items-center gap-0.5">
+                  <Hash className="w-2.5 h-2.5"/>{emp.employee_number}
+                </span>
+              )}
+              {emp.national_id && (
+                <span className="text-[9px] font-mono text-slate-400 flex items-center gap-0.5">
+                  <User className="w-2.5 h-2.5"/>{emp.national_id}
+                </span>
               )}
             </div>
           </div>
-          {/* Actions menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon"
-                className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
+                className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-slate-100 flex-shrink-0"
                 data-testid={`emp-card-menu-${emp.id}`}>
-                <MoreVertical className="w-4 h-4 text-slate-500" />
+                <MoreVertical className="w-4 h-4 text-slate-400" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-52">
-              {canEdit && (
-                <DropdownMenuItem onClick={() => onEdit(emp)}>
-                  <Edit className="w-4 h-4 ml-2 text-slate-500" />تعديل البيانات
-                </DropdownMenuItem>
+              {canEdit && <DropdownMenuItem onClick={()=>onEdit(emp)}><Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات</DropdownMenuItem>}
+              {canResetPins && hasNatId && (emp.account_status==="active"||emp.account_status==="frozen") && (
+                <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"reset-pin",emp.name)}><KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN</DropdownMenuItem>
               )}
-              {canResetPins && hasNatId && (emp.account_status === "active" || emp.account_status === "frozen") && (
-                <DropdownMenuItem onClick={() => onAccountAction(emp.id, "reset-pin", emp.name)}>
-                  <KeyRound className="w-4 h-4 ml-2 text-amber-500" />إعادة تعيين PIN
-                </DropdownMenuItem>
-              )}
-              {canManageAccounts && hasNatId && (
-                <>
-                  <DropdownMenuSeparator />
-                  {emp.account_status === "active" && (
-                    <DropdownMenuItem onClick={() => onAccountAction(emp.id, "freeze-account", emp.name)}
-                      className="text-blue-600">
-                      <ShieldX className="w-4 h-4 ml-2" />تجميد الحساب مؤقتاً
-                    </DropdownMenuItem>
-                  )}
-                  {["pending","frozen","no_account"].includes(emp.account_status) && (
-                    <DropdownMenuItem onClick={() => onAccountAction(emp.id, "activate-account", emp.name)}
-                      className="text-emerald-600">
-                      <ShieldCheck className="w-4 h-4 ml-2" />تفعيل الحساب
-                    </DropdownMenuItem>
-                  )}
-                  {emp.account_status !== "terminated" && (
-                    <DropdownMenuItem onClick={() => onAccountAction(emp.id, "terminate-account", emp.name)}
-                      className="text-orange-600">
-                      <ShieldOff className="w-4 h-4 ml-2" />إنهاء الخدمة
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-              {canDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onDelete(emp)} className="text-destructive">
-                    <Trash2 className="w-4 h-4 ml-2" />حذف الموظف نهائياً
-                  </DropdownMenuItem>
-                </>
-              )}
+              {canManageAccounts && hasNatId && <>
+                <DropdownMenuSeparator/>
+                {emp.account_status==="active" && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"freeze-account",emp.name)} className="text-blue-600"><ShieldX className="w-4 h-4 ml-2"/>تجميد مؤقتاً</DropdownMenuItem>}
+                {["pending","frozen","no_account"].includes(emp.account_status||"no_account") && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"activate-account",emp.name)} className="text-emerald-600"><ShieldCheck className="w-4 h-4 ml-2"/>تفعيل الحساب</DropdownMenuItem>}
+                {emp.account_status!=="terminated" && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"terminate-account",emp.name)} className="text-orange-600"><ShieldOff className="w-4 h-4 ml-2"/>إنهاء الخدمة</DropdownMenuItem>}
+              </>}
+              {canDelete && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onDelete(emp)} className="text-destructive"><Trash2 className="w-4 h-4 ml-2"/>حذف نهائياً</DropdownMenuItem></>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        {/* Info chips */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <EmpTypeBadge type={emp.employment_type} />
-            {emp.user_role && (
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                {ROLE_CFG[emp.user_role]?.label || emp.user_role}
-              </span>
-            )}
+        {/* الصف الثاني: رقم الجوال + نوع التوظيف */}
+        <div className="flex items-center justify-between gap-2 py-2 px-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-2.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Phone className="w-3 h-3 text-sky-500 flex-shrink-0" />
+            <span className="text-[10px] font-mono text-sky-600 truncate">
+              {emp.contact_phone || emp.phone || <span className="text-slate-400 not-italic">لا يوجد</span>}
+            </span>
           </div>
-          {emp.national_id && (
-            <p className="text-[10px] text-slate-400 flex items-center gap-1">
-              <User className="w-3 h-3" /> {emp.national_id}
-            </p>
-          )}
-          {emp.phone && (
-            <p className="text-[10px] text-slate-400 flex items-center gap-1">
-              <Phone className="w-3 h-3" /> {emp.phone}
-            </p>
-          )}
+          <EmpTypeBadge type={emp.employment_type} />
         </div>
-
-        {/* Account status footer */}
-        <div className="mt-3 pt-3 border-t border-slate-100">
-          {/* Account + Role row */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] text-slate-400 font-medium">الحساب</span>
-              <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts}
-                canResetPins={canResetPins} onAccountAction={onAccountAction} isAr={isAr}/>
-            </div>
-            {canChangeRoles && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-400 font-medium">الصلاحيات</span>
-                <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
-                  myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr}/>
-              </div>
-            )}
+        {/* الصف الثالث: الحساب + الصلاحيات */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-medium text-slate-400">الحساب</span>
+            <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts}
+              canResetPins={canResetPins} onAccountAction={onAccountAction} isAr={isAr}/>
           </div>
+          {canChangeRoles && (
+            <div className="flex items-center gap-1">
+              <Shield className="w-3 h-3 text-violet-400" />
+              <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
+                myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr}/>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
+
 
 // ── Main Component ────────────────────────────────────────────
 export default function EmployeesList({ department, onEmployeeAdded }) {
@@ -339,7 +313,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [view, setView]           = useState("cards"); // cards | list
+  const [view, setView]           = useState("list"); // list | cards
   const [search, setSearch]       = useState("");
   const [filterType, setFilterType]     = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
