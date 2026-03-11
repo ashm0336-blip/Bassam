@@ -523,8 +523,8 @@ export default function TasksPage({ department }) {
                   <p className="font-cairo font-bold text-base text-foreground">{formatDate(selectedDate)}</p>
                   {isToday && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">اليوم</span>}
                 </div>
-                <button onClick={()=>navigate(+1)} disabled={isToday}
-                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors disabled:opacity-30">
+                <button onClick={()=>navigate(+1)}
+                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
                   <ChevronLeft className="w-4 h-4 text-muted-foreground"/>
                 </button>
                 <button onClick={()=>setSelectedDate(today)} disabled={isToday}
