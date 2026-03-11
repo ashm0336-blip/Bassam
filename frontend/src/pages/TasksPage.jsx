@@ -554,45 +554,46 @@ export default function TasksPage({ department }) {
             </CardContent>
           </Card>
 
-          {/* ── Stats chips + subview toggle ── */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Stats clickable */}
-            {[
-              { key:"all",         label:"الكل",     value: dayStats.total,       color:"#6b7280" },
-              { key:"pending",     label:"انتظار",   value: dayStats.pending,     color: STATUS_CFG.pending.color },
-              { key:"in_progress", label:"جارية",    value: dayStats.in_progress, color: STATUS_CFG.in_progress.color },
-              { key:"done",        label:"مكتملة",   value: dayStats.done,        color: STATUS_CFG.done.color },
-              { key:"overdue",     label:"متأخرة",   value: dayStats.overdue,     color: STATUS_CFG.overdue.color },
-              ...(dayStats.early > 0 ? [{ key:"early_only", label:"مبكر ⭐", value: dayStats.early, color:"#d97706" }] : []),
-            ].map(s => (
-              <button key={s.key}
-                onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key === "early_only" ? "done_early" : s.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all
-                  ${filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early") ? "shadow-md scale-105" : "hover:shadow-sm"}`}
-                style={(filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early"))
-                  ? { backgroundColor: s.color+"15", borderColor: s.color, color: s.color }
-                  : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
-                <span className="font-bold text-sm" style={{ color: s.color }}>{s.value}</span>
-                {s.label}
-              </button>
-            ))}
-
-            {/* Spacer */}
-            <div className="flex-1"/>
+          {/* ── Stats chips (horizontal scroll on mobile) + subview toggle ── */}
+          <div className="flex items-center gap-2">
+            {/* Stats: scrollable horizontally on mobile */}
+            <div className="flex-1 overflow-x-auto pb-1 -mb-1">
+              <div className="flex items-center gap-2 min-w-max">
+                {[
+                  { key:"all",         label:"الكل",     value: dayStats.total,       color:"#6b7280" },
+                  { key:"pending",     label:"انتظار",   value: dayStats.pending,     color: STATUS_CFG.pending.color },
+                  { key:"in_progress", label:"جارية",    value: dayStats.in_progress, color: STATUS_CFG.in_progress.color },
+                  { key:"done",        label:"مكتملة",   value: dayStats.done,        color: STATUS_CFG.done.color },
+                  { key:"overdue",     label:"متأخرة",   value: dayStats.overdue,     color: STATUS_CFG.overdue.color },
+                  ...(dayStats.early > 0 ? [{ key:"early_only", label:"مبكر ⭐", value: dayStats.early, color:"#d97706" }] : []),
+                ].map(s => (
+                  <button key={s.key}
+                    onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key === "early_only" ? "done_early" : s.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap flex-shrink-0
+                      ${filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early") ? "shadow-md scale-105" : "hover:shadow-sm"}`}
+                    style={(filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early"))
+                      ? { backgroundColor: s.color+"15", borderColor: s.color, color: s.color }
+                      : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
+                    <span className="font-bold text-sm" style={{ color: s.color }}>{s.value}</span>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* SubView toggle: لوحة | قائمة */}
-            <div className="flex border rounded-lg overflow-hidden shadow-sm">
+            <div className="flex border rounded-lg overflow-hidden shadow-sm flex-shrink-0">
               <button onClick={()=>setSubView("kanban")}
-                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                className={`px-2.5 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors
                   ${subView==="kanban"?"bg-primary text-white":"hover:bg-muted text-muted-foreground"}`}
                 data-testid="subview-kanban">
-                <LayoutGrid className="w-3.5 h-3.5"/>لوحة
+                <LayoutGrid className="w-3.5 h-3.5"/><span className="hidden sm:inline">لوحة</span>
               </button>
               <button onClick={()=>setSubView("list")}
-                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors
+                className={`px-2.5 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors
                   ${subView==="list"?"bg-primary text-white":"hover:bg-muted text-muted-foreground"}`}
                 data-testid="subview-list">
-                <List className="w-3.5 h-3.5"/>قائمة
+                <List className="w-3.5 h-3.5"/><span className="hidden sm:inline">قائمة</span>
               </button>
             </div>
           </div>
@@ -639,106 +640,195 @@ export default function TasksPage({ department }) {
             </div>
           ) : subView === "kanban" ? (
             /* ── KANBAN ── */
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[200px]">
-              {[
-                { key:"pending",     ...STATUS_CFG.pending },
-                { key:"in_progress", ...STATUS_CFG.in_progress },
-                { key:"done",        ...STATUS_CFG.done },
-                { key:"overdue",     ...STATUS_CFG.overdue },
-              ].map(col => {
-                const colTasks = filtered.filter(t => t.status === col.key);
-                return (
-                  <div key={col.key} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border font-medium text-sm"
-                      style={{ backgroundColor: col.bg, borderColor: col.border, color: col.color }}>
-                      <col.Icon className="w-4 h-4"/>
-                      <span>{col.label}</span>
-                      <span className="mr-auto font-bold text-xs px-1.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: col.color+"20", color: col.color }}>
-                        {colTasks.length}
-                      </span>
+            <>
+              {/* Mobile: single column with tab selector */}
+              <div className="sm:hidden">
+                {/* Mobile column tabs */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3">
+                  {[
+                    { key:"pending",     ...STATUS_CFG.pending },
+                    { key:"in_progress", ...STATUS_CFG.in_progress },
+                    { key:"done",        ...STATUS_CFG.done },
+                    { key:"overdue",     ...STATUS_CFG.overdue },
+                  ].map(col => {
+                    const count = filtered.filter(t=>t.status===col.key).length;
+                    const isActive = filterStatus === col.key || (filterStatus === "all" && col.key === "pending" && !["pending","in_progress","done","overdue"].some(k=>k===filterStatus && k!=="pending"));
+                    return (
+                      <button key={col.key}
+                        onClick={()=>setFilterStatus(filterStatus===col.key?"all":col.key)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all"
+                        style={filterStatus===col.key
+                          ? {backgroundColor:col.bg, borderColor:col.border, color:col.color}
+                          : {backgroundColor:"#f8fafc", borderColor:"#e2e8f0", color:"#64748b"}}>
+                        <col.Icon className="w-3.5 h-3.5"/>{col.label}
+                        <span className="font-black px-1.5 py-0.5 rounded-full text-[10px]"
+                          style={{backgroundColor:col.color+"20",color:col.color}}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Single column tasks */}
+                <div className="space-y-3">
+                  {filtered.length === 0 ? (
+                    <div className="text-center py-8 text-xs text-muted-foreground border-2 border-dashed rounded-xl">لا توجد مهام</div>
+                  ) : filtered.map(t=>(
+                    <TaskCard key={t.id} task={t} canManage={isManager}
+                      onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop: 4-column grid */}
+              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[200px]">
+                {[
+                  { key:"pending",     ...STATUS_CFG.pending },
+                  { key:"in_progress", ...STATUS_CFG.in_progress },
+                  { key:"done",        ...STATUS_CFG.done },
+                  { key:"overdue",     ...STATUS_CFG.overdue },
+                ].map(col => {
+                  const colTasks = filtered.filter(t => t.status === col.key);
+                  return (
+                    <div key={col.key} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border font-medium text-sm"
+                        style={{ backgroundColor: col.bg, borderColor: col.border, color: col.color }}>
+                        <col.Icon className="w-4 h-4"/>
+                        <span>{col.label}</span>
+                        <span className="mr-auto font-bold text-xs px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: col.color+"20", color: col.color }}>{colTasks.length}</span>
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        {colTasks.length === 0 ? (
+                          <div className="text-center py-6 text-xs text-muted-foreground border-2 border-dashed rounded-xl">لا توجد مهام</div>
+                        ) : colTasks.map(t=>(
+                          <TaskCard key={t.id} task={t} canManage={isManager}
+                            onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-2 flex-1">
-                      {colTasks.length === 0 ? (
-                        <div className="text-center py-6 text-xs text-muted-foreground border-2 border-dashed rounded-xl">لا توجد مهام</div>
-                      ) : colTasks.map(t=>(
-                        <TaskCard key={t.id} task={t} canManage={isManager}
-                          onEdit={handleEdit} onDelete={handleDelete} onStatus={handleStatus}/>
-                      ))}
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* ── LIST: بطاقات على الجوال، جدول على سطح المكتب ── */
+            <>
+              {/* Mobile: card list */}
+              <div className="sm:hidden space-y-3">
+                {filtered.map(t=>(
+                  <div key={t.id} className="bg-white rounded-xl border shadow-sm p-3.5 space-y-2.5"
+                    style={{ borderLeftWidth:"3px", borderLeftColor: PRIORITY_CFG[t.priority]?.color||"#6b7280" }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-cairo font-bold text-sm">{t.title}</p>
+                        {t.description && <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>}
+                      </div>
+                      {isManager && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0"><ChevronDown className="w-4 h-4 text-slate-400"/></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-44">
+                            <DropdownMenuItem onClick={()=>handleEdit(t)}><Edit className="w-3.5 h-3.5 ml-2"/>تعديل</DropdownMenuItem>
+                            <DropdownMenuSeparator/>
+                            {Object.entries(STATUS_CFG).filter(([k])=>k!=="overdue").map(([k,v])=>(
+                              <DropdownMenuItem key={k} onClick={()=>handleStatus(t.id,k)} disabled={t.status===k}>
+                                {(()=>{const C=STATUS_CFG[k];return <C.Icon className="w-3.5 h-3.5 ml-2"/>;})()}{v.label}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator/>
+                            <DropdownMenuItem onClick={()=>handleDelete(t.id)} className="text-destructive"><Trash2 className="w-3.5 h-3.5 ml-2"/>حذف</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <PriorityBadge priority={t.priority}/>
+                      <StatusBadge status={t.status}/>
+                      <PerformanceBadge performance={t.completion_performance} delta={t.completion_delta_minutes}/>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <AssigneeAvatars assignees={t.assignees_info||[]}/>
+                        <span className="text-[10px] text-muted-foreground">{(t.assignees_info||[]).map(a=>a.name).join("، ")}</span>
+                      </div>
+                      {!isManager && t.status!=="done" && (
+                        <Button size="sm" variant="outline" className="h-7 text-[11px]"
+                          onClick={()=>handleStatus(t.id,t.status==="pending"?"in_progress":"done")}>
+                          {t.status==="pending"?"بدء":"إنهاء"}
+                        </Button>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* ── LIST ── */
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="text-right">المهمة</TableHead>
-                        <TableHead className="text-center">الأولوية</TableHead>
-                        <TableHead className="text-center">الحالة</TableHead>
-                        <TableHead className="text-center">الموظفون</TableHead>
-                        <TableHead className="text-center">الأداء</TableHead>
-                        <TableHead className="text-center">بواسطة</TableHead>
-                        {isManager && <TableHead className="text-center w-20">⋯</TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map(t=>(
-                        <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
-                          <TableCell className="text-right">
-                            <p className="font-semibold text-sm">{t.title}</p>
-                            {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
-                          </TableCell>
-                          <TableCell className="text-center"><PriorityBadge priority={t.priority}/></TableCell>
-                          <TableCell className="text-center"><StatusBadge status={t.status}/></TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex flex-col items-center gap-0.5">
-                              <AssigneeAvatars assignees={t.assignees_info||[]}/>
-                              <span className="text-[9px] text-muted-foreground">{(t.assignees_info||[]).map(a=>a.name).join("، ")}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <PerformanceBadge performance={t.completion_performance} delta={t.completion_delta_minutes}/>
-                          </TableCell>
-                          <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
-                          {isManager && (
+                ))}
+              </div>
+
+              {/* Desktop: full table */}
+              <Card className="hidden sm:block">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="text-right">المهمة</TableHead>
+                          <TableHead className="text-center">الأولوية</TableHead>
+                          <TableHead className="text-center">الحالة</TableHead>
+                          <TableHead className="text-center">الموظفون</TableHead>
+                          <TableHead className="text-center">الأداء</TableHead>
+                          <TableHead className="text-center">بواسطة</TableHead>
+                          {isManager && <TableHead className="text-center w-20">⋯</TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map(t=>(
+                          <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
+                            <TableCell className="text-right">
+                              <p className="font-semibold text-sm">{t.title}</p>
+                              {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
+                            </TableCell>
+                            <TableCell className="text-center"><PriorityBadge priority={t.priority}/></TableCell>
+                            <TableCell className="text-center"><StatusBadge status={t.status}/></TableCell>
                             <TableCell className="text-center">
-                              <div className="flex items-center gap-1 justify-center">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={()=>handleEdit(t)}><Edit className="w-3.5 h-3.5"/></Button>
-                                <Select value={t.status} onValueChange={v=>handleStatus(t.id,v)}>
-                                  <SelectTrigger className="h-7 w-7 border-0 p-0 bg-transparent">
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400"/>
-                                  </SelectTrigger>
-                                  <SelectContent dir="rtl">
-                                    {Object.entries(STATUS_CFG).filter(([k])=>k!=="overdue").map(([k,v])=>(
-                                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={()=>handleDelete(t.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                              <div className="flex flex-col items-center gap-0.5">
+                                <AssigneeAvatars assignees={t.assignees_info||[]}/>
+                                <span className="text-[9px] text-muted-foreground">{(t.assignees_info||[]).map(a=>a.name).join("، ")}</span>
                               </div>
                             </TableCell>
-                          )}
-                          {!isManager && t.status !== "done" && (
                             <TableCell className="text-center">
-                              <Button size="sm" variant="outline" className="h-7 text-[11px]"
-                                onClick={()=>handleStatus(t.id, t.status==="pending"?"in_progress":"done")}>
-                                {t.status==="pending"?"بدء":"إنهاء"}
-                              </Button>
+                              <PerformanceBadge performance={t.completion_performance} delta={t.completion_delta_minutes}/>
                             </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                            <TableCell className="text-center text-[11px] text-muted-foreground">{t.created_by}</TableCell>
+                            {isManager && (
+                              <TableCell className="text-center">
+                                <div className="flex items-center gap-1 justify-center">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={()=>handleEdit(t)}><Edit className="w-3.5 h-3.5"/></Button>
+                                  <Select value={t.status} onValueChange={v=>handleStatus(t.id,v)}>
+                                    <SelectTrigger className="h-7 w-7 border-0 p-0 bg-transparent"><ChevronDown className="w-3.5 h-3.5 text-slate-400"/></SelectTrigger>
+                                    <SelectContent dir="rtl">
+                                      {Object.entries(STATUS_CFG).filter(([k])=>k!=="overdue").map(([k,v])=>(
+                                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={()=>handleDelete(t.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                                </div>
+                              </TableCell>
+                            )}
+                            {!isManager && t.status!=="done" && (
+                              <TableCell className="text-center">
+                                <Button size="sm" variant="outline" className="h-7 text-[11px]"
+                                  onClick={()=>handleStatus(t.id,t.status==="pending"?"in_progress":"done")}>
+                                  {t.status==="pending"?"بدء":"إنهاء"}
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       )}

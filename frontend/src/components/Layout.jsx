@@ -477,6 +477,23 @@ export const Layout = () => {
               </span>
             )}
 
+            {/* Mobile: show notification bell prominently */}
+            {headerSettings.show_notifications_bell && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:text-primary lg:hidden"
+                onClick={() => navigate('/notifications')}
+                data-testid="header-notifications-mobile">
+                <Bell className="w-5 h-5" />
+                {unreadAlerts > 0 && (
+                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                    {unreadAlerts > 9 ? "9+" : unreadAlerts}
+                  </span>
+                )}
+              </Button>
+            )}
+
             {/* Desktop: full greeting + role badge */}
             {headerSettings.show_user_name && user && (
               <div className="hidden lg:flex items-center gap-2 mr-2">
@@ -568,14 +585,17 @@ export const Layout = () => {
       {/* ── Mobile Bottom Navigation Bar ── */}
       <nav
         data-testid="mobile-bottom-nav"
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
-          background: 'hsl(var(--card) / 0.97)',
-          backdropFilter: 'blur(20px)',
+          background: 'hsl(var(--card) / 0.95)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderTop: '1px solid hsl(var(--border) / 0.5)',
           paddingBottom: 'env(safe-area-inset-bottom)',
+          boxShadow: '0 -4px 24px rgba(0,0,0,0.08)',
         }}
       >
-        <div className="flex h-16 items-stretch">
+        <div className="flex h-[60px] items-stretch px-1">
           {[...navigation.slice(0, 4)].map((item) => {
             const Icon = item.icon;
             return (
@@ -586,19 +606,21 @@ export const Layout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid={`bottom-nav-${item.href.replace(/\//g, '') || 'home'}`}
                 className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-200 relative
+                  `flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative py-1
                   ${isActive ? 'text-primary' : 'text-muted-foreground'}`
                 }
               >
                 {({ isActive }) => (
                   <>
                     {isActive && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-b-full" />
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-primary rounded-b-full" />
                     )}
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${isActive ? 'bg-primary/10 scale-110' : ''}`}>
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300
+                      ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : 'hover:bg-muted'}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[9px] font-cairo font-medium truncate max-w-[56px] text-center leading-tight">
+                    <span className={`text-[9px] font-cairo font-semibold truncate max-w-[56px] text-center leading-tight transition-colors
+                      ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                       {item.name}
                     </span>
                   </>
@@ -611,12 +633,12 @@ export const Layout = () => {
           <button
             data-testid="bottom-nav-more"
             onClick={() => setMobileMenuOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors"
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors py-1"
           >
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-muted transition-colors">
               <Menu className="w-5 h-5" />
             </div>
-            <span className="text-[9px] font-cairo font-medium">
+            <span className="text-[9px] font-cairo font-semibold">
               {language === 'ar' ? 'المزيد' : 'More'}
             </span>
           </button>
