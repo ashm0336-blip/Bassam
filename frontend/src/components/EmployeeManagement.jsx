@@ -351,8 +351,16 @@ export default function EmployeeManagement({ department }) {
   const todayAr = getTodayArabic();
   const currentMonthKey = getMonthKey(new Date());
 
-  useEffect(() => { fetchDepartmentSettings(); fetchEmployees(); if(department==='gates') fetchGates(); }, [department]);
-  useEffect(() => { fetchSchedule(); }, [selectedMonth, department]);
+  useEffect(() => {
+    fetchDepartmentSettings(); fetchEmployees(); if(department==='gates') fetchGates();
+    const interval = setInterval(() => { fetchEmployees(true); }, 30000);
+    return () => clearInterval(interval);
+  }, [department]);
+  useEffect(() => {
+    fetchSchedule();
+    const interval = setInterval(() => { fetchSchedule(true); }, 30000);
+    return () => clearInterval(interval);
+  }, [selectedMonth, department]);
 
   const fetchDepartmentSettings = async () => {
     try {
@@ -372,25 +380,25 @@ export default function EmployeeManagement({ department }) {
     try { const r = await axios.get(`${API}/gates`); setGates(r.data); } catch(e) { console.error(e); }
   };
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (silent=false) => {
     try {
       const token = localStorage.getItem("token");
       const dept = department || user?.department;
       const url = dept ? `${API}/employees?department=${dept}` : `${API}/employees`;
       const res = await axios.get(url, { headers:{ Authorization:`Bearer ${token}` } });
       setEmployees(res.data);
-    } catch(e) { toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
-    finally { setLoading(false); }
+    } catch(e) { if (!silent) toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
+    finally { if (!silent) setLoading(false); }
   };
 
-  const fetchSchedule = async () => {
-    setScheduleLoading(true);
+  const fetchSchedule = async (silent=false) => {
+    if (!silent) setScheduleLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API}/schedules/${department}/${selectedMonth}`, { headers:{ Authorization:`Bearer ${token}` } });
       setSchedule(res.data);
-    } catch(e) { setSchedule(null); }
-    finally { setScheduleLoading(false); }
+    } catch(e) { if (!silent) setSchedule(null); }
+    finally { if (!silent) setScheduleLoading(false); }
   };
 
   // Merge base employee data + monthly schedule (للجدول والتعديل)

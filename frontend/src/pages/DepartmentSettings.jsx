@@ -118,6 +118,9 @@ export default function DepartmentSettings({ department }) {
   useEffect(() => {
     fetchAllSettings();
     fetchCounts();
+    // تحديث تلقائي كل 30 ثانية
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
   }, [department]);
 
   const fetchCounts = async () => {

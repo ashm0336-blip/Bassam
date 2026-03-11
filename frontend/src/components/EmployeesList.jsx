@@ -369,7 +369,11 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
     finally { setLoading(false); }
   }, [department]);
 
-  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
+  useEffect(() => {
+    fetchEmployees();
+    const interval = setInterval(fetchEmployees, 30000);
+    return () => clearInterval(interval);
+  }, [fetchEmployees]);
 
   // ── Filtered ───────────────────────────────────────────────
   const filtered = useMemo(() => {
