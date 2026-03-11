@@ -742,20 +742,50 @@ export default function EmployeesList({ department }) {
                       </TableCell>
                     )}
                     <TableCell>
-                      <div className="flex items-center gap-1 justify-center">
-                        {canEdit && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7"
-                            onClick={() => handleOpenDialog(emp)}>
-                            <Edit className="w-3.5 h-3.5" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-slate-100"
+                            data-testid={`actions-menu-${emp.id}`}>
+                            <MoreVertical className="w-4 h-4 text-slate-500" />
                           </Button>
-                        )}
-                        {canDelete && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive"
-                            onClick={() => { setDeleteTarget(emp); setDeleteDialog(true); }}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" side="bottom" className="w-52 font-cairo" dir="rtl">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => handleOpenDialog(emp)}>
+                              <Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات
+                            </DropdownMenuItem>
+                          )}
+                          {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
+                            <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
+                              <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN
+                            </DropdownMenuItem>
+                          )}
+                          {canManage && emp.national_id && <>
+                            <DropdownMenuSeparator/>
+                            {emp.account_status==='active' && (
+                              <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)} className="text-blue-600 focus:text-blue-700">
+                                <ShieldX className="w-4 h-4 ml-2"/>تجميد الحساب مؤقتاً
+                              </DropdownMenuItem>
+                            )}
+                            {['pending','frozen','no_account'].includes(emp.account_status||'no_account') && (
+                              <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'activate-account',emp.name)} className="text-emerald-600 focus:text-emerald-700">
+                                <ShieldCheck className="w-4 h-4 ml-2"/>تفعيل الحساب
+                              </DropdownMenuItem>
+                            )}
+                            {emp.account_status!=='terminated' && (
+                              <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'terminate-account',emp.name)} className="text-orange-600 focus:text-orange-700">
+                                <ShieldOff className="w-4 h-4 ml-2"/>إنهاء الخدمة
+                              </DropdownMenuItem>
+                            )}
+                          </>}
+                          {canDelete && <>
+                            <DropdownMenuSeparator/>
+                            <DropdownMenuItem onClick={()=>{setDeleteTarget(emp);setDeleteDialog(true);}} className="text-destructive focus:text-destructive">
+                              <Trash2 className="w-4 h-4 ml-2"/>حذف الموظف نهائياً
+                            </DropdownMenuItem>
+                          </>}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

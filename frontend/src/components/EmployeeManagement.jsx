@@ -866,14 +866,6 @@ export default function EmployeeManagement({ department }) {
                       <span className="text-[11px] font-semibold text-slate-600">{isAr?'الحالة':'Status'}</span>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center py-2.5 w-14">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
-                        <MoreVertical className="w-4 h-4 text-slate-500"/>
-                      </div>
-                      <span className="text-[11px] font-semibold text-slate-400">⋯</span>
-                    </div>
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1023,21 +1015,12 @@ export default function EmployeeManagement({ department }) {
                       )}
                     </TableCell>
 
-                    {/* Actions — ⋮ dropdown */}
-                    <TableCell className="text-center">
-                      <ActionsMenu emp={emp} canEdit={canEdit}
-                        canDeleteEmp={canDeleteEmp} canManageAccounts={canManageAccounts} canResetPins={canResetPins}
-                        handleOpenDialog={handleOpenDialog}
-                        handleAccountAction={handleAccountAction}
-                        setSelectedEmployee={setSelectedEmployee}
-                        setDeleteDialogOpen={setDeleteDialogOpen}
-                        isAr={isAr}/>
-                    </TableCell>
+                    {/* Actions removed — moved to employees tab */}
                   </TableRow>
                 ))}
                 {mergedEmployees.length===0 && (
                   <TableRow>
-                    <TableCell colSpan={schedule?8:7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={schedule?7:6} className="text-center py-8 text-muted-foreground">
                       {isAr?'لا يوجد موظفين':'No employees'}
                     </TableCell>
                   </TableRow>
