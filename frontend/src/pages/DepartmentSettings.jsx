@@ -4,7 +4,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
   Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag,
-  CalendarDays,
+  CalendarDays, Sun, Sunset, Moon, Zap, AlarmClock, Timer,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -285,60 +285,183 @@ export default function DepartmentSettings({ department }) {
         {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
 
         {activeTab === 'shifts' && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-cairo font-semibold text-lg">{language === 'ar' ? 'الورديات' : 'Shifts'}</h3>
-                    <p className="text-sm text-muted-foreground">{language === 'ar' ? 'إدارة الورديات الخاصة بالقسم' : 'Manage department shifts'}</p>
-                  </div>
-                  {canEditShifts && (
-                    <Button onClick={() => handleOpenDialog('shifts')} style={{ backgroundColor: theme.accent }} className="text-white hover:opacity-90" data-testid="add-shift-btn">
-                      <Plus className="w-4 h-4 ml-2" />
-                      {language === 'ar' ? 'إضافة وردية' : 'Add Shift'}
-                    </Button>
-                  )}
+          <div className="space-y-5">
+            {/* ── Header ── */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md"
+                  style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)` }}>
+                  <Clock className="w-5 h-5 text-white" />
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead className="text-right">{language === 'ar' ? 'الوقت' : 'Time'}</TableHead>
-                      <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                      <TableHead className="text-center">{language === 'ar' ? 'اللون' : 'Color'}</TableHead>
-                      <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {shifts.map((shift) => (
-                      <TableRow key={shift.id}>
-                        <TableCell className="text-right font-medium">{shift.label}</TableCell>
-                        <TableCell className="text-right font-mono text-sm">{shift.start_time && shift.end_time ? `${shift.start_time} - ${shift.end_time}` : '-'}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={shift.description === 'secondary' ? 'outline' : 'default'} className={shift.description === 'secondary' ? 'text-xs' : 'text-xs bg-primary'}>
-                            {shift.description === 'secondary' ? (language === 'ar' ? 'فرعية' : 'Secondary') : (language === 'ar' ? 'رئيسية' : 'Primary')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center"><Badge style={{ backgroundColor: shift.color }} className="text-white text-xs">{shift.label}</Badge></TableCell>
-                        <TableCell className="text-center">
+                <div>
+                  <h3 className="font-cairo font-bold text-lg">الورديات</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {shifts.length > 0
+                      ? `${shifts.length} وردية — إجمالي ${(() => {
+                          let total = 0;
+                          shifts.forEach(s => {
+                            if (s.start_time && s.end_time) {
+                              const [sh, sm] = s.start_time.split(':').map(Number);
+                              const [eh, em] = s.end_time.split(':').map(Number);
+                              let mins = (eh*60+em) - (sh*60+sm);
+                              if (mins <= 0) mins += 1440;
+                              total += mins;
+                            }
+                          });
+                          return Math.round(total/60);
+                        })()} ساعة تشغيل يومياً`
+                      : 'لا توجد ورديات — أضف أول وردية'}
+                  </p>
+                </div>
+              </div>
+              {canEditShifts && (
+                <Button onClick={() => handleOpenDialog('shifts')}
+                  className="text-white gap-1.5 shadow-md hover:opacity-90"
+                  style={{ backgroundColor: theme.accent }}
+                  data-testid="add-shift-btn">
+                  <Plus className="w-4 h-4" />
+                  إضافة وردية
+                </Button>
+              )}
+            </div>
+
+            {/* ── Shifts Grid ── */}
+            {shifts.length === 0 ? (
+              <div className="text-center py-16 space-y-3 border-2 border-dashed rounded-2xl"
+                style={{ borderColor: theme.border }}>
+                <div className="text-5xl">⏰</div>
+                <p className="font-cairo font-bold text-muted-foreground">لا توجد ورديات بعد</p>
+                {canEditShifts && (
+                  <Button onClick={() => handleOpenDialog('shifts')} size="sm" className="gap-1.5"
+                    style={{ backgroundColor: theme.accent }} >
+                    <Plus className="w-3.5 h-3.5 text-white" />
+                    <span className="text-white">أضف أول وردية</span>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {shifts.map((shift, idx) => {
+                  // حساب المدة
+                  let durationText = "—";
+                  let durationMins = 0;
+                  if (shift.start_time && shift.end_time) {
+                    const [sh, sm] = shift.start_time.split(':').map(Number);
+                    const [eh, em] = shift.end_time.split(':').map(Number);
+                    durationMins = (eh*60+em) - (sh*60+sm);
+                    if (durationMins <= 0) durationMins += 1440;
+                    const h = Math.floor(durationMins/60);
+                    const m = durationMins%60;
+                    durationText = `${h} ساعة${m ? ` ${m} د` : ''}`;
+                  }
+
+                  // أيقونة الوردية حسب الوقت
+                  const startHour = shift.start_time ? parseInt(shift.start_time.split(':')[0]) : 0;
+                  const ShiftIcon = startHour >= 5 && startHour < 12 ? Sun
+                    : startHour >= 12 && startHour < 17 ? Sunset
+                    : startHour >= 17 && startHour < 20 ? Sunset
+                    : Moon;
+
+                  // نسبة شريط الوقت (من 24 ساعة)
+                  const startPct = shift.start_time
+                    ? ((parseInt(shift.start_time.split(':')[0])*60 + parseInt(shift.start_time.split(':')[1])) / 1440) * 100
+                    : 0;
+                  const widthPct = (durationMins / 1440) * 100;
+                  const isPrimary = shift.description !== 'secondary';
+
+                  return (
+                    <Card key={shift.id}
+                      className="group relative border-0 overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300"
+                      style={{ boxShadow: `0 4px 20px ${shift.color || theme.accent}25` }}>
+
+                      {/* خلفية gradient */}
+                      <div className="absolute inset-0 opacity-[0.04]"
+                        style={{ background: `linear-gradient(135deg, ${shift.color || theme.accent}, transparent)` }} />
+                      {/* شريط علوي ملون */}
+                      <div className="h-1.5" style={{ background: shift.color || theme.accent }} />
+
+                      <CardContent className="relative p-4">
+                        {/* الصف الأول: أيقونة + اسم + إجراءات */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: `${shift.color || theme.accent}20` }}>
+                              <ShiftIcon className="w-5 h-5" style={{ color: shift.color || theme.accent }} />
+                            </div>
+                            <div>
+                              <p className="font-cairo font-bold text-base" style={{ color: shift.color || theme.accent }}>
+                                {shift.label}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full
+                                  ${isPrimary ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                  {isPrimary ? 'رئيسية' : 'فرعية'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                           {canEditShifts && (
-                            <div className="flex items-center gap-2 justify-center">
-                              <Button size="sm" variant="ghost" onClick={() => handleOpenDialog('shifts', shift)}><Edit className="w-4 h-4" /></Button>
-                              <Button size="sm" variant="ghost" onClick={() => handleDelete(shift.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg hover:bg-slate-100"
+                                onClick={() => handleOpenDialog('shifts', shift)}>
+                                <Edit className="w-3.5 h-3.5 text-slate-500" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg hover:bg-red-50"
+                                onClick={() => handleDelete(shift.id)}>
+                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                              </Button>
                             </div>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {shifts.length === 0 && (
-                      <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{language === 'ar' ? 'لا توجد ورديات' : 'No shifts found'}</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                        </div>
+
+                        {/* وقت البداية والنهاية */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-center">
+                            <p className="text-[9px] text-muted-foreground mb-0.5">البداية</p>
+                            <p className="font-mono font-bold text-lg leading-none" style={{ color: shift.color || theme.accent }}>
+                              {shift.start_time || "—"}
+                            </p>
+                          </div>
+                          <div className="flex-1 mx-3 flex items-center gap-1">
+                            <div className="flex-1 h-0.5 rounded-full" style={{ backgroundColor: `${shift.color || theme.accent}30` }} />
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                              style={{ color: shift.color || theme.accent, backgroundColor: `${shift.color || theme.accent}15` }}>
+                              {durationText}
+                            </span>
+                            <div className="flex-1 h-0.5 rounded-full" style={{ backgroundColor: `${shift.color || theme.accent}30` }} />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[9px] text-muted-foreground mb-0.5">النهاية</p>
+                            <p className="font-mono font-bold text-lg leading-none" style={{ color: shift.color || theme.accent }}>
+                              {shift.end_time || "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* شريط الوقت اليومي (24 ساعة) */}
+                        <div className="relative h-2.5 bg-slate-100 rounded-full overflow-hidden" title={`${shift.start_time} — ${shift.end_time}`}>
+                          <div className="absolute top-0 bottom-0 rounded-full transition-all"
+                            style={{
+                              left: `${startPct}%`,
+                              width: `${Math.min(widthPct, 100 - startPct)}%`,
+                              background: shift.color || theme.accent,
+                              opacity: 0.85,
+                            }} />
+                          {/* علامة 12 ظهراً */}
+                          <div className="absolute top-0 bottom-0 w-px bg-slate-300" style={{ left: '50%' }} />
+                        </div>
+                        <div className="flex justify-between mt-0.5">
+                          <span className="text-[8px] text-slate-400">12 م</span>
+                          <span className="text-[8px] text-slate-400 mr-auto ml-auto">6 م</span>
+                          <span className="text-[8px] text-slate-400">12 م</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         )}
 
         {activeTab === 'zone_categories' && (department === 'plazas' || department === 'haram_map') && (
