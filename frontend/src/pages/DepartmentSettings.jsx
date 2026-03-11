@@ -3,7 +3,8 @@ import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag
+  Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag,
+  CalendarDays,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import GatesDataManagement from "@/components/GatesDataManagement";
 import EmployeeManagement from "@/components/EmployeeManagement";
+import EmployeesList from "@/components/EmployeesList";
 import GateMapPage from "@/pages/GateMapPage";
 import MapManagementPage from "@/pages/MapManagementPage";
 import ZoneCategoryManager from "@/pages/admin/ZoneCategoryManager";
@@ -94,7 +96,7 @@ export default function DepartmentSettings({ department }) {
   const canEditMaps = canWrite('manage_maps');
   const canEditSettings = canWrite('manage_settings');
   const hasDataTab = department === 'gates' || department === 'plazas';
-  const [activeTab, setActiveTab] = useState('employees');
+  const [activeTab, setActiveTab] = useState('employees_list');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -230,11 +232,12 @@ export default function DepartmentSettings({ department }) {
     }
   };
 
-  // Build tabs list — order: الموظفين → الورديات → الخرائط → (dept-specific)
+  // Build tabs list — order: الموظفون → الجدول الشهري → الورديات → الخرائط → (dept-specific)
   const tabs = [];
-  tabs.push({ id: 'employees', label: language === 'ar' ? 'الموظفين' : 'Staff',   icon: Users,   count: counts.employees });
-  tabs.push({ id: 'shifts',    label: language === 'ar' ? 'الورديات' : 'Shifts',  icon: Clock,   count: counts.shifts   });
-  tabs.push({ id: 'maps',      label: language === 'ar' ? 'الخرائط'  : 'Maps',    icon: Layers,  count: counts.maps     });
+  tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون'       : 'Staff',    icon: Users,       count: counts.employees });
+  tabs.push({ id: 'employees',      label: language === 'ar' ? 'الجدول الشهري'  : 'Schedule', icon: CalendarDays, count: null });
+  tabs.push({ id: 'shifts',         label: language === 'ar' ? 'الورديات'       : 'Shifts',   icon: Clock,       count: counts.shifts   });
+  tabs.push({ id: 'maps',           label: language === 'ar' ? 'الخرائط'        : 'Maps',     icon: Layers,      count: counts.maps     });
   if (department === 'gates') {
     tabs.push({ id: 'gates_data', label: language === 'ar' ? 'الأبواب' : 'Gates', icon: DoorOpen, count: counts.gates });
   }
@@ -271,6 +274,7 @@ export default function DepartmentSettings({ department }) {
 
       {/* Tab Content */}
       <div className="transition-all duration-300">
+        {activeTab === 'employees_list' && <EmployeesList department={department} />}
         {activeTab === 'employees' && <EmployeeManagement department={department} />}
 
         {activeTab === 'maps' && department === 'gates' && <GateMapPage />}
