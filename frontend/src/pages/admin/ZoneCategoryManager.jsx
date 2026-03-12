@@ -85,89 +85,94 @@ function CategoryCard({ cat, onEdit, onDelete }) {
 
   return (
     <div
-      className={`group relative rounded-2xl border bg-white transition-all hover:shadow-xl hover:-translate-y-0.5 overflow-hidden ${!cat.is_active ? "opacity-40" : ""}`}
+      className="group relative rounded-2xl border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden bg-white hover:-translate-y-0.5"
+      style={{ boxShadow: `0 2px 12px ${cat.color}22` }}
       data-testid={`category-card-${cat.value}`}
-      style={{ borderColor: cat.color + "30" }}
     >
-      {/* Color stripe top */}
-      <div className="h-1.5 w-full" style={{ background: hasPattern ? cat.color : cat.color }} />
+      {/* شريط علوي ملون */}
+      <div className="h-1.5 w-full" style={{ background: cat.color }} />
 
-      {/* Pattern overlay on top stripe if has pattern */}
-      {hasPattern && (
-        <div className="h-1.5 w-full -mt-1.5 overflow-hidden opacity-60">
-          <svg width="100%" height="6" style={{ position: "relative" }}>
-            <defs>
-              <pattern id={`stripe-${cat.value}`} patternUnits="userSpaceOnUse" width="6" height="6">
-                <rect width="6" height="6" fill={cat.color} />
-                {getPatternContent(cat.pattern_type, fg, 6)}
-              </pattern>
-            </defs>
-            <rect width="100%" height="6" fill={`url(#stripe-${cat.value})`} />
-          </svg>
+      {/* خلفية gradient خفيفة */}
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ background: `radial-gradient(circle at top right, ${cat.color}, transparent 70%)` }} />
+
+      <div className="relative p-4">
+        {/* الصف الأول: المعاينة البصرية + الاسم + الإجراءات */}
+        <div className="flex items-center gap-3.5 mb-3">
+          {/* ZonePreview — البطل البصري */}
+          <div className="flex-shrink-0 rounded-xl overflow-hidden border-2 shadow-md"
+            style={{ borderColor: cat.color + "40" }}>
+            <ZonePreview cat={cat} size={68} />
+          </div>
+
+          {/* الاسم والكود */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-cairo font-bold text-base leading-tight truncate" style={{ color: cat.color }}>
+              {cat.label_ar}
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5 truncate">{cat.label_en}</p>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: cat.color + "15", color: cat.color, border: `1px solid ${cat.color}30` }}>
+                {cat.value}
+              </span>
+              {!cat.is_active && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                  معطّلة
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* أزرار الإجراءات */}
+          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
+            <button onClick={() => onEdit(cat)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+              style={{ backgroundColor: cat.color + "15", color: cat.color }}
+              data-testid={`edit-cat-${cat.value}`}>
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => onDelete(cat.id)}
+              className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all hover:scale-110"
+              data-testid={`delete-cat-${cat.value}`}>
+              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            </button>
+          </div>
         </div>
-      )}
 
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Zone preview */}
-          <div className="flex-shrink-0">
-            <ZonePreview cat={cat} size={72} />
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0 pt-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-cairo font-bold text-sm leading-tight">{cat.label_ar}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{cat.label_en}</p>
+        {/* Footer: لون + نقش + ترتيب */}
+        <div className="flex items-center justify-between pt-2.5 border-t" style={{ borderColor: cat.color + "20" }}>
+          <div className="flex items-center gap-2">
+            {/* لون الـ fill */}
+            <div className="w-6 h-6 rounded-lg shadow-sm border-2 border-white"
+              style={{ backgroundColor: cat.color }} />
+            {hasPattern && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                style={{ backgroundColor: cat.color + "15", color: cat.color }}>
+                <Sparkles className="w-2.5 h-2.5" />
+                نقش
               </div>
-              {/* Action buttons */}
-              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                <button onClick={() => onEdit(cat)}
-                  className="w-6 h-6 rounded-md bg-blue-50 hover:bg-blue-100 flex items-center justify-center transition-all"
-                  data-testid={`edit-cat-${cat.value}`}>
-                  <Edit2 className="w-3 h-3 text-blue-500" />
-                </button>
-                <button onClick={() => onDelete(cat.id)}
-                  className="w-6 h-6 rounded-md bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all"
-                  data-testid={`delete-cat-${cat.value}`}>
-                  <Trash2 className="w-3 h-3 text-red-400" />
-                </button>
+            )}
+            {/* mini pattern preview */}
+            {hasPattern && (
+              <div className="w-10 h-4 rounded border border-slate-200 overflow-hidden">
+                <svg width="100%" height="16" viewBox="0 0 40 16">
+                  <defs>
+                    <pattern id={`mini-${cat.value}`} patternUnits="userSpaceOnUse" width="6" height="6">
+                      <rect width="6" height="6" fill={bg} />
+                      {getPatternContent(cat.pattern_type, fg, 6)}
+                    </pattern>
+                  </defs>
+                  <rect width="40" height="16" fill={`url(#mini-${cat.value})`} />
+                  <rect width="40" height="16" fill={cat.color} fillOpacity="0.2" />
+                </svg>
               </div>
-            </div>
-
-            {/* Meta row */}
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              <Badge variant="outline" className="text-[8px] px-1.5 py-0 font-mono h-4">{cat.value}</Badge>
-              {hasPattern && (
-                <Badge className="text-[8px] px-1.5 py-0 h-4 flex items-center gap-0.5" style={{ backgroundColor: cat.color + "20", color: cat.color, border: `1px solid ${cat.color}40` }}>
-                  <Sparkles className="w-2 h-2" />
-                  {isAr ? "نقش" : "Pattern"}
-                </Badge>
-              )}
-            </div>
-
-            {/* Color + pattern mini preview */}
-            <div className="flex items-center gap-2 mt-2.5">
-              <div className="w-5 h-5 rounded-md shadow-sm border border-white/60 flex-shrink-0"
-                style={{ backgroundColor: cat.color }} />
-              {hasPattern && (
-                <div className="w-14 h-5 rounded-md border border-slate-200 overflow-hidden flex-shrink-0">
-                  <svg width="100%" height="20" viewBox="0 0 56 20">
-                    <defs>
-                      <pattern id={`mini-${cat.value}`} patternUnits="userSpaceOnUse" width="6" height="6">
-                        <rect width="6" height="6" fill={bg} />
-                        {getPatternContent(cat.pattern_type, fg, 6)}
-                      </pattern>
-                    </defs>
-                    <rect width="56" height="20" fill={`url(#mini-${cat.value})`} />
-                    <rect width="56" height="20" fill={cat.color} fillOpacity="0.2" />
-                  </svg>
-                </div>
-              )}
-              <span className="text-[9px] text-slate-400 font-mono flex-shrink-0">#{cat.order}</span>
-            </div>
+            )}
           </div>
+          <span className="text-[10px] font-black tabular-nums"
+            style={{ color: cat.color + "aa" }}>
+            #{String(cat.order).padStart(2, "0")}
+          </span>
         </div>
       </div>
     </div>
@@ -306,23 +311,51 @@ export default function ZoneCategoryManager() {
         </div>
       </div>
 
-      {/* ── Summary stats ──────────────────────────────────── */}
+      {/* ── Summary stats — تصميم خرافي ─────────────────────── */}
       {categories.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: isAr ? "إجمالي الفئات" : "Total", value: categories.length, color: "#3b82f6", icon: Layers },
-            { label: isAr ? "بنقش" : "With Pattern", value: categories.filter(c => c.fill_type === "pattern").length, color: "#8b5cf6", icon: Sparkles },
-            { label: isAr ? "نشطة" : "Active", value: categories.filter(c => c.is_active).length, color: "#22c55e", icon: CheckCircle2 },
+            {
+              label: isAr ? "إجمالي الفئات" : "Total",
+              value: categories.length,
+              desc: isAr ? "كل أنواع المصليات" : "All categories",
+              color: "#2563eb", grad: "from-blue-50 to-indigo-50/60", border: "#bfdbfe",
+              Icon: Layers,
+            },
+            {
+              label: isAr ? "بنقش" : "With Pattern",
+              value: categories.filter(c => c.fill_type === "pattern").length,
+              desc: isAr ? "فئات بتصميم نقشي" : "Patterned categories",
+              color: "#8b5cf6", grad: "from-violet-50 to-purple-50/60", border: "#c4b5fd",
+              Icon: Sparkles,
+            },
+            {
+              label: isAr ? "نشطة" : "Active",
+              value: categories.filter(c => c.is_active !== false).length,
+              desc: isAr ? "تظهر على الخرائط" : "Visible on maps",
+              color: "#059669", grad: "from-emerald-50 to-green-50/60", border: "#a7f3d0",
+              Icon: CheckCircle2,
+            },
           ].map((s, i) => {
-            const Icon = s.icon;
+            const pct = categories.length > 0 ? Math.round(s.value / categories.length * 100) : 0;
             return (
-              <div key={i} className="rounded-xl border bg-white p-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.color + "15" }}>
-                  <Icon className="w-4 h-4" style={{ color: s.color }} />
+              <div key={i}
+                className={`group relative overflow-hidden rounded-2xl border p-4 bg-gradient-to-br ${s.grad} hover:shadow-md hover:scale-[1.01] transition-all duration-200`}
+                style={{ borderColor: s.color + "40" }}>
+                <div className="absolute -left-4 -bottom-4 w-16 h-16 rounded-full opacity-[0.07]"
+                  style={{ backgroundColor: s.color }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm mb-3"
+                  style={{ backgroundColor: s.color + "20" }}>
+                  <s.Icon className="w-4.5 h-4.5" style={{ color: s.color }} />
                 </div>
-                <div>
-                  <p className="text-xl font-extrabold" style={{ color: s.color }}>{s.value}</p>
-                  <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                <p className="text-3xl font-black leading-none tabular-nums mb-1" style={{ color: s.color }}>
+                  {s.value}
+                </p>
+                <p className="text-[11px] font-bold text-slate-700">{s.label}</p>
+                <p className="text-[9px] text-slate-400 mt-0.5">{s.desc}</p>
+                <div className="mt-2.5 h-1 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: s.color }} />
                 </div>
               </div>
             );
