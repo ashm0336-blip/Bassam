@@ -242,24 +242,19 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
                     {ev.zone_name}
                   </p>
 
-                  {/* Row 3: تفاصيل */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* نوع المصلى */}
-                    <span className="text-[9px] text-slate-500 flex items-center gap-0.5">
-                      <Layers className="w-2.5 h-2.5"/>{ev.zone_type}
-                    </span>
-                    {/* بواسطة */}
-                    {ev.by && ev.by !== "—" && (
-                      <span className="text-[9px] text-slate-500 flex items-center gap-0.5">
-                        <User2 className="w-2.5 h-2.5"/>{ev.by}
-                      </span>
-                    )}
-                    {/* ملاحظة */}
-                    {ev.note && (
-                      <span className="text-[9px] text-slate-500 italic truncate max-w-[180px]">
-                        "{ev.note}"
-                      </span>
-                    )}
+                  {/* Row 3: تفاصيل — note بأسطر منسقة */}
+                  <div className="mt-1.5 space-y-0.5">
+                    {ev.note ? (
+                      ev.note.split('\n').map((line, li) => line.trim() && (
+                        <p key={li} className={`text-[10px] leading-snug ${li === 0 ? "font-semibold text-slate-700" : "text-slate-500 mr-2"}`}>
+                          {line.trim()}
+                        </p>
+                      ))
+                    ) : null}
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                      <span className="text-[9px] text-slate-400 flex items-center gap-0.5"><Layers className="w-2.5 h-2.5"/>{ev.zone_type}</span>
+                      {ev.by && ev.by !== "—" && <span className="text-[9px] text-slate-400 flex items-center gap-0.5"><User2 className="w-2.5 h-2.5"/>{ev.by}</span>}
+                    </div>
                   </div>
                 </div>
               </div>

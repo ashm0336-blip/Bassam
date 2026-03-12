@@ -235,8 +235,32 @@ def _recalc_summary(zones):
 def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
+# أسماء أنواع المصليات بالعربي
+ZONE_TYPE_AR = {
+    "men_prayer":        "مصلى رجال",
+    "women_prayer":      "مصلى نساء",
+    "mixed_prayer":      "مصلى مختلط",
+    "children_prayer":   "مصلى أطفال",
+    "elderly_prayer":    "مصلى كبار السن",
+    "disabled_prayer":   "مصلى ذوي الاحتياجات",
+    "quran_recitation":  "حلقة قرآن",
+    "lecture_hall":      "قاعة محاضرات",
+    "emergency_exit":    "مخرج طوارئ",
+    "storage":           "مخزن",
+    "service_area":      "منطقة خدمات",
+    "corridor":          "ممر",
+    "wudu_area":         "منطقة وضوء",
+    "men_only":          "رجال فقط",
+    "women_only":        "نساء فقط",
+}
+
+def _zt(key: str) -> str:
+    """اسم نوع المصلى بالعربي"""
+    return ZONE_TYPE_AR.get(key, key or "غير محدد")
+
+
 def _push_history(zone: dict, action: str, by: str, note: str = "") -> dict:
-    """يضيف سجل في history الـ zone"""
+    """يضيف سجل في history الـ zone مع كل التفاصيل"""
     if "history" not in zone:
         zone["history"] = []
     zone["history"].append({
@@ -259,24 +283,68 @@ async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUp
     zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
     if zone_idx is None:
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة في هذه الجلسة")
+
     update_fields = {k: v for k, v in data.model_dump().items() if v is not None}
     zone = zones[zone_idx]
+    zone_name = zone.get('name_ar') or zone.get('zone_code') or 'منطقة'
+    actor = admin.get("name", "النظام")
+
     if update_fields.get("is_removed"):
         zone["change_type"] = "removed"
-        _push_history(zone, "removed", admin.get("name",""), f"تم حذف المنطقة: {zone.get('name_ar','')}")
-    elif update_fields.get("zone_type") and update_fields["zone_type"] != zone.get("zone_type"):
-        zone["change_type"] = "category_changed"
-        _push_history(zone, "category_changed", admin.get("name",""), f"الفئة: {zone.get('zone_type','')} ← {update_fields['zone_type']}")
-    elif update_fields.get("polygon_points"):
-        zone["change_type"] = "moved"
-        _push_history(zone, "moved", admin.get("name",""), "تم تغيير حدود المنطقة")
-    elif any(k in update_fields for k in ["name_ar", "name_en", "fill_color", "max_capacity"]):
-        zone["change_type"] = "modified"
-        notes = []
-        if "max_capacity" in update_fields: notes.append(f"الطاقة: {zone.get('max_capacity',0)} → {update_fields['max_capacity']}")
-        if "fill_color" in update_fields: notes.append("تغيير اللون")
-        if "name_ar" in update_fields: notes.append(f"الاسم: {update_fields['name_ar']}")
-        _push_history(zone, "modified", admin.get("name",""), " | ".join(notes) or "تعديل بيانات المنطقة")
+        _push_history(zone, "removed", actor,
+            f"🗑️ تم حذف منطقة «{zone_name}»"
+            f"\n   الفئة: {_zt(zone.get('zone_type',''))}"
+            f"\n   الطاقة: {zone.get('max_capacity',0)} مصلٍّ")
+    else:
+        # تجميع كل التغييرات في سجل واحد شامل
+        all_changes = []
+        new_action = "modified"
+
+        if update_fields.get("zone_type") and update_fields["zone_type"] != zone.get("zone_type"):
+            old_t = _zt(zone.get("zone_type",""))
+            new_t = _zt(update_fields["zone_type"])
+            all_changes.append(f"الفئة: {old_t} → {new_t}")
+            new_action = "category_changed"
+
+        if update_fields.get("polygon_points"):
+            pts_old = len(zone.get("polygon_points",[]))
+            pts_new = len(update_fields["polygon_points"])
+            all_changes.append(f"الحدود: {pts_old} → {pts_new} نقطة")
+            if new_action == "modified": new_action = "moved"
+
+        if "name_ar" in update_fields and update_fields["name_ar"] != zone.get("name_ar"):
+            all_changes.append(f"الاسم: «{zone.get('name_ar','')}» → «{update_fields['name_ar']}»")
+
+        if "max_capacity" in update_fields and update_fields["max_capacity"] != zone.get("max_capacity"):
+            old_c, new_c = zone.get("max_capacity",0), update_fields["max_capacity"]
+            diff = new_c - old_c
+            sign = "▲" if diff > 0 else "▼"
+            all_changes.append(f"الطاقة: {old_c} → {new_c} مصلٍّ ({sign}{abs(diff)})")
+
+        if "fill_color" in update_fields and update_fields["fill_color"] != zone.get("fill_color"):
+            all_changes.append(f"اللون: {zone.get('fill_color','?')} → {update_fields['fill_color']}")
+
+        if "per_person_sqm" in update_fields and update_fields["per_person_sqm"] != zone.get("per_person_sqm"):
+            all_changes.append(f"م²/شخص: {zone.get('per_person_sqm',0)} → {update_fields['per_person_sqm']}")
+
+        if "area_sqm" in update_fields and update_fields["area_sqm"] != zone.get("area_sqm"):
+            all_changes.append(f"المساحة: {zone.get('area_sqm',0)} → {update_fields['area_sqm']} م²")
+
+        if "daily_note" in update_fields and update_fields["daily_note"] != zone.get("daily_note",""):
+            new_note = update_fields["daily_note"]
+            all_changes.append(f"ملاحظة: {new_note[:80] or '(حُذفت)'}")
+
+        if "fill_type" in update_fields and update_fields["fill_type"] != zone.get("fill_type"):
+            ft = lambda k: {"solid":"لون صلب","pattern":"نقش"}.get(k,k)
+            all_changes.append(f"التعبئة: {ft(zone.get('fill_type',''))} → {ft(update_fields['fill_type'])}")
+
+        if all_changes:
+            action_icons = {"category_changed":"🔄","moved":"📐","modified":"✏️"}
+            icon = action_icons.get(new_action,"✏️")
+            full_note = f"{icon} تعديل «{zone_name}»\n   " + "\n   ".join(all_changes)
+            zone["change_type"] = new_action
+            _push_history(zone, new_action, actor, full_note)
+
     for k, v in update_fields.items():
         zone[k] = v
     zones[zone_idx] = zone
@@ -294,20 +362,38 @@ async def add_session_zone(session_id: str, request: Request, admin: dict = Depe
     if session.get("status") == "completed":
         raise HTTPException(status_code=400, detail="لا يمكن إضافة مناطق لجلسة مكتملة - أعد فتحها أولاً")
     body = await request.json()
+    actor = admin.get("name", "النظام")
+    zone_name = body.get('name_ar', 'منطقة جديدة')
+    zone_type  = _zt(body.get('zone_type', ''))
+    capacity   = body.get('max_capacity', 0)
+    area       = body.get('area_sqm', 0)
     new_zone = SessionZone(
-        floor_id=session["floor_id"], zone_code=body.get("zone_code", "NEW"),
-        name_ar=body.get("name_ar", "منطقة جديدة"), name_en=body.get("name_en", "New Zone"),
-        zone_type=body.get("zone_type", "men_prayer"), polygon_points=body.get("polygon_points", []),
-        fill_color=body.get("fill_color", "#22c55e"), stroke_color=body.get("stroke_color", "#000000"),
-        opacity=body.get("opacity", 0.4), stroke_opacity=body.get("stroke_opacity", 1.0),
-        fill_type=body.get("fill_type", "solid"), pattern_type=body.get("pattern_type"),
-        pattern_fg_color=body.get("pattern_fg_color", "#000000"), pattern_bg_color=body.get("pattern_bg_color", "#ffffff"),
-        max_capacity=body.get("max_capacity", 1000), area_sqm=body.get("area_sqm", 0), change_type="added"
+        floor_id=session["floor_id"],
+        zone_code=body.get("zone_code", "NEW"),
+        name_ar=zone_name,
+        name_en=body.get("name_en", "New Zone"),
+        zone_type=body.get("zone_type", "men_prayer"),
+        polygon_points=body.get("polygon_points", []),
+        fill_color=body.get("fill_color", "#22c55e"),
+        stroke_color=body.get("stroke_color", "#000000"),
+        opacity=body.get("opacity", 0.4),
+        stroke_opacity=body.get("stroke_opacity", 1.0),
+        fill_type=body.get("fill_type", "solid"),
+        pattern_type=body.get("pattern_type"),
+        pattern_fg_color=body.get("pattern_fg_color", "#000000"),
+        pattern_bg_color=body.get("pattern_bg_color", "#ffffff"),
+        max_capacity=capacity,
+        area_sqm=area,
+        change_type="added",
     )
     zone_dict = new_zone.model_dump()
-    # سجل الإضافة في history
-    _push_history(zone_dict, "added", admin.get("name",""),
-                  f"إضافة منطقة جديدة: {body.get('name_ar','')} | الطاقة: {body.get('max_capacity',0)}")
+    _push_history(zone_dict, "added", actor,
+        f"➕ إضافة منطقة جديدة «{zone_name}»"
+        f"\n   الفئة: {zone_type}"
+        f"\n   الطاقة: {capacity} مصلٍّ"
+        + (f"\n   المساحة: {area} م²" if area else "")
+        + f"\n   الكود: {body.get('zone_code','')}"
+    )
     zones = session.get("zones", [])
     zones.append(zone_dict)
     summary = _recalc_summary(zones)
@@ -327,12 +413,20 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
     if zone_idx is None:
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
-    # Soft delete — نبقّي الـ zone في الـ array مع is_removed=True لحفظ السجل
     zone = zones[zone_idx]
+    zone_name = zone.get('name_ar') or zone.get('zone_code') or 'منطقة'
+    actor = admin.get("name", "النظام")
+    # Soft delete مع تسجيل كامل
     zone["is_removed"] = True
     zone["change_type"] = "removed"
-    _push_history(zone, "removed", admin.get("name",""),
-                  f"حُذفت المنطقة: {zone.get('name_ar','')} | الفئة: {zone.get('zone_type','')}")
+    pts_count = len(zone.get("polygon_points", []))
+    _push_history(zone, "removed", actor,
+        f"🗑️ حذف منطقة «{zone_name}»"
+        f"\n   الفئة: {_zt(zone.get('zone_type',''))}"
+        f"\n   الطاقة: {zone.get('max_capacity', 0)} مصلٍّ"
+        f"\n   عدد نقاط الحدود: {pts_count}"
+        + (f"\n   ملاحظة: {zone.get('daily_note','')}" if zone.get('daily_note') else "")
+    )
     zones[zone_idx] = zone
     summary = _recalc_summary(zones)
     await db.map_sessions.update_one(
