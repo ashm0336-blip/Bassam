@@ -38,8 +38,15 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
   - Available prayers shown as clickable quick-switch buttons in empty state
   - Density save handler targets the correct prayer session
   - Files modified: `DailySessionsPage.jsx`, `DensityTab.jsx`
+- **UI Cleanup: Remove duplicate stats headers** - COMPLETE
+  - Removed redundant stats banners from Density tab and Employees tab
+  - KPI data remains in the side panel (no data loss)
+  - Files modified: `DensityTab.jsx`, `ZoneEmployeesTab.jsx`
 
 ## Prioritized Backlog
+
+### P0 - Upcoming
+- Comparative density report between prayers (e.g., Fajr vs Dhuhr chart)
 
 ### P1 - Advanced Task Features
 - Recurring Tasks (daily/weekly/monthly)

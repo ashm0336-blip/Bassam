@@ -443,62 +443,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   return (
     <div className="space-y-2" ref={printRef}>
 
-      {/* ══ Stats Header — بارز ومرئي دائماً ═══════════════ */}
-      <div className="relative overflow-hidden rounded-2xl p-4"
-        style={{ background:"linear-gradient(135deg,#ecfdf5 0%,#d1fae5 50%,#ecfdf5 100%)", border:"1px solid #a7f3d0" }}>
-        <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-emerald-400"/>
-        <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              label:"إجمالي الموظفين", value:employees.length,
-              sub:"على رأس العمل", color:"#065f46", Icon:Users, bg:"#d1fae5",
-            },
-            {
-              label:"معيّنون على مناطق", value:assignedCount,
-              sub:`من ${employees.length} موظف`, color:"#1d4ed8", Icon:UserCheck, bg:"#dbeafe",
-            },
-            {
-              label:"غير معيّنين", value:unassignedEmployees.length,
-              sub:unassignedEmployees.length>0?"⚠️ يحتاجون تعيين":"✅ الكل معيّن",
-              color:unassignedEmployees.length>0?"#d97706":"#059669",
-              Icon:UserX, bg:unassignedEmployees.length>0?"#fef9c3":"#d1fae5",
-            },
-            {
-              label:"مناطق بدون تغطية", value:uncoveredZones.length,
-              sub:uncoveredZones.length>0?"🚨 تحتاج تعيين":"✅ كاملة التغطية",
-              color:uncoveredZones.length>0?"#dc2626":"#059669",
-              Icon:AlertCircle, bg:uncoveredZones.length>0?"#fee2e2":"#d1fae5",
-            },
-          ].map((s,i)=>(
-            <div key={i} className="flex items-center gap-2.5 bg-white/70 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-white/60">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor:s.bg }}>
-                <s.Icon className="w-4 h-4" style={{ color:s.color }}/>
-              </div>
-              <div className="min-w-0">
-                <p className="font-black text-lg leading-none tabular-nums" style={{ color:s.color }}>{s.value}</p>
-                <p className="text-[9px] font-semibold text-slate-600 leading-tight mt-0.5 truncate">{s.label}</p>
-                <p className="text-[8px] text-slate-400 leading-tight">{s.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* شريط التغطية */}
-        <div className="relative mt-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold text-emerald-700">نسبة التغطية الكلية</span>
-            <span className="text-[10px] font-black"
-              style={{ color:coveragePct>=80?"#059669":coveragePct>=50?"#d97706":"#dc2626" }}>
-              {coveragePct}%
-            </span>
-          </div>
-          <div className="h-2 bg-emerald-200 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width:`${coveragePct}%`, backgroundColor:coveragePct>=80?"#059669":coveragePct>=50?"#eab308":"#ef4444" }}/>
-          </div>
-        </div>
-      </div>
-
       {/* ─── Employees Toolbar ─────────────────────────── */}
       <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm flex-wrap" data-testid="employees-toolbar">
 
