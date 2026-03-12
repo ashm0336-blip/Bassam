@@ -73,7 +73,10 @@ def _clone_zones_from_source(source_zones):
 async def create_map_session(data: MapSessionCreate, admin: dict = Depends(require_department_manager)):
     # For prayer sessions: check uniqueness by date + floor + prayer
     if data.session_type == "prayer" and data.prayer:
-        existing = await db.map_sessions.find_one({"date": data.date, "floor_id": data.floor_id, "prayer": data.prayer}, {"_id": 0})
+        existing = await db.map_sessions.find_one({
+            "date": data.date, "floor_id": data.floor_id, "prayer": data.prayer,
+            "parent_session_id": data.parent_session_id  # تحقق ضمن نفس الجلسة اليومية
+        }, {"_id": 0})
         if existing:
             raise HTTPException(status_code=400, detail=f"توجد جلسة {data.prayer} بالفعل لهذا اليوم")
     else:
