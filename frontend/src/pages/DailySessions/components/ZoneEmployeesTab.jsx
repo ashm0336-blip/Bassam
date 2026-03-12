@@ -939,7 +939,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
             <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mb-3" />
             <div className="grid grid-cols-5 gap-1.5 max-h-[300px] overflow-y-auto pr-0.5">
               {[...activeZones.filter(z => !z.is_removed)].sort((a, b) => {
-                // Uncovered non-service zones first
                 const aUncovered = (zoneEmployeeMap[a.zone_code] || []).length === 0 && a.zone_type !== "service";
                 const bUncovered = (zoneEmployeeMap[b.zone_code] || []).length === 0 && b.zone_type !== "service";
                 if (aUncovered && !bUncovered) return -1;
@@ -951,71 +950,23 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                 const hasCoverage = emps.length > 0;
                 const isService = zone.zone_type === "service";
                 return (
-                  <Popover key={zone.id}>
-                    <PopoverTrigger asChild>
-                      <button
-                        className={`relative flex flex-col items-center justify-center rounded-lg border-2 p-1.5 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md
-                          ${hasCoverage ? "bg-emerald-50 border-emerald-200 hover:border-emerald-400" :
-                            isService ? "bg-slate-50 border-slate-200 hover:border-slate-400" :
-                            "bg-red-50 border-red-300 hover:border-red-500 shadow-sm"}`}
-                        data-testid={`zone-card-${zone.id}`}
-                      >
-                        {!hasCoverage && !isService && (
-                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                            <AlertCircle className="w-2 h-2 text-white" />
-                          </span>
-                        )}
-                        <span className="w-3 h-3 rounded-sm mb-0.5" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
-                        <span className="text-[7px] font-bold leading-tight truncate w-full text-center" style={{ color: !hasCoverage && !isService ? "#dc2626" : "#475569" }}>{zone.zone_code}</span>
-                        <Badge variant={hasCoverage ? "secondary" : isService ? "outline" : "destructive"} className="text-[7px] px-1 h-3.5 mt-0.5">
-                          {hasCoverage ? emps.length : isService ? "-" : "0"}
-                        </Badge>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-56 p-3" side="top" align="center">
-                      <div className="space-y-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-4 h-4 rounded-sm" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
-                          <div>
-                            <p className="text-xs font-bold">{zone.zone_code}</p>
-                            <p className="text-[10px] text-muted-foreground">{isAr ? zone.name_ar : zone.name_en}</p>
-                          </div>
-                        </div>
-                        {emps.length > 0 && (
-                          <div className="space-y-1">
-                            {emps.map(emp => {
-                              const shift = SHIFTS.find(s => s.value === emp.shift);
-                              return (
-                                <div key={emp.id} className="flex items-center justify-between px-2 py-1 rounded-lg bg-slate-50 group/emp">
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ backgroundColor: shift?.color || "#94a3b8" }}>{emp.name.charAt(0)}</div>
-                                    <div>
-                                      <span className="text-[10px] font-medium">{emp.name}</span>
-                                      {shift && <p className="text-[8px] text-slate-400">{isAr ? shift.label_ar : shift.label_en}</p>}
-                                    </div>
-                                  </div>
-                                  {activeSession?.status === "draft" && !readOnly && (
-                                    <button onClick={() => handleUnassign(emp.id, zone.id)} className="opacity-0 group-hover/emp:opacity-100 w-4 h-4 rounded bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-all">
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {activeSession?.status === "draft" && !readOnly && (
-                          <Select onValueChange={(empId) => handleAssign(empId, zone.id)}>
-                            <SelectTrigger className="h-7 w-full text-[10px] border-dashed"><Plus className="w-3 h-3 ml-0.5 text-emerald-500" /><SelectValue placeholder={isAr ? "إضافة موظف" : "Add staff"} /></SelectTrigger>
-                            <SelectContent>
-                              {unassignedEmployees.map(emp => <SelectItem key={emp.id} value={emp.id} className="text-[10px]">{emp.name}</SelectItem>)}
-                              {unassignedEmployees.length === 0 && <div className="text-[10px] text-muted-foreground p-2 text-center">{isAr ? "لا يوجد متاحين" : "None"}</div>}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <ZoneAssignPopover
+                    key={zone.id}
+                    zone={zone}
+                    assignedEmps={emps}
+                    allEmployees={filteredEmployees}
+                    employeeZonesMap={employeeZonesMap}
+                    SHIFTS={SHIFTS}
+                    ZONE_TYPES={ZONE_TYPES}
+                    ti={ti}
+                    hasCoverage={hasCoverage}
+                    isService={isService}
+                    isAr={isAr}
+                    readOnly={readOnly}
+                    canEdit={activeSession?.status === "draft" && !readOnly}
+                    handleAssign={handleAssign}
+                    handleUnassign={handleUnassign}
+                  />
                 );
               })}
             </div>
@@ -1024,5 +975,162 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
       </div>
     </div>
     </div>
+  );
+}
+
+
+function ZoneAssignPopover({ zone, assignedEmps, allEmployees, employeeZonesMap, SHIFTS, ZONE_TYPES, ti, hasCoverage, isService, isAr, canEdit, handleAssign, handleUnassign }) {
+  const [search, setSearch] = useState("");
+  const assignedIds = new Set((zone.assigned_employee_ids || []).map(String));
+
+  // Group employees by shift
+  const groupedEmployees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = allEmployees.filter(emp =>
+      !q || emp.name?.toLowerCase().includes(q) || emp.employee_number?.toLowerCase().includes(q)
+    );
+    const groups = {};
+    SHIFTS.forEach(s => { groups[s.value] = []; });
+    groups["_other"] = [];
+    filtered.forEach(emp => {
+      const key = SHIFTS.find(s => s.value === emp.shift) ? emp.shift : "_other";
+      groups[key].push(emp);
+    });
+    return groups;
+  }, [allEmployees, search, SHIFTS]);
+
+  const totalAssigned = assignedIds.size;
+
+  const handleToggle = (empId) => {
+    if (assignedIds.has(empId)) {
+      handleUnassign(empId, zone.id);
+    } else {
+      handleAssign(empId, zone.id);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={`relative flex flex-col items-center justify-center rounded-lg border-2 p-1.5 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md
+            ${hasCoverage ? "bg-emerald-50 border-emerald-200 hover:border-emerald-400" :
+              isService ? "bg-slate-50 border-slate-200 hover:border-slate-400" :
+              "bg-red-50 border-red-300 hover:border-red-500 shadow-sm"}`}
+          data-testid={`zone-card-${zone.id}`}
+        >
+          {!hasCoverage && !isService && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-2 h-2 text-white" />
+            </span>
+          )}
+          <span className="w-3 h-3 rounded-sm mb-0.5" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }} />
+          <span className="text-[7px] font-bold leading-tight truncate w-full text-center" style={{ color: !hasCoverage && !isService ? "#dc2626" : "#475569" }}>{zone.zone_code}</span>
+          <Badge variant={hasCoverage ? "secondary" : isService ? "outline" : "destructive"} className="text-[7px] px-1 h-3.5 mt-0.5">
+            {hasCoverage ? assignedEmps.length : isService ? "-" : "0"}
+          </Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" side="top" align="center" data-testid={`zone-assign-popover-${zone.id}`}>
+        {/* Header */}
+        <div className="px-3 pt-3 pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }}>{ti?.icon || "?"}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold text-slate-800 truncate">{zone.zone_code}</p>
+              <p className="text-[9px] text-slate-400 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+            </div>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{
+              backgroundColor: totalAssigned > 0 ? "#ecfdf5" : "#fef2f2",
+              color: totalAssigned > 0 ? "#059669" : "#dc2626",
+              border: `1px solid ${totalAssigned > 0 ? "#a7f3d0" : "#fecaca"}`
+            }}>
+              {totalAssigned} {isAr ? "موظف" : "staff"}
+            </span>
+          </div>
+          {/* Search */}
+          {canEdit && (
+            <div className="relative">
+              <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={isAr ? "بحث بالاسم أو الرقم..." : "Search..."}
+                className="w-full h-7 pr-7 pl-2 text-[10px] border border-slate-200 rounded-lg focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 outline-none bg-slate-50/50"
+                data-testid={`zone-search-${zone.id}`}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Employee Checklist */}
+        <div className="max-h-64 overflow-y-auto" data-testid={`zone-checklist-${zone.id}`}>
+          {SHIFTS.map(shift => {
+            const emps = groupedEmployees[shift.value] || [];
+            if (emps.length === 0) return null;
+            const shiftAssigned = emps.filter(e => assignedIds.has(e.id)).length;
+            return (
+              <div key={shift.value}>
+                {/* Shift header */}
+                <div className="sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5 bg-slate-50/95 backdrop-blur-sm border-b border-slate-100">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: shift.color }} />
+                  <span className="text-[9px] font-bold text-slate-500 flex-1">{isAr ? shift.label_ar : shift.label_en}</span>
+                  {shiftAssigned > 0 && (
+                    <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded-full">{shiftAssigned}</span>
+                  )}
+                </div>
+                {/* Employee rows */}
+                {emps.map(emp => {
+                  const isAssigned = assignedIds.has(emp.id);
+                  const otherZones = (employeeZonesMap[emp.id] || []).filter(z => z.id !== zone.id);
+                  const hasOtherZones = otherZones.length > 0;
+                  return (
+                    <button
+                      key={emp.id}
+                      onClick={() => canEdit && handleToggle(emp.id)}
+                      disabled={!canEdit}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 transition-all text-right group
+                        ${isAssigned
+                          ? "bg-emerald-50/60 hover:bg-emerald-50"
+                          : "hover:bg-slate-50"
+                        } ${!canEdit ? "cursor-default" : "cursor-pointer"}`}
+                      data-testid={`zone-emp-${zone.id}-${emp.id}`}
+                    >
+                      {/* Checkbox */}
+                      <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all border
+                        ${isAssigned
+                          ? "bg-emerald-500 border-emerald-500"
+                          : "border-slate-300 group-hover:border-emerald-400"}`}>
+                        {isAssigned && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      </div>
+                      {/* Avatar */}
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: shift.color }}>
+                        {emp.name.charAt(0)}
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[10px] font-medium truncate ${isAssigned ? "text-emerald-800" : "text-slate-700"}`}>{emp.name}</p>
+                        <div className="flex items-center gap-1">
+                          {emp.employee_number && <span className="text-[8px] text-slate-400">{emp.employee_number}</span>}
+                          {hasOtherZones && (
+                            <span className="text-[7px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded">
+                              {otherZones.map(z => z.zone_code).join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+          {allEmployees.length === 0 && (
+            <p className="text-[10px] text-slate-400 text-center py-6">{isAr ? "لا يوجد موظفين" : "No employees"}</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
