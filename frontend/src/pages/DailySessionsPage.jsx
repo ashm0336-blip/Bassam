@@ -50,17 +50,6 @@ export default function DailySessionsPage() {
   const canDistribute = canWrite("distribute_employees");
   const canViewDistribute = canRead("distribute_employees");
   const canEnterDensity = canWrite("enter_density");
-
-  // ── الخريطة قابلة للتعديل فقط عند جولة صلاة نشطة ──────────
-  const isMapEditable = canCreateSession
-    && activeSession?.session_type === "prayer"
-    && activeSession?.status === "draft";
-
-  const viewOnlyReason = !activeSession ? null
-    : activeSession.session_type !== "prayer" ? "waiting_prayer"
-    : activeSession.status === "completed"    ? "prayer_done"
-    : activeSession.status === "skipped"      ? "prayer_skipped"
-    : null;
   const canViewDensity = canRead("enter_density") || canRead("view_density_reports");
 
   // Core state
@@ -73,6 +62,17 @@ export default function DailySessionsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ZONE_TYPES, setZoneTypes] = useState(ZONE_TYPES_FALLBACK);
+
+  // ── الخريطة قابلة للتعديل فقط عند جولة صلاة نشطة (بعد useState) ──
+  const isMapEditable = canCreateSession
+    && activeSession?.session_type === "prayer"
+    && activeSession?.status === "draft";
+
+  const viewOnlyReason = !activeSession ? null
+    : activeSession.session_type !== "prayer" ? "waiting_prayer"
+    : activeSession.status === "completed"    ? "prayer_done"
+    : activeSession.status === "skipped"      ? "prayer_skipped"
+    : null;
 
   // UI state
   const [activeTab, setActiveTab] = useState("map");
