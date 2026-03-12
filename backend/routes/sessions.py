@@ -232,6 +232,22 @@ def _recalc_summary(zones):
     return summary
 
 
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+def _push_history(zone: dict, action: str, by: str, note: str = "") -> dict:
+    """يضيف سجل في history الـ zone"""
+    if "history" not in zone:
+        zone["history"] = []
+    zone["history"].append({
+        "action": action,
+        "by": by,
+        "at": _now_iso(),
+        "note": note,
+    })
+    return zone
+
+
 @router.put("/admin/map-sessions/{session_id}/zones/{zone_id}")
 async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUpdate, admin: dict = Depends(require_department_manager)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
@@ -245,15 +261,27 @@ async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUp
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة في هذه الجلسة")
     update_fields = {k: v for k, v in data.model_dump().items() if v is not None}
     zone = zones[zone_idx]
-    if update_fields.get("is_removed"): zone["change_type"] = "removed"
-    elif update_fields.get("zone_type") and update_fields["zone_type"] != zone.get("zone_type"): zone["change_type"] = "category_changed"
-    elif update_fields.get("polygon_points"): zone["change_type"] = "moved"
-    elif any(k in update_fields for k in ["name_ar", "name_en", "fill_color"]): zone["change_type"] = "modified"
+    if update_fields.get("is_removed"):
+        zone["change_type"] = "removed"
+        _push_history(zone, "removed", admin.get("name",""), f"تم حذف المنطقة: {zone.get('name_ar','')}")
+    elif update_fields.get("zone_type") and update_fields["zone_type"] != zone.get("zone_type"):
+        zone["change_type"] = "category_changed"
+        _push_history(zone, "category_changed", admin.get("name",""), f"الفئة: {zone.get('zone_type','')} ← {update_fields['zone_type']}")
+    elif update_fields.get("polygon_points"):
+        zone["change_type"] = "moved"
+        _push_history(zone, "moved", admin.get("name",""), "تم تغيير حدود المنطقة")
+    elif any(k in update_fields for k in ["name_ar", "name_en", "fill_color", "max_capacity"]):
+        zone["change_type"] = "modified"
+        notes = []
+        if "max_capacity" in update_fields: notes.append(f"الطاقة: {zone.get('max_capacity',0)} → {update_fields['max_capacity']}")
+        if "fill_color" in update_fields: notes.append("تغيير اللون")
+        if "name_ar" in update_fields: notes.append(f"الاسم: {update_fields['name_ar']}")
+        _push_history(zone, "modified", admin.get("name",""), " | ".join(notes) or "تعديل بيانات المنطقة")
     for k, v in update_fields.items():
         zone[k] = v
     zones[zone_idx] = zone
     summary = _recalc_summary(zones)
-    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": _now_iso()}})
     updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     return updated
 
@@ -276,10 +304,14 @@ async def add_session_zone(session_id: str, request: Request, admin: dict = Depe
         pattern_fg_color=body.get("pattern_fg_color", "#000000"), pattern_bg_color=body.get("pattern_bg_color", "#ffffff"),
         max_capacity=body.get("max_capacity", 1000), area_sqm=body.get("area_sqm", 0), change_type="added"
     )
+    zone_dict = new_zone.model_dump()
+    # سجل الإضافة في history
+    _push_history(zone_dict, "added", admin.get("name",""),
+                  f"إضافة منطقة جديدة: {body.get('name_ar','')} | الطاقة: {body.get('max_capacity',0)}")
     zones = session.get("zones", [])
-    zones.append(new_zone.model_dump())
+    zones.append(zone_dict)
     summary = _recalc_summary(zones)
-    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": _now_iso()}})
     updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     return updated
 
@@ -291,9 +323,15 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
     if session.get("status") == "completed":
         raise HTTPException(status_code=400, detail="لا يمكن حذف مناطق من جلسة مكتملة - أعد فتحها أولاً")
-    zones = [z for z in session.get("zones", []) if z["id"] != zone_id]
+    # نسجّل الحذف في الـ zone قبل الإزالة
+    zones = session.get("zones", [])
+    del_zone = next((z for z in zones if z["id"] == zone_id), None)
+    if del_zone:
+        _push_history(del_zone, "removed", admin.get("name",""),
+                      f"حذف نهائي للمنطقة: {del_zone.get('name_ar','')}")
+    zones = [z for z in zones if z["id"] != zone_id]
     summary = _recalc_summary(zones)
-    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": _now_iso()}})
     return {"message": "تم حذف المنطقة من الجلسة"}
 
 
