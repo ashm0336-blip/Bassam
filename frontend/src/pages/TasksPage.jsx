@@ -886,24 +886,82 @@ export default function TasksPage({ department }) {
               </div>
 
               {/* Desktop: full table */}
-              <Card className="hidden sm:block">
+              <Card className="hidden sm:block border-0 shadow-sm overflow-hidden">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
-                    <Table>
+                    <Table className="min-w-[900px]">
                       <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="text-right">المهمة</TableHead>
-                          <TableHead className="text-center">الأولوية</TableHead>
-                          <TableHead className="text-center">الحالة</TableHead>
-                          <TableHead className="text-center">الموظفون</TableHead>
-                          <TableHead className="text-center">الأداء</TableHead>
-                          <TableHead className="text-center">بواسطة</TableHead>
-                          {isManager && <TableHead className="text-center w-20">⋯</TableHead>}
+                        <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
+                          {/* المهمة */}
+                          <TableHead className="text-right py-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shadow-sm">
+                                <Tag className="w-4 h-4 text-primary"/>
+                              </div>
+                              <span className="font-bold text-foreground text-sm">المهمة</span>
+                            </div>
+                          </TableHead>
+                          {/* الأولوية */}
+                          <TableHead className="text-center py-2.5 w-28">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
+                                <Zap className="w-4 h-4 text-amber-600"/>
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600">الأولوية</span>
+                            </div>
+                          </TableHead>
+                          {/* الحالة */}
+                          <TableHead className="text-center py-2.5 w-28">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                                <Activity className="w-4 h-4 text-emerald-600"/>
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600">الحالة</span>
+                            </div>
+                          </TableHead>
+                          {/* الموظفون */}
+                          <TableHead className="text-center py-2.5 w-36">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
+                                <Users className="w-4 h-4 text-blue-600"/>
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600">الموظفون</span>
+                            </div>
+                          </TableHead>
+                          {/* الأداء */}
+                          <TableHead className="text-center py-2.5 w-28">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
+                                <Star className="w-4 h-4 text-violet-600"/>
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600">الأداء</span>
+                            </div>
+                          </TableHead>
+                          {/* بواسطة */}
+                          <TableHead className="text-center py-2.5 w-28">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                                <Users className="w-4 h-4 text-slate-500"/>
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-500">بواسطة</span>
+                            </div>
+                          </TableHead>
+                          {/* الإجراءات */}
+                          {isManager && (
+                            <TableHead className="text-center py-2.5 w-20">
+                              <div className="flex flex-col items-center gap-1.5">
+                                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                                  <ChevronDown className="w-4 h-4 text-slate-500"/>
+                                </div>
+                                <span className="text-[11px] font-semibold text-slate-400">⋯</span>
+                              </div>
+                            </TableHead>
+                          )}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filtered.map(t=>(
-                          <TableRow key={t.id} className="hover:bg-muted/30" data-testid={`task-row-${t.id}`}>
+                          <TableRow key={t.id} className="hover:bg-muted/40 transition-colors [&>td]:py-2" data-testid={`task-row-${t.id}`}>
                             <TableCell className="text-right">
                               <p className="font-semibold text-sm">{t.title}</p>
                               {t.description && <p className="text-[11px] text-muted-foreground line-clamp-1">{t.description}</p>}
