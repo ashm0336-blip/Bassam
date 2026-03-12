@@ -79,6 +79,7 @@ export default function DailyGateSessionsPage() {
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [statsPanelCollapsed, setStatsPanelCollapsed] = useState(false);
 
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [cloneSource, setCloneSource] = useState("auto");
@@ -537,61 +538,17 @@ export default function DailyGateSessionsPage() {
                 </div>
               </div>
 
-              {/* ══ Stats Header الاحترافي ═══════════════════════ */}
-              <div className="relative overflow-hidden rounded-2xl p-4"
-                style={{ background:"linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#eff6ff 100%)", border:"1px solid #bfdbfe" }}>
-                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-blue-400"/>
-                <div className="relative grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                  {[
-                    { label:"إجمالي الأبواب", value:stats.total,   sub:"في هذه الجولة",                         color:"#1d4ed8", Icon:DoorOpen,       bg:"#dbeafe" },
-                    { label:"مفتوحة الآن",     value:stats.open,    sub:`${stats.total>0?Math.round(stats.open/stats.total*100):0}% من الإجمالي`, color:"#059669", Icon:DoorOpen,       bg:"#d1fae5" },
-                    { label:"مغلقة / صيانة",  value:stats.closed,  sub:"موقوف أو صيانة",                       color:"#6b7280", Icon:DoorClosed,     bg:"#f1f5f9" },
-                    { label:"مزدحمة",          value:stats.crowded, sub:stats.crowded>0?"⚠️ تحتاج انتباه":"✅ حالة جيدة", color:stats.crowded>0?"#dc2626":"#059669", Icon:AlertTriangle, bg:stats.crowded>0?"#fee2e2":"#d1fae5" },
-                    { label:"بدون موظفين",     value:stats.noStaff, sub:stats.noStaff>0?"🚨 تحتاج تغطية!":"✅ كل مغطى", color:stats.noStaff>0?"#dc2626":"#059669", Icon:stats.noStaff>0?AlertTriangle:UserCheck, bg:stats.noStaff>0?"#fee2e2":"#d1fae5" },
-                  ].map((s,i)=>(
-                    <div key={i} className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-xl px-2.5 py-2 border border-white/60">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor:s.bg }}>
-                        <s.Icon className="w-3.5 h-3.5" style={{ color:s.color }}/>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-black text-lg leading-none tabular-nums" style={{ color:s.color }}>{s.value}</p>
-                        <p className="text-[8px] font-bold text-slate-600 leading-tight truncate">{s.label}</p>
-                        <p className="text-[7px] text-slate-400 leading-tight">{s.sub}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Indicators + progress */}
-                <div className="relative mt-3 flex items-center gap-2 flex-wrap">
-                  {[{l:"خفيف",v:stats.light,c:"#22c55e"},{l:"متوسط",v:stats.medium,c:"#f59e0b"},{l:"مزدحم",v:stats.crowded,c:"#ef4444"}]
-                    .filter(x=>x.v>0).map((ind,i)=>(
-                    <div key={i} className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border"
-                      style={{ backgroundColor:ind.c+"12", borderColor:ind.c+"40" }}>
-                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor:ind.c }}/>
-                      <span className="text-[9px] font-bold" style={{ color:ind.c }}>{ind.l}: {ind.v}</span>
-                    </div>
-                  ))}
-                  <div className="mr-auto flex items-center gap-2">
-                    <div className="h-1.5 w-24 bg-blue-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-600 rounded-full transition-all duration-700" style={{ width:`${stats.total>0?Math.round(stats.open/stats.total*100):0}%` }}/>
-                    </div>
-                    <span className="text-[9px] font-black text-blue-700">{stats.total>0?Math.round(stats.open/stats.total*100):0}% مفتوح</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Tab Bar — نفس تبويبات الإعدادات */}
+                {/* Tab Bar */}
                 <div className="rounded-2xl p-2 mb-4"
                   style={{ backgroundColor:'rgba(255,255,255,0.7)', border:'1px solid #e5e7eb' }}
                   data-testid="daily-tabs-bar">
                   <div className="flex items-center gap-2 justify-center flex-wrap">
                     {[
-                      { id:'map',       label:isAr?'الخريطة':'Map',       icon:DoorOpen, count:null },
-                      { id:'gates',     label:isAr?'الأبواب':'Gates',     icon:Tag,      count:activeGates.length },
-                      { id:'employees', label:isAr?'الموظفين':'Staff',    icon:Users,    count:null },
-                      { id:'changes',   label:isAr?'التغييرات':'Changes', icon:FileText, count:changedGates.length||null },
+                      { id:'employees', label:isAr?'الموظفين':'Staff',      icon:Users,    count:null },
+                      { id:'gates',     label:isAr?'الكثافات':'Density',     icon:Activity,  count:null },
+                      { id:'map',       label:isAr?'الأبواب':'Gates',        icon:DoorOpen, count:activeGates.length },
                     ].map(tab=>{
                       const isActive = activeTab===tab.id;
                       const TabIcon = tab.icon;
@@ -621,17 +578,27 @@ export default function DailyGateSessionsPage() {
                   </div>
                 </div>
 
-                {/* MAP TAB */}
+                {/* MAP TAB → الأبواب */}
                 <TabsContent value="map" className="space-y-2" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  {/* Toolbar: Mode toggle + Zoom */}
+                  {/* Toolbar: Zoom + Legend */}
                   <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       {activeSession?.status === "draft" && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-700 font-medium">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-700 font-medium">
                           <Crosshair className="w-3 h-3" />
-                          {isAr ? "اسحب الباب لتغيير موقعه • اسحب الخلفية للتنقل" : "Drag gate to reposition • Drag background to pan"}
+                          {isAr ? "اسحب الباب لتغيير موقعه" : "Drag gate to reposition"}
                         </div>
                       )}
+                      <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+                      {/* Legend inline */}
+                      <div className="hidden sm:flex items-center gap-2 text-[9px] text-slate-500 font-medium">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />{isAr?"مفتوح":"Open"}</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{isAr?"مغلق":"Closed"}</span>
+                        <span className="w-px h-3 bg-slate-200" />
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:"#22c55e"}} />{isAr?"خفيف":"Light"}</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:"#f59e0b"}} />{isAr?"متوسط":"Medium"}</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:"#ef4444"}} />{isAr?"مزدحم":"Crowded"}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-3.5 h-3.5" /></Button>
@@ -641,9 +608,20 @@ export default function DailyGateSessionsPage() {
                     </div>
                   </div>
 
-                  {selectedFloor?.image_url ? (
-                    <Card className="overflow-hidden"><CardContent className="p-0">
-                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden" style={{ height: "550px", cursor: draggingGateId ? "grabbing" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
+                  {/* Map + Side Panel layout */}
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height:'min(680px, calc(100vh - 260px))' }}>
+                    {/* Panel toggle handle */}
+                    <div className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-300" style={{ right: statsPanelCollapsed ? 0 : '38%' }}>
+                      <button onClick={() => setStatsPanelCollapsed(p => !p)}
+                        className="flex items-center justify-center w-5 h-14 bg-blue-600 hover:bg-blue-700 rounded-r-none rounded-l-lg shadow-lg transition-colors">
+                        <ChevronRight className="w-3 h-3 text-white transition-transform duration-300" style={{ transform: statsPanelCollapsed ? 'rotate(180deg)' : '' }} />
+                      </button>
+                    </div>
+
+                    {/* Map area */}
+                    <div className="absolute inset-0">
+                    {selectedFloor?.image_url ? (
+                      <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden h-full" style={{ cursor: draggingGateId ? "grabbing" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
@@ -733,22 +711,7 @@ export default function DailyGateSessionsPage() {
                             );
                           })()}
                         </div>
-                        {/* Legend */}
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
-                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                            <span>{isAr ? "الحالة:" : "Status:"}</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />{isAr ? "مفتوح" : "Open"}</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" />{isAr ? "مغلق" : "Closed"}</span>
-                          </div>
-                          <div className="w-px h-4 bg-slate-200" />
-                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                            <span>{isAr ? "الازدحام:" : "Crowd:"}</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#22c55e"}} />{isAr ? "خفيف" : "Light"}</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#f59e0b"}} />{isAr ? "متوسط" : "Medium"}</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:"#ef4444"}} />{isAr ? "مزدحم" : "Crowded"}</span>
-                          </div>
-                        </div>
-                        {/* Rich Tooltip (when hovering and not dragging) */}
+                        {/* Rich Tooltip */}
                         {hoveredGate && !draggingGateId && !isPanning && (() => {
                           const sc = STATUS_CONFIG[hoveredGate.status] || STATUS_CONFIG.closed;
                           const INDICATOR_LABELS = { light: { ar: "خفيف", en: "Light", color: "#22c55e" }, medium: { ar: "متوسط", en: "Medium", color: "#f59e0b" }, crowded: { ar: "مزدحم", en: "Crowded", color: "#ef4444" } };
@@ -770,9 +733,7 @@ export default function DailyGateSessionsPage() {
                                 <div className="p-3 space-y-2">
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                      <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}>
-                                        <DoorOpen className="w-4 h-4 text-white" />
-                                      </span>
+                                      <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}><DoorOpen className="w-4 h-4 text-white" /></span>
                                       <span className="font-bold text-sm">{hoveredGate.name_ar}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
@@ -798,11 +759,115 @@ export default function DailyGateSessionsPage() {
                           );
                         })()}
                       </div>
-                    </CardContent></Card>
-                  ) : <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr?"لا توجد خريطة":"No map"}</CardContent></Card>}
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">{isAr?"لا توجد خريطة":"No map"}</div>
+                    )}
+                    </div>
+
+                    {/* ── Side Panel: Gate Stats ── */}
+                    <div
+                      className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto shadow-xl z-25"
+                      style={{ width: '38%', transform: statsPanelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
+                      data-testid="gates-stats-panel"
+                    >
+                      <div className="p-4 space-y-3">
+                        <div className="text-center">
+                          <p className="text-[12px] font-bold font-cairo text-slate-600">{isAr ? "لوحة الأبواب" : "Gates Panel"}</p>
+                        </div>
+                        <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
+
+                        {/* KPIs Row 1 */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { label: isAr?"الإجمالي":"Total", value: stats.total, icon: DoorOpen, color: "#1d4ed8", bg: "#eff6ff" },
+                            { label: isAr?"مفتوح":"Open", value: stats.open, icon: DoorOpen, color: "#059669", bg: "#ecfdf5" },
+                            { label: isAr?"مغلق":"Closed", value: stats.closed, icon: DoorClosed, color: "#6b7280", bg: "#f1f5f9" },
+                          ].map((kpi, i) => {
+                            const Icon = kpi.icon;
+                            return (
+                              <div key={i} className="relative rounded-xl p-2 border border-slate-100 bg-white overflow-hidden">
+                                <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[2rem] opacity-[0.06]" style={{ backgroundColor: kpi.color }} />
+                                <div className="flex items-start justify-between gap-1 relative">
+                                  <div>
+                                    <p className="text-[9px] font-medium text-slate-400">{kpi.label}</p>
+                                    <span className="text-lg font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                                  </div>
+                                  <Icon className="w-4 h-4 mt-0.5" style={{ color: kpi.color, opacity: 0.4 }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* KPIs Row 2 - Indicators */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { label: isAr?"خفيف":"Light", value: stats.light, color: "#16a34a", cardBg: "#f0fdf4" },
+                            { label: isAr?"متوسط":"Medium", value: stats.medium, color: "#f59e0b", cardBg: "#fffbeb" },
+                            { label: isAr?"مزدحم":"Crowded", value: stats.crowded, color: "#dc2626", cardBg: "#fef2f2" },
+                          ].map((kpi, i) => (
+                            <div key={i} className="relative rounded-xl p-2 border overflow-hidden" style={{ backgroundColor: kpi.cardBg, borderColor: kpi.color+"25" }}>
+                              <div className="absolute top-0 right-0 w-10 h-10 rounded-bl-[2rem] opacity-[0.08]" style={{ backgroundColor: kpi.color }} />
+                              <div className="relative">
+                                <p className="text-[9px] font-medium" style={{ color: kpi.color+"99" }}>{kpi.label}</p>
+                                <span className="text-lg font-extrabold tracking-tight" style={{ color: kpi.color }}>{kpi.value}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Coverage */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { label: isAr?"بدون موظف":"No Staff", value: stats.noStaff, color: stats.noStaff > 0 ? "#dc2626" : "#059669", icon: stats.noStaff > 0 ? AlertTriangle : UserCheck },
+                            { label: isAr?"نسبة الفتح":"Open %", value: `${stats.total>0?Math.round(stats.open/stats.total*100):0}%`, color: "#1d4ed8", icon: Activity },
+                          ].map((kpi, i) => {
+                            const Icon = kpi.icon;
+                            return (
+                              <div key={i} className="relative rounded-xl p-2.5 border border-slate-100 bg-white overflow-hidden">
+                                <div className="flex items-start justify-between gap-1">
+                                  <div>
+                                    <p className="text-[8px] font-medium text-slate-400">{kpi.label}</p>
+                                    <span className="text-lg font-extrabold" style={{ color: kpi.color }}>{kpi.value}</span>
+                                  </div>
+                                  <Icon className="w-3.5 h-3.5 mt-0.5" style={{ color: kpi.color, opacity: 0.4 }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
+
+                        {/* Mini Gate Cards */}
+                        <div>
+                          <p className="text-[12px] font-bold font-cairo text-slate-600 mb-2">{isAr?"حالة الأبواب":"Gate Status"}</p>
+                          <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mb-2" />
+                          <div className="grid grid-cols-5 gap-1.5 max-h-[260px] overflow-y-auto pr-0.5">
+                            {activeGates.map(gate => {
+                              const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
+                              const isOpen = gate.status === "open";
+                              const INDICATOR_COLORS = { light: "#22c55e", medium: "#f59e0b", crowded: "#ef4444" };
+                              const indColor = isOpen ? (INDICATOR_COLORS[gate.indicator || "light"] || "#22c55e") : sc.color;
+                              return (
+                                <button key={gate.id} onClick={() => { if (activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
+                                  className="relative flex flex-col items-center justify-center rounded-lg border-2 p-1.5 transition-all hover:scale-105 hover:shadow-md"
+                                  style={{ borderColor: indColor+"60", backgroundColor: indColor+"08" }}
+                                  data-testid={`panel-gate-${gate.id}`}>
+                                  <div className="w-3 h-3 rounded-full mb-0.5" style={{ backgroundColor: indColor }} />
+                                  <span className="text-[7px] font-bold text-slate-600 leading-tight truncate w-full text-center">{gate.name_ar}</span>
+                                  <span className="text-[7px] font-medium mt-0.5" style={{ color: sc.color }}>{isAr ? sc.label_ar : sc.label_en}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
 
-                {/* GATES TAB - Quick status toggle cards */}
+                {/* GATES TAB → الكثافات */}
                 <TabsContent value="gates" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   <GatesTab
                     activeGates={activeGates}
@@ -821,34 +886,6 @@ export default function DailyGateSessionsPage() {
                     isAr={isAr}
                     onUpdateGate={handleUpdateGate}
                   />
-                </TabsContent>
-
-                {/* CHANGES TAB */}
-                <TabsContent value="changes" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <Card><CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" />{isAr?"ملخص التغييرات":"Changes"}</CardTitle></CardHeader>
-                    <CardContent>
-                      {changedGates.length === 0 ? <div className="text-center py-8"><CheckCircle2 className="w-12 h-12 mx-auto text-blue-400 mb-3" /><p className="text-muted-foreground">{isAr?"لا توجد تغييرات":"No changes"}</p></div> : (
-                        <div className="space-y-3">{changedGates.map(gate => {
-                          const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
-                          const cl = CHANGE_LABELS[gate.change_type] || CHANGE_LABELS.unchanged;
-                          return (
-                            <div key={gate.id} className="flex items-center gap-3 p-3 rounded-lg border" style={{borderRightColor:cl.color,borderRightWidth:3}} data-testid={`change-item-${gate.id}`}>
-                              <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:cl.color}} />
-                              <div className="flex-1">
-                                <span className="font-semibold text-sm">{gate.name_ar}</span>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>
-                                  <span className="text-[10px]" style={{color:sc.color}}>{isAr?sc.label_ar:sc.label_en}</span>
-                                </div>
-                              </div>
-                              {gate.daily_note && <p className="text-[10px] text-slate-500 max-w-xs truncate">{gate.daily_note}</p>}
-                            </div>
-                          );
-                        })}</div>
-                      )}
-                      {activeSession.supervisor_notes && <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100"><h4 className="font-cairo font-semibold text-sm text-blue-700 flex items-center gap-2 mb-2"><MessageSquare className="w-4 h-4" />{isAr?"ملاحظات المشرف":"Notes"}</h4><p className="text-sm text-blue-600 whitespace-pre-wrap">{activeSession.supervisor_notes}</p></div>}
-                    </CardContent>
-                  </Card>
                 </TabsContent>
               </Tabs>
             </div>

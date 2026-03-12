@@ -56,6 +56,7 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 
 ### P0 - Upcoming
 - Comparative density report between prayers (e.g., Fajr vs Dhuhr chart)
+- Gate audit log (سجل تغييرات الأبواب) under map - records open/close/crowded changes
 
 ### P1 - Advanced Task Features
 - Recurring Tasks (daily/weekly/monthly)
