@@ -212,7 +212,7 @@ export function DensityTab({
                         {zone.max_capacity > 0 && <p className="text-[8px] text-slate-400">{isAr ? `طاقة: ${zone.max_capacity.toLocaleString()}` : `Cap: ${zone.max_capacity.toLocaleString()}`}</p>}
                       </div>
                       {/* Quick number input */}
-                      {!readOnly && activeSession?.status === "draft" && zone.max_capacity > 0 && (
+                      {!readOnly && zone.max_capacity > 0 && (
                         <input
                           type="number"
                           min={0}
@@ -227,7 +227,7 @@ export function DensityTab({
                   );
                 })}
             </div>
-            {!readOnly && activeSession?.status === "draft" && Object.keys(densityEdits).length > 0 && (
+            {!readOnly && Object.keys(densityEdits).length > 0 && (
               <div className="p-2 border-t bg-amber-50">
                 <Button onClick={() => { handleSaveDensityBatch(); setQuickListOpen(false); }} disabled={savingDensity}
                   className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700" data-testid="quick-save-btn">
