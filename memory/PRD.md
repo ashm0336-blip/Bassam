@@ -42,6 +42,14 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
   - Removed redundant stats banners from Density tab and Employees tab
   - KPI data remains in the side panel (no data loss)
   - Files modified: `DensityTab.jsx`, `ZoneEmployeesTab.jsx`
+- **Multi-Select Employee Assignment for Zones** - COMPLETE & TESTED
+  - Zone cards now open a professional multi-select popover with checkboxes
+  - Employees grouped by shift with color indicators
+  - Shows which employees are assigned to other zones (amber warning)
+  - Search field for quick filtering by name/employee number
+  - Read-only mode when session is completed
+  - Employee count badge with visual status
+  - Files modified: `ZoneEmployeesTab.jsx`
 
 ## Prioritized Backlog
 

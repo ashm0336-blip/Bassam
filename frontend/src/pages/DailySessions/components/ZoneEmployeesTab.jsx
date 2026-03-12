@@ -818,9 +818,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
           {/* Unassigned Employees */}
           {unassignedEmployees.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold text-amber-700 flex items-center gap-1.5 mb-2">
+              <div className="text-[10px] font-semibold text-amber-700 flex items-center gap-1.5 mb-2">
                 <UserX className="w-3.5 h-3.5" />{isAr ? "غير معيّنين" : "Unassigned"}<Badge variant="secondary" className="text-[9px] px-1">{unassignedEmployees.length}</Badge>
-              </p>
+              </div>
               <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
                 {unassignedEmployees.map(emp => {
                   const shift = SHIFTS.find(s => s.value === emp.shift);
@@ -864,9 +864,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
           {/* Assigned Employees — with zone tags */}
           {employees.filter(e => employeeZonesMap[e.id]?.length > 0).length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1.5 mb-2">
+              <div className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1.5 mb-2">
                 <UserCheck className="w-3.5 h-3.5" />{isAr ? "معيّنون" : "Assigned"}<Badge className="text-[9px] px-1 bg-emerald-100 text-emerald-700">{assignedCount}</Badge>
-              </p>
+              </div>
               <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
                 {employees.filter(e => employeeZonesMap[e.id]?.length > 0 && filteredEmployees.some(f => f.id === e.id)).map(emp => {
                   const shift = SHIFTS.find(s => s.value === emp.shift);
