@@ -81,10 +81,12 @@ export function DensityTab({
     return zones;
   }, [densityStats, searchQuery, filterLevel, sortBy]);
 
+  // ← يجب أن يكون قبل أي early return
+  const [autoFocusInput, setAutoFocusInput] = useState(null);
+
   if (!densityStats) return null;
 
   const selectedZone = selectedZoneId ? densityStats.zonesDensity.find(z => z.id === selectedZoneId) : null;
-  const [autoFocusInput, setAutoFocusInput] = useState(null);
 
   const handleZoneClick = (zoneId) => {
     setSelectedZoneId(prev => prev === zoneId ? null : zoneId);
