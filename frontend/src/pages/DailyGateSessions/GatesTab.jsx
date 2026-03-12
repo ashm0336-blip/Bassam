@@ -92,53 +92,57 @@ export function GatesTab({ activeGates, removedGates, activeSession, isAr, onUpd
 
   return (
     <div className="space-y-3" data-testid="gates-tab">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={isAr ? "بحث عن باب..." : "Search gates..."} className="pr-9 h-9 text-sm" data-testid="gate-search" />
-      </div>
+      {/* Professional Toolbar */}
+      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm flex-wrap">
+        {/* Search */}
+        <div className="relative min-w-[140px]">
+          <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none" />
+          <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isAr ? "بحث..." : "Search..."} className="pr-7 h-8 text-[10px] w-full" data-testid="gate-search" />
+        </div>
 
-      {/* Two-row filters */}
-      <div className="space-y-2">
-        {/* Status filter */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold text-slate-400 w-14">{isAr ? 'الحالة:' : 'Status:'}</span>
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+        {/* Status filter pills */}
+        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
           {[
-            { key: "all", label: isAr ? "الكل" : "All", count: counts.total, color: "#475569" },
-            { key: "open", label: isAr ? "مفتوح" : "Open", count: counts.open, color: "#22c55e" },
-            { key: "closed", label: isAr ? "مغلق" : "Closed", count: counts.closed, color: "#ef4444" },
+            { key: "all", label: isAr ? "الكل" : "All" },
+            { key: "open", label: isAr ? "مفتوح" : "Open" },
+            { key: "closed", label: isAr ? "مغلق" : "Closed" },
           ].map(f => (
             <button key={f.key} onClick={() => { setFilterStatus(f.key); if (f.key === "closed") setFilterIndicator("all"); }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${filterStatus === f.key ? 'text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
-              style={filterStatus === f.key ? { backgroundColor: f.color } : {}} data-testid={`filter-status-${f.key}`}>
-              {f.key !== "all" && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: filterStatus === f.key ? '#fff' : f.color }} />}
-              {f.label} <span className="text-[10px] opacity-70">({f.count})</span>
+              data-testid={`filter-status-${f.key}`}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold transition-all ${filterStatus === f.key ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400 hover:text-slate-600'}`}>
+              {f.label}
             </button>
           ))}
         </div>
 
-        {/* Indicator filter - only for open gates */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold text-slate-400 w-14 flex items-center gap-1">
-            <Gauge className="w-3 h-3" />{isAr ? 'الازدحام:' : 'Crowd:'}
-          </span>
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+        {/* KPI + Legend pills */}
+        <div className="hidden sm:flex items-center gap-1.5 mr-auto">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+            <DoorOpen className="w-3 h-3 text-blue-500" />
+            <span className="text-[9px] font-bold text-blue-600">{counts.total}</span>
+            <span className="text-[8px] text-slate-400">{isAr ? "باب" : "gates"}</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg border" style={{ backgroundColor: counts.total > 0 ? "#05966908" : "#f1f5f9", borderColor: "#05966930" }}>
+            <span className="text-[9px] font-bold text-emerald-600">{counts.total > 0 ? Math.round(counts.open / counts.total * 100) : 0}%</span>
+            <span className="text-[8px] text-slate-400">{isAr ? "مفتوح" : "open"}</span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
           {[
-            { key: "all", label: isAr ? "الكل" : "All", count: counts.open },
-            { key: "light", label: isAr ? "خفيف" : "Light", count: counts.light, color: "#22c55e" },
-            { key: "medium", label: isAr ? "متوسط" : "Medium", count: counts.medium, color: "#f59e0b" },
-            { key: "crowded", label: isAr ? "مزدحم" : "Crowded", count: counts.crowded, color: "#ef4444" },
-          ].map(f => (
-            <button key={f.key}
-              onClick={() => { setFilterIndicator(f.key); if (f.key !== "all") setFilterStatus("open"); }}
-              disabled={filterStatus === "closed"}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all
-                ${filterStatus === "closed" ? 'opacity-40 cursor-not-allowed' : ''}
-                ${filterIndicator === f.key && filterStatus !== "closed" ? 'text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
-              style={filterIndicator === f.key && filterStatus !== "closed" ? { backgroundColor: f.color || "#475569" } : {}}
-              data-testid={`filter-indicator-${f.key}`}>
-              {f.color && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: filterIndicator === f.key ? '#fff' : f.color }} />}
-              {f.label} <span className="text-[10px] opacity-70">({f.count})</span>
+            { color: "#16a34a", label: isAr ? "خفيف" : "Light", count: counts.light },
+            { color: "#f59e0b", label: isAr ? "متوسط" : "Med", count: counts.medium },
+            { color: "#ef4444", label: isAr ? "مزدحم" : "Crowd", count: counts.crowded },
+          ].filter(l => l.count > 0 || l.color === "#16a34a").map(l => (
+            <button key={l.color}
+              onClick={() => { if (l.color === "#16a34a") { setFilterIndicator("light"); setFilterStatus("open"); } else if (l.color === "#f59e0b") { setFilterIndicator("medium"); setFilterStatus("open"); } else { setFilterIndicator("crowded"); setFilterStatus("open"); } }}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border transition-all hover:scale-105" style={{ borderColor: l.color + "40", backgroundColor: l.color + "08" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: l.color }} />
+              {l.count > 0 && <span className="text-[8px] font-bold" style={{ color: l.color }}>{l.count}</span>}
+              <span className="text-[8px] font-medium" style={{ color: l.color + "cc" }}>{l.label}</span>
             </button>
           ))}
         </div>
