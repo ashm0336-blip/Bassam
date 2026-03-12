@@ -6,7 +6,26 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
-// ── Helpers ────────────────────────────────────────────────────
+// ── Arabic Maps ────────────────────────────────────────────────
+const ZONE_TYPE_AR_MAP = {
+  "men_prayer":"مصلى رجال","women_prayer":"مصلى نساء","mixed_prayer":"مصلى مختلط",
+  "children_prayer":"مصلى أطفال","elderly_prayer":"مصلى كبار السن",
+  "disabled_prayer":"مصلى ذوي الاحتياجات","quran_recitation":"حلقة قرآن",
+  "lecture_hall":"قاعة محاضرات","emergency_exit":"مخرج طوارئ","storage":"مخزن",
+  "service_area":"منطقة خدمات","corridor":"ممر","wudu_area":"منطقة وضوء",
+  "men_only":"رجال فقط","women_only":"نساء فقط","service":"خدمات","prayer":"مصلى",
+};
+function _ztAR(key) { return ZONE_TYPE_AR_MAP[key] || key || "غير محدد"; }
+
+const SESSION_ACTION_CFG = {
+  prayer_started:    { label:"بدء جولة صلاة",    color:"#2563eb", bg:"#eff6ff", border:"#bfdbfe", Icon:Plus      },
+  prayer_completed:  { label:"إنهاء جولة صلاة",  color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", Icon:CheckCircle2 },
+  prayer_skipped:    { label:"تجاوز صلاة",        color:"#94a3b8", bg:"#f8fafc", border:"#e2e8f0", Icon:ArrowRight },
+  session_completed: { label:"إنهاء الجولة اليومية", color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", Icon:CheckCircle2 },
+  session_reopened:  { label:"إعادة فتح",         color:"#d97706", bg:"#fffbeb", border:"#fcd34d", Icon:Edit2     },
+  session_created:   { label:"بدء جولة جديدة",   color:"#2563eb", bg:"#eff6ff", border:"#bfdbfe", Icon:Plus      },
+  notes_added:       { label:"ملاحظات المشرف",    color:"#7c3aed", bg:"#f5f3ff", border:"#c4b5fd", Icon:MessageSquare },
+};
 function formatSATime(isoStr) {
   if (!isoStr) return "—";
   try {
@@ -44,20 +63,20 @@ function buildTimeline(activeSession, ZONE_TYPES, isAr) {
   const allZones = activeSession?.zones || [];
   const events = [];
 
+  // ① أحداث الـ zones (إضافة/تعديل/حذف)
   allZones.forEach(zone => {
     const hist = zone.history || [];
-    // من الـ history في كل zone
     hist.forEach(h => {
-      const cfg = CHANGE_CONFIG[h.action] || CHANGE_CONFIG[h.action?.includes("assign")?"assigned":"modified"];
+      const cfg = CHANGE_CONFIG[h.action] || CHANGE_CONFIG.modified;
       const ti = ZONE_TYPES?.find(t => t.value === zone.zone_type);
       events.push({
         id: `${zone.id}-${h.at}`,
+        type: "zone",
         zone_id: zone.id,
         zone_code: zone.zone_code || "—",
         zone_name: isAr ? zone.name_ar : (zone.name_en || zone.name_ar),
         zone_color: zone.fill_color || "#6b7280",
-        zone_icon: ti?.icon || "🏛️",
-        zone_type: ti?.label_ar || zone.zone_type || "—",
+        zone_type: ti?.label_ar || _ztAR(zone.zone_type),
         action: h.action || "modified",
         by: h.by || "النظام",
         at: h.at,
@@ -66,24 +85,32 @@ function buildTimeline(activeSession, ZONE_TYPES, isAr) {
       });
     });
 
-    // إذا لا يوجد history لكن يوجد change_type
     if (hist.length === 0 && zone.change_type && zone.change_type !== "unchanged") {
       const ti = ZONE_TYPES?.find(t => t.value === zone.zone_type);
       events.push({
-        id: zone.id,
-        zone_id: zone.id,
-        zone_code: zone.zone_code || "—",
+        id: zone.id, type:"zone",
+        zone_id: zone.id, zone_code: zone.zone_code || "—",
         zone_name: isAr ? zone.name_ar : (zone.name_en || zone.name_ar),
         zone_color: zone.fill_color || "#6b7280",
-        zone_icon: ti?.icon || "🏛️",
-        zone_type: ti?.label_ar || zone.zone_type || "—",
+        zone_type: ti?.label_ar || _ztAR(zone.zone_type),
         action: zone.change_type || (zone.is_removed ? "removed" : "modified"),
-        by: zone.updated_by || "—",
-        at: zone.updated_at || zone.created_at,
-        note: "",
-        is_removed: zone.is_removed,
+        by: zone.updated_by || "—", at: zone.updated_at || zone.created_at,
+        note: "", is_removed: zone.is_removed,
       });
     }
+  });
+
+  // ② أحداث الجلسة (صلاة/إنهاء/ملاحظات)
+  const sessionHist = activeSession?.session_history || [];
+  sessionHist.forEach(h => {
+    events.push({
+      id: `session-${h.at}`, type: "session",
+      action: h.action || "session_created",
+      by: h.by || "النظام",
+      at: h.at,
+      note: h.note || "",
+      icon: h.icon || "📌",
+    });
   });
 
   return events.sort((a,b) => (b.at||"").localeCompare(a.at||""));
@@ -192,7 +219,46 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
           {/* خط الـ timeline */}
           <div className="absolute right-[19px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-amber-200 via-slate-200 to-transparent rounded-full"/>
 
-          {filtered.map((ev, idx) => {
+            {filtered.map((ev, idx) => {
+            // ── حدث جلسة (صلاة/إنهاء/ملاحظات) ──
+            if (ev.type === "session") {
+              const scfg = SESSION_ACTION_CFG[ev.action] || SESSION_ACTION_CFG.session_created;
+              const Icon = scfg.Icon;
+              return (
+                <div key={ev.id} className="relative flex gap-4 pb-3 group">
+                  <div className="relative z-10 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border-2 border-white"
+                      style={{ backgroundColor:scfg.bg, borderColor:scfg.border }}>
+                      <span className="text-lg">{ev.icon}</span>
+                    </div>
+                    <div className="text-[8px] text-slate-400 text-center mt-0.5 font-mono">{formatSATime(ev.at)}</div>
+                  </div>
+                  <div className="flex-1 min-w-0 rounded-xl border-2 shadow-sm p-3 transition-all group-hover:shadow-md"
+                    style={{ backgroundColor:scfg.bg, borderColor:scfg.border }}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full border"
+                        style={{ color:scfg.color, backgroundColor:"white", borderColor:scfg.border }}>
+                        {scfg.label}
+                      </span>
+                      <span className="text-[9px] text-slate-400 flex items-center gap-1 flex-shrink-0">
+                        <Clock className="w-2.5 h-2.5"/>{formatSADateTime(ev.at)}
+                      </span>
+                    </div>
+                    <div className="mt-1 space-y-0.5">
+                      {ev.note.split('\n').map((line,li) => line.trim() && (
+                        <p key={li} className={`text-[10px] leading-snug ${li===0?"font-semibold":"mr-2 text-slate-500"}`}
+                          style={{ color: li===0 ? scfg.color : undefined }}>
+                          {line.trim()}
+                        </p>
+                      ))}
+                    </div>
+                    {ev.by && <p className="text-[8px] text-slate-400 mt-1 flex items-center gap-0.5"><User2 className="w-2.5 h-2.5"/>{ev.by}</p>}
+                  </div>
+                </div>
+              );
+            }
+
+            // ── حدث zone ──
             const cfg = CHANGE_CONFIG[ev.action] || CHANGE_CONFIG.modified;
             const Icon = cfg.icon;
             const isLast = idx === filtered.length - 1;

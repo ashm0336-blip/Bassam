@@ -133,9 +133,27 @@ async def create_map_session(data: MapSessionCreate, admin: dict = Depends(requi
         zones=zones_snapshot, changes_summary=changes_summary
     )
     doc = session.model_dump()
+    doc["session_history"] = []  # مصفوفة أحداث مستوى الجلسة
     await db.map_sessions.insert_one(doc)
-    label = f"صلاة {data.prayer}" if data.prayer else f"تاريخ: {data.date}"
-    await log_activity("إنشاء جلسة خريطة", admin, session.id, label)
+
+    actor = admin.get("name", "النظام")
+    if data.session_type == "prayer" and data.prayer:
+        prayer_name = _pt(data.prayer)
+        # سجّل في الجلسة الجديدة
+        await _push_session_event(session.id, "prayer_started", actor,
+            f"🕌 بدأت جولة صلاة {prayer_name}\n   التاريخ: {data.date}\n   المنفذ: {actor}",
+            icon="🕌")
+        # سجّل في الجلسة الأم (الجولة اليومية) إن وجدت
+        if data.parent_session_id:
+            await _push_session_event(data.parent_session_id, "prayer_started", actor,
+                f"🕌 بدأت جولة {prayer_name}\n   المنفذ: {actor}",
+                icon="🕌")
+    else:
+        await _push_session_event(session.id, "session_created", actor,
+            f"📋 إنشاء جولة يومية جديدة\n   التاريخ: {data.date}\n   المنفذ: {actor}",
+            icon="📋")
+
+    await log_activity("إنشاء جلسة خريطة", admin, session.id, f"صلاة {data.prayer}" if data.prayer else f"تاريخ: {data.date}")
     result = doc.copy()
     result.pop("_id", None)
     return result
@@ -148,6 +166,48 @@ async def update_map_session(session_id: str, data: MapSessionUpdate, admin: dic
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    actor = admin.get("name", "النظام")
+    prayer_name = _pt(existing.get("prayer","")) if existing.get("prayer") else None
+    is_prayer = existing.get("session_type") == "prayer"
+    parent_id = existing.get("parent_session_id")
+
+    # تسجيل الأحداث حسب التغيير
+    new_status = update_data.get("status")
+    if new_status == "completed":
+        if is_prayer and prayer_name:
+            note = f"✅ اكتملت جولة {prayer_name}\n   المنفذ: {actor}"
+            icon = "✅"
+            action = "prayer_completed"
+        else:
+            note = f"🏁 اكتملت الجولة اليومية بالكامل\n   المنفذ: {actor}\n   التاريخ: {existing.get('date','')}"
+            icon = "🏁"
+            action = "session_completed"
+        await _push_session_event(session_id, action, actor, note, icon)
+        if parent_id and is_prayer:
+            await _push_session_event(parent_id, action, actor,
+                f"✅ اكتملت جولة {prayer_name}\n   المنفذ: {actor}", "✅")
+
+    elif new_status == "skipped":
+        note = f"⏭️ تم تجاوز جولة {prayer_name or 'الصلاة'}\n   المنفذ: {actor}"
+        await _push_session_event(session_id, "prayer_skipped", actor, note, "⏭️")
+        if parent_id:
+            await _push_session_event(parent_id, "prayer_skipped", actor,
+                f"⏭️ تجاوز {prayer_name or 'الصلاة'}\n   المنفذ: {actor}", "⏭️")
+
+    elif new_status == "draft" and existing.get("status") in ("skipped", "completed"):
+        verb = "فك تجاوز" if existing.get("status") == "skipped" else "إعادة فتح"
+        note = f"🔄 {verb} جولة {prayer_name or 'الجولة'}\n   المنفذ: {actor}"
+        await _push_session_event(session_id, "session_reopened", actor, note, "🔄")
+        if parent_id:
+            await _push_session_event(parent_id, "session_reopened", actor,
+                f"🔄 {verb} {prayer_name or 'الجولة'}\n   المنفذ: {actor}", "🔄")
+
+    elif update_data.get("supervisor_notes") and update_data["supervisor_notes"] != existing.get("supervisor_notes",""):
+        note_text = update_data["supervisor_notes"][:120]
+        await _push_session_event(session_id, "notes_added", actor,
+            f"📝 ملاحظات المشرف:\n   {note_text}", "📝")
+
     await db.map_sessions.update_one({"id": session_id}, {"$set": update_data})
     updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     return updated
@@ -235,41 +295,43 @@ def _recalc_summary(zones):
 def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
-# أسماء أنواع المصليات بالعربي
+# ── أسماء أنواع المصليات ──────────────────────────────────────
 ZONE_TYPE_AR = {
-    "men_prayer":        "مصلى رجال",
-    "women_prayer":      "مصلى نساء",
-    "mixed_prayer":      "مصلى مختلط",
-    "children_prayer":   "مصلى أطفال",
-    "elderly_prayer":    "مصلى كبار السن",
-    "disabled_prayer":   "مصلى ذوي الاحتياجات",
-    "quran_recitation":  "حلقة قرآن",
-    "lecture_hall":      "قاعة محاضرات",
-    "emergency_exit":    "مخرج طوارئ",
-    "storage":           "مخزن",
-    "service_area":      "منطقة خدمات",
-    "corridor":          "ممر",
-    "wudu_area":         "منطقة وضوء",
-    "men_only":          "رجال فقط",
-    "women_only":        "نساء فقط",
+    "men_prayer":"مصلى رجال","women_prayer":"مصلى نساء","mixed_prayer":"مصلى مختلط",
+    "children_prayer":"مصلى أطفال","elderly_prayer":"مصلى كبار السن",
+    "disabled_prayer":"مصلى ذوي الاحتياجات","quran_recitation":"حلقة قرآن",
+    "lecture_hall":"قاعة محاضرات","emergency_exit":"مخرج طوارئ","storage":"مخزن",
+    "service_area":"منطقة خدمات","corridor":"ممر","wudu_area":"منطقة وضوء",
+    "men_only":"رجال فقط","women_only":"نساء فقط",
+}
+
+# ── أسماء أوقات الصلاة ──────────────────────────────────────
+PRAYER_AR = {
+    "fajr":"الفجر","sunrise":"الشروق","duha":"الضحى","dhuhr":"الظهر",
+    "asr":"العصر","maghrib":"المغرب","isha":"العشاء","tarawih":"التراويح",
 }
 
 def _zt(key: str) -> str:
-    """اسم نوع المصلى بالعربي"""
     return ZONE_TYPE_AR.get(key, key or "غير محدد")
+
+def _pt(key: str) -> str:
+    return PRAYER_AR.get(key, key or "صلاة")
 
 
 def _push_history(zone: dict, action: str, by: str, note: str = "") -> dict:
-    """يضيف سجل في history الـ zone مع كل التفاصيل"""
     if "history" not in zone:
         zone["history"] = []
-    zone["history"].append({
-        "action": action,
-        "by": by,
-        "at": _now_iso(),
-        "note": note,
-    })
+    zone["history"].append({"action":action,"by":by,"at":_now_iso(),"note":note})
     return zone
+
+
+async def _push_session_event(session_id: str, action: str, by: str, note: str, icon: str = "📌"):
+    """يسجّل حدث على مستوى الجلسة كاملة (للصلوات والإنهاء والملاحظات)"""
+    event = {"action":action,"by":by,"at":_now_iso(),"note":note,"icon":icon}
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$push": {"session_history": event}, "$set": {"updated_at": _now_iso()}}
+    )
 
 
 @router.put("/admin/map-sessions/{session_id}/zones/{zone_id}")
