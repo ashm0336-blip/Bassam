@@ -844,26 +844,66 @@ export default function DailySessionsPage() {
 
   // ─── Render ───────────────────────────────────────────────
   return (
-    <div className="space-y-5" data-testid="daily-sessions-page">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2 lg:gap-4">
-        <div>
-          <h1 className="font-cairo font-bold text-xl lg:text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للمصليات" : "Daily Prayer Areas Log"}</h1>
-          <p className="text-xs lg:text-sm text-muted-foreground mt-0.5">{isAr ? "تتبع التغييرات اليومية للمصليات والمناطق في كل طابق" : "Track daily changes to prayer areas and zones per floor"}</p>
+    <div className="space-y-4" data-testid="daily-sessions-page">
+
+      {/* ══ HERO HEADER ════════════════════════════════════════ */}
+      <div className="relative overflow-hidden rounded-2xl p-5"
+        style={{ background: "linear-gradient(135deg, #065f46 0%, #047857 40%, #059669 70%, #10b981 100%)" }}>
+        {/* دوائر ديكورية */}
+        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10 bg-white"/>
+        <div className="absolute -bottom-14 -left-6 w-56 h-56 rounded-full opacity-5 bg-white"/>
+        <div className="absolute top-4 left-32 w-6 h-6 rounded-full opacity-15 bg-white"/>
+
+        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                <Eye className="w-4 h-4 text-white"/>
+              </div>
+              <span className="text-emerald-200 text-xs font-medium">السجل اليومي للمصليات</span>
+            </div>
+            <h1 className="font-cairo font-black text-2xl text-white leading-tight" data-testid="page-title">
+              {selectedFloor ? (isAr ? selectedFloor.name_ar : selectedFloor.name_en) : "اختر الطابق"}
+            </h1>
+            <p className="text-emerald-200 text-xs mt-1">تتبع التغييرات اليومية للمصليات والمناطق في كل طابق</p>
+          </div>
+
+          {/* mini stats من الجلسات */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {[
+              { label:"الجولات",  value:sessions.length,                                           color:"text-white",         bg:"bg-white/20" },
+              { label:"مكتملة",   value:sessions.filter(s=>s.status==="completed").length,         color:"text-emerald-200",   bg:"bg-white/10" },
+              { label:"مسودة",    value:sessions.filter(s=>s.status==="draft").length,             color:"text-yellow-300",    bg:"bg-yellow-400/20" },
+              { label:"هذا الشهر",value:sessions.filter(s=>s.date?.startsWith(new Date().toISOString().slice(0,7))).length, color:"text-cyan-300", bg:"bg-cyan-400/15" },
+            ].map((s,i)=>(
+              <div key={i} className={`${s.bg} rounded-xl px-3 py-2 text-center backdrop-blur-sm`}>
+                <p className={`font-black text-xl leading-none ${s.color}`}>{s.value}</p>
+                <p className="text-white/60 text-[9px] mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+
+        {/* Controls bar */}
+        <div className="relative flex items-center gap-2 mt-4 pt-3 border-t border-white/15 flex-wrap">
           <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
-            <SelectTrigger className="w-36 lg:w-44" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
-            <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id} data-testid={`floor-option-${f.id}`}>{isAr ? f.name_ar : f.name_en}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-36 lg:w-44 bg-white/20 border-white/30 text-white h-9 text-sm" data-testid="floor-select">
+              <Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} />
+            </SelectTrigger>
+            <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id}>{isAr ? f.name_ar : f.name_en}</SelectItem>)}</SelectContent>
           </Select>
           {canCreateSession && (
-            <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} data-testid="start-new-tour-btn" className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}
+            <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
+              disabled={!selectedFloor} data-testid="start-new-tour-btn"
+              className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold gap-1.5 h-9 shadow-md">
+              <Plus className="w-4 h-4"/>{isAr ? "جولة جديدة" : "New Tour"}
             </Button>
           )}
           {canCreateSession && (
-            <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn" className="hidden sm:flex">
-              <CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}
+            <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setBatchCloneSource("master"); setShowBatchDialog(true); }}
+              disabled={!selectedFloor} data-testid="batch-entry-btn"
+              className="bg-white/15 border-white/30 text-white hover:bg-white/25 h-9 gap-1.5 hidden sm:flex">
+              <CalendarRange className="w-4 h-4"/>{isAr ? "إدخال متعدد" : "Batch"}
             </Button>
           )}
         </div>
@@ -902,30 +942,74 @@ export default function DailySessionsPage() {
 
         <div className="lg:col-span-3 order-1 lg:order-2">
           {!activeSession ? (
-            <Card className="border-dashed">
-              <CardContent className="py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><Eye className="w-8 h-8 text-slate-400" /></div>
+            /* ── Empty State خرافي ── */
+            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60"
+              style={{ minHeight: "420px" }}>
+              {/* دوائر ديكورية */}
+              <div className="absolute top-6 right-6 w-24 h-24 rounded-full bg-emerald-100/50"/>
+              <div className="absolute bottom-8 left-8 w-16 h-16 rounded-full bg-teal-100/40"/>
+
+              <div className="relative flex flex-col items-center justify-center py-16 px-8 text-center">
+                {/* أيقونة */}
+                <div className="relative mb-6">
+                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-xl"
+                    style={{ background: "linear-gradient(135deg, #065f46, #059669)" }}>
+                    {emptyDaySelected
+                      ? <Calendar className="w-11 h-11 text-white"/>
+                      : <Eye className="w-11 h-11 text-white"/>}
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
+                    <span className="text-lg">{emptyDaySelected ? "📅" : "🕌"}</span>
+                  </div>
+                </div>
+
                 {emptyDaySelected ? (
                   <>
-                    <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
-                      {isAr ? `لا توجد جولات ليوم ${new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}` : `No sessions for ${emptyDaySelected}`}
+                    <h3 className="font-cairo font-black text-2xl text-emerald-900 mb-2">
+                      لا توجد جولات لهذا اليوم
                     </h3>
-                    <p className="text-sm text-muted-foreground">{isAr ? "اختر يوماً آخر من التقويم" : "Select another day from the calendar"}</p>
+                    <p className="text-emerald-700 font-medium mb-1">
+                      {new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long', year:'numeric' })}
+                    </p>
+                    <p className="text-slate-500 text-sm max-w-xs">اختر يوماً آخر من التقويم أو أنشئ جولة جديدة لهذا اليوم</p>
+                    {canCreateSession && selectedFloor && (
+                      <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(emptyDaySelected); setShowNewSessionDialog(true); }}
+                        className="mt-5 gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg">
+                        <Plus className="w-4 h-4"/>إنشاء جولة لهذا اليوم
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <>
-                    <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
-                      {isAr 
-                        ? (canCreateSession ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "اختر يوماً من التقويم لعرض جولته")
-                        : (canCreateSession ? "Pick a day or start a new tour" : "Pick a day to view its tour")}
+                    <h3 className="font-cairo font-black text-2xl text-emerald-900 mb-2">
+                      {canCreateSession ? "ابدأ جولتك اليومية" : "السجل اليومي للمصليات"}
                     </h3>
-                    <p className="text-sm text-muted-foreground max-w-md mx-auto">{isAr 
-                      ? (canCreateSession ? "اضغط على يوم في التقويم لعرض جولته، أو اضغط على يوم فارغ لإنشاء جولة جديدة" : "اضغط على يوم في التقويم لعرض جولته")
-                      : (canCreateSession ? "Click a day to view its tour, or click an empty day to create a new one" : "Click a day to view its tour")}</p>
+                    <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-5">
+                      {canCreateSession
+                        ? "اضغط على يوم في التقويم لعرض جولته، أو ابدأ جولة جديدة الآن لتتبع حالة المصليات والمناطق"
+                        : "اضغط على يوم في التقويم لعرض تفاصيل الجولة اليومية للمصليات"}
+                    </p>
+                    {canCreateSession && selectedFloor && (
+                      <div className="flex items-center gap-3">
+                        <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
+                          className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg">
+                          <Plus className="w-4 h-4"/>جولة جديدة الآن
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowBatchDialog(true)}
+                          className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                          <CalendarRange className="w-4 h-4"/>إدخال متعدد
+                        </Button>
+                      </div>
+                    )}
+                    {!selectedFloor && (
+                      <div className="mt-4 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                        ⚠️ اختر الطابق من القائمة أعلاه أولاً
+                      </div>
+                    )}
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} readOnly={!canApproveSession} />
