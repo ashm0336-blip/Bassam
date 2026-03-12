@@ -470,7 +470,7 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
     if session.get("status") == "completed":
-        raise HTTPException(status_code=400, detail="لا يمكن حذف مناطق من جلسة مكتملة - أعد فتحها أولاً")
+        raise HTTPException(status_code=400, detail="لا يمكن حذف مناطق من جلسة مكتملة")
     zones = session.get("zones", [])
     zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
     if zone_idx is None:
@@ -478,18 +478,14 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     zone = zones[zone_idx]
     zone_name = zone.get('name_ar') or zone.get('zone_code') or 'منطقة'
     actor = admin.get("name", "النظام")
-    # Soft delete مع تسجيل كامل
-    zone["is_removed"] = True
-    zone["change_type"] = "removed"
-    pts_count = len(zone.get("polygon_points", []))
-    _push_history(zone, "removed", actor,
-        f"🗑️ حذف منطقة «{zone_name}»"
+    # سجّل الحذف في session_history قبل الإزالة
+    await _push_session_event(session_id, "zone_deleted", actor,
+        f"🗑️ حُذفت المنطقة نهائياً: «{zone_name}»"
         f"\n   الفئة: {_zt(zone.get('zone_type',''))}"
-        f"\n   الطاقة: {zone.get('max_capacity', 0)} مصلٍّ"
-        f"\n   عدد نقاط الحدود: {pts_count}"
-        + (f"\n   ملاحظة: {zone.get('daily_note','')}" if zone.get('daily_note') else "")
-    )
-    zones[zone_idx] = zone
+        f"\n   الطاقة: {zone.get('max_capacity',0)} مصلٍّ",
+        icon="🗑️")
+    # حذف نهائي من المصفوفة
+    zones = [z for z in zones if z["id"] != zone_id]
     summary = _recalc_summary(zones)
     await db.map_sessions.update_one(
         {"id": session_id},

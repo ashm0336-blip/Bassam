@@ -17,6 +17,12 @@ const ZONE_TYPE_AR_MAP = {
 };
 function _ztAR(key) { return ZONE_TYPE_AR_MAP[key] || key || "غير محدد"; }
 
+const PRAYER_AR_MAP = {
+  "fajr":"الفجر","sunrise":"الشروق","duha":"الضحى","dhuhr":"الظهر",
+  "asr":"العصر","maghrib":"المغرب","isha":"العشاء","tarawih":"التراويح",
+};
+function _pt(key) { return PRAYER_AR_MAP[key] || key || "الصلاة"; }
+
 const SESSION_ACTION_CFG = {
   prayer_started:    { label:"بدء جولة صلاة",    color:"#2563eb", bg:"#eff6ff", border:"#bfdbfe", Icon:Plus      },
   prayer_completed:  { label:"إنهاء جولة صلاة",  color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", Icon:CheckCircle2 },
@@ -121,6 +127,22 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
   const isAr = language === "ar";
   const [filter, setFilter] = useState("all");
 
+  // ── نافذة وقت الجولة النشطة ──────────────────────────────────
+  const isPrayerSession = activeSession?.session_type === "prayer";
+  const sessionStartAt = useMemo(() => {
+    if (!isPrayerSession || !activeSession?.session_history) return null;
+    const startEvent = [...(activeSession.session_history)].reverse()
+      .find(h => h.action === "prayer_started" || h.action === "session_created");
+    return startEvent?.at || activeSession.created_at || null;
+  }, [activeSession, isPrayerSession]);
+  const sessionEndAt = useMemo(() => {
+    if (!isPrayerSession || !activeSession?.session_history) return null;
+    const endEvent = (activeSession.session_history)
+      .filter(h => ["prayer_completed","prayer_skipped","session_completed"].includes(h.action))
+      .at(-1);
+    return endEvent?.at || null;
+  }, [activeSession, isPrayerSession]);
+
   const allZones     = activeSession?.zones || [];
   const totalZones   = allZones.length;
   const summary      = activeSession?.changes_summary || {};
@@ -133,14 +155,22 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
   const timeline = useMemo(() => buildTimeline(activeSession, ZONE_TYPES, isAr), [activeSession, ZONE_TYPES, isAr]);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return timeline;
-    return timeline.filter(e => {
-      if (filter === "added")   return e.action === "added";
-      if (filter === "modified") return ["modified","category_changed","moved"].includes(e.action);
-      if (filter === "removed") return e.action === "removed" || e.is_removed;
-      return true;
-    });
-  }, [timeline, filter]);
+    let result = timeline;
+    // فلتر حسب نافذة وقت الجلسة الصلاة
+    if (isPrayerSession && sessionStartAt) {
+      result = result.filter(e => {
+        if (!e.at) return false;
+        const afterStart = e.at >= sessionStartAt;
+        const beforeEnd  = !sessionEndAt || e.at <= sessionEndAt;
+        return afterStart && beforeEnd;
+      });
+    }
+    // فلتر حسب النوع
+    if (filter === "added")    result = result.filter(e => e.action === "added");
+    if (filter === "modified") result = result.filter(e => ["modified","category_changed","moved"].includes(e.action));
+    if (filter === "removed")  result = result.filter(e => e.action === "removed" || e.is_removed);
+    return result;
+  }, [timeline, filter, isPrayerSession, sessionStartAt, sessionEndAt]);
 
   return (
     <div data-testid="changes-log" className="space-y-3">
@@ -157,7 +187,9 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
             <div>
               <h3 className="font-cairo font-bold text-sm text-amber-900">سجل التغييرات</h3>
               <p className="text-[9px] text-amber-600">
-                {timeline.length > 0
+                {isPrayerSession && sessionStartAt
+                  ? `جولة ${activeSession?.prayer ? (_pt(activeSession.prayer)) : "الصلاة"} · ${formatSATime(sessionStartAt)}${sessionEndAt ? ` ← ${formatSATime(sessionEndAt)}` : " ← جارية"}`
+                  : timeline.length > 0
                   ? `${timeline.length} حدث مسجّل · آخر تحديث: ${formatSATime(timeline[0]?.at)}`
                   : "لا توجد تغييرات حتى الآن"}
               </p>

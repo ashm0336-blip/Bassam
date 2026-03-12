@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES, PRAYER_TIMES } from "../constants";
@@ -9,7 +9,7 @@ import { ZonePatternDefs } from "./ZonePatterns";
 
 // Quick color swatches for common zone colors
 
-function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isAr, onEdit, onCopy, onSmooth, onRemove }) {
+function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isAr, onEdit, onCopy, onSmooth, onRemove, onToggleRemove }) {
   if (!zone?.polygon_points?.length || !mapContainerRef.current) return null;
 
   const pts = zone.polygon_points;
@@ -57,7 +57,15 @@ function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isA
           <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
         </button>
         <div className="w-px h-5 bg-slate-200" />
-        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "حذف المنطقة نهائياً" : "Delete Zone"}>
+        {/* غير نشط — soft hide (is_removed=true) */}
+        <button onClick={() => onToggleRemove && onToggleRemove(false)}
+          className={`${btnClass} text-amber-600 hover:bg-amber-50`}
+          data-testid="float-inactive-btn"
+          title={isAr ? "إخفاء المنطقة مؤقتاً (غير نشط)" : "Hide zone (inactive)"}>
+          <EyeOff className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "غير نشط" : "Hide"}</span>
+        </button>
+        {/* حذف نهائي من الخريطة */}
+        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "حذف المنطقة نهائياً من الخريطة" : "Delete Zone Permanently"}>
           <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "حذف" : "Delete"}</span>
         </button>
       </div>
@@ -539,15 +547,18 @@ export function MapCanvas({
             <FloatingToolbar
               zone={selectedZoneData}
               mapContainerRef={mapContainerRef}
-              zoom={zoom}
-              panOffset={panOffset}
-              imgRatio={imgRatio}
-              isAr={isAr}
+              zoom={zoom} panOffset={panOffset} imgRatio={imgRatio} isAr={isAr}
               onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
               onCopy={handleCopyZone}
               onSmooth={handleSmoothZone}
+              onToggleRemove={() => {
+                // غير نشط — soft hide (is_removed=true مع سجل)
+                handleToggleRemove && handleToggleRemove(selectedZoneId, false);
+                setSelectedZoneId(null);
+              }}
               onRemove={() => {
-                if (window.confirm(isAr ? `حذف المنطقة "${selectedZoneData?.name_ar || ''}"؟ سيُسجَّل في سجل التغييرات.` : "Delete zone?")) {
+                // حذف نهائي من الخريطة
+                if (window.confirm(isAr ? `⚠️ حذف نهائي للمنطقة "${selectedZoneData?.name_ar || ''}" من الخريطة؟\nلا يمكن التراجع.` : "Delete permanently?")) {
                   handleDeleteZone ? handleDeleteZone(selectedZoneId) : handleToggleRemove(selectedZoneId, false);
                   setSelectedZoneId(null);
                 }
