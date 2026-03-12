@@ -290,16 +290,32 @@ export function DensityTab({
         )}
         </>}
 
-        {/* Legend */}
+        {/* Legend + Mini KPIs */}
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
-        <div className="hidden sm:flex items-center gap-2 text-[9px] text-slate-500 font-medium mr-auto">
+        <div className="hidden sm:flex items-center gap-1.5 mr-auto">
+          {/* Mini KPI pills */}
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+            <MapPin className="w-3 h-3 text-indigo-500" />
+            <span className="text-[9px] font-bold text-indigo-600">{densityStats.totalZones}</span>
+            <span className="text-[8px] text-slate-400">{isAr ? "منطقة" : "zones"}</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg border" style={{ backgroundColor: (densityStats.overallLevel?.color || "#059669") + "08", borderColor: (densityStats.overallLevel?.color || "#059669") + "30" }}>
+            <Gauge className="w-3 h-3" style={{ color: densityStats.overallLevel?.color || "#059669" }} />
+            <span className="text-[9px] font-bold" style={{ color: densityStats.overallLevel?.color || "#059669" }}>{densityStats.overallPct}%</span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          {/* Legend pills */}
           {[
-            { color: "#16a34a", label: isAr ? "آمن" : "Safe" },
-            { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" },
-            { color: "#ea580c", label: isAr ? "مرتفع" : "High" },
-            { color: "#dc2626", label: isAr ? "حرج" : "Critical" },
-          ].map(l => (
-            <span key={l.color} className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: l.color }} />{l.label}</span>
+            { color: "#16a34a", label: isAr ? "آمن" : "Safe", count: densityStats.safeCount },
+            { color: "#f59e0b", label: isAr ? "متوسط" : "Med", count: densityStats.mediumCount },
+            { color: "#ea580c", label: isAr ? "مرتفع" : "High", count: densityStats.highCount },
+            { color: "#dc2626", label: isAr ? "حرج" : "Crit", count: densityStats.criticalCount },
+          ].filter(l => l.count > 0 || l.color === "#16a34a").map(l => (
+            <div key={l.color} className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border" style={{ borderColor: l.color + "40", backgroundColor: l.color + "08" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: l.color }} />
+              <span className="text-[8px] font-bold" style={{ color: l.color }}>{l.count > 0 ? l.count : ""}</span>
+              <span className="text-[8px] font-medium" style={{ color: l.color + "cc" }}>{l.label}</span>
+            </div>
           ))}
         </div>
       </div>
