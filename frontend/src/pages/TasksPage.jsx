@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -8,7 +8,8 @@ import {
   ArrowUpRight, CircleDot, Tag, RefreshCw, Filter, Search,
   Flame, TimerOff, Timer, AlarmClock, Star, Trophy, TrendingUp,
   ChevronLeft, ChevronRight, CalendarDays, Archive, Award,
-  BarChart3, Target,
+  BarChart3, Target, Sunrise, Moon, Sun, Sunset, Sparkles,
+  ClipboardList, Activity, Rocket,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -457,32 +458,121 @@ export default function TasksPage({ department }) {
     if (nm !== currentMonth) setCurrentMonth(nm);
   };
 
-  const isToday = selectedDate === today;
-  const isFuture = (d) => d > today;
+  const isToday    = selectedDate === today;
+  const isFuture   = (d) => d > today;
+  const isPast     = (d) => d < today;
 
   // Day stats
-  const dayTotal = tasks.length;
-  const dayDone  = tasks.filter(t=>t.status==="done").length;
-  const dayPct   = dayTotal > 0 ? Math.round(dayDone/dayTotal*100) : 0;
+  const dayTotal   = tasks.length;
+  const dayDone    = tasks.filter(t=>t.status==="done").length;
+  const dayPct     = dayTotal > 0 ? Math.round(dayDone/dayTotal*100) : 0;
   const dayOverdue = tasks.filter(t=>t.status==="overdue").length;
-  const dayEarly = tasks.filter(t=>t.completion_performance==="early").length;
+  const dayEarly   = tasks.filter(t=>t.completion_performance==="early").length;
+
+  // وقت اليوم لرسالة الترحيب
+  const hour = getSANow().getHours();
+  const greeting = hour < 6 ? "ليلة مباركة 🌙" : hour < 12 ? "صباح الخير ☀️" : hour < 17 ? "مساؤك نشاط 🌤️" : "مساء الخير 🌙";
+  const greetSub  = hour < 12 ? "ابدأ يومك بإنجاز مهمة" : hour < 17 ? "في منتصف اليوم، كيف السير؟" : "اختم يومك بنجاح";
 
   return (
     <div className="space-y-4 font-cairo" data-testid="tasks-page">
 
-      {/* ── Header ────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-cairo font-bold text-lg flex items-center gap-2">
-            <Tag className="w-5 h-5 text-primary"/>
-            المهام اليومية
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {isManager ? "إدارة وتتبع مهام الإدارة بالتاريخ" : "مهامك اليومية"}
-          </p>
+      {/* ══ HERO BANNER ════════════════════════════════════════ */}
+      {view === "day" && (
+        <div className="relative overflow-hidden rounded-2xl p-5"
+          style={{ background: "linear-gradient(135deg, #1e40af 0%, #1d4ed8 40%, #2563eb 70%, #3b82f6 100%)" }}>
+          {/* خلفية دوائر ديكورية */}
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-10 bg-white"/>
+          <div className="absolute -bottom-12 -left-4 w-48 h-48 rounded-full opacity-5 bg-white"/>
+          <div className="absolute top-3 left-24 w-8 h-8 rounded-full opacity-10 bg-white"/>
+
+          <div className="relative flex items-center justify-between gap-4 flex-wrap">
+            {/* يسار: تاريخ + رسالة */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-white/70 text-xs font-medium">{greeting}</span>
+              </div>
+              <h2 className="font-cairo font-black text-2xl text-white leading-tight">
+                {isToday ? "مهام اليوم" : isFuture(selectedDate) ? "تخطيط مسبق" : "يوم سابق"}
+              </h2>
+              <p className="text-blue-200 text-sm mt-0.5">
+                {new Date(selectedDate+"T00:00:00").toLocaleDateString("ar-SA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+              </p>
+            </div>
+
+            {/* يمين: الإحصائيات السريعة */}
+            <div className="flex items-center gap-3">
+              {dayTotal > 0 ? (
+                <>
+                  {/* دائرة الإنجاز */}
+                  <div className="relative w-16 h-16">
+                    <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="6"/>
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="white" strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeDasharray={`${163*dayPct/100} 163`}
+                        style={{ transition:"stroke-dasharray 1s ease" }}/>
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-white font-black text-base leading-none">{dayPct}%</span>
+                    </div>
+                  </div>
+                  {/* mini stats */}
+                  <div className="space-y-1">
+                    {[
+                      { v:dayTotal,   label:"مهمة",    c:"text-white" },
+                      { v:dayDone,    label:"منجزة",   c:"text-emerald-300" },
+                      { v:dayOverdue, label:"متأخرة",  c:dayOverdue>0?"text-red-300":"text-white/50" },
+                    ].map((s,i)=>(
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className={`font-black text-sm tabular-nums ${s.c}`}>{s.v}</span>
+                        <span className="text-blue-200 text-[10px]">{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center">
+                  <div className="text-3xl mb-1">{isFuture(selectedDate) ? "📅" : isToday ? "✨" : "📂"}</div>
+                  <p className="text-blue-200 text-xs">
+                    {isFuture(selectedDate) ? "جاهز للتخطيط" : isToday ? greetSub : "لا مهام لهذا اليوم"}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* شريط التقدم في البانر */}
+          {dayTotal > 0 && (
+            <div className="relative mt-4">
+              <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div className="h-full bg-white rounded-full transition-all duration-1000"
+                  style={{ width:`${dayPct}%` }}/>
+              </div>
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {dayEarly > 0 && <span className="text-[10px] font-bold text-amber-300 flex items-center gap-1"><Star className="w-3 h-3"/>{dayEarly} مبكر</span>}
+                {dayDone === dayTotal && dayTotal > 0 && <span className="text-[10px] font-bold text-emerald-300 flex items-center gap-1"><Trophy className="w-3 h-3"/>يوم مثالي! 🎉</span>}
+                {dayOverdue > 0 && <span className="text-[10px] font-bold text-red-300 flex items-center gap-1"><TimerOff className="w-3 h-3"/>{dayOverdue} متأخرة</span>}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
+      )}
+
+      {/* ── Header (controls) ─────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className={view !== "day" ? "flex items-center gap-2" : "hidden sm:flex items-center gap-2"}>
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <ClipboardList className="w-4 h-4 text-primary"/>
+          </div>
+          <div>
+            <h3 className="font-cairo font-bold text-sm leading-none">المهام اليومية</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {isManager ? "إدارة وتتبع مهام الإدارة" : "مهامك اليومية"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
           <div className="flex border rounded-xl overflow-hidden shadow-sm">
             {[
               { id:"day",      Icon:CalendarDays, label:"اليوم" },
@@ -498,7 +588,7 @@ export default function TasksPage({ department }) {
             ))}
           </div>
           {isManager && view !== "archive" && (
-            <Button size="sm" className="gap-1.5 bg-primary h-8"
+            <Button size="sm" className="gap-1.5 bg-primary h-8 shadow-md"
               onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }}
               data-testid="create-task-btn">
               <Plus className="w-4 h-4"/>مهمة جديدة
@@ -514,43 +604,27 @@ export default function TasksPage({ department }) {
         <div className="space-y-4">
           {/* Day navigator */}
           <Card className="border-2 border-primary/10 shadow-sm">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center gap-3">
-                <button onClick={()=>navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
+                <button onClick={()=>navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors flex-shrink-0">
                   <ChevronRight className="w-4 h-4 text-muted-foreground"/>
                 </button>
                 <div className="flex-1 text-center">
-                  <p className="font-cairo font-bold text-base text-foreground">{formatDate(selectedDate)}</p>
-                  {isToday && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">اليوم</span>}
+                  <p className="font-cairo font-bold text-sm text-foreground">
+                    {new Date(selectedDate+"T00:00:00").toLocaleDateString("ar-SA",{weekday:"short",month:"short",day:"numeric"})}
+                  </p>
+                  {isToday && <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">اليوم</span>}
+                  {isPast(selectedDate) && !isToday && <span className="text-[9px] text-muted-foreground">يوم سابق</span>}
+                  {isFuture(selectedDate) && <span className="text-[9px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">📅 مخطط</span>}
                 </div>
-                <button onClick={()=>navigate(+1)}
-                  className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
+                <button onClick={()=>navigate(+1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors flex-shrink-0">
                   <ChevronLeft className="w-4 h-4 text-muted-foreground"/>
                 </button>
                 <button onClick={()=>setSelectedDate(today)} disabled={isToday}
-                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all disabled:opacity-30 hover:bg-primary/5 text-primary border-primary/30">
+                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all disabled:opacity-30 hover:bg-primary/5 text-primary border-primary/30 flex-shrink-0">
                   اليوم
                 </button>
               </div>
-
-              {/* Day stats bar */}
-              {dayStats.total > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-muted-foreground">{dayStats.done}/{dayStats.total} منجزة</span>
-                    <span className="text-[11px] font-bold text-primary">{dayStats.total > 0 ? Math.round(dayStats.done/dayStats.total*100) : 0}%</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-700"
-                      style={{ width:`${dayStats.total > 0 ? Math.round(dayStats.done/dayStats.total*100) : 0}%` }}/>
-                  </div>
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    {dayStats.overdue > 0 && <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5"><TimerOff className="w-3 h-3"/>{dayStats.overdue} متأخرة</span>}
-                    {dayStats.early  > 0 && <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><Star className="w-3 h-3"/>{dayStats.early} مبكر ⭐</span>}
-                    {dayStats.done === dayStats.total && dayStats.total > 0 && <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5"><Trophy className="w-3 h-3"/>يوم مثالي! 🎉</span>}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -617,23 +691,45 @@ export default function TasksPage({ department }) {
           {loading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-primary"/></div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 space-y-3">
-              <div className="text-5xl">{isFuture(selectedDate) ? "📅" : "📋"}</div>
-              <p className="font-cairo font-bold text-muted-foreground">
-                {filterStatus !== "all"
-                  ? "لا توجد مهام بهذه الحالة"
-                  : isFuture(selectedDate)
-                  ? "لا توجد مهام مخططة لهذا اليوم بعد"
-                  : "لا توجد مهام لهذا اليوم"}
-              </p>
+            <div className="text-center py-10 space-y-4">
+              <div className="relative inline-flex items-center justify-center">
+                <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-lg"
+                  style={{ background: isFuture(selectedDate)
+                    ? "linear-gradient(135deg, #7c3aed, #6d28d9)"
+                    : isToday
+                    ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
+                    : "linear-gradient(135deg, #64748b, #475569)" }}>
+                  <span className="text-4xl">{isFuture(selectedDate) ? "📅" : isToday ? "✨" : "📂"}</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-4 border-white"
+                  style={{ backgroundColor: isFuture(selectedDate) ? "#7c3aed22" : "#2563eb22" }}/>
+              </div>
+              <div className="space-y-1.5">
+                <p className="font-cairo font-black text-xl">
+                  {filterStatus !== "all" ? "لا توجد مهام بهذه الحالة"
+                    : isFuture(selectedDate) ? "لا توجد مهام مخططة لهذا اليوم"
+                    : isToday ? "لا مهام اليوم بعد!"
+                    : "لا توجد مهام لهذا اليوم"}
+                </p>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                  {filterStatus !== "all" ? "جرّب تغيير الفلتر لرؤية مهام أخرى"
+                    : isFuture(selectedDate) ? "خطّط مسبقاً وأضف مهام للمستقبل"
+                    : isToday ? "ابدأ يومك بإضافة أول مهمة الآن 🚀"
+                    : "يمكنك إضافة مهام لأي يوم سابق"}
+                </p>
+              </div>
               {isManager && filterStatus === "all" && (
-                <div className="space-y-2">
-                  <Button size="sm" onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }} className="gap-1.5">
-                    <Plus className="w-3.5 h-3.5"/>
-                    {isFuture(selectedDate) ? `تخطيط مسبق ليوم ${selectedDate}` : "إضافة مهمة"}
+                <div className="flex flex-col items-center gap-2 pt-1">
+                  <Button onClick={()=>{ setEditTask(null); setForm({...emptyForm,work_date:selectedDate}); setDialogOpen(true); }}
+                    className="gap-2 shadow-md"
+                    style={{ background: isFuture(selectedDate)
+                      ? "linear-gradient(135deg, #7c3aed, #6d28d9)"
+                      : "linear-gradient(135deg, #2563eb, #1d4ed8)" }}>
+                    <Rocket className="w-4 h-4"/>
+                    {isFuture(selectedDate) ? `تخطيط ليوم ${selectedDate}` : isToday ? "أضف أول مهمة اليوم" : "إضافة مهمة"}
                   </Button>
                   {isFuture(selectedDate) && (
-                    <p className="text-[10px] text-muted-foreground">💡 يمكنك التخطيط مسبقاً لأي يوم قادم</p>
+                    <p className="text-[10px] text-muted-foreground">💡 التخطيط المسبق يزيد الإنتاجية 40%</p>
                   )}
                 </div>
               )}
