@@ -510,12 +510,37 @@ export function MapCanvas({
                         </g>
                       );
                     })}
-                    {removedZones.map(zone => (
-                      <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`} onMouseEnter={() => setHoveredZone(zone)} onMouseLeave={() => setHoveredZone(null)} onClick={(e) => { if (activeSession?.status === "draft" && !readOnly) { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); } }} style={{ cursor: activeSession?.status === "draft" && !readOnly ? "pointer" : "default" }}>
-                        <path d={getPath(zone.polygon_points)} fill="#ef4444" fillOpacity={0.08} stroke="#ef4444" strokeWidth={0.5} strokeOpacity={0.4} strokeDasharray="2 1.5" vectorEffect="non-scaling-stroke" />
-                        {zone.polygon_points?.length > 0 && (() => { const cx2 = zone.polygon_points.reduce((s,p)=>s+p.x,0)/zone.polygon_points.length; const cy2 = zone.polygon_points.reduce((s,p)=>s+p.y,0)/zone.polygon_points.length; return (<g><line x1={cx2-0.8} y1={cy2-0.8} x2={cx2+0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/><line x1={cx2+0.8} y1={cy2-0.8} x2={cx2-0.8} y2={cy2+0.8} stroke="#ef4444" strokeWidth="0.4" vectorEffect="non-scaling-stroke" opacity="0.6"/></g>); })()}
-                      </g>
-                    ))}
+                    {/* ── Inactive Zones (is_removed=true) — رمادي على الخريطة ── */}
+                    {removedZones.map(zone => {
+                      const cx2 = zone.polygon_points?.reduce((s,p)=>s+p.x,0)/(zone.polygon_points?.length||1);
+                      const cy2 = zone.polygon_points?.reduce((s,p)=>s+p.y,0)/(zone.polygon_points?.length||1);
+                      return (
+                        <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`}
+                          onMouseEnter={()=>setHoveredZone(zone)} onMouseLeave={()=>setHoveredZone(null)}
+                          onClick={(e)=>{
+                            if (!readOnly) { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }
+                          }}
+                          style={{ cursor: !readOnly ? "pointer" : "default" }}>
+                          {/* شكل رمادي شفاف */}
+                          <path d={getPath(zone.polygon_points)}
+                            fill="#94a3b8" fillOpacity={0.15}
+                            stroke="#94a3b8" strokeWidth={0.6} strokeOpacity={0.5}
+                            strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke" />
+                          {/* تاج "غير نشط" في المنتصف */}
+                          {zone.polygon_points?.length > 0 && (
+                            <g>
+                              <rect x={cx2-1.5} y={cy2-0.55} width="3" height="1.1" rx="0.4"
+                                fill="#94a3b8" fillOpacity={0.7} vectorEffect="non-scaling-stroke"/>
+                              <text x={cx2} y={cy2+0.28} textAnchor="middle" fontSize="0.65"
+                                fill="white" fontFamily="Cairo,sans-serif" fontWeight="600"
+                                style={{ pointerEvents:"none" }}>
+                                غير نشط
+                              </text>
+                            </g>
+                          )}
+                        </g>
+                      );
+                    })}
                     {mapMode === "draw" && drawingPoints.length > 0 && (
                       <g data-testid="drawing-layer">
                         <path d={getPath(drawingPoints, false)} fill="none" stroke="#3b82f6" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />

@@ -351,12 +351,16 @@ async def update_session_zone(session_id: str, zone_id: str, data: SessionZoneUp
     zone_name = zone.get('name_ar') or zone.get('zone_code') or 'منطقة'
     actor = admin.get("name", "النظام")
 
-    if update_fields.get("is_removed"):
-        zone["change_type"] = "removed"
-        _push_history(zone, "removed", actor,
-            f"🗑️ تم حذف منطقة «{zone_name}»"
+    if update_fields.get("is_removed") is True:
+        zone["change_type"] = "deactivated"
+        _push_history(zone, "deactivated", actor,
+            f"⬛ المنطقة «{zone_name}» أصبحت غير نشطة (رمادية على الخريطة)"
             f"\n   الفئة: {_zt(zone.get('zone_type',''))}"
             f"\n   الطاقة: {zone.get('max_capacity',0)} مصلٍّ")
+    elif update_fields.get("is_removed") is False and zone.get("is_removed"):
+        zone["change_type"] = "reactivated"
+        _push_history(zone, "reactivated", actor,
+            f"✅ المنطقة «{zone_name}» أصبحت نشطة مجدداً")
     else:
         # تجميع كل التغييرات في سجل واحد شامل
         all_changes = []
@@ -478,7 +482,11 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
     zone = zones[zone_idx]
     zone_name = zone.get('name_ar') or zone.get('zone_code') or 'منطقة'
     actor = admin.get("name", "النظام")
-    # سجّل الحذف في session_history قبل الإزالة
+    # انقل كل history الـ zone إلى session_history قبل الحذف
+    for h in zone.get("history", []):
+        await _push_session_event(session_id, h.get("action","modified"), h.get("by",actor),
+            h.get("note",""), h.get("icon","📌"))
+    # سجّل حدث الحذف النهائي
     await _push_session_event(session_id, "zone_deleted", actor,
         f"🗑️ حُذفت المنطقة نهائياً: «{zone_name}»"
         f"\n   الفئة: {_zt(zone.get('zone_type',''))}"

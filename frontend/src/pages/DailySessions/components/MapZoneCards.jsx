@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   Plus, Trash2, Edit2, Check, CheckCircle2, MessageSquare, FileText,
   Clock, Filter, Download, Activity, Layers, User2, ChevronDown,
-  ArrowRight, Tag, Hash, Palette, Users, Maximize2,
+  ArrowRight, Tag, Hash, Palette, Users, Maximize2, EyeOff,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -55,14 +55,17 @@ function formatSADateTime(isoStr) {
 }
 
 const CHANGE_CONFIG = {
-  added:            { label:"إضافة",       color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", icon:Plus,    dot:"bg-emerald-500" },
-  modified:         { label:"تعديل",       color:"#d97706", bg:"#fffbeb", border:"#fcd34d", icon:Edit2,   dot:"bg-amber-500"   },
-  category_changed: { label:"تغيير فئة",   color:"#7c3aed", bg:"#f5f3ff", border:"#c4b5fd", icon:Tag,     dot:"bg-violet-500"  },
-  moved:            { label:"تحريك",       color:"#0284c7", bg:"#e0f2fe", border:"#7dd3fc", icon:Maximize2,dot:"bg-sky-500"    },
-  removed:          { label:"حذف",         color:"#dc2626", bg:"#fef2f2", border:"#fecaca", icon:Trash2,  dot:"bg-red-500"     },
-  assigned:         { label:"تعيين موظف",  color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", icon:User2,   dot:"bg-emerald-400" },
-  unassigned:       { label:"فك تعيين",    color:"#6b7280", bg:"#f9fafb", border:"#e5e7eb", icon:User2,   dot:"bg-slate-400"   },
-  unchanged:        { label:"بدون تغيير",  color:"#94a3b8", bg:"#f8fafc", border:"#e2e8f0", icon:Check,   dot:"bg-slate-300"   },
+  added:            { label:"إضافة",       color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", icon:Plus,         dot:"bg-emerald-500" },
+  modified:         { label:"تعديل",       color:"#d97706", bg:"#fffbeb", border:"#fcd34d", icon:Edit2,        dot:"bg-amber-500"   },
+  category_changed: { label:"تغيير فئة",   color:"#7c3aed", bg:"#f5f3ff", border:"#c4b5fd", icon:Tag,          dot:"bg-violet-500"  },
+  moved:            { label:"تحريك",       color:"#0284c7", bg:"#e0f2fe", border:"#7dd3fc", icon:Maximize2,    dot:"bg-sky-500"     },
+  deactivated:      { label:"غير نشط",     color:"#64748b", bg:"#f1f5f9", border:"#cbd5e1", icon:EyeOff,       dot:"bg-slate-400"   },
+  reactivated:      { label:"تنشيط",       color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", icon:CheckCircle2, dot:"bg-emerald-400" },
+  removed:          { label:"حذف",         color:"#dc2626", bg:"#fef2f2", border:"#fecaca", icon:Trash2,       dot:"bg-red-500"     },
+  zone_deleted:     { label:"حذف نهائي",   color:"#dc2626", bg:"#fef2f2", border:"#fecaca", icon:Trash2,       dot:"bg-red-500"     },
+  assigned:         { label:"تعيين موظف",  color:"#059669", bg:"#ecfdf5", border:"#a7f3d0", icon:User2,        dot:"bg-emerald-400" },
+  unassigned:       { label:"فك تعيين",    color:"#6b7280", bg:"#f9fafb", border:"#e5e7eb", icon:User2,        dot:"bg-slate-400"   },
+  unchanged:        { label:"بدون تغيير",  color:"#94a3b8", bg:"#f8fafc", border:"#e2e8f0", icon:Check,        dot:"bg-slate-300"   },
 };
 
 function buildTimeline(activeSession, ZONE_TYPES, isAr) {
