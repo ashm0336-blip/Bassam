@@ -84,9 +84,25 @@ export function DensityTab({
   if (!densityStats) return null;
 
   const selectedZone = selectedZoneId ? densityStats.zonesDensity.find(z => z.id === selectedZoneId) : null;
+  const [autoFocusInput, setAutoFocusInput] = useState(null);
 
   const handleZoneClick = (zoneId) => {
     setSelectedZoneId(prev => prev === zoneId ? null : zoneId);
+    // scroll للخريطة
+    if (zoneId) {
+      const mapEl = document.querySelector('[data-testid="density-heatmap-container"]');
+      if (mapEl) mapEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+  };
+
+  // دبل كلك على الخريطة → فتح input فوراً + scroll للقائمة
+  const handleDblClickZone = (zoneId) => {
+    setSelectedZoneId(zoneId);
+    setAutoFocusInput(zoneId);
+    setTimeout(() => {
+      const el = document.querySelector(`[data-testid="density-zone-row-${zoneId}"]`);
+      if (el) { el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    }, 150);
   };
 
   return (
@@ -301,6 +317,7 @@ export function DensityTab({
               densityStats={densityStats} selectedFloor={selectedFloor} imgRatio={imgRatio}
               ZONE_TYPES={ZONE_TYPES} isAr={isAr}
               selectedZoneId={selectedZoneId} onZoneClick={handleZoneClick}
+              onDblClickZone={handleDblClickZone}
             />
           ) : (
             <div className="min-h-[500px] bg-slate-50 flex items-center justify-center text-sm text-slate-400">{isAr ? "لا توجد صورة خريطة" : "No map image"}</div>
@@ -407,13 +424,16 @@ export function DensityTab({
               {filteredZones.length === 0 ? (
                 <p className="col-span-6 text-center text-[10px] text-slate-300 py-4">{isAr ? "لا توجد نتائج" : "No results"}</p>
               ) : filteredZones.map(zone => (
-                <ZoneMiniCard key={zone.id} zone={zone} ZONE_TYPES={ZONE_TYPES}
-                  densityEdits={densityEdits} activePrayer={activePrayer}
-                  handleDensityChange={handleDensityChange}
-                  isSelected={zone.id === selectedZoneId}
-                  onSelect={() => handleZoneClick(zone.id)}
-                  isAr={isAr} readOnly={readOnly}
-                />
+                <div key={zone.id} data-testid={`density-zone-row-${zone.id}`}>
+                  <ZoneMiniCard zone={zone} ZONE_TYPES={ZONE_TYPES}
+                    densityEdits={densityEdits} activePrayer={activePrayer}
+                    handleDensityChange={handleDensityChange}
+                    isSelected={zone.id === selectedZoneId}
+                    autoFocusInput={autoFocusInput === zone.id}
+                    onSelect={() => { handleZoneClick(zone.id); setAutoFocusInput(null); }}
+                    isAr={isAr} readOnly={readOnly}
+                  />
+                </div>
               ))}
             </div>
 
@@ -424,7 +444,7 @@ export function DensityTab({
   );
 }
 
-function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDensityChange, isSelected, onSelect, isAr, readOnly = false }) {
+function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDensityChange, isSelected, onSelect, autoFocusInput, isAr, readOnly = false }) {
   const di = zone.densityInfo;
   const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
   const isEdited = densityEdits[zone.id]?.prayer_counts?.[activePrayer] !== undefined;
@@ -487,6 +507,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
                 value={zone.fillPct}
                 onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}
                 onClick={(e) => e.stopPropagation()}
+                autoFocus={autoFocusInput}
                 data-testid={`density-input-${zone.id}`}
               />
               <span className="text-[10px] font-bold text-slate-400 px-1.5 bg-slate-50 h-8 flex items-center">%</span>
@@ -514,7 +535,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
   );
 }
 
-function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPES, isAr, selectedZoneId, onZoneClick }) {
+function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPES, isAr, selectedZoneId, onZoneClick, onDblClickZone }) {
   const [heatZoom, setHeatZoom] = useState(1);
   const [heatPan, setHeatPan] = useState({ x: 0, y: 0 });
   const [heatPanning, setHeatPanning] = useState(false);
@@ -607,6 +628,21 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
     onZoneClick(null);
   };
 
+  // دبل كلك — يفتح input الكثافة مباشرة
+  const handleDblClick = (e) => {
+    if (heatPanning) return;
+    const pos = getMousePercent(e);
+    if (!pos) return;
+    for (const zone of (densityStats?.zonesDensity || [])) {
+      if (zone.polygon_points && isPointInPolygon(pos, zone.polygon_points)) {
+        onZoneClick(zone.id);
+        // أخبر الـ parent لفتح input
+        if (onDblClickZone) onDblClickZone(zone.id);
+        return;
+      }
+    }
+  };
+
   return (
     <div className="relative h-full" style={{ minHeight: "500px" }}>
       {/* Zoom controls */}
@@ -651,6 +687,7 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
         onTouchEnd={() => setHeatPanning(false)}
         onTouchCancel={() => setHeatPanning(false)}
         onClick={handleClick}
+        onDoubleClick={handleDblClick}
       >
         <div style={{ transform: `translate(${heatPan.x}px, ${heatPan.y}px) scale(${heatZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {(() => {
@@ -679,22 +716,26 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
                     const filledRows = zone.filledRows || 0;
                     const rowHeight = totalRows > 0 ? (maxY - minY) / totalRows : 0;
                     const gap = rowHeight * 0.15;
-                    // Fill color based on density level
-                    const zoneFill = isSelected ? "#dbeafe"
-                      : isHovered ? (hasDensity ? di.color : "#f1f5f9")
-                      : hasDensity ? di.color : "#f8fafc";
-                    const zoneFillOpacity = isSelected ? 0.6
-                      : isHovered ? (hasDensity ? 0.35 : 0.5)
-                      : hasDensity ? Math.min(0.15 + (zone.fillPct / 100) * 0.35, 0.5) : 0.15;
+                    // Fill color based on density level —ألوان أغمق وأوضح
+                    const zoneFill = isSelected ? "#2563eb"
+                      : isHovered ? (hasDensity ? di.color : "#64748b")
+                      : hasDensity ? di.color : "#94a3b8";
+                    const zoneFillOpacity = isSelected ? 0.5
+                      : isHovered ? (hasDensity ? 0.55 : 0.35)
+                      : hasDensity ? Math.min(0.30 + (zone.fillPct / 100) * 0.55, 0.75) : 0.22;
+                    const strokeColor = isSelected ? "#1d4ed8"
+                      : isHovered ? (hasDensity ? di.color : "#475569")
+                      : hasDensity ? di.color : "#64748b";
+                    const strokeW = isSelected ? 1.5 : isHovered ? 1.2 : 0.6;
                     return (
                       <g key={zone.id} style={{ pointerEvents: "all", cursor: "pointer" }}>
                         <defs><clipPath id={`clip-d-${zone.id}`}><path d={getPath(pts)} /></clipPath></defs>
                         <path d={getPath(pts)}
                           fill={zoneFill}
                           fillOpacity={zoneFillOpacity}
-                          stroke={isSelected ? "#3b82f6" : isHovered ? "#1e293b" : hasDensity ? di.color : "#94a3b8"}
-                          strokeWidth={isSelected ? 1.2 : isHovered ? 1 : hasDensity ? 0.5 : 0.3}
-                          strokeOpacity={isSelected || isHovered ? 1 : hasDensity ? 0.7 : 0.4}
+                          stroke={strokeColor}
+                          strokeWidth={strokeW}
+                          strokeOpacity={isSelected ? 1 : isHovered ? 0.9 : 0.75}
                           vectorEffect="non-scaling-stroke"
                         />
                         {totalRows > 0 && Array.from({ length: totalRows }, (_, r) => {
