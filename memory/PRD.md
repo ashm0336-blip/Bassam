@@ -40,7 +40,12 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
   - Zone cards + map click: multi-select popover with checkboxes grouped by shift
   - Read-only mode with clear message for completed sessions
   - Removed redundant "Quick Assign" button
-- **Gate Sessions Overhaul** - COMPLETE
+- **Map Scale Calibration System** - COMPLETE
+  - Two-point calibration tool: user clicks 2 known points on map + enters real distance in meters
+  - Auto-computes area (m²), safe/medium/max capacity, carpet rows/count for any drawn zone
+  - Calibration saved per floor in MongoDB
+  - Shoelace formula with aspect ratio correction for precise polygon area
+  - Files: `calibration.js`, `DailySessionsPage.jsx`, `Dialogs.jsx`
   - Renamed/reordered tabs: الموظفين ← الكثافات ← الأبواب (matches Prayer Halls)
   - Removed stats banner, added side panel with KPIs + mini gate cards
   - Legend moved to toolbar

@@ -2,7 +2,7 @@ import {
   Plus, Save, X, RefreshCw, Edit2, CalendarRange, AlertCircle,
   Database, Copy, FileStack, ArrowLeftRight, ArrowRight, RotateCcw,
   MessageSquare, CircleDot, CircleOff, Trash2, CheckCircle2,
-  Users, Maximize2, Layers,
+  Users, Maximize2, Layers, Ruler,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -342,9 +342,13 @@ export function ZoneEditDialog({ open, onOpenChange, selectedZone, setSelectedZo
   );
 }
 
-export function NewZoneDialog({ open, onOpenChange, newZoneForm, setNewZoneForm, drawingPoints, setDrawingPoints, handleSaveNewZone, ZONE_TYPES }) {
+export function NewZoneDialog({ open, onOpenChange, newZoneForm, setNewZoneForm, drawingPoints, setDrawingPoints, handleSaveNewZone, ZONE_TYPES, autoMetrics }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
+
+  // Auto-fill metrics when dialog opens with valid autoMetrics
+  const hasAutoMetrics = autoMetrics && autoMetrics.areaSqm > 0;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setDrawingPoints([]); } }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
@@ -359,7 +363,61 @@ export function NewZoneDialog({ open, onOpenChange, newZoneForm, setNewZoneForm,
             </div>
           </div>
 
-          {/* Same form fields as Edit dialog */}
+          {/* Auto-computed metrics from calibration */}
+          {hasAutoMetrics && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 space-y-2" data-testid="auto-metrics-panel">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Ruler className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <p className="text-[11px] font-bold text-blue-800 font-cairo">{isAr ? "حسابات تلقائية من المعايرة" : "Auto-calculated from calibration"}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white rounded-lg p-2 text-center border border-blue-100">
+                  <p className="text-lg font-black text-blue-700">{autoMetrics.areaSqm}</p>
+                  <p className="text-[8px] text-blue-500 font-medium">{isAr ? "م² المساحة" : "m² Area"}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center border border-emerald-100">
+                  <p className="text-lg font-black text-emerald-600">{autoMetrics.safeCapacity}</p>
+                  <p className="text-[8px] text-emerald-500 font-medium">{isAr ? "طاقة آمنة" : "Safe Cap"}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center border border-red-100">
+                  <p className="text-lg font-black text-red-600">{autoMetrics.maxCapacity}</p>
+                  <p className="text-[8px] text-red-500 font-medium">{isAr ? "حد أقصى" : "Max Cap"}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white rounded-lg p-2 text-center border border-slate-100">
+                  <p className="text-sm font-bold text-slate-700">{autoMetrics.totalRows}</p>
+                  <p className="text-[8px] text-slate-400">{isAr ? "صف سجاد" : "Rows"}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center border border-slate-100">
+                  <p className="text-sm font-bold text-slate-700">{autoMetrics.carpetsPerRow}</p>
+                  <p className="text-[8px] text-slate-400">{isAr ? "سجادة/صف" : "Per Row"}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center border border-slate-100">
+                  <p className="text-sm font-bold text-slate-700">{autoMetrics.totalCarpets}</p>
+                  <p className="text-[8px] text-slate-400">{isAr ? "إجمالي السجاد" : "Total"}</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="w-full h-7 text-[10px] text-blue-700 border-blue-200 hover:bg-blue-100"
+                onClick={() => {
+                  setNewZoneForm(prev => ({
+                    ...prev,
+                    area_sqm: autoMetrics.areaSqm,
+                    max_capacity: autoMetrics.maxCapacity,
+                    per_person_sqm: 0.75,
+                    length_m: autoMetrics.areaSqm > 0 ? Math.round(Math.sqrt(autoMetrics.areaSqm) * 10) / 10 : "",
+                    width_m: autoMetrics.areaSqm > 0 ? Math.round(Math.sqrt(autoMetrics.areaSqm) * 10) / 10 : "",
+                  }));
+                  toast.success(isAr ? "تم تطبيق القيم التلقائية" : "Auto values applied");
+                }}
+                data-testid="apply-auto-metrics-btn">
+                {isAr ? "تطبيق القيم التلقائية على النموذج" : "Apply to form"}
+              </Button>
+            </div>
+          )}
+
           <ZoneFormFields zone={newZoneForm} setZone={setNewZoneForm} ZONE_TYPES={ZONE_TYPES} isAr={isAr} />
         </div>
         <DialogFooter>
