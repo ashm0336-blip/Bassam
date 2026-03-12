@@ -487,8 +487,26 @@ export default function DailySessionsPage() {
   };
 
   const handleToggleRemove = async (zoneId, currentlyRemoved) => {
-    await handleUpdateZone(zoneId, { is_removed: !currentlyRemoved });
+    if (!currentlyRemoved) {
+      await handleDeleteZone(zoneId);
+    } else {
+      await handleUpdateZone(zoneId, { is_removed: false });
+    }
   };
+
+  const handleDeleteZone = useCallback(async (zoneId) => {
+    if (!activeSession) return;
+    try {
+      const res = await axios.delete(
+        `${API}/admin/map-sessions/${activeSession.id}/zones/${zoneId}`,
+        getAuthHeaders()
+      );
+      if (res.data?.zones) setActiveSession(res.data);
+      else { const r2 = await axios.get(`${API}/map-sessions/${activeSession.id}`, getAuthHeaders()); setActiveSession(r2.data); }
+      setSelectedZoneId(null);
+      toast.success(isAr ? "🗑️ تم حذف المنطقة وتسجيلها في السجل" : "Zone deleted & logged");
+    } catch (e) { toast.error(e.response?.data?.detail || (isAr ? "تعذر الحذف" : "Delete failed")); }
+  }, [activeSession, isAr]);
 
   const handleUpdateZoneStyle = async (zoneId, styleData) => {
     if (!activeSession) return;
@@ -698,10 +716,12 @@ export default function DailySessionsPage() {
         if (selectedZoneId) { e.preventDefault(); handleCutZone(); }
         return;
       }
-      // Delete / Backspace = حذف المنطقة المحددة
+      // Delete / Backspace = حذف المنطقة المحددة مع التسجيل في السجل
       if ((e.key === "Delete" || e.key === "Backspace") && selectedZoneId && mapMode === "edit") {
         e.preventDefault();
-        handleDeleteSelectedZone();
+        if (window.confirm(isAr ? "حذف المنطقة؟ سيُسجَّل في سجل التغييرات." : "Delete zone? Will be logged.")) {
+          handleDeleteZone(selectedZoneId);
+        }
         return;
       }
       // Escape = إلغاء / رجوع
@@ -1370,7 +1390,7 @@ export default function DailySessionsPage() {
                     ZONE_TYPES={ZONE_TYPES} wheelRef={wheelRef}
                     onMapMouseUp={handleMapMouseUp}
                     handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
-                    handleToggleRemove={handleToggleRemove} handleUpdateZoneStyle={handleUpdateZoneStyle}
+                    handleToggleRemove={handleToggleRemove} handleDeleteZone={handleDeleteZone} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     handleDeletePoint={handleDeletePoint}
                     addDrawingPoint={addDrawingPoint}
                     onEditStart={onEditStart} setMapMode={setMapMode}

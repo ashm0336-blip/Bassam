@@ -323,16 +323,24 @@ async def remove_session_zone(session_id: str, zone_id: str, admin: dict = Depen
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
     if session.get("status") == "completed":
         raise HTTPException(status_code=400, detail="لا يمكن حذف مناطق من جلسة مكتملة - أعد فتحها أولاً")
-    # نسجّل الحذف في الـ zone قبل الإزالة
     zones = session.get("zones", [])
-    del_zone = next((z for z in zones if z["id"] == zone_id), None)
-    if del_zone:
-        _push_history(del_zone, "removed", admin.get("name",""),
-                      f"حذف نهائي للمنطقة: {del_zone.get('name_ar','')}")
-    zones = [z for z in zones if z["id"] != zone_id]
+    zone_idx = next((i for i, z in enumerate(zones) if z["id"] == zone_id), None)
+    if zone_idx is None:
+        raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
+    # Soft delete — نبقّي الـ zone في الـ array مع is_removed=True لحفظ السجل
+    zone = zones[zone_idx]
+    zone["is_removed"] = True
+    zone["change_type"] = "removed"
+    _push_history(zone, "removed", admin.get("name",""),
+                  f"حُذفت المنطقة: {zone.get('name_ar','')} | الفئة: {zone.get('zone_type','')}")
+    zones[zone_idx] = zone
     summary = _recalc_summary(zones)
-    await db.map_sessions.update_one({"id": session_id}, {"$set": {"zones": zones, "changes_summary": summary, "updated_at": _now_iso()}})
-    return {"message": "تم حذف المنطقة من الجلسة"}
+    await db.map_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"zones": zones, "changes_summary": summary, "updated_at": _now_iso()}}
+    )
+    updated = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
+    return updated
 
 
 @router.put("/admin/map-sessions/{session_id}/density-batch")

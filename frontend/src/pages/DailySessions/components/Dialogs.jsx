@@ -305,15 +305,20 @@ export function ZoneEditDialog({ open, onOpenChange, selectedZone, setSelectedZo
               <ZoneFormFields zone={selectedZone} setZone={setSelectedZone} ZONE_TYPES={ZONE_TYPES} isAr={isAr}
                 onCategoryChange={(v) => handleCategoryChange(selectedZone.id, v)} />
 
-              {/* Zone Status */}
-              <div className="p-3 border rounded-lg space-y-2">
-                <Label className="text-sm font-medium">{isAr ? "حالة المنطقة" : "Zone Status"}</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button onClick={() => { if (selectedZone.is_removed) { handleToggleRemove(selectedZone.id, true); setSelectedZone(p => ({ ...p, is_removed: false })); } }} className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border text-xs transition-all ${!selectedZone.is_removed ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50"}`} data-testid="zone-status-active"><CircleDot className="w-5 h-5 text-emerald-500" /><span className="font-medium">{isAr ? "نشط" : "Active"}</span></button>
-                  <button onClick={() => { if (!selectedZone.is_removed) { handleToggleRemove(selectedZone.id, false); setSelectedZone(p => ({ ...p, is_removed: true })); } }} className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border text-xs transition-all ${selectedZone.is_removed ? "border-amber-500 bg-amber-50 ring-1 ring-amber-200" : "hover:bg-slate-50"}`} data-testid="zone-status-inactive"><CircleOff className="w-5 h-5 text-amber-500" /><span className="font-medium">{isAr ? "غير نشط" : "Inactive"}</span></button>
-                  <button onClick={async () => {
-                    try { await axios.delete(`${API}/admin/map-sessions/${activeSession.id}/zones/${selectedZone.id}`, getAuthHeaders()); const res = await axios.get(`${API}/map-sessions/${activeSession.id}`); setActiveSession(res.data); onOpenChange(false); setSelectedZoneId(null); toast.success(isAr ? "تم حذف المنطقة نهائياً" : "Zone permanently deleted"); } catch { toast.error(isAr ? "تعذر الحذف" : "Delete failed"); }
-                  }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-red-200 text-xs transition-all hover:bg-red-50 hover:border-red-400" data-testid="zone-status-delete"><Trash2 className="w-5 h-5 text-red-500" /><span className="font-medium text-red-600">{isAr ? "حذف نهائي" : "Delete"}</span></button>
+              {/* Zone Status — نشط فقط، الحذف من الشريط العائم */}
+              <div className="p-3 border rounded-lg bg-slate-50/50">
+                <Label className="text-[11px] font-semibold text-slate-600 mb-2 block">{isAr ? "حالة المنطقة" : "Zone Status"}</Label>
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium
+                    ${!selectedZone.is_removed ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
+                    {!selectedZone.is_removed
+                      ? <><CircleDot className="w-4 h-4"/>{isAr?"نشطة":"Active"}</>
+                      : <><CircleOff className="w-4 h-4"/>{isAr?"محذوفة (مسجلة في السجل)":"Deleted (in log)"}</>
+                    }
+                  </div>
+                  {!selectedZone.is_removed && (
+                    <p className="text-[9px] text-slate-400 max-w-[140px] text-left">لحذف المنطقة: أغلق هذا الديالوق واضغط زر الحذف 🗑️ من الشريط العائم</p>
+                  )}
                 </div>
               </div>
             </>

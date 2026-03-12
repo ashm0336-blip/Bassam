@@ -57,8 +57,8 @@ function FloatingToolbar({ zone, mapContainerRef, zoom, panOffset, imgRatio, isA
           <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "تنعيم" : "Smooth"}</span>
         </button>
         <div className="w-px h-5 bg-slate-200" />
-        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "إزالة المنطقة" : "Remove Zone"}>
-          <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "إزالة" : "Remove"}</span>
+        <button onClick={onRemove} className={`${btnClass} text-red-500 hover:bg-red-50`} data-testid="float-remove-btn" title={isAr ? "حذف المنطقة نهائياً" : "Delete Zone"}>
+          <Trash2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">{isAr ? "حذف" : "Delete"}</span>
         </button>
       </div>
       {/* Arrow pointer */}
@@ -80,7 +80,7 @@ export function MapCanvas({
   imgRatio, setImgRatio, newZoneForm,
   setActiveSession, setSelectedZone, setShowZoneDialog, setShowNewZoneDialog,
   ZONE_TYPES, wheelRef, onMapMouseUp,
-  handleSmoothZone, handleCopyZone, handleToggleRemove, handleUpdateZoneStyle, handleDeletePoint,
+  handleSmoothZone, handleCopyZone, handleToggleRemove, handleDeleteZone, handleUpdateZoneStyle, handleDeletePoint,
   addDrawingPoint, onEditStart, setMapMode,
   activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
   readOnly = false,
@@ -546,7 +546,12 @@ export function MapCanvas({
               onEdit={() => { setSelectedZone(selectedZoneData); setShowZoneDialog(true); }}
               onCopy={handleCopyZone}
               onSmooth={handleSmoothZone}
-              onRemove={() => { handleToggleRemove(selectedZoneId, false); setSelectedZoneId(null); }}
+              onRemove={() => {
+                if (window.confirm(isAr ? `حذف المنطقة "${selectedZoneData?.name_ar || ''}"؟ سيُسجَّل في سجل التغييرات.` : "Delete zone?")) {
+                  handleDeleteZone ? handleDeleteZone(selectedZoneId) : handleToggleRemove(selectedZoneId, false);
+                  setSelectedZoneId(null);
+                }
+              }}
             />
           )}
           {/* Tooltip: shows on hover (desktop) or after single tap (tablet) */}
