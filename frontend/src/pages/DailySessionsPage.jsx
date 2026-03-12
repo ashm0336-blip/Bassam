@@ -1080,148 +1080,176 @@ export default function DailySessionsPage() {
                 <TabsContent value="map" tabIndex={-1} className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out', minHeight: 'min(760px, calc(100vh - 220px))' }}>
                   {/* Prayer Sessions Bar */}
                   {activeDailySession && (
-                    <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-l from-slate-50 to-white p-3" data-testid="prayer-sessions-bar">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          {activeSession?.session_type === "prayer" && (
-                            <button onClick={handleBackToDaily}
-                              className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-800 font-semibold transition-colors"
-                              data-testid="back-to-daily-btn">
-                              <ChevronRight className="w-3.5 h-3.5" />
-                              {isAr ? "الجولة اليومية" : "Daily Tour"}
-                            </button>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {/* Day completion progress */}
-                          {(() => {
-                            const completed = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'completed').length;
-                            const skipped = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'skipped').length;
-                            const countable = PRAYER_TIMES.length - skipped;
-                            const started = Object.keys(prayerSessions).length;
-                            return started > 0 && (
-                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                {completed}/{countable}
-                                {skipped > 0 && <span className="text-slate-400">({skipped} ⏭️)</span>}
-                                {isAr ? " مكتملة" : " done"}
-                              </span>
-                            );
-                          })()}
-                          <p className="text-[11px] font-cairo font-bold text-slate-500">{isAr ? "جولات الصلوات" : "Prayer Rounds"}</p>
-                        </div>
-                      </div>
+                    <div className="rounded-2xl border-0 shadow-sm overflow-hidden" data-testid="prayer-sessions-bar"
+                      style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%)", border: "1px solid #a7f3d0" }}>
 
-                      {/* Prayer Cards - horizontal scroll on mobile, grid on desktop */}
-                      <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar sm:grid sm:grid-cols-6 sm:overflow-visible sm:pb-0">
-                        {PRAYER_TIMES.map((pt, idx) => {
-                          const ps = prayerSessions[pt.key];
-                          const isActivePrayer = activeSession?.prayer === pt.key;
-                          const status = ps?.status;
+                      {/* ── Prayer Bar Header ────────────────────── */}
+                      {(() => {
+                        const completed = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'completed').length;
+                        const skipped   = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'skipped').length;
+                        const draft     = PRAYER_TIMES.filter(pt => prayerSessions[pt.key]?.status === 'draft').length;
+                        const total     = PRAYER_TIMES.length - skipped;
+                        const pct       = total > 0 ? Math.round(completed / total * 100) : 0;
+                        return (
+                          <div className="px-4 py-3 flex items-center justify-between gap-3 border-b" style={{ borderColor:"#bbf7d0" }}>
+                            <div className="flex items-center gap-2.5">
+                              {activeSession?.session_type === "prayer" && (
+                                <button onClick={handleBackToDaily}
+                                  className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-800 font-bold transition-colors mr-1"
+                                  data-testid="back-to-daily-btn">
+                                  <ChevronRight className="w-3.5 h-3.5"/>{isAr?"الجولة اليومية":"Daily Tour"}
+                                </button>
+                              )}
+                              <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+                                <span className="text-base">🕌</span>
+                              </div>
+                              <div>
+                                <p className="text-[12px] font-bold text-emerald-800">{isAr?"جولات الصلوات":"Prayer Rounds"}</p>
+                                <p className="text-[9px] text-emerald-600">{PRAYER_TIMES.length} صلاة{skipped>0?` · ${skipped} مُتجاوزة`:""}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {/* chips */}
+                              {[
+                                { label:"مكتملة", v:completed, color:"#059669", bg:"#ecfdf5" },
+                                { label:"جارية",  v:draft,     color:"#2563eb", bg:"#eff6ff" },
+                                { label:"متبقية", v:total-completed-draft, color:"#d97706", bg:"#fffbeb" },
+                              ].map((s,i) => s.v > 0 && (
+                                <div key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-bold"
+                                  style={{ color:s.color, backgroundColor:s.bg, borderColor:s.color+"40" }}>
+                                  <span className="font-black">{s.v}</span>{s.label}
+                                </div>
+                              ))}
+                              {/* دائرة progress */}
+                              <div className="relative w-9 h-9 flex-shrink-0">
+                                <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
+                                  <circle cx="18" cy="18" r="14" fill="none" stroke="#bbf7d0" strokeWidth="4"/>
+                                  <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4"
+                                    strokeLinecap="round"
+                                    strokeDasharray={`${88*pct/100} 88`}
+                                    style={{ transition:"stroke-dasharray 0.8s ease" }}/>
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="text-[9px] font-black text-emerald-700">{pct}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
-                          // Determine ordering state
-                          const prevPrayerKey = idx > 0 ? PRAYER_TIMES[idx - 1].key : null;
-                          const prevSession = prevPrayerKey ? prayerSessions[prevPrayerKey] : null;
-                          const prevCompleted = !prevPrayerKey || prevSession?.status === 'completed' || prevSession?.status === 'skipped';
-                          const prevIsDraft = prevPrayerKey && prevSession && prevSession.status === 'draft';
-                          const prevNotStarted = prevPrayerKey && !prevSession;
-                          const canStartFreely = !ps && prevCompleted;
-                          const needsBypass = !ps && (prevIsDraft || prevNotStarted);
-                          const awaitingBypass = bypassConfirm === pt.key;
-                          const isSkipped = status === 'skipped';
+                      {/* ── Prayer Cards ─────────────────────────── */}
+                      <div className="p-3">
+                        <div className="flex overflow-x-auto gap-2 pb-1 no-scrollbar sm:grid sm:grid-cols-6 sm:overflow-visible sm:pb-0">
+                          {PRAYER_TIMES.map((pt, idx) => {
+                            const ps = prayerSessions[pt.key];
+                            const isActivePrayer = activeSession?.prayer === pt.key;
+                            const status = ps?.status;
+                            const prevPrayerKey = idx > 0 ? PRAYER_TIMES[idx - 1].key : null;
+                            const prevSession = prevPrayerKey ? prayerSessions[prevPrayerKey] : null;
+                            const prevCompleted = !prevPrayerKey || prevSession?.status === 'completed' || prevSession?.status === 'skipped';
+                            const prevIsDraft = prevPrayerKey && prevSession && prevSession.status === 'draft';
+                            const prevNotStarted = prevPrayerKey && !prevSession;
+                            const canStartFreely = !ps && prevCompleted;
+                            const needsBypass = !ps && (prevIsDraft || prevNotStarted);
+                            const awaitingBypass = bypassConfirm === pt.key;
+                            const isSkipped = status === 'skipped';
 
-                          // Card border/bg based on state
-                          let cardClass = 'border-dashed border-slate-200 bg-slate-50/50';
-                          if (isActivePrayer) cardClass = 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.03]';
-                          else if (status === 'completed') cardClass = 'border-emerald-300 bg-emerald-50/60 cursor-pointer hover:shadow-sm';
-                          else if (status === 'draft') cardClass = 'border-blue-300 bg-blue-50/60 cursor-pointer hover:shadow-sm';
-                          else if (isSkipped) cardClass = 'border-slate-300 bg-slate-100/80 opacity-75';
+                            // Card style per state
+                            const cardStyles = {
+                              active:    { border:"#059669", bg:"linear-gradient(135deg,#d1fae5,#ecfdf5)", shadow:"0 4px 12px #05996930", iconBg:"#059669", textColor:"#065f46" },
+                              completed: { border:"#059669", bg:"linear-gradient(135deg,#f0fdf4,#ecfdf5)", shadow:"0 2px 8px #05996920", iconBg:"#d1fae5", textColor:"#065f46" },
+                              draft:     { border:"#2563eb", bg:"linear-gradient(135deg,#eff6ff,#e0f2fe)", shadow:"0 2px 8px #2563eb20", iconBg:"#dbeafe", textColor:"#1e40af" },
+                              skipped:   { border:"#cbd5e1", bg:"linear-gradient(135deg,#f8fafc,#f1f5f9)", shadow:"none", iconBg:"#e2e8f0", textColor:"#94a3b8" },
+                              empty:     { border:"#e2e8f0", bg:"linear-gradient(135deg,#fafafa,#f8fafc)", shadow:"none", iconBg:"#f1f5f9", textColor:"#94a3b8" },
+                            };
+                            const style = isActivePrayer ? cardStyles.active
+                              : status === 'completed' ? cardStyles.completed
+                              : status === 'draft'     ? cardStyles.draft
+                              : isSkipped             ? cardStyles.skipped
+                              : cardStyles.empty;
 
-                          return (
-                            <div key={pt.key} className="relative flex flex-col gap-1 flex-shrink-0 sm:flex-shrink group" style={{ minWidth: '82px' }}>
-                              {/* Main card */}
-                              <button
-                                onClick={() => ps && !isSkipped ? handleSelectPrayer(pt.key) : null}
-                                data-testid={`prayer-session-${pt.key}`}
-                                className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all ${cardClass}`}
-                              >
-                                <span className={`text-lg leading-none ${isSkipped ? 'grayscale opacity-50' : ''}`}>{pt.icon}</span>
-                                <span className={`text-[9px] font-cairo font-bold leading-tight ${isActivePrayer ? 'text-emerald-700' : isSkipped ? 'text-slate-400 line-through' : status ? 'text-slate-600' : 'text-slate-400'}`}>
-                                  {isAr ? pt.label_ar : pt.label_en}
-                                </span>
-                                <span className="text-[8px] leading-none">
-                                  {status === 'completed' ? '✅' : status === 'draft' ? '🔵' : isSkipped ? '⏭️' : '○'}
-                                </span>
-                              </button>
+                            const statusIcon = status === 'completed' ? "✅"
+                              : status === 'draft' ? "🔵"
+                              : isSkipped ? "⏭️"
+                              : "○";
 
-                              {/* Skip button - for unstarted prayers (can start freely) */}
-                              {canStartFreely && canStartPrayer && (
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => handleStartPrayerSession(pt.key)}
-                                    disabled={saving}
-                                    data-testid={`start-prayer-session-${pt.key}`}
-                                    className="flex-1 text-[8px] py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-sm disabled:opacity-50"
-                                  >
-                                    {isAr ? "▶ بدء" : "▶ Start"}
-                                  </button>
-                                  {canSkipPrayer && (
-                                    <button
-                                      onClick={() => handleSkipPrayerSession(pt.key)}
-                                      disabled={saving}
-                                      data-testid={`skip-prayer-session-${pt.key}`}
-                                      title={isAr ? "تجاوز هذه الصلاة (لا تُحسب في الإحصائيات)" : "Skip this prayer (excluded from stats)"}
-                                      className="text-[8px] px-1.5 py-1.5 rounded-lg border border-slate-300 text-slate-400 hover:bg-slate-100 transition-all"
-                                    >
-                                      ⏭️
+                            return (
+                              <div key={pt.key} className="relative flex flex-col gap-1.5 flex-shrink-0 sm:flex-shrink group"
+                                style={{ minWidth: '82px' }}>
+                                {/* Main card */}
+                                <button
+                                  onClick={() => ps && !isSkipped ? handleSelectPrayer(pt.key) : null}
+                                  data-testid={`prayer-session-${pt.key}`}
+                                  className={`flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1.5 rounded-2xl border-2 transition-all duration-300 w-full
+                                    ${isActivePrayer ? 'scale-[1.06]' : ps && !isSkipped ? 'hover:scale-[1.02] cursor-pointer' : 'cursor-default'}`}
+                                  style={{ borderColor:style.border, background:style.bg, boxShadow:style.shadow }}>
+
+                                  {/* أيقونة الصلاة */}
+                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                                    style={{ backgroundColor:style.iconBg }}>
+                                    <span className={`text-xl leading-none ${isSkipped ? 'opacity-40 grayscale' : ''}`}>{pt.icon}</span>
+                                  </div>
+
+                                  {/* اسم الصلاة */}
+                                  <span className="text-[10px] font-cairo font-bold leading-tight text-center"
+                                    style={{ color:style.textColor, textDecoration: isSkipped ? 'line-through' : 'none' }}>
+                                    {isAr ? pt.label_ar : pt.label_en}
+                                  </span>
+
+                                  {/* حالة */}
+                                  <span className="text-sm leading-none">{statusIcon}</span>
+                                </button>
+
+                                {/* أزرار الإجراءات */}
+                                {canStartFreely && canStartPrayer && (
+                                  <div className="flex gap-1">
+                                    <button onClick={() => handleStartPrayerSession(pt.key)} disabled={saving}
+                                      data-testid={`start-prayer-session-${pt.key}`}
+                                      className="flex-1 text-[9px] py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-sm disabled:opacity-50">
+                                      ▶ {isAr ? "بدء" : "Start"}
                                     </button>
-                                  )}
-                                </div>
-                              )}
+                                    {canSkipPrayer && (
+                                      <button onClick={() => handleSkipPrayerSession(pt.key)} disabled={saving}
+                                        data-testid={`skip-prayer-session-${pt.key}`}
+                                        title={isAr ? "تجاوز هذه الصلاة" : "Skip"}
+                                        className="text-[9px] px-2 py-1.5 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-100 transition-all">
+                                        ⏭️
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
 
-                              {/* Skipped session - show unskip + delete buttons */}
-                              {isSkipped && canSkipPrayer && (
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => handleUnskipPrayerSession(pt.key)}
-                                    data-testid={`unskip-prayer-session-${pt.key}`}
-                                    className="flex-1 text-[8px] py-1.5 rounded-lg border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold transition-all"
-                                    title={isAr ? "فك التجاوز وإدخال البيانات" : "Unskip and enter data"}
-                                  >
-                                    {isAr ? "فك التجاوز" : "Unskip"}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeletePrayerSession(pt.key)}
+                                {isSkipped && canSkipPrayer && (
+                                  <div className="flex gap-1">
+                                    <button onClick={() => handleUnskipPrayerSession(pt.key)}
+                                      data-testid={`unskip-prayer-session-${pt.key}`}
+                                      className="flex-1 text-[9px] py-1.5 rounded-xl border-2 border-amber-400 text-amber-600 hover:bg-amber-50 font-bold transition-all">
+                                      {isAr ? "فك" : "Unskip"}
+                                    </button>
+                                    <button onClick={() => handleDeletePrayerSession(pt.key)}
+                                      data-testid={`delete-prayer-session-${pt.key}`}
+                                      className="text-[9px] px-2 py-1.5 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-all">
+                                      🗑️
+                                    </button>
+                                  </div>
+                                )}
+
+                                {status && status !== 'skipped' && !isActivePrayer && canDeleteSession && (
+                                  <button onClick={() => handleDeletePrayerSession(pt.key)}
                                     data-testid={`delete-prayer-session-${pt.key}`}
-                                    className="text-[8px] px-1.5 py-1.5 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all"
-                                    title={isAr ? "حذف الجولة نهائياً" : "Delete session"}
-                                  >🗑️</button>
-                                </div>
-                              )}
+                                    className="w-full text-[8px] py-1 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 hover:border-red-300 transition-all opacity-0 group-hover:opacity-100">
+                                    🗑️ {isAr?"حذف":"Delete"}
+                                  </button>
+                                )}
 
-                              {/* Draft/Completed - show delete button (hover) */}
-                              {status && status !== 'skipped' && !isActivePrayer && canDeleteSession && (
-                                <button
-                                  onClick={() => handleDeletePrayerSession(pt.key)}
-                                  data-testid={`delete-prayer-session-${pt.key}`}
-                                  className="w-full text-[8px] py-1 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all opacity-0 group-hover:opacity-100"
-                                  title={isAr ? "حذف الجولة وإعادة البدء" : "Delete & restart"}
-                                >
-                                  {isAr ? "🗑️ حذف الجولة" : "🗑️ Delete"}
-                                </button>
-                              )}
-
-                              {/* Needs bypass - previous not completed */}
-                              {needsBypass && !awaitingBypass && canStartPrayer && (
-                                <button
-                                  onClick={() => setBypassConfirm(pt.key)}
-                                  data-testid={`bypass-prayer-${pt.key}`}
-                                  className="w-full text-[8px] py-1.5 rounded-lg border-2 border-dashed border-amber-400 text-amber-600 font-bold hover:bg-amber-50 transition-all"
-                                  title={isAr ? `${prevPrayerKey ? PRAYER_TIMES.find(p=>p.key===prevPrayerKey)?.label_ar : ''} لم تُكتمل بعد` : 'Previous not done'}
-                                >
-                                  ⚠️ {isAr ? "تجاوز" : "Bypass"}
-                                </button>
-                              )}
+                                {needsBypass && !awaitingBypass && canStartPrayer && (
+                                  <button onClick={() => setBypassConfirm(pt.key)}
+                                    data-testid={`bypass-prayer-${pt.key}`}
+                                    className="w-full text-[9px] py-1.5 rounded-xl border-2 border-dashed border-amber-400 text-amber-600 font-bold hover:bg-amber-50 transition-all">
+                                    ⚠️ {isAr ? "تجاوز" : "Bypass"}
+                                  </button>
+                                )}
 
                               {/* Bypass confirmation inline */}
                               {awaitingBypass && (
@@ -1252,20 +1280,22 @@ export default function DailySessionsPage() {
                         })}
                       </div>
 
-                      {/* Legend + progress bar */}
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[9px] text-slate-400 flex items-center gap-1">✅ {isAr ? "مكتملة" : "Done"}</span>
-                          <span className="text-[9px] text-slate-400 flex items-center gap-1">🔵 {isAr ? "مسودة" : "Draft"}</span>
-                          <span className="text-[9px] text-slate-400 flex items-center gap-1">⏭️ {isAr ? "متجاوزة" : "Skipped"}</span>
-                          <span className="text-[9px] text-slate-400 flex items-center gap-1">⚠️ {isAr ? "يحتاج تجاوز" : "Needs bypass"}</span>
-                        </div>
-                        {/* Progress dots */}
-                        <div className="flex items-center gap-1">
-                          {PRAYER_TIMES.map(pt => {
-                            const s = prayerSessions[pt.key]?.status;
-                            return <span key={pt.key} className={`w-2 h-2 rounded-full transition-all ${s === 'completed' ? 'bg-emerald-500' : s === 'draft' ? 'bg-blue-400' : s === 'skipped' ? 'bg-slate-400' : 'bg-slate-200'}`} title={s === 'skipped' ? (isAr ? 'متجاوزة' : 'Skipped') : ''} />;
-                          })}
+                      {/* Legend row */}
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t" style={{ borderColor:"#bbf7d0" }}>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            {[["✅","مكتملة","#059669"],["🔵","جارية","#2563eb"],["⏭️","متجاوزة","#94a3b8"],["⚠️","يحتاج تجاوز","#d97706"]].map(([icon,label,color],i)=>(
+                              <span key={i} className="text-[9px] font-medium flex items-center gap-1" style={{color}}>{icon} {label}</span>
+                            ))}
+                          </div>
+                          {/* Progress dots */}
+                          <div className="flex items-center gap-1.5">
+                            {PRAYER_TIMES.map(pt => {
+                              const s = prayerSessions[pt.key]?.status;
+                              return <div key={pt.key} className="w-2.5 h-2.5 rounded-full transition-all"
+                                style={{ backgroundColor: s==='completed'?'#059669':s==='draft'?'#2563eb':s==='skipped'?'#94a3b8':'#e2e8f0' }}
+                                title={pt.label_ar}/>;
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
