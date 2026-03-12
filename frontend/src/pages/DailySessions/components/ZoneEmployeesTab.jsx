@@ -466,53 +466,29 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
 
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
 
-        {/* ── Auto Distribute ── */}
-        {activeSession?.status === "draft" && !readOnly && (
-          <Popover open={showAutoConfirm} onOpenChange={setShowAutoConfirm}>
-            <PopoverTrigger asChild>
-              <Button size="sm" className="h-8 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700" disabled={autoDistributing} data-testid="auto-distribute-btn">
-                {autoDistributing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                {isAr ? "توزيع تلقائي" : "Auto-Assign"}
-                {unassignedEmployees.length > 0 && <Badge className="text-[8px] h-4 px-1 bg-white/20">{unassignedEmployees.length}</Badge>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-4" align="start">
-              <div className="space-y-3">
-                <div>
-                  <p className="font-cairo font-bold text-sm text-slate-700 mb-1">{isAr ? "التوزيع التلقائي" : "Auto-Distribute"}</p>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    {isAr
-                      ? `سيتم توزيع ${unassignedEmployees.length} موظف غير معيّن على ${uncoveredZones.length} منطقة بدون تغطية. يمكنك التعديل اليدوي بعدها.`
-                      : `Will assign ${unassignedEmployees.length} unassigned staff to ${uncoveredZones.length} uncovered zones. You can adjust manually after.`}
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  <div className="bg-violet-50 rounded-lg p-2"><p className="text-lg font-bold text-violet-600">{unassignedEmployees.length}</p><p className="text-[8px] text-slate-500">{isAr ? "موظف" : "staff"}</p></div>
-                  <div className="bg-slate-100 rounded-lg p-2 flex items-center justify-center"><Sparkles className="w-5 h-5 text-slate-400" /></div>
-                  <div className="bg-red-50 rounded-lg p-2"><p className="text-lg font-bold text-red-500">{uncoveredZones.length}</p><p className="text-[8px] text-slate-500">{isAr ? "منطقة" : "zones"}</p></div>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleAutoDistribute} className="flex-1 bg-violet-600 hover:bg-violet-700 h-8 text-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 ml-1" />{isAr ? "بدء التوزيع" : "Start"}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowAutoConfirm(false)} className="flex-1 h-8 text-xs">{isAr ? "إلغاء" : "Cancel"}</Button>
-                </div>
-                {assignedCount > 0 && (
-                  <button onClick={() => { setShowAutoConfirm(false); handleClearAll(); }}
-                    className="w-full text-[9px] text-red-500 hover:text-red-700 transition-colors text-center">
-                    {isAr ? "مسح جميع التعيينات الحالية" : "Clear all assignments"}
-                  </button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
-
-        {/* Legend */}
-        <div className="hidden sm:flex items-center gap-2 text-[9px] text-slate-500 font-medium mr-auto">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{isAr ? "مغطاة" : "Covered"}</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{isAr ? "غير مغطاة" : "Uncovered"}</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400" />{isAr ? "خدمات" : "Service"}</span>
+        {/* Legend + Mini KPIs */}
+        <div className="hidden sm:flex items-center gap-1.5 mr-auto">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+            <Users className="w-3 h-3 text-blue-500" />
+            <span className="text-[9px] font-bold text-blue-600">{employees.length}</span>
+            <span className="text-[8px] text-slate-400">{isAr ? "موظف" : "staff"}</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg border" style={{ backgroundColor: coveragePct >= 80 ? "#05966908" : "#f59e0b08", borderColor: coveragePct >= 80 ? "#05966930" : "#f59e0b30" }}>
+            <span className="text-[9px] font-bold" style={{ color: coveragePct >= 80 ? "#059669" : "#f59e0b" }}>{coveragePct}%</span>
+            <span className="text-[8px] text-slate-400">{isAr ? "تغطية" : "cov"}</span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          {[
+            { color: "#16a34a", label: isAr ? "مغطاة" : "Covered", count: coveredZones.length },
+            { color: "#ef4444", label: isAr ? "غير مغطاة" : "Uncov", count: uncoveredZones.length },
+            { color: "#94a3b8", label: isAr ? "خدمات" : "Service", count: null },
+          ].filter(l => l.count === null || l.count > 0).map(l => (
+            <div key={l.color} className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border" style={{ borderColor: l.color + "40", backgroundColor: l.color + "08" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: l.color }} />
+              {l.count !== null && <span className="text-[8px] font-bold" style={{ color: l.color }}>{l.count}</span>}
+              <span className="text-[8px] font-medium" style={{ color: l.color + "cc" }}>{l.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
