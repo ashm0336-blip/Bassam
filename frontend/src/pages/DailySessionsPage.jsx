@@ -1477,9 +1477,12 @@ export default function DailySessionsPage() {
                       ))}
                     </div>
                   )}
+                  {/* السجل يظهر فقط عند جولة صلاة نشطة */}
+                  {isMapEditable && (
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
                   />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="density" tabIndex={-1} className="space-y-5" style={{ animation: 'tabSlideIn 0.3s ease-out', minHeight: 'min(760px, calc(100vh - 220px))' }}>
