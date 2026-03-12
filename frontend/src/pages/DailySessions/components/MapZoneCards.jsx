@@ -250,33 +250,27 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
           <p className="text-xs text-muted-foreground">لا أحداث بهذا النوع</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-1.5">
           {filtered.map((ev) => {
             // ── كرت حدث جلسة ──
             if (ev.type === "session") {
               const scfg = SESSION_ACTION_CFG[ev.action] || SESSION_ACTION_CFG.session_created;
               return (
                 <div key={ev.id}
-                  className="flex items-start gap-2.5 p-2.5 rounded-xl border shadow-sm hover:shadow-md transition-all"
+                  className="flex flex-col gap-1.5 p-2 rounded-lg border shadow-sm hover:shadow-md transition-all"
                   style={{ backgroundColor:scfg.bg, borderColor:scfg.border }}
                   data-testid={`log-card-${ev.id}`}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base"
-                    style={{ backgroundColor:"white", border:`1.5px solid ${scfg.border}` }}>
-                    {ev.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className="text-[9px] font-black" style={{ color:scfg.color }}>{scfg.label}</span>
-                      <span className="text-[8px] text-slate-400 font-mono flex-shrink-0">{formatSATime(ev.at)}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <span className="text-base leading-none">{ev.icon}</span>
+                      <span className="text-[8px] font-black" style={{ color:scfg.color }}>{scfg.label}</span>
                     </div>
-                    {ev.note.split('\n').slice(0,2).map((line,li) => line.trim() && (
-                      <p key={li} className={`text-[9px] leading-tight ${li===0?"font-semibold":"text-slate-500"}`}
-                        style={{ color: li===0 ? scfg.color : undefined }}>
-                        {line.trim()}
-                      </p>
-                    ))}
-                    {ev.by && <p className="text-[8px] text-slate-400 mt-0.5 flex items-center gap-0.5"><User2 className="w-2 h-2"/>{ev.by}</p>}
+                    <span className="text-[7px] text-slate-400 font-mono">{formatSATime(ev.at)}</span>
                   </div>
+                  <p className="text-[9px] font-semibold leading-snug" style={{ color:scfg.color }}>
+                    {ev.note.split('\n')[0]?.replace(/^[🕌✅⏭️🏁🔄📋📝🗑️]/,'').trim() || scfg.label}
+                  </p>
+                  {ev.by && <p className="text-[7px] text-slate-400 flex items-center gap-0.5"><User2 className="w-2 h-2"/>{ev.by}</p>}
                 </div>
               );
             }
@@ -286,57 +280,31 @@ export function ChangesLog({ activeSession, changedZones, ZONE_TYPES }) {
             const CfgIcon = cfg.icon;
             return (
               <div key={ev.id}
-                className="flex items-start gap-2.5 p-2.5 rounded-xl border bg-white shadow-sm hover:shadow-md transition-all"
-                style={{ borderColor:cfg.color+"30", borderRightWidth:"3px", borderRightColor:cfg.color }}
+                className="flex flex-col gap-1.5 p-2 rounded-lg border bg-white shadow-sm hover:shadow-md transition-all"
+                style={{ borderColor:cfg.color+"30", borderRightWidth:"2px", borderRightColor:cfg.color }}
                 data-testid={`log-card-${ev.id}`}>
-
-                {/* أيقونة النوع */}
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor:cfg.bg, border:`1.5px solid ${cfg.border}` }}>
-                  <CfgIcon className="w-3.5 h-3.5" style={{ color:cfg.color }}/>
-                </div>
-
-                {/* المحتوى */}
-                <div className="flex-1 min-w-0">
-                  {/* الصف الأول: النوع + الوقت */}
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-black px-1.5 py-0 rounded-full"
-                        style={{ color:cfg.color, backgroundColor:cfg.bg }}>
-                        {cfg.label}
-                      </span>
-                      <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold text-slate-600">
-                        <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor:ev.zone_color||"#94a3b8" }}/>
-                        {ev.zone_code}
-                      </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor:cfg.bg }}>
+                      <CfgIcon className="w-3 h-3" style={{ color:cfg.color }}/>
                     </div>
-                    <span className="text-[8px] text-slate-400 font-mono flex-shrink-0">{formatSATime(ev.at)}</span>
+                    <span className="text-[8px] font-black" style={{ color:cfg.color }}>{cfg.label}</span>
                   </div>
-
-                  {/* اسم المنطقة */}
-                  <p className={`text-[10px] font-cairo font-semibold leading-tight ${ev.is_removed?"line-through text-slate-400":"text-slate-800"}`}>
+                  <span className="text-[7px] text-slate-400 font-mono">{formatSATime(ev.at)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor:ev.zone_color||"#94a3b8" }}/>
+                  <p className={`text-[9px] font-semibold leading-tight truncate ${ev.is_removed?"line-through text-slate-400":"text-slate-800"}`}>
                     {ev.zone_name}
                   </p>
-
-                  {/* تفاصيل التغيير */}
-                  {ev.note && ev.note.split('\n').slice(0,3).map((line,li) => line.trim() && (
-                    <p key={li} className={`text-[9px] leading-tight mt-0.5 ${li===0?"font-medium text-slate-700":"text-slate-400 mr-1"}`}>
-                      {line.trim()}
-                    </p>
-                  ))}
-
-                  {/* الفوتر */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[8px] text-slate-400 flex items-center gap-0.5">
-                      <Layers className="w-2 h-2"/>{ev.zone_type}
-                    </span>
-                    {ev.by && ev.by !== "—" && (
-                      <span className="text-[8px] text-slate-400 flex items-center gap-0.5">
-                        <User2 className="w-2 h-2"/>{ev.by}
-                      </span>
-                    )}
-                  </div>
                 </div>
+                {ev.note && (
+                  <p className="text-[8px] text-slate-500 leading-tight">
+                    {ev.note.split('\n').find(l=>l.includes('→') || l.includes('←') || l.includes('▲') || l.includes('▼'))?.trim() || ev.note.split('\n')[0]?.trim()}
+                  </p>
+                )}
+                {ev.by && ev.by !== "—" && <p className="text-[7px] text-slate-400 flex items-center gap-0.5"><User2 className="w-2 h-2"/>{ev.by}</p>}
               </div>
             );
           })}

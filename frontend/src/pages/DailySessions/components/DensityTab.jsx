@@ -18,6 +18,8 @@ export function DensityTab({
   selectedFloor, imgRatio, ZONE_TYPES,
   panelCollapsed, onPanelToggle,
   readOnly = false,
+  prayerSessions = {},
+  hasPrayerContext = false,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -84,9 +86,12 @@ export function DensityTab({
   // ← يجب أن يكون قبل أي early return
   const [autoFocusInput, setAutoFocusInput] = useState(null);
 
-  if (!densityStats) return null;
+  // When no prayer session exists for selected prayer, show prayer selector + empty state only
+  const noPrayerSession = hasPrayerContext && !prayerSessions[activePrayer];
 
-  const selectedZone = selectedZoneId ? densityStats.zonesDensity.find(z => z.id === selectedZoneId) : null;
+  if (!densityStats && !noPrayerSession) return null;
+
+  const selectedZone = selectedZoneId && densityStats ? densityStats.zonesDensity.find(z => z.id === selectedZoneId) : null;
 
   const handleZoneClick = (zoneId) => {
     setSelectedZoneId(prev => prev === zoneId ? null : zoneId);
@@ -111,7 +116,7 @@ export function DensityTab({
     <div className="space-y-3">
 
       {/* ══ Stats Header — دائماً ظاهر ═══════════════════════ */}
-      {densityStats.totalZones > 0 && (
+      {densityStats && densityStats.totalZones > 0 && (
         <div className="relative overflow-hidden rounded-2xl p-4"
           style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%)", border: "1px solid #a7f3d0" }}>
           {/* خلفية ديكورية */}
@@ -168,21 +173,78 @@ export function DensityTab({
         </div>
       )}
 
-      {/* ══ Prayer Time Selector — emerald themed ═══════════ */}
+      {/* ══ Prayer Time Selector — emerald themed with status ═══════════ */}
       <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border" style={{ backgroundColor:"rgba(255,255,255,0.8)", borderColor:"#d1fae5" }} data-testid="prayer-time-selector">
-        {PRAYER_TIMES.map(pt => (
-          <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`prayer-btn-${pt.key}`}
-            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 px-2 rounded-xl text-sm font-cairo font-semibold transition-all duration-200
-              ${activePrayer === pt.key
-                ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md scale-[1.03]"
-                : "text-slate-400 hover:text-emerald-700 hover:bg-emerald-50"}`}>
-            <span className="text-base leading-none">{pt.icon}</span>
-            <span className="hidden sm:inline text-[10px] font-bold leading-none">{isAr ? pt.label_ar : pt.label_en}</span>
-          </button>
-        ))}
+        {PRAYER_TIMES.map(pt => {
+          const ps = prayerSessions[pt.key];
+          const status = ps?.status; // 'draft' | 'completed' | 'skipped' | undefined
+          const hasSession = !!ps;
+          return (
+            <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`prayer-btn-${pt.key}`}
+              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 px-2 rounded-xl text-sm font-cairo font-semibold transition-all duration-200 relative
+                ${activePrayer === pt.key
+                  ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md scale-[1.03]"
+                  : hasSession
+                    ? "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    : "text-slate-300 hover:text-slate-500 hover:bg-slate-50"}`}>
+              <span className="text-base leading-none">{pt.icon}</span>
+              <span className="hidden sm:inline text-[10px] font-bold leading-none">{isAr ? pt.label_ar : pt.label_en}</span>
+              {/* Prayer session status indicator */}
+              {hasPrayerContext && (
+                <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white
+                  ${status === 'completed' ? 'bg-emerald-500' :
+                    status === 'draft' ? 'bg-blue-500' :
+                    status === 'skipped' ? 'bg-amber-400' :
+                    'bg-slate-200'}`}
+                  title={status === 'completed' ? (isAr ? 'مكتملة' : 'Completed') :
+                         status === 'draft' ? (isAr ? 'جارية' : 'In Progress') :
+                         status === 'skipped' ? (isAr ? 'متجاوزة' : 'Skipped') :
+                         (isAr ? 'لم تبدأ' : 'Not Started')}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
+      {/* ═══ Empty State — No prayer session for selected prayer ════════ */}
+      {hasPrayerContext && !prayerSessions[activePrayer] && (
+        <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/60 py-12 px-6 text-center" data-testid="density-no-prayer-session">
+          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-slate-100/50" />
+          <div className="absolute -bottom-4 -left-4 w-14 h-14 rounded-full bg-slate-100/30" />
+          <div className="relative">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+              <span className="text-3xl">{PRAYER_TIMES.find(p => p.key === activePrayer)?.icon}</span>
+            </div>
+            <h3 className="font-cairo font-bold text-lg text-slate-700 mb-1">
+              {isAr ? `لا توجد جولة لصلاة ${PRAYER_TIMES.find(p => p.key === activePrayer)?.label_ar}` : `No tour for ${PRAYER_TIMES.find(p => p.key === activePrayer)?.label_en}`}
+            </h3>
+            <p className="text-slate-400 text-sm max-w-sm mx-auto">
+              {isAr
+                ? "يجب بدء جولة لهذه الصلاة من تبويب المصليات أولاً لتتمكن من إدخال بيانات الكثافة"
+                : "Start a prayer tour from the Prayer Areas tab first to enter density data"}
+            </p>
+            {/* Show which prayers have sessions */}
+            {Object.keys(prayerSessions).length > 0 && (
+              <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+                <span className="text-[10px] text-slate-400 font-medium">{isAr ? "الصلوات المتاحة:" : "Available prayers:"}</span>
+                {PRAYER_TIMES.filter(pt => prayerSessions[pt.key]).map(pt => (
+                  <button key={pt.key} onClick={() => setActivePrayer(pt.key)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold hover:bg-emerald-100 transition-colors"
+                    data-testid={`switch-prayer-${pt.key}`}>
+                    <span>{pt.icon}</span>
+                    <span>{isAr ? pt.label_ar : pt.label_en}</span>
+                    {prayerSessions[pt.key]?.status === 'completed' && <span className="text-emerald-500">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ─── Density Toolbar ──────────────────────── */}
+      {densityStats && <>
       <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
         {/* Quick List Dropdown */}
         <Popover open={quickListOpen} onOpenChange={setQuickListOpen}>
@@ -442,6 +504,7 @@ export function DensityTab({
           </div>
         </div>
       </div>
+      </>}
     </div>
   );
 }

@@ -755,7 +755,7 @@ export default function DailySessionsPage() {
       undoDrawing, redoDrawing, undoMapAction, redoMapAction,
       clipboardZone, handleCopyZone, handlePasteZone, handleCutZone, handleDeleteSelectedZone]);
 
-  useEffect(() => { setDensityEdits({}); }, [activeSession?.id]);
+  useEffect(() => { setDensityEdits({}); }, [activeSession?.id, activePrayer]);
 
   // ─── Density Handlers ─────────────────────────────────────
   const handleDensityChange = (zoneId, field, value, prayerOverride = null) => {
@@ -768,13 +768,14 @@ export default function DailySessionsPage() {
   };
 
   const handleSaveDensityBatch = async () => {
-    if (!activeSession || Object.keys(densityEdits).length === 0) return;
+    const targetSession = densityTargetSession || activeSession;
+    if (!targetSession || Object.keys(densityEdits).length === 0) return;
     setSavingDensity(true);
     try {
       const updates = Object.entries(densityEdits).map(([zone_id, edits]) => {
         const upd = { zone_id };
         if (edits.prayer_counts) {
-          const zone = activeSession.zones?.find(z => z.id === zone_id);
+          const zone = targetSession.zones?.find(z => z.id === zone_id);
           const existing = zone?.prayer_counts || { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, taraweeh: 0 };
           upd.prayer_counts = { ...existing, ...edits.prayer_counts };
         }
@@ -782,8 +783,14 @@ export default function DailySessionsPage() {
         if (edits.max_capacity !== undefined) upd.max_capacity = edits.max_capacity;
         return upd;
       });
-      const res = await axios.put(`${API}/admin/map-sessions/${activeSession.id}/density-batch`, { updates }, getAuthHeaders());
-      setActiveSession(res.data); setDensityEdits({}); await fetchSessions();
+      const res = await axios.put(`${API}/admin/map-sessions/${targetSession.id}/density-batch`, { updates }, getAuthHeaders());
+      // Update the correct state based on which session we saved to
+      if (targetSession.id !== activeSession?.id && activePrayer) {
+        setPrayerSessions(prev => ({ ...prev, [activePrayer]: res.data }));
+      } else {
+        setActiveSession(res.data);
+      }
+      setDensityEdits({}); await fetchSessions();
       toast.success(isAr ? "تم حفظ بيانات الكثافة" : "Density data saved");
     } catch (e) { toast.error(isAr ? "تعذر حفظ البيانات" : "Save failed"); }
     finally { setSavingDensity(false); }
@@ -830,9 +837,17 @@ export default function DailySessionsPage() {
     return { totalActive: active.length, totalRemoved: removed.length, totalAll: activeSession.zones.length, uniqueCategories: activeCats.length, catCounts, prevSession, prevCatCounts, prevTotalActive, hasPrevious: !!prevSession && Object.keys(prevCatCounts).length > 0, activeCats, totalArea, avgWorshippers, avgCapacity };
   }, [activeSession, sessions, ZONE_TYPES]);
 
+  // ─── Density Target Session ──────────────────────────────
+  // When viewing density for a specific prayer, use that prayer's session zones
+  const densityTargetSession = useMemo(() => {
+    if (!activeDailySession) return activeSession;
+    return prayerSessions[activePrayer] || null;
+  }, [activeDailySession, prayerSessions, activePrayer, activeSession]);
+
   const densityStats = useMemo(() => {
-    if (!activeSession?.zones) return null;
-    const active = activeSession.zones.filter(z => !z.is_removed);
+    const targetSession = densityTargetSession;
+    if (!targetSession?.zones) return null;
+    const active = targetSession.zones.filter(z => !z.is_removed);
     let totalCurrent = 0, totalCapacity = 0, criticalCount = 0, highCount = 0, mediumCount = 0, safeCount = 0;
     const zonesDensity = active.map(z => {
       const area = z.area_sqm || 0;
@@ -861,7 +876,7 @@ export default function DailySessionsPage() {
     const overallPct = totalCapacity > 0 ? Math.round((totalCurrent / totalCapacity) * 100) : 0;
     const overallLevel = getDensityLevel(totalCurrent, totalCapacity);
     return { zonesDensity, totalCurrent, totalCapacity, overallPct, overallLevel, criticalCount, highCount, mediumCount, safeCount, totalZones: active.length };
-  }, [activeSession, densityEdits, activePrayer]);
+  }, [densityTargetSession, densityEdits, activePrayer]);
 
   // ─── Loading ──────────────────────────────────────────────
   if (loading) {
@@ -1497,6 +1512,8 @@ export default function DailySessionsPage() {
                     panelCollapsed={densityPanelCollapsed}
                     onPanelToggle={() => setDensityPanelCollapsed(p => !p)}
                     readOnly={!canEnterDensity}
+                    prayerSessions={prayerSessions}
+                    hasPrayerContext={!!activeDailySession}
                   />
                 </TabsContent>
 
