@@ -630,8 +630,8 @@ export default function TasksPage({ department }) {
 
           {/* ── Stats Cards احترافية مع أيقونات ── */}
           <div className="flex items-center gap-2">
-            <div className="flex-1 overflow-x-auto pb-1 -mb-1">
-              <div className="flex items-center gap-2 min-w-max">
+            <div className="flex-1 overflow-x-auto pb-2 pt-1 -mb-1">
+              <div className="flex items-center gap-2 min-w-max px-0.5">
                 {[
                   { key:"all",         label:"الكل",     value:dayStats.total,       color:"#475569", bg:"#f8fafc", border:"#e2e8f0", Icon:ClipboardList, pulse:false },
                   { key:"pending",     label:"انتظار",   value:dayStats.pending,     color:STATUS_CFG.pending.color,     bg:STATUS_CFG.pending.bg,     border:STATUS_CFG.pending.border,     Icon:Clock,        pulse:false },
@@ -645,7 +645,7 @@ export default function TasksPage({ department }) {
                     <button key={s.key}
                       onClick={()=>setFilterStatus(s.key===filterStatus?"all":s.key==="early_only"?"done_early":s.key)}
                       className={`group relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all duration-200 flex-shrink-0 min-w-[62px]
-                        ${isActive ? "shadow-lg scale-105 -translate-y-0.5" : "hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5"}`}
+                        ${isActive ? "shadow-lg -translate-y-0.5" : "hover:shadow-md hover:-translate-y-0.5"}`}
                       style={isActive
                         ? { backgroundColor:s.color+"18", borderColor:s.color, boxShadow:`0 4px 12px ${s.color}30` }
                         : { backgroundColor:s.bg, borderColor:s.border }}>
