@@ -50,6 +50,17 @@ export default function DailySessionsPage() {
   const canDistribute = canWrite("distribute_employees");
   const canViewDistribute = canRead("distribute_employees");
   const canEnterDensity = canWrite("enter_density");
+
+  // ── الخريطة قابلة للتعديل فقط عند جولة صلاة نشطة ──────────
+  const isMapEditable = canCreateSession
+    && activeSession?.session_type === "prayer"
+    && activeSession?.status === "draft";
+
+  const viewOnlyReason = !activeSession ? null
+    : activeSession.session_type !== "prayer" ? "waiting_prayer"
+    : activeSession.status === "completed"    ? "prayer_done"
+    : activeSession.status === "skipped"      ? "prayer_skipped"
+    : null;
   const canViewDensity = canRead("enter_density") || canRead("view_density_reports");
 
   // Core state
@@ -686,6 +697,8 @@ export default function DailySessionsPage() {
     const handleKeyDown = (e) => {
       // لا تتدخل إذا المستخدم يكتب في input
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+      // لا تتدخل إذا الخريطة في وضع العرض (لا يوجد جولة صلاة نشطة)
+      if (!isMapEditable) return;
 
       // Ctrl+Z = Undo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
@@ -1321,7 +1334,8 @@ export default function DailySessionsPage() {
                       </div>
                     </div>
                   )}
-                  {activeSession?.status !== "completed" && canCreateSession && (
+                  {/* ── MapToolbar: يظهر فقط عند جولة صلاة نشطة ── */}
+                  {isMapEditable ? (
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -1338,8 +1352,36 @@ export default function DailySessionsPage() {
                     undoStack={undoStack} redoStack={redoStack}
                     undoMapAction={undoMapAction} redoMapAction={redoMapAction}
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
-                    readOnly={!canCreateSession}
+                    readOnly={false}
                   />
+                  ) : activeSession && viewOnlyReason && (
+                    /* ── لافتة وضع العرض ── */
+                    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm font-cairo
+                      ${viewOnlyReason === "waiting_prayer"
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : viewOnlyReason === "prayer_done"
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                        : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+                      <span className="text-xl">
+                        {viewOnlyReason === "waiting_prayer" ? "🕌"
+                          : viewOnlyReason === "prayer_done" ? "✅"
+                          : "⏭️"}
+                      </span>
+                      <div>
+                        <p className="font-bold text-sm">
+                          {viewOnlyReason === "waiting_prayer"
+                            ? "وضع العرض — ابدأ جولة صلاة لتفعيل التعديل"
+                            : viewOnlyReason === "prayer_done"
+                            ? "جولة الصلاة اكتملت — الخريطة للعرض فقط"
+                            : "الصلاة متجاوزة — الخريطة للعرض فقط"}
+                        </p>
+                        <p className="text-[10px] opacity-70">
+                          {viewOnlyReason === "waiting_prayer"
+                            ? "اضغط زر البدء على أي وقت صلاة لفتح التعديل"
+                            : "لإجراء تعديلات: ابدأ جولة صلاة جديدة من الأسفل"}
+                        </p>
+                      </div>
+                    </div>
                   )}
                   <div className="relative rounded-xl overflow-hidden border border-slate-200/60" style={{ height: 'var(--map-container-h)' }}>
                     {/* Fixed handle - always at panel edge */}
@@ -1397,7 +1439,7 @@ export default function DailySessionsPage() {
                     activePrayer={activePrayer} densityEdits={densityEdits}
                     handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
                     savingDensity={savingDensity}
-                    readOnly={!canCreateSession}
+                    readOnly={!isMapEditable}
                   />
                     </div>
                     {/* Stats panel: absolutely positioned, slides over the map */}
