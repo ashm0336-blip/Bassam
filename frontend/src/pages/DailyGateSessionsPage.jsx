@@ -6,7 +6,7 @@ import {
   RefreshCw, Edit2, MessageSquare, Layers, ZoomIn, ZoomOut, Maximize2,
   RotateCcw, CircleDot, CircleOff, Tag, CalendarRange, DoorOpen, DoorClosed,
   Wrench, ArrowUpRight, ArrowDownRight, Users, FileStack, Database,
-  Crosshair
+  Crosshair, Activity, AlertTriangle, UserCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -350,35 +350,79 @@ export default function DailyGateSessionsPage() {
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto flex items-center justify-center mb-3 animate-pulse"><DoorOpen className="w-6 h-6 text-primary" /></div><p className="text-muted-foreground text-sm">{isAr ? "جاري التحميل..." : "Loading..."}</p></div></div>;
 
   return (
-    <div className="space-y-5" data-testid="daily-gate-sessions-page">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">{isAr ? "السجل اليومي للأبواب" : "Daily Gate Log"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{isAr ? "تتبع حالة الأبواب يومياً مع التغييرات والملاحظات" : "Track daily gate status changes and notes"}</p>
+    <div className="space-y-4" data-testid="daily-gate-sessions-page">
+
+      {/* ══ HERO BANNER ════════════════════════════════════════ */}
+      <div className="relative overflow-hidden rounded-2xl p-5"
+        style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 40%, #2563eb 70%, #3b82f6 100%)" }}>
+        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10 bg-white"/>
+        <div className="absolute -bottom-14 -left-6 w-56 h-56 rounded-full opacity-5 bg-white"/>
+        <div className="absolute top-4 left-32 w-6 h-6 rounded-full opacity-15 bg-white"/>
+
+        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                <DoorOpen className="w-4 h-4 text-white"/>
+              </div>
+              <span className="text-blue-200 text-xs font-medium">السجل اليومي للأبواب</span>
+            </div>
+            <h1 className="font-cairo font-black text-2xl text-white leading-tight" data-testid="page-title">
+              {selectedFloor ? (isAr ? selectedFloor.name_ar : (selectedFloor.name_en || selectedFloor.name_ar)) : "اختر الطابق"}
+            </h1>
+            <p className="text-blue-200 text-xs mt-1">تتبع حالة الأبواب يومياً مع التغييرات والملاحظات</p>
+          </div>
+
+          {/* mini stats */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {[
+              { label:"الجولات",   value:sessions.length,                                                    color:"text-white",        bg:"bg-white/20" },
+              { label:"مكتملة",    value:sessions.filter(s=>s.status==="completed").length,                  color:"text-blue-200",     bg:"bg-white/10" },
+              { label:"مسودة",     value:sessions.filter(s=>s.status==="draft").length,                      color:"text-yellow-300",   bg:"bg-yellow-400/20" },
+              { label:"هذا الشهر", value:sessions.filter(s=>s.date?.startsWith(new Date().toISOString().slice(0,7))).length, color:"text-cyan-300", bg:"bg-cyan-400/15" },
+            ].map((s,i)=>(
+              <div key={i} className={`${s.bg} rounded-xl px-3 py-2 text-center backdrop-blur-sm`}>
+                <p className={`font-black text-xl leading-none ${s.color}`}>{s.value}</p>
+                <p className="text-white/60 text-[9px] mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Controls bar */}
+        <div className="relative flex items-center gap-2 mt-4 pt-3 border-t border-white/15 flex-wrap">
           <Select value={selectedFloor?.id || ""} onValueChange={(v) => setSelectedFloor(floors.find(f => f.id === v))}>
-            <SelectTrigger className="w-48" data-testid="floor-select"><Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} /></SelectTrigger>
+            <SelectTrigger className="w-44 bg-white/20 border-white/30 text-white h-9 text-sm" data-testid="floor-select">
+              <Layers className="w-4 h-4 ml-1" /><SelectValue placeholder={isAr ? "اختر الطابق" : "Select floor"} />
+            </SelectTrigger>
             <SelectContent>{floors.map(f => <SelectItem key={f.id} value={f.id}>{isAr ? f.name_ar : (f.name_en || f.name_ar)}</SelectItem>)}</SelectContent>
           </Select>
-          {canCreateSession && <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }} disabled={!selectedFloor} className="bg-blue-600 hover:bg-blue-700" data-testid="start-new-tour-btn"><Plus className="w-4 h-4 ml-1" />{isAr ? "جولة جديدة" : "New Tour"}</Button>}
-          {canCreateSession && <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setShowBatchDialog(true); }} disabled={!selectedFloor} data-testid="batch-entry-btn"><CalendarRange className="w-4 h-4 ml-1" />{isAr ? "إدخال متعدد" : "Batch"}</Button>}
+          {canCreateSession && (
+            <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
+              disabled={!selectedFloor} data-testid="start-new-tour-btn"
+              className="bg-white text-blue-700 hover:bg-blue-50 font-bold gap-1.5 h-9 shadow-md">
+              <Plus className="w-4 h-4"/>جولة جديدة
+            </Button>
+          )}
+          {canCreateSession && (
+            <Button variant="outline" onClick={() => { setBatchStartDate(""); setBatchEndDate(""); setShowBatchDialog(true); }}
+              disabled={!selectedFloor} data-testid="batch-entry-btn"
+              className="bg-white/15 border-white/30 text-white hover:bg-white/25 h-9 gap-1.5 hidden sm:flex">
+              <CalendarRange className="w-4 h-4"/>إدخال متعدد
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        {/* Sidebar: Archive System */}
+        {/* Sidebar */}
         <div className="lg:col-span-1">
           <ArchiveSidebar
-            sessions={sessions}
-            activeSession={activeSession}
-            isAr={isAr}
-            theme="blue"
-            readOnly={!canDeleteSession}
+            sessions={sessions} activeSession={activeSession} isAr={isAr}
+            theme="blue" readOnly={!canDeleteSession}
             onSelectSession={(s) => { setActiveSession(s); setZoom(1); setPanOffset({x:0,y:0}); zoomRef.current=1; }}
             onDeleteSession={handleDeleteSession}
-            onCalendarEmptyClick={canCreateSession 
+            onCalendarEmptyClick={canCreateSession
               ? (ds) => { setEmptyDaySelected(null); setNewSessionDate(ds); setCloneSource("auto"); setShowNewSessionDialog(true); }
               : (ds) => { setActiveSession(null); setEmptyDaySelected(ds); }
             }
@@ -388,142 +432,197 @@ export default function DailyGateSessionsPage() {
         {/* Main Content */}
         <div className="lg:col-span-3">
           {!activeSession ? (
-            <Card className="border-dashed"><CardContent className="py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4"><DoorOpen className="w-8 h-8 text-slate-400" /></div>
-              {emptyDaySelected ? (
-                <>
-                  <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
-                    {isAr ? `لا توجد جولات ليوم ${new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}` : `No sessions for ${emptyDaySelected}`}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{isAr ? "اختر يوماً آخر من التقويم" : "Select another day"}</p>
-                </>
-              ) : (
-                <h3 className="font-cairo font-semibold text-lg text-slate-600 mb-2">
-                  {isAr ? (canCreateSession ? "اختر يوماً من التقويم أو ابدأ جولة جديدة" : "اختر يوماً من التقويم لعرض جولته") : "Pick a day to view its tour"}
-                </h3>
-              )}
-            </CardContent></Card>
+            /* ── Empty State خرافي ── */
+            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/60"
+              style={{ minHeight: "420px" }}>
+              <div className="absolute top-6 right-6 w-24 h-24 rounded-full bg-blue-100/50"/>
+              <div className="absolute bottom-8 left-8 w-16 h-16 rounded-full bg-indigo-100/40"/>
+
+              <div className="relative flex flex-col items-center justify-center py-16 px-8 text-center">
+                <div className="relative mb-6">
+                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-xl"
+                    style={{ background: "linear-gradient(135deg, #1e40af, #2563eb)" }}>
+                    {emptyDaySelected ? <CalendarIcon className="w-11 h-11 text-white"/> : <DoorOpen className="w-11 h-11 text-white"/>}
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
+                    <span className="text-lg">🚪</span>
+                  </div>
+                </div>
+
+                {emptyDaySelected ? (
+                  <>
+                    <h3 className="font-cairo font-black text-2xl text-blue-900 mb-2">لا توجد جولات لهذا اليوم</h3>
+                    <p className="text-blue-700 font-medium mb-1">
+                      {new Date(emptyDaySelected).toLocaleDateString('ar-SA', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
+                    </p>
+                    <p className="text-slate-500 text-sm max-w-xs">اختر يوماً آخر من التقويم أو أنشئ جولة جديدة لهذا اليوم</p>
+                    {canCreateSession && selectedFloor && (
+                      <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(emptyDaySelected); setShowNewSessionDialog(true); }}
+                        className="mt-5 gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg">
+                        <Plus className="w-4 h-4"/>إنشاء جولة لهذا اليوم
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-cairo font-black text-2xl text-blue-900 mb-2">
+                      {canCreateSession ? "ابدأ جولتك اليومية للأبواب" : "السجل اليومي للأبواب"}
+                    </h3>
+                    <p className="text-slate-500 text-sm max-w-sm leading-relaxed mb-5">
+                      {canCreateSession
+                        ? "اضغط على يوم في التقويم لعرض جولته، أو ابدأ جولة جديدة الآن لتتبع حالة الأبواب والتدفق"
+                        : "اضغط على يوم في التقويم لعرض تفاصيل الجولة اليومية للأبواب"}
+                    </p>
+                    {canCreateSession && selectedFloor && (
+                      <div className="flex items-center gap-3">
+                        <Button onClick={() => { setCloneSource("auto"); setNewSessionDate(today); setShowNewSessionDialog(true); }}
+                          className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg">
+                          <Plus className="w-4 h-4"/>جولة جديدة الآن 🚀
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowBatchDialog(true)}
+                          className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50">
+                          <CalendarRange className="w-4 h-4"/>إدخال متعدد
+                        </Button>
+                      </div>
+                    )}
+                    {!selectedFloor && (
+                      <div className="mt-4 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                        ⚠️ اختر الطابق من القائمة أعلاه أولاً
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
-              {/* Session header */}
-              <div className="relative overflow-hidden rounded-xl border bg-gradient-to-l from-blue-50 via-white to-slate-50 p-4">
+              {/* ══ Session Header ════════════════════════════════ */}
+              <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-l from-blue-50 via-white to-slate-50 p-4">
                 <div className="relative flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200"><DoorOpen className="w-6 h-6 text-white" /></div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200">
+                      <DoorOpen className="w-5 h-5 text-white" />
+                    </div>
                     <div>
-                      <h2 className="font-cairo font-bold text-lg">{isAr ? "جولة " : "Tour "}{formatDate(activeSession.date)}</h2>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <Badge className={`text-xs ${activeSession.status === "completed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>{activeSession.status === "completed" ? (isAr ? "مكتملة" : "Done") : (isAr ? "مسودة" : "Draft")}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-blue-500" />{stats.total} {isAr ? "باب" : "gates"}</span>
-                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-emerald-500" />{stats.open} {isAr ? "مفتوح" : "open"}</span>
-                          <span className="inline-flex items-center gap-1 ml-3"><span className="w-2 h-2 rounded-full bg-red-500" />{stats.closed} {isAr ? "مغلق" : "closed"}</span>
-                          {stats.crowded > 0 && <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium"><span className="w-2 h-2 rounded-full bg-red-500" />{stats.crowded} {isAr ? "مزدحم" : "crowded"}</span>}
-                          {stats.medium > 0 && <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium"><span className="w-2 h-2 rounded-full bg-amber-500" />{stats.medium} {isAr ? "متوسط" : "medium"}</span>}
-                        </span>
+                      <h2 className="font-cairo font-bold text-base">{isAr ? "جولة " : "Tour "}{formatDate(activeSession.date)}</h2>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <Badge className={`text-[10px] px-2 py-0.5 ${activeSession.status==="completed" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                          {activeSession.status==="completed" ? (isAr?"✅ مكتملة":"Done") : (isAr?"⏳ مسودة":"Draft")}
+                        </Badge>
+                        {activeSession.changes_summary && Object.entries(activeSession.changes_summary).map(([k,v]) => {
+                          if (v===0) return null;
+                          const l = CHANGE_LABELS[k]; if (!l) return null;
+                          return <span key={k} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{backgroundColor:l.bg,color:l.color}}>{v} {isAr?l.ar:l.en}</span>;
+                        })}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setSessionNotes(activeSession.supervisor_notes || ""); setShowNotesDialog(true); }}><MessageSquare className="w-4 h-4 ml-1" />{isAr ? "ملاحظات" : "Notes"}</Button>
-                    {canApproveSession && activeSession.status === "draft" ? (
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleUpdateSession({ status: "completed" })} data-testid="complete-session-btn"><CheckCircle2 className="w-4 h-4 ml-1" />{isAr ? "إنهاء الجولة" : "Complete"}</Button>
-                    ) : canApproveSession && activeSession.status !== "draft" ? (
-                      <Button variant="outline" size="sm" onClick={() => handleUpdateSession({ status: "draft" })}><RotateCcw className="w-4 h-4 ml-1" />{isAr ? "إعادة فتح" : "Reopen"}</Button>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs"
+                      onClick={() => { setSessionNotes(activeSession.supervisor_notes||""); setShowNotesDialog(true); }}>
+                      <MessageSquare className="w-3.5 h-3.5"/>ملاحظات
+                    </Button>
+                    {canApproveSession && activeSession.status==="draft" ? (
+                      <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 gap-1.5 text-xs"
+                        onClick={()=>handleUpdateSession({status:"completed"})} data-testid="complete-session-btn">
+                        <CheckCircle2 className="w-3.5 h-3.5"/>إنهاء الجولة
+                      </Button>
+                    ) : canApproveSession && activeSession.status!=="draft" ? (
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs"
+                        onClick={()=>handleUpdateSession({status:"draft"})}>
+                        <RotateCcw className="w-3.5 h-3.5"/>إعادة فتح
+                      </Button>
                     ) : null}
                   </div>
                 </div>
-                {/* Stats strip */}
-                {stats.noStaff > 0 && <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700"><AlertCircle className="w-3.5 h-3.5 inline ml-1" />{stats.noStaff} {isAr ? "أبواب مفتوحة بدون موظفين" : "open gates without staff"}</div>}
-                {activeSession.changes_summary && (
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-200/60 flex-wrap">
-                    {Object.entries(activeSession.changes_summary).map(([k,v]) => { if (v===0) return null; const l = CHANGE_LABELS[k]; if (!l) return null; return <div key={k} className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium" style={{backgroundColor:l.bg,color:l.color}}><span className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:l.color}} />{v} {isAr?l.ar:l.en}</div>; })}
+              </div>
+
+              {/* ══ Stats Header الاحترافي ═══════════════════════ */}
+              <div className="relative overflow-hidden rounded-2xl p-4"
+                style={{ background:"linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#eff6ff 100%)", border:"1px solid #bfdbfe" }}>
+                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-blue-400"/>
+                <div className="relative grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  {[
+                    { label:"إجمالي الأبواب", value:stats.total,   sub:"في هذه الجولة",                         color:"#1d4ed8", Icon:DoorOpen,       bg:"#dbeafe" },
+                    { label:"مفتوحة الآن",     value:stats.open,    sub:`${stats.total>0?Math.round(stats.open/stats.total*100):0}% من الإجمالي`, color:"#059669", Icon:DoorOpen,       bg:"#d1fae5" },
+                    { label:"مغلقة / صيانة",  value:stats.closed,  sub:"موقوف أو صيانة",                       color:"#6b7280", Icon:DoorClosed,     bg:"#f1f5f9" },
+                    { label:"مزدحمة",          value:stats.crowded, sub:stats.crowded>0?"⚠️ تحتاج انتباه":"✅ حالة جيدة", color:stats.crowded>0?"#dc2626":"#059669", Icon:AlertTriangle, bg:stats.crowded>0?"#fee2e2":"#d1fae5" },
+                    { label:"بدون موظفين",     value:stats.noStaff, sub:stats.noStaff>0?"🚨 تحتاج تغطية!":"✅ كل مغطى", color:stats.noStaff>0?"#dc2626":"#059669", Icon:stats.noStaff>0?AlertTriangle:UserCheck, bg:stats.noStaff>0?"#fee2e2":"#d1fae5" },
+                  ].map((s,i)=>(
+                    <div key={i} className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-xl px-2.5 py-2 border border-white/60">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor:s.bg }}>
+                        <s.Icon className="w-3.5 h-3.5" style={{ color:s.color }}/>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-lg leading-none tabular-nums" style={{ color:s.color }}>{s.value}</p>
+                        <p className="text-[8px] font-bold text-slate-600 leading-tight truncate">{s.label}</p>
+                        <p className="text-[7px] text-slate-400 leading-tight">{s.sub}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Indicators + progress */}
+                <div className="relative mt-3 flex items-center gap-2 flex-wrap">
+                  {[{l:"خفيف",v:stats.light,c:"#22c55e"},{l:"متوسط",v:stats.medium,c:"#f59e0b"},{l:"مزدحم",v:stats.crowded,c:"#ef4444"}]
+                    .filter(x=>x.v>0).map((ind,i)=>(
+                    <div key={i} className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border"
+                      style={{ backgroundColor:ind.c+"12", borderColor:ind.c+"40" }}>
+                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor:ind.c }}/>
+                      <span className="text-[9px] font-bold" style={{ color:ind.c }}>{ind.l}: {ind.v}</span>
+                    </div>
+                  ))}
+                  <div className="mr-auto flex items-center gap-2">
+                    <div className="h-1.5 w-24 bg-blue-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-600 rounded-full transition-all duration-700" style={{ width:`${stats.total>0?Math.round(stats.open/stats.total*100):0}%` }}/>
+                    </div>
+                    <span className="text-[9px] font-black text-blue-700">{stats.total>0?Math.round(stats.open/stats.total*100):0}% مفتوح</span>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Professional Tab Bar */}
-                <div className="rounded-2xl p-2 mb-4" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }} data-testid="daily-tabs-bar">
-                  <div className="flex items-center justify-center gap-2">
+                {/* Tab Bar — نفس تبويبات الإعدادات */}
+                <div className="rounded-2xl p-2 mb-4"
+                  style={{ backgroundColor:'rgba(255,255,255,0.7)', border:'1px solid #e5e7eb' }}
+                  data-testid="daily-tabs-bar">
+                  <div className="flex items-center gap-2 justify-center flex-wrap">
                     {[
-                      { id: 'map', label: isAr ? 'الخريطة' : 'Map', icon: DoorOpen, count: null },
-                      { id: 'gates', label: isAr ? 'الأبواب' : 'Gates', icon: Tag, count: activeGates.length },
-                      { id: 'employees', label: isAr ? 'الموظفين' : 'Staff', icon: Users, count: null },
-                      { id: 'changes', label: isAr ? 'التغييرات' : 'Changes', icon: FileText, count: changedGates.length || null },
-                    ].map(tab => {
-                      const isActive = activeTab === tab.id;
+                      { id:'map',       label:isAr?'الخريطة':'Map',       icon:DoorOpen, count:null },
+                      { id:'gates',     label:isAr?'الأبواب':'Gates',     icon:Tag,      count:activeGates.length },
+                      { id:'employees', label:isAr?'الموظفين':'Staff',    icon:Users,    count:null },
+                      { id:'changes',   label:isAr?'التغييرات':'Changes', icon:FileText, count:changedGates.length||null },
+                    ].map(tab=>{
+                      const isActive = activeTab===tab.id;
                       const TabIcon = tab.icon;
                       return (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setActiveTab(tab.id)}
+                        <button key={tab.id} type="button" onClick={()=>setActiveTab(tab.id)}
                           data-testid={`tab-${tab.id}`}
-                          className={`relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-xl transition-all duration-300 min-w-[90px]
-                            ${isActive
-                              ? 'bg-white shadow-md border-2 scale-[1.02]'
-                              : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'
-                            }`}
-                          style={isActive ? { borderColor: '#2563eb' } : {}}
-                        >
-                          <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
-                            style={isActive ? { backgroundColor: '#eff6ff', color: '#2563eb' } : { backgroundColor: '#f3f4f6', color: '#6b7280' }}
-                          >
-                            <TabIcon className="w-5 h-5" />
+                          className={`relative flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl transition-all duration-300 min-w-[90px]
+                            ${isActive ? 'bg-white shadow-md border-2 scale-[1.02]' : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'}`}
+                          style={isActive?{borderColor:"#1d4ed8"}:{}}>
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                            style={isActive?{backgroundColor:"#dbeafe",color:"#1d4ed8"}:{backgroundColor:"#f3f4f6",color:"#6b7280"}}>
+                            <TabIcon className="w-5 h-5"/>
                           </div>
-                          <span
-                            className={`text-xs font-medium transition-colors duration-300 ${isActive ? 'font-bold' : 'text-gray-500'}`}
-                            style={isActive ? { color: '#2563eb' } : {}}
-                          >
+                          <span className="text-xs font-cairo transition-colors" style={isActive?{fontWeight:700,color:"#1d4ed8"}:{color:"#6b7280"}}>
                             {tab.label}
                           </span>
-                          {tab.count !== null && tab.count > 0 && (
-                            <span
-                              className={`absolute -top-1 -left-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
-                              style={{ backgroundColor: tab.id === 'changes' ? '#ef4444' : (isActive ? '#2563eb' : '#9ca3af') }}
-                            >
+                          {tab.count!==null && tab.count>0 && (
+                            <span className="absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white"
+                              style={{backgroundColor:isActive?"#1d4ed8":"#9ca3af"}}>
                               {tab.count}
                             </span>
                           )}
-                          {isActive && (
-                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: '#2563eb' }} />
-                          )}
+                          {isActive && <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-blue-600"/>}
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* MAP TAB - Rich map with markers, tooltips, stats */}
-                <TabsContent value="map" className="space-y-3" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <div className="rounded-xl border bg-gradient-to-bl from-blue-50 to-white p-3">
-                      <p className="text-[10px] text-muted-foreground">{isAr ? "إجمالي" : "Total"}</p>
-                      <p className="text-xl font-bold text-blue-700">{stats.total}</p>
-                    </div>
-                    <div className="rounded-xl border bg-gradient-to-bl from-emerald-50 to-white p-3">
-                      <p className="text-[10px] text-muted-foreground">{isAr ? "مفتوح" : "Open"}</p>
-                      <p className="text-xl font-bold text-emerald-600">{stats.open}</p>
-                    </div>
-                    <div className="rounded-xl border bg-gradient-to-bl from-red-50 to-white p-3">
-                      <p className="text-[10px] text-muted-foreground">{isAr ? "مغلق" : "Closed"}</p>
-                      <p className="text-xl font-bold text-red-600">{stats.closed}</p>
-                    </div>
-                    <div className="rounded-xl border bg-gradient-to-bl from-orange-50 to-white p-3">
-                      <p className="text-[10px] text-muted-foreground">{isAr ? "مزدحم" : "Crowded"}</p>
-                      <p className="text-xl font-bold text-orange-600">{stats.crowded}</p>
-                    </div>
-                    {stats.noStaff > 0 && (
-                      <div className="rounded-xl border bg-amber-50 border-amber-200 p-3">
-                        <p className="text-[10px] text-amber-600">{isAr ? "بدون موظفين" : "No Staff"}</p>
-                        <p className="text-xl font-bold text-amber-600">{stats.noStaff}</p>
-                      </div>
-                    )}
-                  </div>
-
+                {/* MAP TAB */}
+                <TabsContent value="map" className="space-y-2" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
                   {/* Toolbar: Mode toggle + Zoom */}
                   <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
                     <div className="flex items-center gap-1.5">
