@@ -688,7 +688,11 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                 return (
                   <>
                     {/* Backdrop */}
-                    <div className="absolute inset-0 z-30 bg-black/10" onClick={() => setMapClickedZone(null)} />
+                    <div className="absolute inset-0 z-30 bg-black/10"
+                      onClick={() => setMapClickedZone(null)}
+                      onMouseDown={e => e.stopPropagation()}
+                      onMouseUp={e => e.stopPropagation()}
+                    />
                     {/* Panel */}
                     <div
                       className="absolute z-40"
@@ -697,6 +701,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                         top: Math.max(0, mapClickPos.y - 200),
                       }}
                       onClick={e => e.stopPropagation()}
+                      onMouseDown={e => e.stopPropagation()}
+                      onMouseUp={e => e.stopPropagation()}
                       data-testid="map-zone-assign-panel"
                     >
                       <MapZoneAssignPanel
