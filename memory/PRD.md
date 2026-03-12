@@ -32,25 +32,20 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 
 ### Recent Implementation (March 12, 2026)
 - **P0: Link Crowd Densities to Prayer-Specific Zones** - COMPLETE & TESTED
-  - Density tab now shows zones from the specific prayer session (not all zones)
-  - Prayer time selector shows status indicators (green=completed, blue=draft, amber=skipped, gray=no session)
-  - Empty state with helpful messaging when no prayer session exists for selected prayer
-  - Available prayers shown as clickable quick-switch buttons in empty state
-  - Density save handler targets the correct prayer session
-  - Files modified: `DailySessionsPage.jsx`, `DensityTab.jsx`
+  - Density tab shows zones from specific prayer session
+  - Prayer status indicators + empty state for prayers without sessions
 - **UI Cleanup: Remove duplicate stats headers** - COMPLETE
-  - Removed redundant stats banners from Density tab and Employees tab
-  - KPI data remains in the side panel (no data loss)
-  - Files modified: `DensityTab.jsx`, `ZoneEmployeesTab.jsx`
+  - Removed from Density tab and Employees tab in Prayer Halls
 - **Multi-Select Employee Assignment for Zones** - COMPLETE & TESTED
-  - Zone cards now open a professional multi-select popover with checkboxes
-  - Employees grouped by shift with color indicators
-  - Shows which employees are assigned to other zones (amber warning)
-  - Search field for quick filtering by name/employee number
-  - Read-only mode with clear message when session is completed
-  - **Map-click assignment**: Click any zone on the map to open assignment panel
-  - Removed redundant "Quick Assign" button from toolbar
-  - Files modified: `ZoneEmployeesTab.jsx`
+  - Zone cards + map click: multi-select popover with checkboxes grouped by shift
+  - Read-only mode with clear message for completed sessions
+  - Removed redundant "Quick Assign" button
+- **Gate Sessions Overhaul** - COMPLETE
+  - Renamed/reordered tabs: الموظفين ← الكثافات ← الأبواب (matches Prayer Halls)
+  - Removed stats banner, added side panel with KPIs + mini gate cards
+  - Legend moved to toolbar
+  - Gate changes log under the map (cards showing status/indicator changes)
+  - Employees tab completely rewritten: map with coverage overlay + side panel + multi-select gate assignment popovers
 
 ## Prioritized Backlog
 

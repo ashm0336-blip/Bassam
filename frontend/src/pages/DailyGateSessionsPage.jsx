@@ -865,6 +865,51 @@ export default function DailyGateSessionsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* ── سجل التغييرات تحت الخريطة ── */}
+                  {changedGates.length > 0 && (
+                    <div className="rounded-2xl overflow-hidden" style={{ background:"linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#eff6ff 100%)", border:"1px solid #bfdbfe" }} data-testid="gate-changes-log">
+                      <div className="px-4 py-3 flex items-center justify-between border-b" style={{ borderColor:"#93c5fd" }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Activity className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-blue-900 font-cairo">{isAr?"سجل التغييرات":"Changes Log"}</p>
+                            <p className="text-[8px] text-blue-500">{changedGates.length} {isAr?"تغيير في هذه الجولة":"changes"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                          {changedGates.map(gate => {
+                            const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
+                            const cl = CHANGE_LABELS[gate.change_type] || CHANGE_LABELS.unchanged;
+                            const isOpen = gate.status === "open";
+                            const INDICATOR_LABELS = { light:"خفيف", medium:"متوسط", crowded:"مزدحم" };
+                            return (
+                              <div key={gate.id} className="bg-white/80 rounded-xl p-2.5 border border-white/60 hover:shadow-sm transition-all" data-testid={`gate-change-${gate.id}`}>
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                  <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: sc.color }}>
+                                    <DoorOpen className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-700 truncate flex-1">{gate.name_ar}</span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: cl.bg, color: cl.color }}>{isAr?cl.ar:cl.en}</span>
+                                  <span className="text-[8px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: sc.color+"15", color: sc.color }}>{isAr?sc.label_ar:sc.label_en}</span>
+                                  {isOpen && gate.indicator && gate.indicator !== "light" && (
+                                    <span className="text-[8px] font-medium text-amber-600">{INDICATOR_LABELS[gate.indicator]}</span>
+                                  )}
+                                </div>
+                                {gate.daily_note && <p className="text-[7px] text-slate-400 mt-1 truncate">{gate.daily_note}</p>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* GATES TAB → الكثافات */}
@@ -885,6 +930,9 @@ export default function DailyGateSessionsPage() {
                     activeSession={activeSession}
                     isAr={isAr}
                     onUpdateGate={handleUpdateGate}
+                    selectedFloor={selectedFloor}
+                    imgRatio={imgRatio}
+                    STATUS_CONFIG={STATUS_CONFIG}
                   />
                 </TabsContent>
               </Tabs>
