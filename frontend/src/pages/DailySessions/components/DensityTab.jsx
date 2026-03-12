@@ -91,13 +91,75 @@ export function DensityTab({
 
   return (
     <div className="space-y-3">
-      {/* Prayer Time Selector */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl" data-testid="prayer-time-selector">
+
+      {/* ══ Stats Header — دائماً ظاهر ═══════════════════════ */}
+      {densityStats.totalZones > 0 && (
+        <div className="relative overflow-hidden rounded-2xl p-4"
+          style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%)", border: "1px solid #a7f3d0" }}>
+          {/* خلفية ديكورية */}
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-emerald-400"/>
+          <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full opacity-5 bg-teal-500"/>
+
+          <div className="relative grid grid-cols-4 gap-3">
+            {[
+              {
+                label: "إجمالي المناطق", value: densityStats.totalZones,
+                sub: null, color: "#065f46", Icon: MapPin, bg: "#d1fae5",
+              },
+              {
+                label: "المصلون الحاليون", value: densityStats.totalCurrent.toLocaleString('ar-SA'),
+                sub: `من ${densityStats.totalCapacity.toLocaleString('ar-SA')}`, color: "#1d4ed8", Icon: Users, bg: "#dbeafe",
+              },
+              {
+                label: "نسبة الإشغال", value: `${densityStats.overallPct}%`,
+                sub: densityStats.overallLevel?.label || "عادي",
+                color: densityStats.overallLevel?.color || "#059669", Icon: Gauge,
+                bg: (densityStats.overallLevel?.color || "#059669") + "20",
+              },
+              {
+                label: "تنبيهات كثافة", value: densityStats.zonesDensity?.filter(z=>z.fillPct>=80).length || 0,
+                sub: densityStats.zonesDensity?.filter(z=>z.fillPct>=80).length > 0 ? "⚠️ مناطق ممتلئة" : "✅ حالة طبيعية",
+                color: densityStats.zonesDensity?.filter(z=>z.fillPct>=80).length > 0 ? "#dc2626" : "#059669",
+                Icon: ShieldAlert, bg: densityStats.zonesDensity?.filter(z=>z.fillPct>=80).length > 0 ? "#fee2e2" : "#d1fae5",
+              },
+            ].map((s,i) => (
+              <div key={i} className="flex items-center gap-2.5 bg-white/70 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-white/60">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: s.bg }}>
+                  <s.Icon className="w-4 h-4" style={{ color: s.color }}/>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-black text-lg leading-none tabular-nums" style={{ color: s.color }}>{s.value}</p>
+                  <p className="text-[9px] font-semibold text-slate-600 leading-tight mt-0.5 truncate">{s.label}</p>
+                  {s.sub && <p className="text-[8px] text-slate-400 leading-tight">{s.sub}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* شريط الإشغال الكلي */}
+          <div className="relative mt-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-bold text-emerald-700">الطاقة الاستيعابية الكلية</span>
+              <span className="text-[10px] font-black text-emerald-800">{densityStats.overallPct}%</span>
+            </div>
+            <div className="h-2 bg-emerald-200 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width:`${Math.min(densityStats.overallPct,100)}%`, backgroundColor: densityStats.overallLevel?.color || "#059669" }}/>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Prayer Time Selector — emerald themed ═══════════ */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border" style={{ backgroundColor:"rgba(255,255,255,0.8)", borderColor:"#d1fae5" }} data-testid="prayer-time-selector">
         {PRAYER_TIMES.map(pt => (
           <button key={pt.key} onClick={() => setActivePrayer(pt.key)} data-testid={`prayer-btn-${pt.key}`}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-cairo font-semibold transition-all ${activePrayer === pt.key ? "bg-white shadow-md text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:text-slate-700 hover:bg-white/50"}`}>
-            <span className="text-base">{pt.icon}</span>
-            <span className="hidden sm:inline">{isAr ? pt.label_ar : pt.label_en}</span>
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 px-2 rounded-xl text-sm font-cairo font-semibold transition-all duration-200
+              ${activePrayer === pt.key
+                ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md scale-[1.03]"
+                : "text-slate-400 hover:text-emerald-700 hover:bg-emerald-50"}`}>
+            <span className="text-base leading-none">{pt.icon}</span>
+            <span className="hidden sm:inline text-[10px] font-bold leading-none">{isAr ? pt.label_ar : pt.label_en}</span>
           </button>
         ))}
       </div>
