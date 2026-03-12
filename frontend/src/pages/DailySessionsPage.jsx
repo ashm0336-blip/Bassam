@@ -1479,8 +1479,8 @@ export default function DailySessionsPage() {
                       ))}
                     </div>
                   )}
-                  {/* السجل يظهر فقط عند جولة صلاة نشطة */}
-                  {isMapEditable && (
+                  {/* السجل يظهر عند جولة صلاة (نشطة أو منتهية) */}
+                  {activeSession?.session_type === "prayer" && (
                   <ChangesLog
                     activeSession={activeSession} changedZones={changedZones} ZONE_TYPES={ZONE_TYPES}
                   />
