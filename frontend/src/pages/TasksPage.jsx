@@ -628,30 +628,57 @@ export default function TasksPage({ department }) {
             </CardContent>
           </Card>
 
-          {/* ── Stats chips (horizontal scroll on mobile) + subview toggle ── */}
+          {/* ── Stats Cards احترافية مع أيقونات ── */}
           <div className="flex items-center gap-2">
-            {/* Stats: scrollable horizontally on mobile */}
             <div className="flex-1 overflow-x-auto pb-1 -mb-1">
               <div className="flex items-center gap-2 min-w-max">
                 {[
-                  { key:"all",         label:"الكل",     value: dayStats.total,       color:"#6b7280" },
-                  { key:"pending",     label:"انتظار",   value: dayStats.pending,     color: STATUS_CFG.pending.color },
-                  { key:"in_progress", label:"جارية",    value: dayStats.in_progress, color: STATUS_CFG.in_progress.color },
-                  { key:"done",        label:"مكتملة",   value: dayStats.done,        color: STATUS_CFG.done.color },
-                  { key:"overdue",     label:"متأخرة",   value: dayStats.overdue,     color: STATUS_CFG.overdue.color },
-                  ...(dayStats.early > 0 ? [{ key:"early_only", label:"مبكر ⭐", value: dayStats.early, color:"#d97706" }] : []),
-                ].map(s => (
-                  <button key={s.key}
-                    onClick={() => setFilterStatus(s.key === filterStatus ? "all" : s.key === "early_only" ? "done_early" : s.key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap flex-shrink-0
-                      ${filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early") ? "shadow-md scale-105" : "hover:shadow-sm"}`}
-                    style={(filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early"))
-                      ? { backgroundColor: s.color+"15", borderColor: s.color, color: s.color }
-                      : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }}>
-                    <span className="font-bold text-sm" style={{ color: s.color }}>{s.value}</span>
-                    {s.label}
-                  </button>
-                ))}
+                  { key:"all",         label:"الكل",     value:dayStats.total,       color:"#475569", bg:"#f8fafc", border:"#e2e8f0", Icon:ClipboardList, pulse:false },
+                  { key:"pending",     label:"انتظار",   value:dayStats.pending,     color:STATUS_CFG.pending.color,     bg:STATUS_CFG.pending.bg,     border:STATUS_CFG.pending.border,     Icon:Clock,        pulse:false },
+                  { key:"in_progress", label:"جارية",    value:dayStats.in_progress, color:STATUS_CFG.in_progress.color, bg:STATUS_CFG.in_progress.bg, border:STATUS_CFG.in_progress.border, Icon:Zap,          pulse:dayStats.in_progress>0 },
+                  { key:"done",        label:"مكتملة",   value:dayStats.done,        color:STATUS_CFG.done.color,        bg:STATUS_CFG.done.bg,        border:STATUS_CFG.done.border,        Icon:CheckCircle2, pulse:false },
+                  { key:"overdue",     label:"متأخرة",   value:dayStats.overdue,     color:STATUS_CFG.overdue.color,     bg:STATUS_CFG.overdue.bg,     border:STATUS_CFG.overdue.border,     Icon:TimerOff,     pulse:dayStats.overdue>0 },
+                  ...(dayStats.early > 0 ? [{ key:"early_only", label:"مبكر",  value:dayStats.early, color:"#d97706", bg:"#fffbeb", border:"#fcd34d", Icon:Star, pulse:false }] : []),
+                ].map(s => {
+                  const isActive = filterStatus === s.key || (s.key==="early_only" && filterStatus==="done_early");
+                  return (
+                    <button key={s.key}
+                      onClick={()=>setFilterStatus(s.key===filterStatus?"all":s.key==="early_only"?"done_early":s.key)}
+                      className={`group relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all duration-200 flex-shrink-0 min-w-[62px]
+                        ${isActive ? "shadow-lg scale-105 -translate-y-0.5" : "hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5"}`}
+                      style={isActive
+                        ? { backgroundColor:s.color+"18", borderColor:s.color, boxShadow:`0 4px 12px ${s.color}30` }
+                        : { backgroundColor:s.bg, borderColor:s.border }}>
+
+                      {/* نقطة نشطة pulse */}
+                      {s.pulse && s.value > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full animate-ping opacity-75"
+                          style={{ backgroundColor:s.color }}/>
+                      )}
+                      {s.pulse && s.value > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor:s.color }}/>
+                      )}
+
+                      {/* أيقونة */}
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                        style={{ backgroundColor: isActive ? s.color+"25" : s.color+"12" }}>
+                        <s.Icon className={`w-3.5 h-3.5 ${s.pulse && s.value > 0 ? "animate-pulse" : ""}`}
+                          style={{ color:s.color }}/>
+                      </div>
+
+                      {/* العدد */}
+                      <span className="font-black text-lg leading-none tabular-nums"
+                        style={{ color:s.color }}>{s.value}</span>
+
+                      {/* الاسم */}
+                      <span className="text-[9px] font-semibold leading-none"
+                        style={{ color: isActive ? s.color : "#94a3b8" }}>
+                        {s.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
