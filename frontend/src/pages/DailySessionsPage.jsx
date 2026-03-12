@@ -1015,61 +1015,62 @@ export default function DailySessionsPage() {
               <SessionHeader activeSession={activeSession} activeZones={activeZones} handleUpdateSession={handleUpdateSession} setSessionNotes={setSessionNotes} setShowNotesDialog={setShowNotesDialog} readOnly={!canApproveSession} />
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Professional Tab Bar */}
+                {/* Tab Bar — نفس تبويبات الإعدادات */}
                 <div
                   className="rounded-2xl p-2 mb-4"
                   style={isDark
                     ? { backgroundColor: 'hsl(160 22% 10%)', border: '1px solid hsl(160 18% 18%)' }
-                    : { backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }
+                    : { backgroundColor: 'rgba(255,255,255,0.6)', border: '1px solid #e5e7eb' }
                   }
                   data-testid="daily-tabs-bar"
                 >
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-2 justify-center flex-wrap">
                     {[
-                      { id: 'employees', label: isAr ? 'الموظفين' : 'Staff', icon: Users, count: null },
-                      { id: 'density', label: isAr ? 'الكثافات' : 'Density', icon: Activity, count: densityStats?.criticalCount || null, isAlert: true },
-                      { id: 'map', label: isAr ? 'المصليات' : 'Prayer Areas', icon: MapPin, count: activeZones.length },
+                      { id: 'employees', label: isAr ? 'الموظفين' : 'Staff',         icon: Users,   count: null },
+                      { id: 'density',   label: isAr ? 'الكثافات' : 'Density',       icon: Activity, count: densityStats?.criticalCount || null, isAlert: true },
+                      { id: 'map',       label: isAr ? 'المصليات' : 'Prayer Areas',  icon: MapPin,  count: activeZones.length },
                     ].map(tab => {
                       const isActive = activeTab === tab.id;
                       const TabIcon = tab.icon;
+                      const accent = isDark ? 'hsl(160 65% 42%)' : '#047857';
+                      const lightBg = isDark ? 'hsl(160 30% 16%)' : '#ecfdf5';
                       return (
                         <button
                           key={tab.id}
                           type="button"
                           onClick={() => setActiveTab(tab.id)}
                           data-testid={`tab-${tab.id}`}
-                          className={`relative flex flex-col items-center gap-1 lg:gap-1.5 px-3 lg:px-5 py-2 lg:py-3 rounded-xl transition-all duration-300 flex-1
+                          className={`relative flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl transition-all duration-300 min-w-[100px]
                             ${isActive
                               ? 'bg-white shadow-md border-2 scale-[1.02]'
                               : 'bg-transparent border-2 border-transparent hover:bg-white/60 hover:shadow-sm'
                             }`}
-                          style={isActive ? { borderColor: isDark ? 'hsl(160 65% 42%)' : '#047857' } : {}}
+                          style={isActive ? { borderColor: accent } : {}}
                         >
                           <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
                             style={isActive
-                            ? { backgroundColor: isDark ? 'hsl(160 30% 16%)' : '#ecfdf5', color: isDark ? 'hsl(160 65% 50%)' : '#047857' }
-                            : { backgroundColor: isDark ? 'hsl(160 15% 14%)' : '#f3f4f6', color: isDark ? 'hsl(155 8% 50%)' : '#6b7280' }
-                          }
+                              ? { backgroundColor: lightBg, color: accent }
+                              : { backgroundColor: isDark ? 'hsl(160 15% 14%)' : '#f3f4f6', color: isDark ? 'hsl(155 8% 50%)' : '#6b7280' }}
                           >
                             <TabIcon className="w-5 h-5" />
                           </div>
                           <span
-                            className={`text-xs font-medium transition-colors duration-300 ${isActive ? 'font-bold' : 'text-gray-500'}`}
-                            style={isActive ? { color: isDark ? 'hsl(160 65% 50%)' : '#047857' } : {}}
+                            className={`text-xs font-cairo transition-colors duration-300 ${isActive ? 'font-bold' : 'text-gray-500'}`}
+                            style={isActive ? { color: accent } : {}}
                           >
                             {tab.label}
                           </span>
                           {tab.count !== null && tab.count > 0 && (
                             <span
-                              className={`absolute -top-1 -left-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
-                              style={{ backgroundColor: tab.isAlert ? '#ef4444' : (isActive ? '#047857' : '#9ca3af') }}
+                              className={`absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full text-[9px] font-bold flex items-center justify-center text-white transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+                              style={{ backgroundColor: tab.isAlert ? '#ef4444' : (isActive ? accent : '#9ca3af') }}
                             >
                               {tab.count}
                             </span>
                           )}
                           {isActive && (
-                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: isDark ? 'hsl(160 65% 42%)' : '#047857' }} />
+                            <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: accent }} />
                           )}
                         </button>
                       );
