@@ -508,10 +508,12 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
           </Popover>
         )}
 
-        {/* ── Print ── */}
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 mr-auto" onClick={handlePrint} data-testid="print-assignments-btn">
-          <Printer className="w-3.5 h-3.5" />{isAr ? "طباعة" : "Print"}
-        </Button>
+        {/* Legend */}
+        <div className="hidden sm:flex items-center gap-2 text-[9px] text-slate-500 font-medium mr-auto">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{isAr ? "مغطاة" : "Covered"}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{isAr ? "غير مغطاة" : "Uncovered"}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400" />{isAr ? "خدمات" : "Service"}</span>
+        </div>
       </div>
 
       {/* ─── Map Container ──────────────────────────────── */}
@@ -723,14 +725,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                 );
               })()}
             </div>
-          </div>
-          {/* Legend - below map */}
-          <div className="flex items-center justify-center gap-4 py-2.5 bg-white border-t border-slate-100">
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500/60 border border-green-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "مغطاة" : "Covered"}</span></div>
-            <div className="w-px h-4 bg-slate-200" />
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-500/60 border border-red-600/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "غير مغطاة" : "Uncovered"}</span></div>
-            <div className="w-px h-4 bg-slate-200" />
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400/40 border border-slate-400/30" /><span className="text-[10px] font-medium text-slate-600">{isAr ? "خدمات" : "Service"}</span></div>
           </div>
           {/* All assigned message - below map */}
           {unassignedEmployees.length === 0 && employees.length > 0 && (

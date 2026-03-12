@@ -289,6 +289,19 @@ export function DensityTab({
           </>
         )}
         </>}
+
+        {/* Legend */}
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+        <div className="hidden sm:flex items-center gap-2 text-[9px] text-slate-500 font-medium mr-auto">
+          {[
+            { color: "#16a34a", label: isAr ? "آمن" : "Safe" },
+            { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" },
+            { color: "#ea580c", label: isAr ? "مرتفع" : "High" },
+            { color: "#dc2626", label: isAr ? "حرج" : "Critical" },
+          ].map(l => (
+            <span key={l.color} className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: l.color }} />{l.label}</span>
+          ))}
+        </div>
       </div>
 
       {/* Save bar (remove duplicate, now in toolbar) */}
@@ -658,19 +671,6 @@ function DensityHeatmapInline({ densityStats, selectedFloor, imgRatio, ZONE_TYPE
         <span className="text-xs w-10 text-center font-mono">{Math.round(heatZoom * 100)}%</span>
         <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-in" onClick={() => zoomHeat(1.25)}><ZoomIn className="w-4 h-4" /></Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" data-testid="heat-zoom-reset" onClick={() => { heatZoomRef.current = 1; setHeatZoom(1); setHeatPan({ x: 0, y: 0 }); }}><Maximize2 className="w-4 h-4" /></Button>
-      </div>
-
-      {/* Legend */}
-      <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
-        {[
-          { color: "#16a34a", label: isAr ? "آمن" : "Safe" },
-          { color: "#f59e0b", label: isAr ? "متوسط" : "Medium" },
-          { color: "#ea580c", label: isAr ? "مرتفع" : "High" },
-          { color: "#dc2626", label: isAr ? "حرج" : "Critical" },
-        ].map(l => (
-          <div key={l.color} className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm" style={{ backgroundColor: l.color }} /><span className="text-[9px]">{l.label}</span></div>
-        ))}
-        <span className="text-[9px] text-muted-foreground mr-auto">{isAr ? "انقر على منطقة للتعديل" : "Click zone to edit"}</span>
       </div>
 
       {/* Heatmap */}

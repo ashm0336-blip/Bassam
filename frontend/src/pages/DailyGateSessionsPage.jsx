@@ -580,7 +580,7 @@ export default function DailyGateSessionsPage() {
 
                 {/* MAP TAB → الأبواب */}
                 <TabsContent value="map" className="space-y-2" style={{ animation: 'tabSlideIn 0.3s ease-out' }}>
-                  {/* Toolbar: Zoom + Legend */}
+                  {/* Toolbar: Legend */}
                   <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
                     <div className="flex items-center gap-2">
                       {activeSession?.status === "draft" && (
@@ -600,12 +600,6 @@ export default function DailyGateSessionsPage() {
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:"#ef4444"}} />{isAr?"مزدحم":"Crowded"}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-3.5 h-3.5" /></Button>
-                      <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom*100)}%</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(6,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-3.5 h-3.5" /></Button>
-                    </div>
                   </div>
 
                   {/* Map + Side Panel layout */}
@@ -622,6 +616,13 @@ export default function DailyGateSessionsPage() {
                     <div className="absolute inset-0">
                     {selectedFloor?.image_url ? (
                       <div ref={wheelRef} className="relative bg-slate-100 overflow-hidden h-full" style={{ cursor: draggingGateId ? "grabbing" : isPanning ? "grabbing" : "grab", touchAction: "none" }} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={() => { handleMouseUp(); setHoveredGate(null); }} onTouchStart={handleTouchStartGates} onTouchMove={handleTouchMoveGates} onTouchEnd={handleTouchEndGates} onTouchCancel={handleTouchEndGates} data-testid="gate-map-container">
+                        {/* Zoom controls inside map */}
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-3.5 h-3.5" /></Button>
+                          <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom*100)}%</span>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(6,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-3.5 h-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-3.5 h-3.5" /></Button>
+                        </div>
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {(() => {
                             const ce = mapContainerRef.current;
