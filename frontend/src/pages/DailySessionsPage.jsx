@@ -499,8 +499,10 @@ export default function DailySessionsPage() {
 
   const handleToggleRemove = async (zoneId, currentlyRemoved) => {
     if (!currentlyRemoved) {
-      await handleDeleteZone(zoneId);
+      // غير نشط = soft hide — يبقى على الخريطة بلون رمادي
+      await handleUpdateZone(zoneId, { is_removed: true });
     } else {
+      // إعادة تنشيط
       await handleUpdateZone(zoneId, { is_removed: false });
     }
   };

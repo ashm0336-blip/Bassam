@@ -510,34 +510,42 @@ export function MapCanvas({
                         </g>
                       );
                     })}
-                    {/* ── Inactive Zones (is_removed=true) — رمادي على الخريطة ── */}
+                    {/* ── Inactive Zones (is_removed=true) — رمادي مع tooltip ── */}
                     {removedZones.map(zone => {
-                      const cx2 = zone.polygon_points?.reduce((s,p)=>s+p.x,0)/(zone.polygon_points?.length||1);
-                      const cy2 = zone.polygon_points?.reduce((s,p)=>s+p.y,0)/(zone.polygon_points?.length||1);
+                      const pts = zone.polygon_points || [];
+                      if (!pts.length) return null;
+                      const cx2 = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+                      const cy2 = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+                      const tooltipText = `${zone.name_ar || zone.zone_code} — غير نشط`;
                       return (
-                        <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`}
-                          onMouseEnter={()=>setHoveredZone(zone)} onMouseLeave={()=>setHoveredZone(null)}
-                          onClick={(e)=>{
-                            if (!readOnly) { e.stopPropagation(); setSelectedZone(zone); setShowZoneDialog(true); }
-                          }}
-                          style={{ cursor: !readOnly ? "pointer" : "default" }}>
+                        <g key={zone.id} data-testid={`session-zone-removed-${zone.id}`}>
+                          <title>{tooltipText}</title>
                           {/* شكل رمادي شفاف */}
-                          <path d={getPath(zone.polygon_points)}
-                            fill="#94a3b8" fillOpacity={0.15}
-                            stroke="#94a3b8" strokeWidth={0.6} strokeOpacity={0.5}
-                            strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke" />
-                          {/* تاج "غير نشط" في المنتصف */}
-                          {zone.polygon_points?.length > 0 && (
-                            <g>
-                              <rect x={cx2-1.5} y={cy2-0.55} width="3" height="1.1" rx="0.4"
-                                fill="#94a3b8" fillOpacity={0.7} vectorEffect="non-scaling-stroke"/>
-                              <text x={cx2} y={cy2+0.28} textAnchor="middle" fontSize="0.65"
-                                fill="white" fontFamily="Cairo,sans-serif" fontWeight="600"
-                                style={{ pointerEvents:"none" }}>
-                                غير نشط
-                              </text>
-                            </g>
-                          )}
+                          <path d={getPath(pts)}
+                            fill="#94a3b8" fillOpacity={0.18}
+                            stroke="#94a3b8" strokeWidth={0.6} strokeOpacity={0.6}
+                            strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke"
+                            style={{ cursor: !readOnly ? "pointer" : "default" }}
+                            onMouseEnter={() => setHoveredZone({ ...zone, tooltip: tooltipText })}
+                            onMouseLeave={() => setHoveredZone(null)}
+                            onClick={(e) => {
+                              if (!readOnly) {
+                                e.stopPropagation();
+                                setSelectedZone(zone);
+                                setShowZoneDialog(true);
+                              }
+                            }}
+                          />
+                          {/* لافتة "غير نشط" في المنتصف */}
+                          <g>
+                            <rect x={cx2-2.2} y={cy2-0.6} width="4.4" height="1.2" rx="0.4"
+                              fill="#64748b" fillOpacity={0.75} vectorEffect="non-scaling-stroke"/>
+                            <text x={cx2} y={cy2+0.3} textAnchor="middle" fontSize="0.7"
+                              fill="white" fontFamily="Cairo,sans-serif" fontWeight="700"
+                              style={{ pointerEvents:"none", userSelect:"none" }}>
+                              غير نشط
+                            </text>
+                          </g>
                         </g>
                       );
                     })}
