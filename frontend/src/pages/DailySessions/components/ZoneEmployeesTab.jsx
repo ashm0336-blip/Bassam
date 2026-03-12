@@ -120,6 +120,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
   const [coverageFilter, setCoverageFilter] = useState("all"); // "all" | "uncovered" | "covered"
   const [autoDistributing, setAutoDistributing] = useState(false);
   const [showAutoConfirm, setShowAutoConfirm] = useState(false);
+  const [mapClickedZone, setMapClickedZone] = useState(null); // zone object for map-click assignment
+  const [mapClickPos, setMapClickPos] = useState({ x: 0, y: 0 });
+  const [dragDistance, setDragDistance] = useState(0);
   const printRef = useRef(null);
 
   // Zoom/Pan state
@@ -463,34 +466,7 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
 
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
 
-        {/* ── Quick Zone Assignment ── */}
-        {!readOnly && <>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 font-cairo text-xs h-8" data-testid="quick-assign-btn">
-              <MapPin className="w-3.5 h-3.5" />
-              {isAr ? "تعيين سريع" : "Quick Assign"}
-              {uncoveredZones.length > 0 && <Badge variant="destructive" className="text-[8px] h-4 px-1">{uncoveredZones.length}</Badge>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start" side="bottom" data-testid="quick-assign-panel">
-            <div className="p-3 border-b">
-              <p className="text-[11px] font-cairo font-bold text-slate-600 mb-2">{isAr ? "اختر منطقة وعيّن موظفاً" : "Select zone & assign staff"}</p>
-              <QuickAssignSearch
-                activeZones={activeZones}
-                zoneEmployeeMap={zoneEmployeeMap}
-                unassignedEmployees={unassignedEmployees}
-                ZONE_TYPES={ZONE_TYPES}
-                isAr={isAr}
-                activeSession={activeSession}
-                handleAssign={handleAssign}
-                handleUnassign={handleUnassign}
-              />
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+        {/* ── Auto Distribute ── */}
         {activeSession?.status === "draft" && !readOnly && (
           <Popover open={showAutoConfirm} onOpenChange={setShowAutoConfirm}>
             <PopoverTrigger asChild>
@@ -531,7 +507,6 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
             </PopoverContent>
           </Popover>
         )}
-        </>}
 
         {/* ── Print ── */}
         <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 mr-auto" onClick={handlePrint} data-testid="print-assignments-btn">
@@ -581,9 +556,9 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
               className="relative bg-slate-50 overflow-hidden h-full"
               style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
               data-testid="coverage-map-container"
-              onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); }}
+              onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); setDragDistance(0); }}
               onMouseMove={(e) => {
-                if (isPanning) { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); return; }
+                if (isPanning) { setPanOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y }); setDragDistance(prev => prev + 1); return; }
                 const c = mapContainerRef.current; if (!c) return;
                 const rect = c.getBoundingClientRect();
                 setMousePos({ x: e.clientX - rect.left + 16, y: e.clientY - rect.top - 10 });
@@ -598,7 +573,29 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                 }
                 setHoveredZone(found);
               }}
-              onMouseUp={() => setIsPanning(false)}
+              onMouseUp={(e) => {
+                const wasClick = dragDistance < 5;
+                setIsPanning(false);
+                if (wasClick) {
+                  // Detect clicked zone
+                  const c = mapContainerRef.current; if (!c) return;
+                  const innerDiv = c.querySelector("[data-map-inner]"); if (!innerDiv) return;
+                  const innerRect = innerDiv.getBoundingClientRect();
+                  const px = ((e.clientX - innerRect.left) / innerRect.width) * 100;
+                  const py = ((e.clientY - innerRect.top) / innerRect.height) * 100;
+                  let found = null;
+                  for (const z of activeZones) {
+                    if (!z.is_removed && z.polygon_points?.length > 2 && isPointInPoly({ x: px, y: py }, z.polygon_points)) { found = z; break; }
+                  }
+                  if (found) {
+                    const rect = c.getBoundingClientRect();
+                    setMapClickedZone(found);
+                    setMapClickPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  } else {
+                    setMapClickedZone(null);
+                  }
+                }
+              }}
               onMouseLeave={() => { setIsPanning(false); setHoveredZone(null); }}
               onTouchStart={(e) => { if (e.touches.length !== 1) return; e.preventDefault(); const t = e.touches[0]; setIsPanning(true); setPanStart({ x: t.clientX - panOffset.x, y: t.clientY - panOffset.y }); }}
               onTouchMove={(e) => { if (e.touches.length !== 1) return; if (isPanning) { e.preventDefault(); const t = e.touches[0]; setPanOffset({ x: t.clientX - panStart.x, y: t.clientY - panStart.y }); } }}
@@ -678,6 +675,45 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
                     </div>
                     <div className="w-2 h-2 bg-slate-900/95 rotate-45 mx-4 -mt-1" />
                   </div>
+                );
+              })()}
+
+              {/* ── Map Zone Assignment Panel ─────────────── */}
+              {mapClickedZone && (() => {
+                const zone = activeZones.find(z => z.id === mapClickedZone.id);
+                if (!zone) return null;
+                const emps = zoneEmployeeMap[zone.zone_code] || [];
+                const ti = ZONE_TYPES.find(t => t.value === zone.zone_type);
+                const canEdit = activeSession?.status === "draft" && !readOnly;
+                return (
+                  <>
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 z-30 bg-black/10" onClick={() => setMapClickedZone(null)} />
+                    {/* Panel */}
+                    <div
+                      className="absolute z-40"
+                      style={{
+                        left: Math.min(mapClickPos.x, (mapContainerRef.current?.clientWidth || 400) - 290),
+                        top: Math.max(0, mapClickPos.y - 200),
+                      }}
+                      onClick={e => e.stopPropagation()}
+                      data-testid="map-zone-assign-panel"
+                    >
+                      <MapZoneAssignPanel
+                        zone={zone}
+                        allEmployees={filteredEmployees}
+                        employeeZonesMap={employeeZonesMap}
+                        SHIFTS={SHIFTS}
+                        ZONE_TYPES={ZONE_TYPES}
+                        ti={ti}
+                        isAr={isAr}
+                        canEdit={canEdit}
+                        handleAssign={handleAssign}
+                        handleUnassign={handleUnassign}
+                        onClose={() => setMapClickedZone(null)}
+                      />
+                    </div>
+                  </>
                 );
               })()}
             </div>
@@ -1130,7 +1166,130 @@ function ZoneAssignPopover({ zone, assignedEmps, allEmployees, employeeZonesMap,
             <p className="text-[10px] text-slate-400 text-center py-6">{isAr ? "لا يوجد موظفين" : "No employees"}</p>
           )}
         </div>
+        {/* Read-only notice */}
+        {!canEdit && (
+          <div className="px-3 py-2 bg-amber-50/80 border-t border-amber-200 text-center" data-testid="zone-readonly-notice">
+            <p className="text-[9px] text-amber-700 font-semibold">{isAr ? "الجلسة مكتملة — أعد فتحها للتعديل" : "Session completed — reopen to edit"}</p>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
+  );
+}
+
+function MapZoneAssignPanel({ zone, allEmployees, employeeZonesMap, SHIFTS, ZONE_TYPES, ti, isAr, canEdit, handleAssign, handleUnassign, onClose }) {
+  const [search, setSearch] = useState("");
+  const assignedIds = new Set((zone.assigned_employee_ids || []).map(String));
+
+  const groupedEmployees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = allEmployees.filter(emp =>
+      !q || emp.name?.toLowerCase().includes(q) || emp.employee_number?.toLowerCase().includes(q)
+    );
+    const groups = {};
+    SHIFTS.forEach(s => { groups[s.value] = []; });
+    filtered.forEach(emp => {
+      const key = SHIFTS.find(s => s.value === emp.shift) ? emp.shift : null;
+      if (key) groups[key].push(emp);
+    });
+    return groups;
+  }, [allEmployees, search, SHIFTS]);
+
+  const totalAssigned = assignedIds.size;
+
+  const handleToggle = (empId) => {
+    if (assignedIds.has(empId)) {
+      handleUnassign(empId, zone.id);
+    } else {
+      handleAssign(empId, zone.id);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-72 overflow-hidden" data-testid={`map-assign-${zone.id}`}>
+      {/* Header */}
+      <div className="px-3 pt-3 pb-2 border-b border-slate-100">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white" style={{ backgroundColor: zone.fill_color || ti?.color || "#22c55e" }}>{ti?.icon || "?"}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-slate-800 truncate">{zone.zone_code}</p>
+            <p className="text-[9px] text-slate-400 truncate">{isAr ? zone.name_ar : zone.name_en}</p>
+          </div>
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{
+            backgroundColor: totalAssigned > 0 ? "#ecfdf5" : "#fef2f2",
+            color: totalAssigned > 0 ? "#059669" : "#dc2626",
+            border: `1px solid ${totalAssigned > 0 ? "#a7f3d0" : "#fecaca"}`
+          }}>
+            {totalAssigned} {isAr ? "موظف" : "staff"}
+          </span>
+          <button onClick={onClose} className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        {canEdit && (
+          <div className="relative">
+            <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 pointer-events-none" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder={isAr ? "بحث بالاسم أو الرقم..." : "Search..."}
+              className="w-full h-7 pr-7 pl-2 text-[10px] border border-slate-200 rounded-lg focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 outline-none bg-slate-50/50" />
+          </div>
+        )}
+      </div>
+
+      {/* Employee Checklist */}
+      <div className="max-h-56 overflow-y-auto">
+        {SHIFTS.map(shift => {
+          const emps = groupedEmployees[shift.value] || [];
+          if (emps.length === 0) return null;
+          const shiftAssigned = emps.filter(e => assignedIds.has(e.id)).length;
+          return (
+            <div key={shift.value}>
+              <div className="sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5 bg-slate-50/95 backdrop-blur-sm border-b border-slate-100">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: shift.color }} />
+                <span className="text-[9px] font-bold text-slate-500 flex-1">{isAr ? shift.label_ar : shift.label_en}</span>
+                {shiftAssigned > 0 && <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded-full">{shiftAssigned}</span>}
+              </div>
+              {emps.map(emp => {
+                const isAssigned = assignedIds.has(emp.id);
+                const otherZones = (employeeZonesMap[emp.id] || []).filter(z => z.id !== zone.id);
+                return (
+                  <button key={emp.id} onClick={() => canEdit && handleToggle(emp.id)} disabled={!canEdit}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 transition-all text-right group
+                      ${isAssigned ? "bg-emerald-50/60 hover:bg-emerald-50" : "hover:bg-slate-50"}
+                      ${!canEdit ? "cursor-default" : "cursor-pointer"}`}>
+                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all border
+                      ${isAssigned ? "bg-emerald-500 border-emerald-500" : "border-slate-300 group-hover:border-emerald-400"}`}>
+                      {isAssigned && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </div>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0" style={{ backgroundColor: shift.color }}>
+                      {emp.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[10px] font-medium truncate ${isAssigned ? "text-emerald-800" : "text-slate-700"}`}>{emp.name}</p>
+                      <div className="flex items-center gap-1">
+                        {emp.employee_number && <span className="text-[8px] text-slate-400">{emp.employee_number}</span>}
+                        {otherZones.length > 0 && (
+                          <span className="text-[7px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded">
+                            {otherZones.map(z => z.zone_code).join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+        {allEmployees.length === 0 && (
+          <p className="text-[10px] text-slate-400 text-center py-6">{isAr ? "لا يوجد موظفين" : "No employees"}</p>
+        )}
+      </div>
+      {!canEdit && (
+        <div className="px-3 py-2 bg-amber-50/80 border-t border-amber-200 text-center">
+          <p className="text-[9px] text-amber-700 font-semibold">{isAr ? "الجلسة مكتملة — أعد فتحها للتعديل" : "Session completed — reopen to edit"}</p>
+        </div>
+      )}
+    </div>
   );
 }

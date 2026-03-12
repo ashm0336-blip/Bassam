@@ -47,8 +47,9 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
   - Employees grouped by shift with color indicators
   - Shows which employees are assigned to other zones (amber warning)
   - Search field for quick filtering by name/employee number
-  - Read-only mode when session is completed
-  - Employee count badge with visual status
+  - Read-only mode with clear message when session is completed
+  - **Map-click assignment**: Click any zone on the map to open assignment panel
+  - Removed redundant "Quick Assign" button from toolbar
   - Files modified: `ZoneEmployeesTab.jsx`
 
 ## Prioritized Backlog
