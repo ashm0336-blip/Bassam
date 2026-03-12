@@ -1,41 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { PLAZA_COLORS, GATE_TYPES, DIRECTIONS, CATEGORIES, CLASSIFICATIONS, GATE_STATUSES, CURRENT_INDICATORS } from "@/constants/gateData";
-import { 
-  Plus,
-  Edit,
-  Trash2,
-  Loader2
+import {
+  Plus, Edit, Trash2, Loader2,
+  DoorOpen, DoorClosed, Users, AlertTriangle, Activity,
+  MapPin, ArrowUpDown, Tag, Shield, Hash, RefreshCw, MoreVertical,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -197,121 +176,269 @@ export default function GatesDataManagement() {
 
   return (
     <div className="space-y-6 max-w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="text-right flex-1">
-          <h2 className="font-cairo font-bold text-xl text-right">
-            {language === 'ar' ? 'إدارة الأبواب' : 'Gates Management'}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1 text-right">
-            {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب' : 'Add and edit gates data'}
-          </p>
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md bg-gradient-to-br from-emerald-500 to-teal-600">
+            <DoorOpen className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-cairo font-bold text-xl">
+              {language === 'ar' ? 'إدارة الأبواب' : 'Gates Management'}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب وإسناد الموظفين' : 'Add and edit gates data'}
+            </p>
+          </div>
         </div>
-        {!isReadOnly() && (
-          <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 ml-2" />
-            {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchGates} className="gap-1.5 h-9">
+            <RefreshCw className="w-3.5 h-3.5" />
+            {language === 'ar' ? 'تحديث' : 'Refresh'}
           </Button>
-        )}
+          {!isReadOnly() && (
+            <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 h-9">
+              <Plus className="w-4 h-4" />
+              {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Gates Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-cairo text-right">{language === 'ar' ? 'قائمة الأبواب' : 'Gates List'}</CardTitle>
-          <CardDescription className="text-right">{language === 'ar' ? `إجمالي ${gates.length} باب` : `Total ${gates.length} gates`}</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
+      {/* ── Stats Cards ──────────────────────────────────────── */}
+      {gates.length > 0 && (() => {
+        const open   = gates.filter(g => g.status === 'مفتوح').length;
+        const closed = gates.filter(g => g.status !== 'مفتوح').length;
+        const noStaff = gates.filter(g => getEmployeesAtGate(g.name).length === 0).length;
+        const total  = gates.length;
+        const STATS = [
+          { label:"إجمالي الأبواب",  value:total,   desc:"كل الأبواب المسجلة",  color:"#2563eb", grad:"from-blue-50 to-indigo-50/60",   border:"#bfdbfe", Icon:DoorOpen    },
+          { label:"مفتوحة الآن",     value:open,    desc:`${Math.round(open/total*100)}% من الإجمالي`, color:"#059669", grad:"from-emerald-50 to-green-50/60", border:"#a7f3d0", Icon:DoorOpen    },
+          { label:"مغلقة",           value:closed,  desc:"باب مغلق أو موقوف",   color:"#6b7280", grad:"from-slate-50 to-gray-50/60",    border:"#e2e8f0", Icon:DoorClosed  },
+          { label:"بدون موظفين",     value:noStaff, desc:"تحتاج تغطية فورية",   color: noStaff>0?"#dc2626":"#059669", grad:noStaff>0?"from-red-50 to-rose-50/60":"from-emerald-50 to-green-50/60", border:noStaff>0?"#fca5a5":"#a7f3d0", Icon: noStaff>0?AlertTriangle:Users },
+        ];
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {STATS.map((s, i) => {
+              const pct = total > 0 && typeof s.value === 'number' ? Math.round(s.value/total*100) : null;
+              return (
+                <div key={i} className={`group relative overflow-hidden rounded-2xl border p-3.5 bg-gradient-to-br ${s.grad} hover:shadow-lg hover:scale-[1.02] transition-all duration-200`}
+                  style={{ borderColor: s.color+"40" }}>
+                  <div className="absolute -left-3 -bottom-3 w-12 h-12 rounded-full opacity-[0.08]" style={{ backgroundColor:s.color }}/>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm mb-2" style={{ backgroundColor:s.color+"20" }}>
+                    <s.Icon className="w-4 h-4" style={{ color:s.color }}/>
+                  </div>
+                  <p className="text-2xl font-black leading-none mb-1 tabular-nums" style={{ color:s.color }}>{s.value}</p>
+                  <p className="text-[11px] font-bold text-slate-700">{s.label}</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">{s.desc}</p>
+                  {pct !== null && (
+                    <div className="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700" style={{ width:`${pct}%`, backgroundColor:s.color }}/>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* ── Gates Table ──────────────────────────────────────── */}
+      <Card className="border-0 shadow-sm overflow-hidden">
+        {gates.length === 0 ? (
+          <div className="text-center py-20 space-y-4">
+            <div className="w-20 h-20 rounded-3xl bg-emerald-50 flex items-center justify-center mx-auto">
+              <DoorOpen className="w-10 h-10 text-emerald-300"/>
+            </div>
+            <div>
+              <p className="font-cairo font-bold text-lg text-muted-foreground">لا توجد أبواب مسجلة بعد</p>
+              <p className="text-sm text-slate-400 mt-1">ابدأ بإضافة أول باب من زر "إضافة باب جديد"</p>
+            </div>
+            {!isReadOnly() && (
+              <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 mt-2">
+                <Plus className="w-4 h-4"/>إضافة أول باب
+              </Button>
+            )}
+          </div>
+        ) : (
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1100px]">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">{language === 'ar' ? 'رقم الباب' : 'Number'}</TableHead>
-                  <TableHead className="text-right">{language === 'ar' ? 'اسم الباب' : 'Name'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'المنطقة' : 'Plaza'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'المسار' : 'Direction'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'التصنيف' : 'Classification'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'المؤشر' : 'Indicator'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الموظفين' : 'Staff'}</TableHead>
-                  <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
+                  {/* رقم الباب */}
+                  <TableHead className="text-right py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shadow-sm">
+                        <Hash className="w-4 h-4 text-primary"/>
+                      </div>
+                      <span className="font-bold text-foreground text-sm">رقم الباب</span>
+                    </div>
+                  </TableHead>
+                  {/* اسم الباب */}
+                  <TableHead className="text-right py-2.5">
+                    <div className="flex flex-col items-start gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <DoorOpen className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">اسم الباب</span>
+                    </div>
+                  </TableHead>
+                  {/* المنطقة */}
+                  <TableHead className="text-center py-2.5 w-28">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shadow-sm">
+                        <MapPin className="w-4 h-4 text-sky-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">المنطقة</span>
+                    </div>
+                  </TableHead>
+                  {/* النوع */}
+                  <TableHead className="text-center py-2.5 w-28">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
+                        <Tag className="w-4 h-4 text-violet-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">النوع</span>
+                    </div>
+                  </TableHead>
+                  {/* المسار */}
+                  <TableHead className="text-center py-2.5 w-24">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
+                        <ArrowUpDown className="w-4 h-4 text-amber-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">المسار</span>
+                    </div>
+                  </TableHead>
+                  {/* الفئة */}
+                  <TableHead className="text-center py-2.5 w-32">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center shadow-sm">
+                        <Shield className="w-4 h-4 text-rose-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">الفئة</span>
+                    </div>
+                  </TableHead>
+                  {/* الحالة */}
+                  <TableHead className="text-center py-2.5 w-24">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <Activity className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">الحالة</span>
+                    </div>
+                  </TableHead>
+                  {/* المؤشر */}
+                  <TableHead className="text-center py-2.5 w-24">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center shadow-sm">
+                        <Activity className="w-4 h-4 text-orange-500"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">المؤشر</span>
+                    </div>
+                  </TableHead>
+                  {/* الموظفين */}
+                  <TableHead className="text-center py-2.5 w-32">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
+                        <Users className="w-4 h-4 text-blue-600"/>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600">الموظفين</span>
+                    </div>
+                  </TableHead>
+                  {/* الإجراءات */}
+                  <TableHead className="text-center py-2.5 w-20">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
+                        <MoreVertical className="w-4 h-4 text-slate-500"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-400">⋯</span>
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {gates.map((gate) => {
                   const gateEmployees = getEmployeesAtGate(gate.name);
-                  
+                  const isOpen = gate.status === 'مفتوح';
+                  const noStaff = gateEmployees.length === 0;
+                  const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
+                  const indicatorColor = indicatorColors[gate.current_indicator] || '#94a3b8';
+
                   return (
-                    <TableRow key={gate.id}>
-                      <TableCell className="text-right font-bold">{gate.number}</TableCell>
-                      <TableCell className="text-right font-medium">{gate.name}</TableCell>
+                    <TableRow key={gate.id}
+                      className={`hover:bg-muted/40 transition-colors [&>td]:py-2 ${noStaff && isOpen ? 'bg-red-50/30' : ''}`}>
+                      {/* رقم الباب */}
+                      <TableCell className="text-right font-black text-primary text-base">{gate.number}</TableCell>
+                      {/* اسم الباب */}
+                      <TableCell className="text-right">
+                        <p className="font-bold text-sm">{gate.name}</p>
+                        {gate.classification && <p className="text-[10px] text-muted-foreground">{gate.classification}</p>}
+                      </TableCell>
+                      {/* المنطقة */}
                       <TableCell className="text-center">
-                        <div className="flex items-center gap-2 justify-center">
-                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] }} />
-                          <span className="text-sm">{gate.plaza}</span>
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>
+                          <span className="text-[11px] font-medium">{gate.plaza}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center text-sm">{gate.gate_type}</TableCell>
-                      <TableCell className="text-center text-sm">{gate.direction}</TableCell>
-                      <TableCell className="text-center text-sm">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</TableCell>
-                      <TableCell className="text-center text-sm">{gate.classification}</TableCell>
+                      {/* النوع */}
                       <TableCell className="text-center">
-                        <Badge variant={gate.status === 'مفتوح' ? 'default' : 'destructive'}>
-                          {gate.status}
-                        </Badge>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">{gate.gate_type}</span>
                       </TableCell>
+                      {/* المسار */}
+                      <TableCell className="text-center text-[11px] text-slate-500 font-medium">{gate.direction}</TableCell>
+                      {/* الفئة */}
+                      <TableCell className="text-center">
+                        <span className="text-[10px] font-medium">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</span>
+                      </TableCell>
+                      {/* الحالة */}
+                      <TableCell className="text-center">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full
+                          ${isOpen ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-emerald-500' : 'bg-slate-400'}`}/>
+                          {gate.status}
+                        </span>
+                      </TableCell>
+                      {/* المؤشر */}
                       <TableCell className="text-center">
                         {gate.current_indicator && (
-                          <div className="flex items-center gap-2 justify-center">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ 
-                                backgroundColor: 
-                                  gate.current_indicator === 'خفيف' ? '#22c55e' :
-                                  gate.current_indicator === 'متوسط' ? '#f97316' :
-                                  gate.current_indicator === 'مزدحم' ? '#ef4444' : '#gray'
-                              }}
-                            />
-                            <span className="text-sm">{gate.current_indicator}</span>
+                          <div className="flex items-center gap-1 justify-center">
+                            <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: indicatorColor }}/>
+                            <span className="text-[10px] font-semibold" style={{ color: indicatorColor }}>{gate.current_indicator}</span>
                           </div>
                         )}
                       </TableCell>
+                      {/* الموظفين */}
                       <TableCell className="text-center">
-                        <div className="flex flex-col gap-1">
-                          <Badge 
-                            variant={
-                              gateEmployees.length === 0 ? "destructive" :
-                              gateEmployees.length <= 2 ? "secondary" :
-                              "default"
-                            }
-                            className="text-xs"
-                          >
-                            {gateEmployees.length === 0 ? '⚠️ ' : ''}{gateEmployees.length} {language === 'ar' ? 'موظف' : 'staff'}
-                          </Badge>
-                          {gateEmployees.length > 0 && (
-                            <div className="text-xs text-muted-foreground">
-                              {gateEmployees.slice(0, 2).map(emp => emp.name.split(' ')[0]).join(', ')}
-                              {gateEmployees.length > 2 && ` +${gateEmployees.length - 2}`}
-                            </div>
-                          )}
+                        <div className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full
+                          ${noStaff && isOpen ? 'bg-red-100 text-red-700 border border-red-200 animate-pulse' :
+                            gateEmployees.length <= 2 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                            'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                          {noStaff && isOpen && <AlertTriangle className="w-3 h-3"/>}
+                          {gateEmployees.length} موظف
                         </div>
+                        {gateEmployees.length > 0 && (
+                          <p className="text-[9px] text-muted-foreground mt-0.5">
+                            {gateEmployees.slice(0,2).map(e=>e.name.split(' ')[0]).join('، ')}{gateEmployees.length>2?` +${gateEmployees.length-2}`:''}
+                          </p>
+                        )}
                       </TableCell>
+                      {/* الإجراءات */}
                       <TableCell className="text-center">
                         {!isReadOnly() ? (
-                          <div className="flex gap-2 justify-center">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
-                              <Trash2 className="w-4 h-4" />
+                          <div className="flex gap-1 justify-center">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary"
+                              onClick={() => handleOpenDialog(gate)}>
+                              <Edit className="w-3.5 h-3.5"/>
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(gate)}>
-                              <Edit className="w-4 h-4" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-red-50 hover:text-destructive"
+                              onClick={() => { setSelectedGate(gate); setDeleteDialogOpen(true); }}>
+                              <Trash2 className="w-3.5 h-3.5"/>
                             </Button>
                           </div>
                         ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            {language === 'ar' ? 'قراءة فقط' : 'Read Only'}
-                          </Badge>
+                          <span className="text-[9px] text-slate-400">قراءة</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -320,7 +447,7 @@ export default function GatesDataManagement() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
+        )}
       </Card>
 
       {/* Add/Edit Dialog */}
