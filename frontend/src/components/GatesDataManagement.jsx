@@ -205,40 +205,255 @@ export default function GatesDataManagement() {
         </div>
       </div>
 
-      {/* ── Stats Cards ──────────────────────────────────────── */}
+      {/* ══ ANALYTICS DASHBOARD ══════════════════════════════ */}
       {gates.length > 0 && (() => {
-        const open   = gates.filter(g => g.status === 'مفتوح').length;
-        const closed = gates.filter(g => g.status !== 'مفتوح').length;
-        const noStaff = gates.filter(g => getEmployeesAtGate(g.name).length === 0).length;
-        const total  = gates.length;
-        const STATS = [
-          { label:"إجمالي الأبواب",  value:total,   desc:"كل الأبواب المسجلة",  color:"#2563eb", grad:"from-blue-50 to-indigo-50/60",   border:"#bfdbfe", Icon:DoorOpen    },
-          { label:"مفتوحة الآن",     value:open,    desc:`${Math.round(open/total*100)}% من الإجمالي`, color:"#059669", grad:"from-emerald-50 to-green-50/60", border:"#a7f3d0", Icon:DoorOpen    },
-          { label:"مغلقة",           value:closed,  desc:"باب مغلق أو موقوف",   color:"#6b7280", grad:"from-slate-50 to-gray-50/60",    border:"#e2e8f0", Icon:DoorClosed  },
-          { label:"بدون موظفين",     value:noStaff, desc:"تحتاج تغطية فورية",   color: noStaff>0?"#dc2626":"#059669", grad:noStaff>0?"from-red-50 to-rose-50/60":"from-emerald-50 to-green-50/60", border:noStaff>0?"#fca5a5":"#a7f3d0", Icon: noStaff>0?AlertTriangle:Users },
+        const total   = gates.length;
+        const open    = gates.filter(g => g.status === 'مفتوح').length;
+        const closed  = gates.filter(g => g.status !== 'مفتوح').length;
+        const noStaff = gates.filter(g => getEmployeesAtGate(g.name).length === 0 && g.status === 'مفتوح').length;
+
+        // توزيعات
+        const byPlaza     = Object.entries(gates.reduce((a,g)=>{ a[g.plaza]=(a[g.plaza]||0)+1; return a; },{})).sort((a,b)=>b[1]-a[1]);
+        const byType      = Object.entries(gates.reduce((a,g)=>{ const k=g.gate_type||'غير محدد'; a[k]=(a[k]||0)+1; return a; },{})).sort((a,b)=>b[1]-a[1]);
+        const byDirection = Object.entries(gates.reduce((a,g)=>{ const k=g.direction||'غير محدد'; a[k]=(a[k]||0)+1; return a; },{})).sort((a,b)=>b[1]-a[1]);
+        const byCategory  = Object.entries(gates.reduce((a,g)=>{ const cats=Array.isArray(g.category)?g.category:[g.category||'غير محدد']; cats.forEach(c=>{ if(c) a[c]=(a[c]||0)+1; }); return a; },{})).sort((a,b)=>b[1]-a[1]);
+        const byIndicator = [
+          { label:'خفيف',  color:'#22c55e', count:gates.filter(g=>g.current_indicator==='خفيف').length  },
+          { label:'متوسط', color:'#f97316', count:gates.filter(g=>g.current_indicator==='متوسط').length },
+          { label:'مزدحم', color:'#ef4444', count:gates.filter(g=>g.current_indicator==='مزدحم').length },
+          { label:'غير محدد',color:'#94a3b8',count:gates.filter(g=>!g.current_indicator).length         },
+        ].filter(x=>x.count>0);
+        const staffBands  = [
+          { label:'0 موظف',  color:'#dc2626', bg:'#fef2f2', count:gates.filter(g=>getEmployeesAtGate(g.name).length===0).length, icon:'🚫' },
+          { label:'1-2 موظف',color:'#f97316', bg:'#fff7ed', count:gates.filter(g=>{ const c=getEmployeesAtGate(g.name).length; return c>=1&&c<=2; }).length, icon:'⚡' },
+          { label:'3+ موظف', color:'#059669', bg:'#ecfdf5', count:gates.filter(g=>getEmployeesAtGate(g.name).length>=3).length, icon:'✅' },
         ];
+
+        // helper: mini bar
+        const MiniBar = ({ label, count, total:t, color, extra }) => {
+          const pct = t>0 ? Math.round(count/t*100) : 0;
+          return (
+            <div className="space-y-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-slate-600 truncate max-w-[100px]">{label}</span>
+                <span className="text-[10px] font-bold tabular-nums flex-shrink-0 mr-1" style={{ color }}>
+                  {count} <span className="text-[9px] text-slate-400">({pct}%)</span>
+                </span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width:`${pct}%`, backgroundColor:color }}/>
+              </div>
+              {extra}
+            </div>
+          );
+        };
+
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {STATS.map((s, i) => {
-              const pct = total > 0 && typeof s.value === 'number' ? Math.round(s.value/total*100) : null;
-              return (
-                <div key={i} className={`group relative overflow-hidden rounded-2xl border p-3.5 bg-gradient-to-br ${s.grad} hover:shadow-lg hover:scale-[1.02] transition-all duration-200`}
-                  style={{ borderColor: s.color+"40" }}>
-                  <div className="absolute -left-3 -bottom-3 w-12 h-12 rounded-full opacity-[0.08]" style={{ backgroundColor:s.color }}/>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm mb-2" style={{ backgroundColor:s.color+"20" }}>
-                    <s.Icon className="w-4 h-4" style={{ color:s.color }}/>
-                  </div>
-                  <p className="text-2xl font-black leading-none mb-1 tabular-nums" style={{ color:s.color }}>{s.value}</p>
-                  <p className="text-[11px] font-bold text-slate-700">{s.label}</p>
-                  <p className="text-[9px] text-slate-400 mt-0.5">{s.desc}</p>
-                  {pct !== null && (
+          <div className="space-y-3">
+
+            {/* ── الصف ١: KPIs ───────────────────────────────── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {[
+                { label:"إجمالي الأبواب",  value:total,   desc:"كل الأبواب المسجلة",          color:"#2563eb", grad:"from-blue-50 to-indigo-50/60",   border:"#bfdbfe", Icon:DoorOpen     },
+                { label:"مفتوحة الآن",     value:open,    desc:`${Math.round(open/total*100)}% من الإجمالي`, color:"#059669", grad:"from-emerald-50 to-green-50/60", border:"#a7f3d0", Icon:DoorOpen     },
+                { label:"مغلقة / موقوفة",  value:closed,  desc:"باب مغلق أو موقوف",            color:"#6b7280", grad:"from-slate-50 to-gray-50/60",    border:"#e2e8f0", Icon:DoorClosed   },
+                { label:"مفتوح بلا موظف",  value:noStaff, desc:noStaff>0?"⚠️ تحتاج تغطية فورية!":"✅ كل الأبواب مغطاة", color:noStaff>0?"#dc2626":"#059669", grad:noStaff>0?"from-red-50 to-rose-50/60":"from-emerald-50 to-green-50/60", border:noStaff>0?"#fca5a5":"#a7f3d0", Icon:noStaff>0?AlertTriangle:Users },
+              ].map((s,i)=>{
+                const pct = Math.round(s.value/total*100);
+                return (
+                  <div key={i} className={`group relative overflow-hidden rounded-2xl border p-3 bg-gradient-to-br ${s.grad} hover:shadow-lg hover:scale-[1.02] transition-all duration-200`}
+                    style={{ borderColor:s.color+"40" }}>
+                    <div className="absolute -left-3 -bottom-3 w-12 h-12 rounded-full opacity-[0.07]" style={{ backgroundColor:s.color }}/>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm mb-2" style={{ backgroundColor:s.color+"20" }}>
+                      <s.Icon className="w-4 h-4" style={{ color:s.color }}/>
+                    </div>
+                    <p className="text-2xl font-black leading-none mb-0.5 tabular-nums" style={{ color:s.color }}>{s.value}</p>
+                    <p className="text-[11px] font-bold text-slate-700">{s.label}</p>
+                    <p className="text-[9px] text-slate-400 mt-0.5 leading-tight">{s.desc}</p>
                     <div className="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-700" style={{ width:`${pct}%`, backgroundColor:s.color }}/>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── الصف ٢: المنطقة + الحالة + المؤشر ─────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+              {/* ① توزيع المناطق */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-sky-50/80 to-blue-50/40 hover:shadow-md transition-all" style={{ borderColor:"#bae6fd" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-sky-600"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">توزيع المناطق</p>
+                    <p className="text-[9px] text-slate-400">{byPlaza.length} منطقة مختلفة</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {byPlaza.length===0 ? <p className="text-[10px] text-slate-400 text-center py-2">لا بيانات</p> :
+                    byPlaza.map(([name, count], i) => {
+                      const colors=["#0284c7","#0891b2","#0d9488","#0f766e","#059669","#16a34a"];
+                      return <MiniBar key={i} label={name} count={count} total={total} color={colors[i%colors.length]}/>;
+                    })
+                  }
+                </div>
+              </div>
+
+              {/* ② حالة الأبواب */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-emerald-50/80 to-teal-50/40 hover:shadow-md transition-all" style={{ borderColor:"#a7f3d0" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-emerald-600"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">حالة الأبواب</p>
+                    <p className="text-[9px] text-slate-400">{Math.round(open/total*100)}% مفتوحة الآن</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <MiniBar label="مفتوح" count={open} total={total} color="#059669"/>
+                  <MiniBar label="مغلق" count={closed} total={total} color="#6b7280"/>
+                  {/* open with no staff warning */}
+                  {noStaff>0 && (
+                    <div className="mt-2 p-2 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0"/>
+                      <span className="text-[10px] font-bold text-red-600">{noStaff} باب مفتوح بلا تغطية</span>
+                    </div>
                   )}
                 </div>
-              );
-            })}
+              </div>
+
+              {/* ③ مؤشر الازدحام */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-orange-50/80 to-amber-50/40 hover:shadow-md transition-all" style={{ borderColor:"#fed7aa" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-orange-500"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">مؤشر الازدحام</p>
+                    <p className="text-[9px] text-slate-400">حالة التدفق الحالية</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {byIndicator.length===0 ? (
+                    <p className="text-[10px] text-slate-400 text-center py-3">لا يوجد قراءات مؤشر</p>
+                  ) : byIndicator.map((ind,i)=>(
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor:ind.color }}/>
+                      <div className="flex-1"><MiniBar label={ind.label} count={ind.count} total={total} color={ind.color}/></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── الصف ٣: النوع + المسار + الفئة + الموظفون ──── */}
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+
+              {/* ④ النوع */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-violet-50/80 to-purple-50/40 hover:shadow-md transition-all" style={{ borderColor:"#c4b5fd" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
+                    <Tag className="w-4 h-4 text-violet-600"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">نوع الباب</p>
+                    <p className="text-[9px] text-slate-400">{byType.length} نوع</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {byType.length===0 ? <p className="text-[10px] text-slate-400 text-center py-2">لا بيانات</p> :
+                    byType.map(([name,count],i)=>{
+                      const c=["#7c3aed","#6d28d9","#5b21b6","#4c1d95"][i]||"#7c3aed";
+                      return <MiniBar key={i} label={name} count={count} total={total} color={c}/>;
+                    })
+                  }
+                </div>
+              </div>
+
+              {/* ⑤ المسار */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-amber-50/80 to-yellow-50/40 hover:shadow-md transition-all" style={{ borderColor:"#fcd34d" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <ArrowUpDown className="w-4 h-4 text-amber-600"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">المسار</p>
+                    <p className="text-[9px] text-slate-400">دخول / خروج / مشترك</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {byDirection.length===0 ? <p className="text-[10px] text-slate-400 text-center py-2">لا بيانات</p> :
+                    byDirection.map(([name,count],i)=>{
+                      const c=["#d97706","#b45309","#92400e","#78350f"][i]||"#d97706";
+                      return <MiniBar key={i} label={name} count={count} total={total} color={c}/>;
+                    })
+                  }
+                </div>
+              </div>
+
+              {/* ⑥ الفئة */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-rose-50/80 to-pink-50/40 hover:shadow-md transition-all" style={{ borderColor:"#fda4af" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-rose-500"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">الفئة</p>
+                    <p className="text-[9px] text-slate-400">رجال / نساء / مشترك</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {byCategory.length===0 ? <p className="text-[10px] text-slate-400 text-center py-2">لا بيانات</p> :
+                    byCategory.slice(0,5).map(([name,count],i)=>{
+                      const c=["#e11d48","#be185d","#9d174d","#831843","#f43f5e"][i]||"#e11d48";
+                      return <MiniBar key={i} label={name} count={count} total={total} color={c}/>;
+                    })
+                  }
+                </div>
+              </div>
+
+              {/* ⑦ تغطية الموظفين */}
+              <div className="rounded-2xl border p-4 bg-gradient-to-br from-indigo-50/80 to-blue-50/40 hover:shadow-md transition-all" style={{ borderColor:"#a5b4fc" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-indigo-600"/>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700">تغطية الموظفين</p>
+                    <p className="text-[9px] text-slate-400">توزيع الكثافة التشغيلية</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {staffBands.map((b,i)=>(
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[10px] font-medium text-slate-600 flex items-center gap-1">
+                          <span>{b.icon}</span>{b.label}
+                        </span>
+                        <span className="text-[10px] font-bold tabular-nums" style={{ color:b.color }}>
+                          {b.count} <span className="text-[9px] text-slate-400">({total>0?Math.round(b.count/total*100):0}%)</span>
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor:b.color+"20" }}>
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width:total>0?`${Math.round(b.count/total*100)}%`:"0%", backgroundColor:b.color }}/>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-1 border-t border-slate-100 mt-2">
+                    <p className="text-[9px] text-slate-500 flex items-center justify-between">
+                      <span>متوسط التغطية:</span>
+                      <span className="font-bold">
+                        {total>0 ? (employees.filter(e=>e.location).length/total).toFixed(1) : "0"} موظف/باب
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         );
       })()}
