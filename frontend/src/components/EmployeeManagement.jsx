@@ -325,7 +325,7 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 }
 
 // ── Main Component ───────────────────────────────────────────────
-export default function EmployeeManagement({ department }) {
+export default function EmployeeManagement({ department, onScheduleChange }) {
   const { language } = useLanguage();
   const { user, isReadOnly, hasPermission, canWrite, canRead } = useAuth();
 
@@ -448,6 +448,7 @@ export default function EmployeeManagement({ department }) {
       await axios.post(`${API}/admin/schedules`, { department, month:selectedMonth, clone_from: mode==="clone"?prevMonth:null }, { headers:{ Authorization:`Bearer ${token}` } });
       toast.success(isAr ? `تم إنشاء جدول ${getMonthLabel(selectedMonth)}` : "Schedule created");
       fetchSchedule();
+      onScheduleChange?.(); // تحديث badge فوراً
     } catch(e) { toast.error(e.response?.data?.detail || (isAr?"فشل الإنشاء":"Failed")); }
   };
 
@@ -456,8 +457,9 @@ export default function EmployeeManagement({ department }) {
     try {
       const token = localStorage.getItem("token");
       await axios.put(`${API}/admin/schedules/${schedule.id}/status?status=active`,{},{ headers:{ Authorization:`Bearer ${token}` } });
-      toast.success(isAr ? "تم اعتماد الجدول" : "Schedule approved");
+      toast.success(isAr ? "تم اعتماد الجدول ✅" : "Schedule approved");
       fetchSchedule();
+      onScheduleChange?.(); // badge → عدد الموظفين فوراً
     } catch(e) { toast.error(isAr?"فشل الاعتماد":"Failed"); }
   };
 
@@ -468,6 +470,7 @@ export default function EmployeeManagement({ department }) {
       await axios.delete(`${API}/admin/schedules/${schedule.id}`,{ headers:{ Authorization:`Bearer ${token}` } });
       toast.success(isAr?"تم حذف الجدول":"Schedule deleted");
       setSchedule(null);
+      onScheduleChange?.(); // badge → null فوراً
     } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل الحذف":"Failed")); }
   };
 
@@ -479,6 +482,7 @@ export default function EmployeeManagement({ department }) {
       await axios.put(`${API}/admin/schedules/${schedule.id}/unlock`, {}, { headers:{ Authorization:`Bearer ${token}` } });
       toast.success(isAr ? "تم فتح الجدول للتعديل" : "Schedule unlocked");
       fetchSchedule();
+      onScheduleChange?.(); // badge → "مسودة" فوراً
     } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل فتح الجدول":"Failed to unlock")); }
   };
 
