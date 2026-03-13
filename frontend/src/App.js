@@ -34,28 +34,49 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   
   // General Manager sees unified dashboard
   if (user?.role === 'general_manager') {
     return <ManagerDashboard />;
   }
   
-  // Department users (manager, supervisor, staff) see their department page
+  // Department users — only redirect if they have page_overview permission
   if (user?.department && user?.role !== 'system_admin') {
-    const departmentRoutes = {
-      'planning': '/planning',
-      'haram_map': '/haram-map',
-      'gates': '/gates',
-      'plazas': '/plazas',
-      'squares': '/plazas',
-      'mataf': '/mataf',
-      'crowd_services': '/crowd-services'
-    };
-    const route = departmentRoutes[user.department];
-    if (route) {
-      return <Navigate to={route} replace />;
+    if (hasPermission('page_overview')) {
+      const departmentRoutes = {
+        'planning': '/planning',
+        'haram_map': '/haram-map',
+        'gates': '/gates',
+        'plazas': '/plazas',
+        'squares': '/plazas',
+        'mataf': '/mataf',
+        'crowd_services': '/crowd-services'
+      };
+      const route = departmentRoutes[user.department];
+      if (route) {
+        return <Navigate to={route} replace />;
+      }
     }
+  }
+  
+  // Check dashboard permission for non-admin users
+  if (user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
+    // Redirect to notifications if they have alert permission, otherwise show access denied
+    if (hasPermission('page_alerts')) {
+      return <Navigate to="/notifications" replace />;
+    }
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <span className="text-destructive text-2xl">⛔</span>
+          </div>
+          <h2 className="font-cairo font-bold text-xl mb-2">غير مصرح بالدخول</h2>
+          <p className="text-muted-foreground">ليس لديك صلاحية للوصول إلى لوحة التحكم</p>
+        </div>
+      </div>
+    );
   }
   
   // Admin and others see main dashboard
@@ -149,10 +170,22 @@ function AppRoutes() {
             <MatafDepartment />
           </DepartmentProtectedRoute>
         } />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="alerts" element={<AlertsPage />} />
+        <Route path="reports" element={
+          <PermissionProtectedRoute permission="page_reports">
+            <ReportsPage />
+          </PermissionProtectedRoute>
+        } />
+        <Route path="alerts" element={
+          <PermissionProtectedRoute permission="page_alerts">
+            <AlertsPage />
+          </PermissionProtectedRoute>
+        } />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="prohibited-items" element={<ProhibitedItemsPage />} />
+        <Route path="prohibited-items" element={
+          <PermissionProtectedRoute permission="page_alerts">
+            <ProhibitedItemsPage />
+          </PermissionProtectedRoute>
+        } />
         <Route path="settings" element={<Navigate to="/admin" replace />} />
         <Route path="haram-map" element={
           <DepartmentProtectedRoute department="haram_map">
@@ -180,7 +213,9 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="field" element={
-          <FieldWorkerPage />
+          <PermissionProtectedRoute permission="enter_density">
+            <FieldWorkerPage />
+          </PermissionProtectedRoute>
         } />
         <Route path="employee/:id" element={
           <EmployeeProfilePage />

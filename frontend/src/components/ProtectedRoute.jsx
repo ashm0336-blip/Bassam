@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const DepartmentProtectedRoute = ({ children, department }) => {
-  const { canViewDepartment, isAuthenticated, loading } = useAuth();
+  const { canViewDepartment, hasPermission, isAuthenticated, loading, user } = useAuth();
   const { language } = useLanguage();
 
   if (loading) {
@@ -27,7 +27,11 @@ export const DepartmentProtectedRoute = ({ children, department }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!canViewDepartment(department)) {
+  // Check department access + at least page_overview permission
+  const hasDeptAccess = canViewDepartment(department);
+  const hasPagePerm = user?.role === 'system_admin' || hasPermission('page_overview');
+
+  if (!hasDeptAccess || !hasPagePerm) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-md mx-auto">

@@ -29,9 +29,12 @@ const LEVEL_CONFIG = {
 
 // Tree structure mapping permissions to their page location
 const PERM_TREE = [
-  { key: "page_overview", icon: LayoutDashboard, color: "#0891b2", children: [] },
-  { key: "page_transactions", icon: FileText, color: "#7c3aed", children: [] },
-  { key: "page_employees", icon: Users, color: "#1d4ed8", children: [
+  { key: "page_dashboard", icon: LayoutDashboard, color: "#0891b2", label_ar: "لوحة التحكم (غرفة العمليات)", children: [] },
+  { key: "page_overview", icon: Layers, color: "#6366f1", label_ar: "نظرة عامة على الإدارة", children: [] },
+  { key: "page_transactions", icon: FileText, color: "#7c3aed", label_ar: "المهام اليومية", children: [] },
+  { key: "page_alerts", icon: Bell, color: "#f59e0b", label_ar: "التنبيهات والبلاغات", children: [] },
+  { key: "page_reports", icon: BarChart3, color: "#06b6d4", label_ar: "التقارير", children: [] },
+  { key: "page_employees", icon: Users, color: "#1d4ed8", label_ar: "إدارة الموظفين", children: [
     { key: "add_employees" },
     { key: "edit_employees" },
     { key: "delete_employees", danger: true },
@@ -39,7 +42,7 @@ const PERM_TREE = [
     { key: "reset_pins" },
     { key: "change_roles", danger: true },
   ]},
-  { key: "page_daily_log", icon: Calendar, color: "#047857", children: [
+  { key: "page_daily_log", icon: Calendar, color: "#047857", label_ar: "السجل اليومي والجلسات", children: [
     { key: "view_daily_sessions" },
     { key: "create_session" },
     { key: "approve_session" },
@@ -53,7 +56,7 @@ const PERM_TREE = [
     { key: "enter_density" },
     { key: "view_density_reports" },
   ]},
-  { key: "page_settings", icon: Settings, color: "#64748b", children: [
+  { key: "page_settings", icon: Settings, color: "#64748b", label_ar: "إعدادات القسم", children: [
     { key: "manage_settings" },
     { key: "manage_maps" },
     { key: "manage_shifts" },
