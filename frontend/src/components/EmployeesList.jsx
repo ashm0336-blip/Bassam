@@ -416,6 +416,11 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const handleChangeRole = async (emp, newRole) => {
     if (!window.confirm(`تغيير صلاحية "${emp.name}" إلى "${ROLE_LABELS_MAP[newRole] || newRole}"؟`)) return;
     try {
+      // Update role on the user account (users collection)
+      if (emp.user_id) {
+        await axios.put(`${API}/users/${emp.user_id}/role`, { role: newRole }, headers());
+      }
+      // Also sync on employee record
       await axios.put(`${API}/employees/${emp.id}`, { user_role: newRole }, headers());
       toast.success(`تم تغيير الصلاحية إلى: ${ROLE_LABELS_MAP[newRole] || newRole}`);
       fetchEmployees();
