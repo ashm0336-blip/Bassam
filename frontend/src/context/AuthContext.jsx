@@ -190,7 +190,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isReadOnly = () => {
-    return user?.role === 'general_manager' || user?.role === 'admin_staff';
+    if (!user) return true;
+    if (user.role === 'system_admin') return false;
+    // Check if user has ANY write permission
+    const perms = user.permissions || {};
+    if (Array.isArray(perms)) return false;
+    return !Object.values(perms).some(v => v === 'write');
   };
 
   return (

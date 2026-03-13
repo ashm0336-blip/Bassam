@@ -61,6 +61,8 @@ const PERM_TREE = [
     { key: "manage_settings" },
     { key: "manage_maps" },
     { key: "manage_shifts" },
+    { key: "manage_gates" },
+    { key: "manage_categories" },
   ]},
 ];
 

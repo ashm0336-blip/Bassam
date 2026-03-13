@@ -54,6 +54,8 @@ ALL_PERMISSIONS = {
     "manage_settings":     {"ar": "إدارة إعدادات القسم",             "group": "settings",  "danger": False},
     "manage_maps":         {"ar": "إدارة خرائط الطوابق",             "group": "settings",  "danger": False},
     "manage_shifts":       {"ar": "إدارة الورديات",                  "group": "settings",  "danger": False},
+    "manage_gates":        {"ar": "إدارة بيانات الأبواب (إضافة/تعديل/حذف)", "group": "settings", "danger": False},
+    "manage_categories":   {"ar": "إدارة فئات المصليات",             "group": "settings",  "danger": False},
 }
 
 GROUP_LABELS = {
@@ -96,7 +98,7 @@ DEFAULT_PERMISSIONS = {
         "view_coverage_map": "write",
         "enter_density": "write", "view_density_reports": "write",
         "manage_settings": "write", "manage_maps": "write",
-        "manage_shifts": "write",
+        "manage_shifts": "write", "manage_gates": "write", "manage_categories": "write",
     },
     "shift_supervisor": {
         "page_overview": "read", "page_daily_log": "read",

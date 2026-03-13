@@ -196,7 +196,7 @@ export default function GatesDataManagement() {
             <RefreshCw className="w-3.5 h-3.5" />
             {language === 'ar' ? 'تحديث' : 'Refresh'}
           </Button>
-          {!isReadOnly() && (
+          {canWrite("manage_gates") && (
             <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 h-9">
               <Plus className="w-4 h-4" />
               {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
@@ -364,7 +364,7 @@ export default function GatesDataManagement() {
               <p className="font-cairo font-bold text-lg text-muted-foreground">لا توجد أبواب مسجلة بعد</p>
               <p className="text-sm text-slate-400 mt-1">ابدأ بإضافة أول باب من زر "إضافة باب جديد"</p>
             </div>
-            {!isReadOnly() && (
+            {canWrite("manage_gates") && (
               <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 mt-2">
                 <Plus className="w-4 h-4"/>إضافة أول باب
               </Button>
@@ -536,7 +536,7 @@ export default function GatesDataManagement() {
                       </TableCell>
                       {/* الإجراءات */}
                       <TableCell className="text-center">
-                        {!isReadOnly() ? (
+                        {canWrite("manage_gates") ? (
                           <div className="flex gap-1 justify-center">
                             <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary"
                               onClick={() => handleOpenDialog(gate)}>
