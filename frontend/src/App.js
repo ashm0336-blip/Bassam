@@ -36,13 +36,8 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 function ConditionalDashboard() {
   const { user, hasPermission } = useAuth();
   
-  // General Manager sees unified dashboard
-  if (user?.role === 'general_manager') {
-    return <ManagerDashboard />;
-  }
-  
   // Department users — only redirect if they have page_overview permission
-  if (user?.department && user?.role !== 'system_admin') {
+  if (user?.department && user?.role !== 'system_admin' && user?.role !== 'general_manager') {
     if (hasPermission('page_overview')) {
       const departmentRoutes = {
         'planning': '/planning',
@@ -61,8 +56,7 @@ function ConditionalDashboard() {
   }
   
   // Check dashboard permission for non-admin users
-  if (user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
-    // Redirect to notifications if they have alert permission, otherwise show access denied
+  if (user?.role !== 'system_admin' && user?.role !== 'general_manager' && !hasPermission('page_dashboard')) {
     if (hasPermission('page_alerts')) {
       return <Navigate to="/notifications" replace />;
     }
@@ -79,7 +73,7 @@ function ConditionalDashboard() {
     );
   }
   
-  // Admin and others see main dashboard
+  // Everyone with permission sees the same Dashboard (غرفة العمليات)
   return <Dashboard />;
 }
 
