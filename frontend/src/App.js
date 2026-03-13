@@ -180,7 +180,11 @@ function AppRoutes() {
             <AlertsPage />
           </PermissionProtectedRoute>
         } />
-        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="notifications" element={
+          <PermissionProtectedRoute permission="page_alerts">
+            <NotificationsPage />
+          </PermissionProtectedRoute>
+        } />
         <Route path="prohibited-items" element={
           <PermissionProtectedRoute permission="page_alerts">
             <ProhibitedItemsPage />
@@ -218,7 +222,9 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="employee/:id" element={
-          <EmployeeProfilePage />
+          <PermissionProtectedRoute permission="page_employees">
+            <EmployeeProfilePage />
+          </PermissionProtectedRoute>
         } />
         <Route path="my-profile" element={
           <EmployeeProfilePage self />

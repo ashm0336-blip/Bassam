@@ -286,6 +286,7 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         "alerts": "page_alerts",
         "reports": "page_reports",
         "field-worker": "page_field",
+        "/field": "page_field",
         "employee-profile": "page_overview",
     }
 
@@ -295,8 +296,10 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     DAILY_LOG_NAMES = ["السجل اليومي", "Daily Log", "المهام اليومية", "Daily Tasks"]
     # Names that map to page_settings
     SETTINGS_NAMES = ["الإعدادات", "Settings"]
+    # Notification names — requires page_alerts permission
+    NOTIFICATION_NAMES = ["الإشعارات", "Notifications"]
     # Public items (visible to all logged-in users)
-    PUBLIC_NAMES = ["الإشعارات", "Notifications"]
+    PUBLIC_NAMES = []
     # Dashboard names
     DASHBOARD_NAMES = ["لوحة التحكم", "Dashboard"]
 
@@ -314,6 +317,10 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         # Dashboard
         if name in DASHBOARD_NAMES:
             return "page_dashboard" in user_permissions
+
+        # Notifications
+        if name in NOTIFICATION_NAMES:
+            return "page_alerts" in user_permissions
 
         # Check if it's an overview page by name
         if name in OVERVIEW_NAMES:
@@ -344,10 +351,12 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             continue
         if item.get("roles") and user_role not in item.get("roles"):
             continue
-        # Public items — check dashboard permission
+        # Public items — check specific permissions
         if item.get("is_public"):
             name = item.get("name_ar", "")
             if name in DASHBOARD_NAMES and "page_dashboard" not in user_permissions:
+                continue
+            if name in NOTIFICATION_NAMES and "page_alerts" not in user_permissions:
                 continue
             filtered_items.append(item)
             accessible_parent_ids.add(item.get("id"))
