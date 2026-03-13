@@ -34,6 +34,7 @@ const PERM_TREE = [
   { key: "page_transactions", icon: FileText, color: "#7c3aed", label_ar: "المهام اليومية", children: [] },
   { key: "page_alerts", icon: Bell, color: "#f59e0b", label_ar: "التنبيهات والبلاغات", children: [] },
   { key: "page_reports", icon: BarChart3, color: "#06b6d4", label_ar: "التقارير", children: [] },
+  { key: "page_field", icon: MapPin, color: "#f97316", label_ar: "الواجهة الميدانية", children: [] },
   { key: "page_employees", icon: Users, color: "#1d4ed8", label_ar: "إدارة الموظفين", children: [
     { key: "add_employees" },
     { key: "edit_employees" },

@@ -22,6 +22,7 @@ ALL_PERMISSIONS = {
     "page_settings":       {"ar": "صفحة إعدادات القسم",              "group": "pages",     "danger": False},
     "page_alerts":         {"ar": "صفحة التنبيهات والبلاغات",          "group": "pages",     "danger": False},
     "page_reports":        {"ar": "صفحة التقارير",                    "group": "pages",     "danger": False},
+    "page_field":          {"ar": "الواجهة الميدانية",                 "group": "pages",     "danger": False},
 
     # Employee Management
     "add_employees":       {"ar": "إضافة موظفين",                   "group": "employees", "danger": False},
@@ -84,7 +85,7 @@ DEFAULT_PERMISSIONS = {
     "department_manager": {
         "page_dashboard": "read", "page_overview": "write", "page_employees": "write",
         "page_daily_log": "write", "page_transactions": "write", "page_settings": "write",
-        "page_alerts": "write", "page_reports": "read",
+        "page_alerts": "write", "page_reports": "read", "page_field": "write",
         "add_employees": "write", "edit_employees": "write", "delete_employees": "write",
         "manage_accounts": "write", "reset_pins": "write",
         "view_daily_sessions": "write", "create_session": "write",
@@ -99,7 +100,7 @@ DEFAULT_PERMISSIONS = {
     },
     "shift_supervisor": {
         "page_overview": "read", "page_daily_log": "read",
-        "page_alerts": "read",
+        "page_alerts": "read", "page_field": "write",
         "view_daily_sessions": "read",
         "start_prayer_round": "write", "complete_prayer_round": "write",
         "skip_prayer_round": "write",
@@ -108,7 +109,7 @@ DEFAULT_PERMISSIONS = {
         "enter_density": "write",
     },
     "field_staff": {
-        "page_overview": "read",
+        "page_overview": "read", "page_field": "write",
         "enter_density": "write",
         "view_coverage_map": "read",
     },

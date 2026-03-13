@@ -213,7 +213,7 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="field" element={
-          <PermissionProtectedRoute permission="enter_density">
+          <PermissionProtectedRoute permission="page_field">
             <FieldWorkerPage />
           </PermissionProtectedRoute>
         } />

@@ -285,7 +285,7 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         "tasks": "page_transactions",
         "alerts": "page_alerts",
         "reports": "page_reports",
-        "field-worker": "enter_density",
+        "field-worker": "page_field",
         "employee-profile": "page_overview",
     }
 
