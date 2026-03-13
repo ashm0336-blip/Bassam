@@ -190,7 +190,9 @@ async def get_pwa_settings():
 
 @router.put("/admin/settings/pwa")
 async def update_pwa_settings(settings: PWASettingsUpdate, admin: dict = Depends(require_admin)):
-    import json, base64, os
+    import json
+    import base64
+    import os
 
     update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
     if update_data:
@@ -261,7 +263,8 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     # Get user's permissions for page-level filtering
     user_permissions = {}
     if user_role == "system_admin":
-        user_permissions = {k: "write" for k in ["page_overview", "page_employees", "page_daily_log", "page_transactions", "page_settings"]}
+        from routes.permissions import ALL_PERMISSIONS
+        user_permissions = {k: "write" for k in ALL_PERMISSIONS.keys()}
     else:
         from routes.permissions import _normalize_permissions, DEFAULT_PERMISSIONS
         doc = await db.role_permissions.find_one({"role": user_role}, {"_id": 0})
@@ -279,28 +282,58 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
         "?tab=transactions": "page_transactions",
         "?tab=settings": "page_settings",
         "?tab=employees": "page_employees",
+        "tasks": "page_transactions",
+        "alerts": "page_alerts",
+        "reports": "page_reports",
+        "field-worker": "enter_density",
+        "employee-profile": "page_overview",
     }
 
-    # Names that map to page_overview (نظرة عامة pages that use department root URL)
+    # Names that map to page_overview
     OVERVIEW_NAMES = ["نظرة عامة", "Overview"]
+    # Names that map to page_daily_log
+    DAILY_LOG_NAMES = ["السجل اليومي", "Daily Log", "المهام اليومية", "Daily Tasks"]
+    # Names that map to page_settings
+    SETTINGS_NAMES = ["الإعدادات", "Settings"]
+    # Public items (visible to all logged-in users)
+    PUBLIC_NAMES = ["الإشعارات", "Notifications"]
+    # Dashboard names
+    DASHBOARD_NAMES = ["لوحة التحكم", "Dashboard"]
 
     def _has_page_perm(item):
-        """Check if user has permission for this sidebar item"""
+        """Check if user has permission for this sidebar item — strict mode"""
         if user_role == "system_admin":
             return True
         href = item.get("href", "")
         name = item.get("name_ar", "")
         
+        # Public items — always visible
+        if name in PUBLIC_NAMES or item.get("is_public"):
+            return True
+
+        # Dashboard
+        if name in DASHBOARD_NAMES:
+            return "page_dashboard" in user_permissions
+
         # Check if it's an overview page by name
         if name in OVERVIEW_NAMES:
             return "page_overview" in user_permissions
+
+        # Check daily log names
+        if name in DAILY_LOG_NAMES:
+            return "page_daily_log" in user_permissions
+
+        # Check settings names
+        if name in SETTINGS_NAMES:
+            return "page_settings" in user_permissions
         
         # Check href patterns
         for pattern, perm in PAGE_PERM_MAP.items():
             if pattern in href:
                 return perm in user_permissions
         
-        return True  # No mapping = allow
+        # Default: DENY — only explicitly allowed items are shown
+        return False
 
     filtered_items = []
     accessible_parent_ids = set()
@@ -311,10 +344,15 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             continue
         if item.get("roles") and user_role not in item.get("roles"):
             continue
+        # Public items — check dashboard permission
         if item.get("is_public"):
+            name = item.get("name_ar", "")
+            if name in DASHBOARD_NAMES and "page_dashboard" not in user_permissions:
+                continue
             filtered_items.append(item)
             accessible_parent_ids.add(item.get("id"))
             continue
+        # Department sections — allow provisionally (will be pruned if no children pass)
         if item.get("department"):
             if user_role in ["system_admin", "general_manager", "monitoring_team"]:
                 filtered_items.append(item)
@@ -322,16 +360,30 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             elif user_dept and user_dept == item.get("department"):
                 filtered_items.append(item)
                 accessible_parent_ids.add(item.get("id"))
-        else:
+            continue
+        # Standalone pages (no department, no parent) — must pass permission check
+        if _has_page_perm(item):
             filtered_items.append(item)
             accessible_parent_ids.add(item.get("id"))
 
     # Filter children by parent access AND page permissions
+    child_count = {}
     for item in items:
         if item.get("parent_id") and item.get("parent_id") in accessible_parent_ids:
             if _has_page_perm(item):
                 filtered_items.append(item)
+                pid = item.get("parent_id")
+                child_count[pid] = child_count.get(pid, 0) + 1
+
+    # Remove parents with ZERO accessible children (empty sections)
+    filtered_items = [item for item in filtered_items if item.get("parent_id") or child_count.get(item.get("id"), 0) > 0 or not items_have_children(item.get("id"), items)]
+
     return filtered_items
+
+
+def items_have_children(parent_id, all_items):
+    """Check if a parent item has any children in the full list"""
+    return any(i.get("parent_id") == parent_id for i in all_items)
 
 
 @router.post("/admin/sidebar-menu")
