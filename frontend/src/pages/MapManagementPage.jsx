@@ -310,6 +310,18 @@ export default function MapManagementPage({ department = "plazas" }) {
         })}
       </div>
 
+      {/* Calibration tip */}
+      {floors.length > 0 && (
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200" data-testid="calibration-tip">
+          <Ruler className="w-4 h-4 text-blue-500 flex-shrink-0" />
+          <p className="text-[11px] text-blue-700 leading-relaxed font-cairo">
+            {isAr
+              ? "يمكنك معايرة مقياس كل طابق بالضغط على زر \"معايرة\" في بطاقة الطابق. المعايرة اختيارية — بدونها تعمل الخرائط بشكل طبيعي، ومعها يتم حساب المساحات والطاقة الاستيعابية تلقائياً عند رسم المناطق."
+              : "You can calibrate each floor's scale by clicking \"Calibrate\" on the floor card. Calibration is optional — maps work normally without it, but with it, areas and capacities are auto-calculated when drawing zones."}
+          </p>
+        </div>
+      )}
+
       {/* Floors Grid */}
       {floors.length === 0 ? (
         <Card className="border-dashed">
@@ -485,6 +497,21 @@ export default function MapManagementPage({ department = "plazas" }) {
                 </div>
               )}
             </div>
+
+            {/* Calibration note in edit mode */}
+            {editingFloor && editingFloor.image_url && (
+              <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ backgroundColor: editingFloor.scale_calibration ? "#ecfdf5" : "#f8fafc", borderColor: editingFloor.scale_calibration ? "#a7f3d0" : "#e2e8f0" }}>
+                <Ruler className="w-4 h-4 flex-shrink-0" style={{ color: editingFloor.scale_calibration ? "#059669" : "#94a3b8" }} />
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold" style={{ color: editingFloor.scale_calibration ? "#059669" : "#64748b" }}>
+                    {editingFloor.scale_calibration
+                      ? (isAr ? `مُعاير: ${editingFloor.scale_calibration.distance_meters} متر` : `Calibrated: ${editingFloor.scale_calibration.distance_meters}m`)
+                      : (isAr ? "غير مُعاير — المعايرة اختيارية" : "Not calibrated — optional")}
+                  </p>
+                  <p className="text-[9px] text-slate-400">{isAr ? "يمكنك المعايرة من زر \"معايرة\" في بطاقة الطابق" : "Calibrate from the floor card button"}</p>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url} className="bg-blue-600 hover:bg-blue-700" data-testid="floor-dialog-save-button">
