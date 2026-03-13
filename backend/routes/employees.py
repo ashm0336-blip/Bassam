@@ -136,7 +136,7 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
     query = {}
     if user["role"] == "department_manager":
         query["department"] = user.get("department")
-    elif department and user["role"] in ["system_admin", "general_manager", "monitoring_team"]:
+    elif department and user["role"] in ["system_admin", "general_manager"]:
         query["department"] = department
     employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
     # إضافة حالة الحساب والدور لكل موظف

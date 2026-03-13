@@ -118,7 +118,7 @@ export default function ReportsPage() {
   // Check if user can access all departments
   const canAccessAllDepartments = user?.role === "system_admin" || 
                                     user?.role === "general_manager" || 
-                                    user?.role === "monitoring_team";
+                                    false;
 
   // Get user's department for filtering
   const userDepartment = user?.department;

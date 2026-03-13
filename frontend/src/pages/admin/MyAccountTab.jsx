@@ -22,7 +22,6 @@ const roleLabels = {
   shift_supervisor: 'مشرف الوردية',
   field_staff: 'موظف ميداني',
   admin_staff: 'موظف إداري',
-  monitoring_team: 'فريق المراقبة',
 };
 
 export default function MyAccountTab() {

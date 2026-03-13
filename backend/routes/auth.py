@@ -20,7 +20,6 @@ SESSION_HOURS = {          # مدة الجلسة حسب الدور
     "department_manager": 8,
     "shift_supervisor":  6,
     "field_staff":       4,
-    "monitoring_team":   8,
 }
 
 def _is_national_id(identifier: str) -> bool:

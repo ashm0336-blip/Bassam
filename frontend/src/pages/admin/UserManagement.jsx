@@ -63,11 +63,6 @@ const ROLES = {
     label: { ar: "موظف ميداني", en: "Field Staff" }, 
     color: "bg-green-500", 
     icon: UserCheck 
-  },
-  monitoring_team: { 
-    label: { ar: "فريق المراقبة", en: "Monitoring Team" }, 
-    color: "bg-orange-500", 
-    icon: Eye 
   }
 };
 

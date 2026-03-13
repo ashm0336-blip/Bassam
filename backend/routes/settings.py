@@ -363,7 +363,7 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             continue
         # Department sections — allow provisionally (will be pruned if no children pass)
         if item.get("department"):
-            if user_role in ["system_admin", "general_manager", "monitoring_team"]:
+            if user_role in ["system_admin", "general_manager"]:
                 filtered_items.append(item)
                 accessible_parent_ids.add(item.get("id"))
             elif user_dept and user_dept == item.get("department"):

@@ -15,7 +15,7 @@ const getAuth = () => ({ headers: { Authorization: `Bearer ${localStorage.getIte
 
 const DEPT_LABELS = { gates: 'إدارة الأبواب', plazas: 'إدارة الساحات', planning: 'إدارة التخطيط', crowd_services: 'خدمات الحشود', mataf: 'صحن المطاف', haram_map: 'إدارة المصليات' };
 const DEPT_COLORS = { gates: '#1d4ed8', plazas: '#0d9488', planning: '#7c3aed', crowd_services: '#d97706', mataf: '#dc2626', haram_map: '#059669' };
-const ROLE_LABELS = { system_admin: 'مسؤول النظام', general_manager: 'المدير العام', department_manager: 'مدير الإدارة', shift_supervisor: 'مشرف الوردية', field_staff: 'موظف ميداني', admin_staff: 'موظف إداري', monitoring_team: 'فريق المراقبة' };
+const ROLE_LABELS = { system_admin: 'مسؤول النظام', general_manager: 'المدير العام', department_manager: 'مدير الإدارة', shift_supervisor: 'مشرف الوردية', field_staff: 'موظف ميداني', admin_staff: 'موظف إداري' };
 const STATUS_CONFIG = { active: { label: 'نشط', color: '#22c55e', icon: CheckCircle2 }, frozen: { label: 'مجمّد', color: '#ef4444', icon: Lock }, terminated: { label: 'منتهي', color: '#6b7280', icon: XCircle }, pending: { label: 'معلّق', color: '#f59e0b', icon: Clock } };
 
 export default function EmployeeProfilePage({ self = false }) {

@@ -9,7 +9,6 @@ export const ROLE_LABELS = {
   department_manager: { ar: 'مدير الإدارة', en: 'Dept. Manager', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
   shift_supervisor: { ar: 'مشرف الوردية', en: 'Shift Supervisor', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
   field_staff: { ar: 'موظف ميداني', en: 'Field Staff', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  monitoring_team: { ar: 'فريق المراقبة', en: 'Monitoring', color: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400' },
   admin_staff: { ar: 'موظف إداري', en: 'Admin Staff', color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' },
 };
 
@@ -182,7 +181,6 @@ export const AuthProvider = ({ children }) => {
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
     if (user?.role === 'general_manager') return true;
-    if (user?.role === 'monitoring_team') return true;
     if (user?.department === department) return true;
     return false;
   };
@@ -192,7 +190,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isReadOnly = () => {
-    return user?.role === 'general_manager' || user?.role === 'monitoring_team' || user?.role === 'admin_staff';
+    return user?.role === 'general_manager' || user?.role === 'admin_staff';
   };
 
   return (

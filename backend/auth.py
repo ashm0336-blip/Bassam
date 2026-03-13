@@ -62,7 +62,7 @@ async def require_department_manager(user: dict = Depends(get_current_user)):
 
 
 def check_department_access(user: dict, department: str) -> bool:
-    if user["role"] in ["system_admin", "general_manager", "monitoring_team"]:
+    if user["role"] in ["system_admin", "general_manager"]:
         return True
     if user["role"] == "department_manager":
         return user.get("department") == department
