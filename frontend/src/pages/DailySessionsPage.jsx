@@ -3,14 +3,10 @@ import axios from "axios";
 import {
   Plus, Calendar as CalendarIcon, Layers, Eye, MapPin, Activity,
   CalendarRange, Users, BarChart3, PanelLeftClose, ChevronRight,
-  Ruler, Save,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
@@ -153,33 +149,9 @@ export default function DailySessionsPage() {
   const [savingDensity, setSavingDensity] = useState(false);
   const [activePrayer, setActivePrayer] = useState("fajr");
 
-  // Calibration state
-  const [calibrationMode, setCalibrationMode] = useState(false); // "picking" | false
-  const [calibrationPoints, setCalibrationPoints] = useState([]);
-  const [calibrationDistance, setCalibrationDistance] = useState("");
-  const [showCalibrationDialog, setShowCalibrationDialog] = useState(false);
-
-  // Get calibration from selected floor
+  // Calibration - read from floor, used for auto-computing zone metrics
   const floorCalibration = selectedFloor?.scale_calibration || null;
   const scaleInfo = useMemo(() => computeScale(floorCalibration, imgRatio), [floorCalibration, imgRatio]);
-
-  // Save calibration to floor
-  const handleSaveCalibration = async () => {
-    if (calibrationPoints.length !== 2 || !calibrationDistance || !selectedFloor) return;
-    const dist = parseFloat(calibrationDistance);
-    if (isNaN(dist) || dist <= 0) { toast.error(isAr ? "أدخل مسافة صحيحة بالأمتار" : "Enter valid distance"); return; }
-    try {
-      const calibData = { point1: calibrationPoints[0], point2: calibrationPoints[1], distance_meters: dist };
-      await axios.put(`${API}/admin/floors/${selectedFloor.id}`, { scale_calibration: calibData }, getAuthHeaders());
-      setSelectedFloor(prev => ({ ...prev, scale_calibration: calibData }));
-      setFloors(prev => prev.map(f => f.id === selectedFloor.id ? { ...f, scale_calibration: calibData } : f));
-      setCalibrationMode(false);
-      setCalibrationPoints([]);
-      setCalibrationDistance("");
-      setShowCalibrationDialog(false);
-      toast.success(isAr ? "تم حفظ المعايرة بنجاح" : "Calibration saved");
-    } catch { toast.error(isAr ? "تعذر حفظ المعايرة" : "Failed to save calibration"); }
-  };
 
   // Auto-compute zone metrics from polygon points
   const computeAutoMetrics = useCallback((points) => {
@@ -1397,7 +1369,6 @@ export default function DailySessionsPage() {
                   )}
                   {/* ── MapToolbar: يظهر فقط عند جولة صلاة نشطة ── */}
                   {isMapEditable ? (
-                  <div className="space-y-2">
                   <MapToolbar
                     activeSession={activeSession} mapMode={mapMode} setMapMode={setMapMode}
                     drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints}
@@ -1416,25 +1387,7 @@ export default function DailySessionsPage() {
                     mapUndoStack={mapUndoStack} mapRedoStack={mapRedoStack}
                     readOnly={false}
                   />
-                  {/* Calibration button */}
-                  <div className="flex items-center gap-2">
-                    <Button variant={calibrationMode ? "default" : "outline"} size="sm" className={`h-7 text-[10px] gap-1.5 ${calibrationMode ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-                      onClick={() => {
-                        if (calibrationMode) { setCalibrationMode(false); setCalibrationPoints([]); }
-                        else { setCalibrationMode(true); setCalibrationPoints([]); setShowCalibrationDialog(true); }
-                      }}
-                      data-testid="calibration-btn">
-                      <Ruler className="w-3 h-3" />{isAr ? (calibrationMode ? "إلغاء المعايرة" : "معايرة المقياس") : (calibrationMode ? "Cancel" : "Calibrate")}
-                    </Button>
-                    {scaleInfo.valid && (
-                      <span className="text-[9px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        {isAr ? `مُعاير: ${floorCalibration.distance_meters} م` : `Calibrated: ${floorCalibration.distance_meters}m`}
-                      </span>
-                    )}
-                  </div>
-                  </div>
                   ) : activeSession && viewOnlyReason && (
-                    /* ── لافتة وضع العرض ── */
                     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm font-cairo
                       ${viewOnlyReason === "waiting_prayer"
                         ? "bg-blue-50 border-blue-200 text-blue-700"
@@ -1520,46 +1473,6 @@ export default function DailySessionsPage() {
                     savingDensity={savingDensity}
                     readOnly={!isMapEditable}
                   />
-                  {/* ── Calibration Overlay ── */}
-                  {calibrationMode && calibrationPoints.length < 2 && (
-                    <div className="absolute inset-0 z-20 cursor-crosshair"
-                      style={{ background: "rgba(59,130,246,0.05)" }}
-                      onClick={(e) => {
-                        const container = e.currentTarget.parentElement?.querySelector('[data-testid="session-map-container"]');
-                        if (!container) return;
-                        const inner = container.querySelector('img');
-                        if (!inner) return;
-                        const rect = inner.getBoundingClientRect();
-                        const x = ((e.clientX - rect.left) / rect.width) * 100;
-                        const y = ((e.clientY - rect.top) / rect.height) * 100;
-                        setCalibrationPoints(prev => {
-                          const next = [...prev, { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 }];
-                          if (next.length >= 2) toast.success(isAr ? "تم تحديد النقطتين — أدخل المسافة" : "Both points set — enter distance");
-                          return next;
-                        });
-                      }}
-                      data-testid="calibration-overlay">
-                      {/* Visual indicator */}
-                      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg text-[11px] font-bold font-cairo flex items-center gap-2">
-                        <Ruler className="w-4 h-4" />
-                        {calibrationPoints.length === 0 ? (isAr ? "اضغط على النقطة الأولى" : "Click first point") : (isAr ? "اضغط على النقطة الثانية" : "Click second point")}
-                        <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{calibrationPoints.length}/2</span>
-                      </div>
-                      {/* Show placed calibration points */}
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-                        {calibrationPoints.map((pt, i) => (
-                          <g key={i}>
-                            <circle cx={`${pt.x}%`} cy={`${pt.y}%`} r="8" fill="#2563eb" fillOpacity="0.3" stroke="#2563eb" strokeWidth="2" />
-                            <circle cx={`${pt.x}%`} cy={`${pt.y}%`} r="3" fill="#2563eb" />
-                            <text x={`${pt.x}%`} y={`${pt.y - 2}%`} textAnchor="middle" fill="#1d4ed8" fontSize="12" fontWeight="800">{i + 1}</text>
-                          </g>
-                        ))}
-                        {calibrationPoints.length === 2 && (
-                          <line x1={`${calibrationPoints[0].x}%`} y1={`${calibrationPoints[0].y}%`} x2={`${calibrationPoints[1].x}%`} y2={`${calibrationPoints[1].y}%`} stroke="#2563eb" strokeWidth="2" strokeDasharray="6 3" />
-                        )}
-                      </svg>
-                    </div>
-                  )}
                     </div>
                     {/* Stats panel: absolutely positioned, slides over the map */}
                     <MapStatsPanel
@@ -1642,63 +1555,6 @@ export default function DailySessionsPage() {
       <NewZoneDialog open={showNewZoneDialog} onOpenChange={(v) => { setShowNewZoneDialog(v); if (!v) setMapMode("edit"); }} newZoneForm={newZoneForm} setNewZoneForm={setNewZoneForm} drawingPoints={drawingPoints} setDrawingPoints={setDrawingPoints} handleSaveNewZone={handleSaveNewZone} ZONE_TYPES={ZONE_TYPES} autoMetrics={computeAutoMetrics(drawingPoints)} />
       <NotesDialog open={showNotesDialog} onOpenChange={setShowNotesDialog} sessionNotes={sessionNotes} setSessionNotes={setSessionNotes} handleUpdateSession={handleUpdateSession} />
       <CompareDialog open={showCompareDialog} onOpenChange={setShowCompareDialog} compareData={compareData} ZONE_TYPES={ZONE_TYPES} />
-
-      {/* ── Calibration Dialog ── */}
-      <Dialog open={showCalibrationDialog} onOpenChange={(v) => { setShowCalibrationDialog(v); if (!v) { setCalibrationMode(false); setCalibrationPoints([]); } }}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader><DialogTitle className="font-cairo flex items-center gap-2">
-            <Ruler className="w-5 h-5 text-blue-600" />{isAr ? "معايرة مقياس الخريطة" : "Map Scale Calibration"}
-          </DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-700 leading-relaxed">
-              {calibrationPoints.length === 0 && (isAr ? "اضغط على نقطتين على الخريطة تعرف المسافة بينهما بالأمتار. مثل: زاويتي عمود، أو بداية ونهاية ممر." : "Click two points on the map where you know the real-world distance.")}
-              {calibrationPoints.length === 1 && (isAr ? "تم تحديد النقطة الأولى. اضغط على النقطة الثانية على الخريطة." : "First point set. Click the second point on the map.")}
-              {calibrationPoints.length === 2 && (isAr ? "تم تحديد النقطتين. أدخل المسافة الحقيقية بالأمتار." : "Both points set. Enter the real distance in meters.")}
-            </div>
-
-            {/* Points status */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className={`p-2.5 rounded-xl border text-center ${calibrationPoints.length >= 1 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
-                <div className={`w-6 h-6 mx-auto rounded-full flex items-center justify-center text-[10px] font-bold mb-1 ${calibrationPoints.length >= 1 ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-white'}`}>1</div>
-                <p className="text-[9px] font-medium text-slate-600">{calibrationPoints.length >= 1 ? (isAr ? "تم التحديد" : "Set") : (isAr ? "انتظار..." : "Waiting...")}</p>
-              </div>
-              <div className={`p-2.5 rounded-xl border text-center ${calibrationPoints.length >= 2 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
-                <div className={`w-6 h-6 mx-auto rounded-full flex items-center justify-center text-[10px] font-bold mb-1 ${calibrationPoints.length >= 2 ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-white'}`}>2</div>
-                <p className="text-[9px] font-medium text-slate-600">{calibrationPoints.length >= 2 ? (isAr ? "تم التحديد" : "Set") : (isAr ? "انتظار..." : "Waiting...")}</p>
-              </div>
-            </div>
-
-            {/* Distance input */}
-            {calibrationPoints.length === 2 && (
-              <div className="space-y-2">
-                <Label className="text-sm font-cairo">{isAr ? "المسافة الحقيقية بين النقطتين (بالأمتار)" : "Real distance (meters)"}</Label>
-                <div className="flex items-center gap-2">
-                  <Input type="number" min="0.1" step="0.1" value={calibrationDistance} onChange={e => setCalibrationDistance(e.target.value)}
-                    placeholder={isAr ? "مثال: 15.5" : "e.g., 15.5"} className="text-lg font-mono text-center" autoFocus data-testid="calibration-distance-input" />
-                  <span className="text-sm font-bold text-slate-500">{isAr ? "متر" : "m"}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Existing calibration info */}
-            {floorCalibration && scaleInfo.valid && (
-              <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-700">
-                {isAr ? `معايرة حالية: ${floorCalibration.distance_meters} متر — سيتم استبدالها` : `Current: ${floorCalibration.distance_meters}m — will be replaced`}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            {calibrationPoints.length === 2 && (
-              <Button onClick={handleSaveCalibration} className="bg-blue-600 hover:bg-blue-700" disabled={!calibrationDistance} data-testid="save-calibration-btn">
-                <Save className="w-4 h-4 ml-1" />{isAr ? "حفظ المعايرة" : "Save Calibration"}
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => { setCalibrationPoints([]); setCalibrationDistance(""); }}>
-              {isAr ? "إعادة التحديد" : "Reset Points"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* ── Context Menu (Right-Click) ── */}
       {contextMenu && (
