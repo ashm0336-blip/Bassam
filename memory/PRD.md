@@ -67,6 +67,9 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - Assign Task to entire Department
 - Weekly/Monthly Performance Reports
 
+### P2 - Future
+- Push Notifications (إشعارات الدفع) — Service Worker + Web Push API for real-time alerts on mobile/desktop even when site is closed
+
 ## Credentials
 - **Admin**: admin@crowd.sa / admin123
 - **Employee (Bassam)**: ID 1037299037 / PIN 0000
