@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import {
   Plus, Trash2, Save, X, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
-  CheckCircle2, AlertTriangle, BarChart3, ArrowUpDown, Ruler,
+  CheckCircle2, AlertTriangle, BarChart3, ArrowUpDown, Ruler, ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,13 @@ export default function MapManagementPage({ department = "plazas" }) {
   const [calibFloor, setCalibFloor] = useState(null); // floor being calibrated
   const [calibPoints, setCalibPoints] = useState([]);
   const [calibDistance, setCalibDistance] = useState("");
+  const [calibZoom, setCalibZoom] = useState(1);
+  const [calibPan, setCalibPan] = useState({ x: 0, y: 0 });
+  const [calibPanning, setCalibPanning] = useState(false);
+  const [calibPanStart, setCalibPanStart] = useState({ x: 0, y: 0 });
+  const [calibDragDist, setCalibDragDist] = useState(0);
+  const calibZoomRef = useRef(1);
+  const calibContainerRef = useRef(null);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -392,7 +399,7 @@ export default function MapManagementPage({ department = "plazas" }) {
                     {floor.image_url && (
                       <Button variant="outline" size="sm"
                         className={`hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors ${floor.scale_calibration ? "border-emerald-300 text-emerald-700" : ""}`}
-                        onClick={() => { setCalibFloor(floor); setCalibPoints([]); setCalibDistance(floor.scale_calibration?.distance_meters?.toString() || ""); }}
+                        onClick={() => { setCalibFloor(floor); setCalibPoints([]); setCalibDistance(floor.scale_calibration?.distance_meters?.toString() || ""); setCalibZoom(1); calibZoomRef.current = 1; setCalibPan({ x: 0, y: 0 }); }}
                         data-testid={`floor-calibrate-${floor.id}`}>
                         <Ruler className="w-3.5 h-3.5 ml-1" />
                         {floor.scale_calibration ? (isAr ? "مُعاير" : "Cal'd") : (isAr ? "معايرة" : "Cal")}
@@ -532,42 +539,100 @@ export default function MapManagementPage({ department = "plazas" }) {
               {calibPoints.length === 2 && (isAr ? "الخطوة 3: أدخل المسافة الحقيقية بين النقطتين بالأمتار" : "Step 3: Enter the real distance in meters")}
             </div>
 
-            {/* Map with click-to-place-points */}
+            {/* Map with zoom/pan + click-to-place-points */}
             {calibFloor?.image_url && (
-              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 cursor-crosshair" style={{ height: "400px" }}
-                onClick={(e) => {
-                  if (calibPoints.length >= 2) return;
-                  const img = e.currentTarget.querySelector('img');
-                  if (!img) return;
-                  const rect = img.getBoundingClientRect();
-                  const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000) / 100;
-                  const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000) / 100;
-                  setCalibPoints(prev => [...prev, { x, y }]);
-                }}
-                data-testid="calibration-map">
-                <img src={normalizeImageUrl(calibFloor.image_url)} alt=""
-                  className="w-full h-full object-contain pointer-events-none select-none" draggable={false} />
-                {/* Calibration points overlay */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                  {calibPoints.map((pt, i) => (
-                    <g key={i}>
-                      <circle cx={`${pt.x}%`} cy={`${pt.y}%`} r="12" fill="#2563eb" fillOpacity="0.2" stroke="#2563eb" strokeWidth="2.5" />
-                      <circle cx={`${pt.x}%`} cy={`${pt.y}%`} r="4" fill="#2563eb" />
-                      <text x={`${pt.x}%`} y={`${pt.y - 3}%`} textAnchor="middle" fill="#1d4ed8" fontSize="14" fontWeight="800" fontFamily="Cairo">{i + 1}</text>
-                    </g>
-                  ))}
-                  {calibPoints.length === 2 && (
-                    <line x1={`${calibPoints[0].x}%`} y1={`${calibPoints[0].y}%`} x2={`${calibPoints[1].x}%`} y2={`${calibPoints[1].y}%`}
-                      stroke="#2563eb" strokeWidth="2.5" strokeDasharray="8 4" />
-                  )}
-                </svg>
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: "420px" }}>
+                {/* Zoom controls inside map */}
+                <div className="absolute top-3 left-3 z-20 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm"
+                  onMouseDown={e => e.stopPropagation()}>
+                  <button onClick={() => { const nz = Math.max(0.5, calibZoomRef.current * 0.8); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
+                  <span className="text-[11px] w-10 text-center font-mono text-slate-500">{Math.round(calibZoom * 100)}%</span>
+                  <button onClick={() => { const nz = Math.min(10, calibZoomRef.current * 1.25); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
+                  <button onClick={() => { calibZoomRef.current = 1; setCalibZoom(1); setCalibPan({ x: 0, y: 0 }); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><Maximize2 className="w-4 h-4 text-slate-600" /></button>
+                </div>
+
                 {/* Status badge */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-1.5 rounded-xl shadow-lg text-[11px] font-bold font-cairo flex items-center gap-2">
+                <div className="absolute top-3 right-3 z-20 bg-blue-600 text-white px-3 py-1.5 rounded-xl shadow-lg text-[11px] font-bold font-cairo flex items-center gap-2">
                   <Ruler className="w-3.5 h-3.5" />
                   {calibPoints.length === 0 ? (isAr ? "اضغط على النقطة الأولى" : "Click 1st point") :
                    calibPoints.length === 1 ? (isAr ? "اضغط على النقطة الثانية" : "Click 2nd point") :
                    (isAr ? "تم تحديد النقطتين" : "Both points set")}
                   <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{calibPoints.length}/2</span>
+                </div>
+
+                {/* Zoomable/pannable map container */}
+                <div
+                  ref={el => {
+                    calibContainerRef.current = el;
+                    if (!el) return;
+                    const handler = (e) => {
+                      e.preventDefault();
+                      const rect = el.getBoundingClientRect();
+                      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+                      const prev = calibZoomRef.current;
+                      const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+                      const nz = Math.max(0.5, Math.min(10, prev * delta));
+                      const s = nz / prev;
+                      calibZoomRef.current = nz;
+                      setCalibZoom(nz);
+                      setCalibPan(p => ({ x: mx - s * (mx - p.x), y: my - s * (my - p.y) }));
+                    };
+                    el.onwheel = null;
+                    el.addEventListener("wheel", handler, { passive: false });
+                  }}
+                  className="relative w-full h-full overflow-hidden"
+                  style={{ cursor: calibPanning ? "grabbing" : calibPoints.length >= 2 ? "default" : "crosshair", touchAction: "none" }}
+                  onMouseDown={(e) => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    setCalibPanning(true);
+                    setCalibDragDist(0);
+                    setCalibPanStart({ x: e.clientX - calibPan.x, y: e.clientY - calibPan.y });
+                  }}
+                  onMouseMove={(e) => {
+                    if (calibPanning) {
+                      setCalibPan({ x: e.clientX - calibPanStart.x, y: e.clientY - calibPanStart.y });
+                      setCalibDragDist(prev => prev + 1);
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    const wasClick = calibDragDist < 5;
+                    setCalibPanning(false);
+                    if (wasClick && calibPoints.length < 2) {
+                      // Calculate click position relative to the image
+                      const inner = calibContainerRef.current?.querySelector('[data-calib-inner]');
+                      if (!inner) return;
+                      const rect = inner.getBoundingClientRect();
+                      const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000) / 100;
+                      const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000) / 100;
+                      if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
+                        setCalibPoints(prev => [...prev, { x, y }]);
+                      }
+                    }
+                  }}
+                  onMouseLeave={() => setCalibPanning(false)}
+                  data-testid="calibration-map"
+                >
+                  <div style={{ transform: `translate(${calibPan.x}px, ${calibPan.y}px) scale(${calibZoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ position: "relative", width: "100%", height: "100%" }} data-calib-inner="true">
+                      <img src={normalizeImageUrl(calibFloor.image_url)} alt=""
+                        className="w-full h-full object-contain pointer-events-none select-none" draggable={false} />
+                      {/* Calibration points overlay */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        {calibPoints.map((pt, i) => (
+                          <g key={i}>
+                            <circle cx={pt.x} cy={pt.y} r="1.5" fill="#2563eb" fillOpacity="0.2" stroke="#2563eb" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+                            <circle cx={pt.x} cy={pt.y} r="0.5" fill="#2563eb" />
+                            <text x={pt.x} y={pt.y - 2.5} textAnchor="middle" fill="#1d4ed8" fontSize="2.5" fontWeight="800" fontFamily="Cairo">{i + 1}</text>
+                          </g>
+                        ))}
+                        {calibPoints.length === 2 && (
+                          <line x1={calibPoints[0].x} y1={calibPoints[0].y} x2={calibPoints[1].x} y2={calibPoints[1].y}
+                            stroke="#2563eb" strokeWidth="0.3" strokeDasharray="1 0.5" vectorEffect="non-scaling-stroke" />
+                        )}
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
