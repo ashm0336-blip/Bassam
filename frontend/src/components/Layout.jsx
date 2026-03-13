@@ -290,17 +290,17 @@ export const Layout = () => {
         {sidebarOpen && (
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+              <button onClick={() => navigate('/my-profile')} className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center hover:bg-primary/20 transition-colors cursor-pointer" data-testid="sidebar-profile-btn">
                 <span className="font-cairo font-semibold text-secondary-foreground">
                   {user?.name?.charAt(0) || 'م'}
                 </span>
-              </div>
-              <div className="flex-1 min-w-0">
+              </button>
+              <button onClick={() => navigate('/my-profile')} className="flex-1 min-w-0 text-right hover:opacity-80 transition-opacity cursor-pointer">
                 <p className="text-sm font-medium truncate">{user?.name || t('platformName')}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {ROLE_LABELS[user?.role]?.[language] || user?.role}
                 </p>
-              </div>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -387,17 +387,17 @@ export const Layout = () => {
         {/* User info + action buttons at bottom of mobile sidebar */}
         <div className="border-t border-border mt-auto">
           <div className="px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
               <span className="font-cairo font-semibold text-primary">
                 {user?.name?.charAt(0) || 'م'}
               </span>
-            </div>
-            <div className="flex-1 min-w-0">
+            </button>
+            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="flex-1 min-w-0 text-right">
               <p className="text-sm font-medium truncate">{user?.name}</p>
               <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
                 {ROLE_LABELS[user?.role]?.[language] || user?.role}
               </span>
-            </div>
+            </button>
           </div>
           <div className="px-4 pb-4 flex items-center gap-2">
             <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn">

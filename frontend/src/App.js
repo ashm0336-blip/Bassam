@@ -220,6 +220,9 @@ function AppRoutes() {
         <Route path="employee/:id" element={
           <EmployeeProfilePage />
         } />
+        <Route path="my-profile" element={
+          <EmployeeProfilePage self />
+        } />
         <Route path="admin" element={
           <AdminProtectedRoute>
             <AdminPage />

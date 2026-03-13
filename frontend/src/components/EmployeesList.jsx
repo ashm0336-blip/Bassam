@@ -234,7 +234,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-cairo font-bold text-sm leading-tight truncate">{emp.name}</p>
+            <button onClick={() => window.location.href = `/employee/${emp.id}`} className="font-cairo font-bold text-sm leading-tight truncate text-right hover:text-primary transition-colors cursor-pointer block">{emp.name}</button>
             <p className="text-[11px] text-muted-foreground truncate mt-0.5">{emp.job_title || "—"}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {emp.employee_number && (

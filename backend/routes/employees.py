@@ -345,11 +345,50 @@ async def get_employee_profile(employee_id: str, user: dict = Depends(get_curren
         {"_id": 0}
     ).sort("month", -1).to_list(5)
 
+    # Get tasks assigned to this employee
+    tasks = await db.tasks.find(
+        {"assigned_to": employee_id},
+        {"_id": 0}
+    ).sort("due_date", -1).to_list(20)
+
     return {
         "employee": emp,
         "account": account,
         "activities": activities,
         "schedules": schedules,
+        "tasks": tasks,
+    }
+
+
+@router.get("/auth/my-profile")
+async def get_my_profile(user: dict = Depends(get_current_user)):
+    """الموظف يشوف بياناته الشخصية"""
+    emp = await db.employees.find_one({"national_id": user.get("national_id")}, {"_id": 0})
+    if not emp:
+        # Fallback: return basic user info
+        return {"employee": None, "account": {k: v for k, v in user.items() if k != "password"}, "activities": [], "schedules": [], "tasks": []}
+
+    activities = await db.activity_logs.find(
+        {"$or": [{"user_name": emp.get("name")}, {"target": emp.get("name")}]},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(10)
+
+    schedules = await db.monthly_schedules.find(
+        {"department": emp.get("department"), "assignments.employee_id": emp["id"]},
+        {"_id": 0}
+    ).sort("month", -1).to_list(5)
+
+    tasks = await db.tasks.find(
+        {"assigned_to": emp["id"]},
+        {"_id": 0}
+    ).sort("due_date", -1).to_list(20)
+
+    return {
+        "employee": emp,
+        "account": {k: v for k, v in user.items() if k != "password"},
+        "activities": activities,
+        "schedules": schedules,
+        "tasks": tasks,
     }
 
 

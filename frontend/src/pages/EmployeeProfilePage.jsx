@@ -18,19 +18,34 @@ const DEPT_COLORS = { gates: '#1d4ed8', plazas: '#0d9488', planning: '#7c3aed', 
 const ROLE_LABELS = { system_admin: 'مسؤول النظام', general_manager: 'المدير العام', department_manager: 'مدير الإدارة', shift_supervisor: 'مشرف الوردية', field_staff: 'موظف ميداني', admin_staff: 'موظف إداري', monitoring_team: 'فريق المراقبة' };
 const STATUS_CONFIG = { active: { label: 'نشط', color: '#22c55e', icon: CheckCircle2 }, frozen: { label: 'مجمّد', color: '#ef4444', icon: Lock }, terminated: { label: 'منتهي', color: '#6b7280', icon: XCircle }, pending: { label: 'معلّق', color: '#f59e0b', icon: Clock } };
 
-export default function EmployeeProfilePage() {
+export default function EmployeeProfilePage({ self = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) fetchProfile();
-  }, [id]);
+    if (self) {
+      fetchMyProfile();
+    } else if (id) {
+      fetchProfile();
+    }
+  }, [id, self]);
 
   const fetchProfile = async () => {
     try {
       const res = await axios.get(`${API}/employees/${id}/profile`, getAuth());
+      setData(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMyProfile = async () => {
+    try {
+      const res = await axios.get(`${API}/auth/my-profile`, getAuth());
       setData(res.data);
     } catch (e) {
       console.error(e);
