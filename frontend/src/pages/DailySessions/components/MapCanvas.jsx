@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Edit2, Copy, Sparkles, Trash2, ZoomIn, ZoomOut, Maximize2, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { CHANGE_LABELS, DRAW_POINT_RADIUS, DRAG_SHAPE_MODES, PRAYER_TIMES } from "../constants";
 import { getPath, getDistance, isPointInPolygon, getRotationHandle, getDensityLevel, generateShapeFromDrag } from "../utils";
+import { computePolygonArea, computePolygonDimensions } from "../calibration";
 import { useZoneEmployees } from "./useZoneEmployees";
 import { ZonePatternDefs } from "./ZonePatterns";
 
@@ -92,6 +93,7 @@ export function MapCanvas({
   addDrawingPoint, onEditStart, setMapMode,
   activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
   readOnly = false,
+  scaleInfo = null,
 }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -570,6 +572,59 @@ export function MapCanvas({
                     {mapMode === "freehand" && isDrawingFreehand && freehandPoints.length > 1 && (
                       <path d={getPath(freehandPoints, false)} fill="none" stroke="#ec4899" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" data-testid="freehand-preview" />
                     )}
+
+                    {/* ── Live Measurement Tooltip (drawing mode) ── */}
+                    {scaleInfo?.valid && imgRatio && mapMode === "draw" && drawingPoints.length > 0 && (() => {
+                      const mpu = scaleInfo.metersPerUnit;
+                      // Distance from last point to mouse
+                      const lastPt = drawingPoints[drawingPoints.length - 1];
+                      const dx = (mousePos.x - lastPt.x) * imgRatio * mpu;
+                      const dy = (mousePos.y - lastPt.y) * mpu;
+                      const segmentM = Math.sqrt(dx * dx + dy * dy);
+                      // Total perimeter so far
+                      let perimeterM = 0;
+                      for (let i = 1; i < drawingPoints.length; i++) {
+                        const pdx = (drawingPoints[i].x - drawingPoints[i-1].x) * imgRatio * mpu;
+                        const pdy = (drawingPoints[i].y - drawingPoints[i-1].y) * mpu;
+                        perimeterM += Math.sqrt(pdx * pdx + pdy * pdy);
+                      }
+                      perimeterM += segmentM;
+                      // Live area (if would close now)
+                      const tempPoints = [...drawingPoints, { x: mousePos.x, y: mousePos.y }];
+                      const areaM2 = tempPoints.length >= 3 ? computePolygonArea(tempPoints, mpu, imgRatio) : 0;
+                      // Position tooltip near mouse
+                      const tx = mousePos.x + 2.5;
+                      const ty = mousePos.y - 3;
+                      return (
+                        <g style={{ pointerEvents: "none" }} data-testid="live-measurement">
+                          <rect x={tx} y={ty} width="18" height={areaM2 > 0 ? "7" : "4.5"} rx="0.6" fill="rgba(0,0,0,0.85)" />
+                          <text x={tx + 1} y={ty + 1.8} fill="#60a5fa" fontSize="1.4" fontWeight="800" fontFamily="monospace">{segmentM.toFixed(1)} م</text>
+                          <text x={tx + 1} y={ty + 3.5} fill="#94a3b8" fontSize="1" fontWeight="600" fontFamily="Cairo">محيط: {perimeterM.toFixed(1)} م</text>
+                          {areaM2 > 0 && <text x={tx + 1} y={ty + 5.5} fill="#34d399" fontSize="1.2" fontWeight="800" fontFamily="monospace">{areaM2.toFixed(1)} م²</text>}
+                        </g>
+                      );
+                    })()}
+
+                    {/* ── Live Measurement for selected zone (editing) ── */}
+                    {scaleInfo?.valid && imgRatio && mapMode === "edit" && selectedZoneId && (() => {
+                      const zone = sessionZones.find(z => z.id === selectedZoneId);
+                      if (!zone?.polygon_points?.length) return null;
+                      const mpu = scaleInfo.metersPerUnit;
+                      const pts = zone.polygon_points;
+                      const areaM2 = computePolygonArea(pts, mpu, imgRatio);
+                      const dims = computePolygonDimensions(pts, mpu, imgRatio);
+                      if (areaM2 <= 0) return null;
+                      // Position near zone center
+                      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+                      const minY = Math.min(...pts.map(p => p.y));
+                      return (
+                        <g style={{ pointerEvents: "none" }} data-testid="zone-measurement">
+                          <rect x={cx - 9} y={minY - 5.5} width="18" height="5" rx="0.6" fill="rgba(0,0,0,0.85)" />
+                          <text x={cx} y={minY - 3.5} textAnchor="middle" fill="#34d399" fontSize="1.6" fontWeight="800" fontFamily="monospace">{areaM2.toFixed(1)} م²</text>
+                          <text x={cx} y={minY - 1.5} textAnchor="middle" fill="#94a3b8" fontSize="0.9" fontWeight="600" fontFamily="Cairo">{dims.lengthM}×{dims.widthM} م | {Math.round(areaM2 / 0.75)} مصلي</text>
+                        </g>
+                      );
+                    })()}
                   </svg>
                 </div>
               );

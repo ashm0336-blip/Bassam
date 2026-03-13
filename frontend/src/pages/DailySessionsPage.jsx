@@ -1472,6 +1472,7 @@ export default function DailySessionsPage() {
                     handleDensityChange={handleDensityChange} handleSaveDensityBatch={handleSaveDensityBatch}
                     savingDensity={savingDensity}
                     readOnly={!isMapEditable}
+                    scaleInfo={scaleInfo}
                   />
                     </div>
                     {/* Stats panel: absolutely positioned, slides over the map */}
