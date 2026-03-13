@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
-  LayoutDashboard, Activity, Settings, Menu, Shield, UserCircle,
+  LayoutDashboard, Activity, Settings, Shield, UserCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -15,6 +15,7 @@ export default function AdminPage() {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState("overview");
+  const [accessSubTab, setAccessSubTab] = useState("permissions");
 
   return (
     <div className="space-y-6" data-testid="admin-page">
@@ -37,7 +38,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
           <TabsTrigger value="overview" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-overview">
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-xs">{isAr ? 'نظرة عامة' : 'Overview'}</span>
@@ -46,9 +47,9 @@ export default function AdminPage() {
             <UserCircle className="w-5 h-5" />
             <span className="text-xs">{isAr ? 'حسابي' : 'My Account'}</span>
           </TabsTrigger>
-          <TabsTrigger value="permissions" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-permissions">
+          <TabsTrigger value="access" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-access">
             <Shield className="w-5 h-5" />
-            <span className="text-xs">{isAr ? 'الصلاحيات' : 'Permissions'}</span>
+            <span className="text-xs">{isAr ? 'الصلاحيات والتحكم' : 'Access Control'}</span>
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-activity">
             <Activity className="w-5 h-5" />
@@ -57,10 +58,6 @@ export default function AdminPage() {
           <TabsTrigger value="settings" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-settings">
             <Settings className="w-5 h-5" />
             <span className="text-xs">{isAr ? 'إعدادات النظام' : 'Settings'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="sidebar" className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-sidebar">
-            <Menu className="w-5 h-5" />
-            <span className="text-xs">{isAr ? 'القائمة' : 'Sidebar'}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -72,8 +69,31 @@ export default function AdminPage() {
           <MyAccountTab />
         </TabsContent>
 
-        <TabsContent value="permissions" className="mt-6">
-          <PermissionsManager />
+        <TabsContent value="access" className="mt-6">
+          <div className="space-y-4">
+            {/* Sub-tabs */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 w-fit" data-testid="access-sub-tabs">
+              {[
+                { id: "permissions", label: isAr ? "الصلاحيات حسب الدور" : "Role Permissions", icon: Shield },
+                { id: "sidebar", label: isAr ? "إدارة القائمة الجانبية" : "Sidebar Manager", icon: LayoutDashboard },
+              ].map(tab => {
+                const Icon = tab.icon;
+                const isActive = accessSubTab === tab.id;
+                return (
+                  <button key={tab.id} onClick={() => setAccessSubTab(tab.id)} data-testid={`sub-tab-${tab.id}`}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-cairo font-semibold transition-all
+                      ${isActive ? 'bg-white shadow-md text-primary' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}>
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sub-tab content */}
+            {accessSubTab === "permissions" && <PermissionsManager />}
+            {accessSubTab === "sidebar" && <SidebarManager />}
+          </div>
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6">
@@ -82,10 +102,6 @@ export default function AdminPage() {
 
         <TabsContent value="settings" className="mt-6">
           <SystemSettings />
-        </TabsContent>
-
-        <TabsContent value="sidebar" className="mt-6">
-          <SidebarManager />
         </TabsContent>
       </Tabs>
     </div>
