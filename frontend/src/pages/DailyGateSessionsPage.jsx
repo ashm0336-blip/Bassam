@@ -97,6 +97,7 @@ export default function DailyGateSessionsPage() {
   const [hoveredGate, setHoveredGate] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [draggingGateId, setDraggingGateId] = useState(null);
+  const [selectedGateId, setSelectedGateId] = useState(null);
   const zoomRef = useRef(1);
   const mapContainerRef = useRef(null);
   const svgRef = useRef(null);
@@ -245,6 +246,39 @@ export default function DailyGateSessionsPage() {
     }
     setIsPanning(false);
   };
+
+  // Arrow keys to move selected gate
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedGateId || !activeSession || activeSession.status !== "draft") return;
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      const step = e.shiftKey ? 0.02 : 0.1;
+      let dx = 0, dy = 0;
+      if (e.key === "ArrowLeft") dx = -step;
+      else if (e.key === "ArrowRight") dx = step;
+      else if (e.key === "ArrowUp") dy = -step;
+      else if (e.key === "ArrowDown") dy = step;
+      else if (e.key === "Escape") { setSelectedGateId(null); return; }
+      else return;
+      e.preventDefault();
+      const gate = activeSession.gates?.find(g => g.id === selectedGateId);
+      if (!gate) return;
+      const newX = Math.max(0, Math.min(100, gate.x + dx));
+      const newY = Math.max(0, Math.min(100, gate.y + dy));
+      setActiveSession(prev => ({ ...prev, gates: prev.gates.map(g => g.id === selectedGateId ? { ...g, x: newX, y: newY } : g) }));
+    };
+    const handleKeyUp = (e) => {
+      if (!selectedGateId || !activeSession) return;
+      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+        const gate = activeSession.gates?.find(g => g.id === selectedGateId);
+        if (gate) handleUpdateGate(selectedGateId, { x: gate.x, y: gate.y });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
+  }, [selectedGateId, activeSession]);
+
   // Touch event handlers for gates map - smart cursor
   const handleTouchStartGates = (e) => {
     if (e.touches.length !== 1) return;
@@ -651,20 +685,21 @@ export default function DailyGateSessionsPage() {
                                         onMouseLeave={() => setHoveredGate(null)}
                                         onMouseDown={(e) => handleGateMouseDown(e, gate.id)}
                                         onTouchStart={(e) => handleGateTouchStart(e, gate.id)}
-                                        onClick={() => { if (!hasDraggedRef.current && isDraft) { setSelectedGate(gate); setShowGateDialog(true); } }}
-                                        style={{ cursor: isDraft ? (isDragging ? "grabbing" : "grab") : "default" }}>
-                                        {/* Pulse */}
-                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill={markerColor} fillOpacity="0">
-                                          <animate attributeName="fill-opacity" values="0.1;0;0.1" dur="2s" repeatCount="indefinite" />
-                                          <animate attributeName="rx" values={`${r + 0.3};${r + 1.2};${r + 0.3}`} dur="2s" repeatCount="indefinite" />
-                                          <animate attributeName="ry" values={`${(r + 0.3) * ar};${(r + 1.2) * ar};${(r + 0.3) * ar}`} dur="2s" repeatCount="indefinite" />
-                                        </ellipse>
+                                        onClick={() => {
+                                          if (!hasDraggedRef.current && isDraft) { setSelectedGate(gate); setShowGateDialog(true); }
+                                          setSelectedGateId(gate.id);
+                                        }}
+                                        style={{ cursor: isDraft ? (isDragging ? "grabbing" : "grab") : "pointer" }}>
+                                        {/* Selection ring */}
+                                        {selectedGateId === gate.id && !isDragging && (
+                                          <ellipse cx={gate.x} cy={gate.y} rx={r + 0.6} ry={(r + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" />
+                                        )}
                                         {/* Outer indicator ring for open gates */}
                                         {isOpen && !isDragging && indicatorColor !== statusColor && (
                                           <ellipse cx={gate.x} cy={gate.y} rx={r + 0.5} ry={(r + 0.5) * ar} fill="none" stroke={indicatorColor} strokeWidth="0.25" vectorEffect="non-scaling-stroke" strokeOpacity="0.6" />
                                         )}
                                         {/* Selection ring when dragging */}
-                                        {isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8"><animate attributeName="stroke-dashoffset" values="0;4.6" dur="1s" repeatCount="indefinite" /></ellipse>}
+                                        {isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" vectorEffect="non-scaling-stroke" strokeDasharray="1.5 0.8" />}
                                         {/* Hover ring */}
                                         {isHov && !isDragging && <ellipse cx={gate.x} cy={gate.y} rx={r + 0.4} ry={(r + 0.4) * ar} fill="none" stroke={markerColor} strokeWidth="0.15" vectorEffect="non-scaling-stroke" />}
                                         {/* Main marker - uses indicator color for open gates */}
@@ -679,9 +714,7 @@ export default function DailyGateSessionsPage() {
                                         {/* Warning: open gate with no staff */}
                                         {!isDragging && gate.status === "open" && (gate.assigned_staff || 0) === 0 && (
                                           <g style={{ pointerEvents: "none" }}>
-                                            <circle cx={gate.x + r * 0.7} cy={gate.y - r * ar * 0.7} r="0.4" fill="#f59e0b" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke">
-                                              <animate attributeName="fill-opacity" values="1;0.4;1" dur="1.5s" repeatCount="indefinite" />
-                                            </circle>
+                                            <circle cx={gate.x + r * 0.7} cy={gate.y - r * ar * 0.7} r="0.4" fill="#f59e0b" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                             <text x={gate.x + r * 0.7} y={gate.y - r * ar * 0.7} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="0.5" fontWeight="800">!</text>
                                           </g>
                                         )}
