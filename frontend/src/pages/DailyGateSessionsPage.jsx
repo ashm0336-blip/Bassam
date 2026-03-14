@@ -635,15 +635,15 @@ export default function DailyGateSessionsPage() {
                                   {activeGates.map(gate => {
                                     const isOpen = gate.status === "open";
                                     const INDICATOR_COLORS = { light: "#22c55e", medium: "#f59e0b", crowded: "#ef4444" };
-                                    const statusColor = isOpen ? "#22c55e" : "#ef4444";
-                                    const indicatorColor = isOpen ? (INDICATOR_COLORS[gate.indicator || "light"] || "#22c55e") : "#ef4444";
+                                    const statusColor = isOpen ? "#22c55e" : "#94a3b8";
+                                    const indicatorColor = isOpen ? (INDICATOR_COLORS[gate.indicator || "light"] || "#22c55e") : "#94a3b8";
                                     const markerColor = isOpen ? indicatorColor : statusColor;
                                     const isDragging = draggingGateId === gate.id;
                                     const isHov = hoveredGate?.id === gate.id;
                                     const isDraft = activeSession?.status === "draft" && canCreateSession;
                                     const ar = imgRatio || 1;
-                                    const baseR = 0.7;
-                                    const r = isDragging ? baseR * 1.6 : isHov ? baseR * 1.3 : baseR;
+                                    const baseR = 0.45;
+                                    const r = isDragging ? baseR * 1.8 : isHov ? baseR * 1.5 : baseR;
                                     const showLabel = isDragging || isHov;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
