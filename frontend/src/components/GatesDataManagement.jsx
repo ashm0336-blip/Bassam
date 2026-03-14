@@ -210,27 +210,17 @@ export default function GatesDataManagement() {
   return (
     <div className="space-y-6 max-w-full">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md bg-gradient-to-br from-emerald-500 to-teal-600">
-            <DoorOpen className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-cairo font-bold text-xl">
-              {language === 'ar' ? 'إدارة الأبواب' : 'Gates Management'}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب وإسناد الموظفين' : 'Add and edit gates data'}
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md bg-gradient-to-br from-emerald-500 to-teal-600">
+          <DoorOpen className="w-5 h-5 text-white" />
         </div>
-        <div className="flex items-center gap-2">
-          {canWrite("manage_gates") && (
-            <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 h-9">
-              <Plus className="w-4 h-4" />
-              {language === 'ar' ? 'إضافة باب جديد' : 'Add New Gate'}
-            </Button>
-          )}
+        <div>
+          <h2 className="font-cairo font-bold text-xl">
+            {language === 'ar' ? 'إدارة الأبواب' : 'Gates Management'}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {language === 'ar' ? 'إضافة وتعديل بيانات الأبواب وإسناد الموظفين' : 'Add and edit gates data'}
+          </p>
         </div>
       </div>
 
