@@ -508,6 +508,9 @@ export default function GatesDataManagement() {
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{gate.status}</span>
                   <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">{gate.gate_type}</span>
                   <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">{gate.direction}</span>
+                  {(Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).map(c => (
+                    <span key={c} className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">{c}</span>
+                  ))}
                   {gate.current_indicator && (
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: indicatorColor+'15', color: indicatorColor }}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: indicatorColor }}/>{gate.current_indicator}
