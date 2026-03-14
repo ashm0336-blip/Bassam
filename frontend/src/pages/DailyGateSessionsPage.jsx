@@ -902,9 +902,6 @@ export default function DailyGateSessionsPage() {
                           );
                         })()}
 
-                        <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
-
-                        </div>
                       </div>
                     </div>
                   </div>
