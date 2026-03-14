@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { WebSocketProvider } from "@/context/WebSocketContext";
 import { HeaderProvider } from "@/context/HeaderContext";
 import { DepartmentProtectedRoute, AdminProtectedRoute, PermissionProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
@@ -269,15 +270,17 @@ function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <SidebarProvider>
-            <HeaderProvider>
-              <BrowserRouter>
-                <AppRoutes />
-                <PWAInstallPrompt />
-              </BrowserRouter>
-              <Toaster position="top-left" />
-            </HeaderProvider>
-          </SidebarProvider>
+          <WebSocketProvider>
+            <SidebarProvider>
+              <HeaderProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                  <PWAInstallPrompt />
+                </BrowserRouter>
+                <Toaster position="top-left" />
+              </HeaderProvider>
+            </SidebarProvider>
+          </WebSocketProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

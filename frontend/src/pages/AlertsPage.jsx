@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import HijriDateTimePicker from "@/components/HijriDateTimePicker";
 import {
   AlertTriangle,
@@ -103,13 +103,8 @@ export default function AlertsPage() {
     received_at: new Date().toISOString()
   });
 
-  useEffect(() => {
-    fetchAlerts();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchAlerts(); }, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchAlerts = async () => {
+  // Fetch alerts function - defined before hooks that use it
+  const fetchAlerts = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/alerts`);
       setAlerts(response.data);
@@ -118,7 +113,13 @@ export default function AlertsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [fetchAlerts]);
+
+  useRealtimeRefresh(["alerts"], fetchAlerts);
 
   // Calculate duration dynamically
   const calculateDuration = (alert) => {

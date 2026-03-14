@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import useAlertSound from "@/hooks/useAlertSound";
 import { 
   Bell, 
@@ -82,16 +82,8 @@ export default function NotificationsPage() {
     priority: "medium"
   });
 
-  // Alert sound hook
-  useAlertSound(alerts, soundEnabled);
-
-  useEffect(() => {
-    fetchAlerts();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchAlerts(); }, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchAlerts = async () => {
+  // Fetch alerts function - defined before hooks that use it
+  const fetchAlerts = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/alerts`);
       setAlerts(response.data);
@@ -100,7 +92,16 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Alert sound hook
+  useAlertSound(alerts, soundEnabled);
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [fetchAlerts]);
+
+  useRealtimeRefresh(["alerts"], fetchAlerts);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

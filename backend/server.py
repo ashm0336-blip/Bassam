@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Request
+from fastapi import FastAPI, APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 import logging
 import json
+
+from ws_manager import ws_manager, RealtimeBroadcastMiddleware
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -109,6 +111,19 @@ app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="api-upl
 # Include the router in the main app
 app.include_router(api_router)
 
+
+# ============= WebSocket Endpoint =============
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
+        ws_manager.disconnect(websocket)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=False,
@@ -116,6 +131,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Real-time broadcast middleware — must be added AFTER CORS
+app.add_middleware(RealtimeBroadcastMiddleware)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

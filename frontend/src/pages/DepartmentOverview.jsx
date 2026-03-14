@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Users, Clock, Coffee, Zap, ShieldCheck, ShieldX, ShieldOff, UserPlus,
   CalendarDays, TrendingUp, TrendingDown, AlertTriangle, Activity,
@@ -138,7 +138,9 @@ export default function DepartmentOverview({ department = "planning" }) {
     finally { setLoading(false); setRefreshing(false); setLastRefresh(new Date()); }
   }, [department, monthKey]);
 
-  useEffect(() => { fetchData(); const t = setInterval(() => { if (!isUserInteracting()) fetchData(true); }, 60000); return () => clearInterval(t); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  useRealtimeRefresh(["employees", "schedules", "tasks", "gate_sessions"], useCallback(() => fetchData(true), [fetchData]));
 
   // ── Derived Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
@@ -254,18 +256,13 @@ export default function DepartmentOverview({ department = "planning" }) {
                 <CalendarDays className="w-3 h-3"/>
                 {schedule ? `جدول ${monthLabel}: ${schedule.status === "active" ? "معتمد ✓" : "مسودة"}` : `جدول ${monthLabel}: غير موجود`}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-white/10 text-white/80">
-                <Activity className="w-3 h-3"/>
-                {isAr?`آخر تحديث: ${lastRefresh.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}`:lastRefresh.toLocaleTimeString()}
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-200">
+                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span></span>
+                {isAr?"مباشر":"Live"}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => fetchData(true)} disabled={refreshing}
-              className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              title="تحديث">
-              <RefreshCw className={`w-4 h-4 text-white ${refreshing?"animate-spin":""}`}/>
-            </button>
             {cfg.sessions_href && (
               <Button onClick={() => navigate(cfg.sessions_href)} size="sm"
                 className="bg-white/20 hover:bg-white/30 text-white border-0 font-cairo font-semibold">

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Plus, Edit, Trash2, Users, Loader2, UserCheck, MapPin, Clock, Coffee,
   CalendarDays, ChevronLeft, ChevronRight, Copy, CheckCircle2, FileText,
@@ -354,14 +354,15 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
 
   useEffect(() => {
     fetchDepartmentSettings(); fetchEmployees(); if(department==='gates') fetchGates();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchEmployees(true); }, 30000);
-    return () => clearInterval(interval);
   }, [department]);
+
+  useRealtimeRefresh(["employees", "settings"], useCallback(() => { fetchEmployees(true); }, [fetchEmployees]));
+
   useEffect(() => {
     fetchSchedule();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchSchedule(true); }, 30000);
-    return () => clearInterval(interval);
   }, [selectedMonth, department]);
+
+  useRealtimeRefresh(["schedules"], useCallback(() => { fetchSchedule(true); }, [fetchSchedule]));
 
   const fetchDepartmentSettings = async () => {
     try {

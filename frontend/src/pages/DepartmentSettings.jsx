@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag,
   CalendarDays, Sun, Sunset, Moon, Zap, AlarmClock, Timer,
@@ -119,10 +119,9 @@ export default function DepartmentSettings({ department }) {
   useEffect(() => {
     fetchAllSettings();
     fetchCounts();
-    // تحديث تلقائي كل 30 ثانية — يتخطى التحديث أثناء الكتابة
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchCounts(); }, 30000);
-    return () => clearInterval(interval);
   }, [department]);
+
+  useRealtimeRefresh(["employees", "settings", "maps", "schedules"], useCallback(() => { fetchCounts(); }, []));
 
   const fetchCounts = async () => {
     try {

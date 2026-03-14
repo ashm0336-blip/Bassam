@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Plus, Search, LayoutGrid, List, Download, Upload, FileText,
   Edit, Trash2, ShieldCheck, ShieldX, ShieldOff, UserPlus, KeyRound,
@@ -372,9 +372,9 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
 
   useEffect(() => {
     fetchEmployees();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchEmployees(); }, 30000);
-    return () => clearInterval(interval);
   }, [fetchEmployees]);
+
+  useRealtimeRefresh(["employees"], fetchEmployees);
 
   // ── Filtered ───────────────────────────────────────────────
   const filtered = useMemo(() => {

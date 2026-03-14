@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, ROLE_LABELS, DEPT_LABELS } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useHeader } from "@/context/HeaderContext";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import axios from "axios";
 import { 
   LayoutDashboard, 
@@ -85,9 +86,14 @@ export const Layout = () => {
       } catch (e) { /* silent */ }
     };
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useRealtimeRefresh(["alerts"], useCallback(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    axios.get(`${API}/alerts/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setUnreadAlerts(res.data.count || 0)).catch(() => {});
+  }, []));
 
   // Convert menu items from API — backend already filters by role/department/permissions
   const allMenuItems = menuItems.map(item => ({

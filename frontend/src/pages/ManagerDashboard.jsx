@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import { 
   Users, 
   DoorOpen, 
@@ -32,9 +32,9 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     fetchAllStats();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchAllStats(); }, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useRealtimeRefresh(["employees", "gate_sessions", "tasks", "dashboard"], fetchAllStats);
 
   const fetchAllStats = async () => {
     try {

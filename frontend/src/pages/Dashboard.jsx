@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context/LanguageContext";
-import { isUserInteracting } from "@/lib/autoRefresh";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Users, DoorOpen, AlertTriangle, TrendingUp, Clock, Activity,
   ShieldAlert, Calendar, Building, MapPin, RefreshCw,
@@ -126,9 +126,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(() => { if (!isUserInteracting()) fetchData(); }, 30000);
-    return () => clearInterval(interval);
   }, [fetchData]);
+
+  useRealtimeRefresh(["employees", "gate_sessions", "sessions", "tasks", "alerts", "dashboard"], fetchData);
 
   if (loading || !ops) {
     return (
@@ -169,10 +169,13 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <CrowdAlertMonitor />
-          <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5 text-xs" data-testid="refresh-dashboard">
-            <RefreshCw className="w-3.5 h-3.5" />
-            تحديث
-          </Button>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-full" data-testid="live-indicator">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            مباشر
+          </div>
         </div>
       </div>
 
