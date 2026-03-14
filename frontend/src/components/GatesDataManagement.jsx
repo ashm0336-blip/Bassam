@@ -54,6 +54,8 @@ export default function GatesDataManagement() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterPlaza, setFilterPlaza] = useState("all");
+  const [filterDirection, setFilterDirection] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [view, setView] = useState("list");
 
   useEffect(() => {
@@ -97,9 +99,14 @@ export default function GatesDataManagement() {
       if (filterStatus !== "all" && g.status !== filterStatus) return false;
       if (filterType !== "all" && g.gate_type !== filterType) return false;
       if (filterPlaza !== "all" && g.plaza !== filterPlaza) return false;
+      if (filterDirection !== "all" && g.direction !== filterDirection) return false;
+      if (filterCategory !== "all") {
+        const cats = Array.isArray(g.category) ? g.category : [g.category];
+        if (!cats.includes(filterCategory)) return false;
+      }
       return true;
     });
-  }, [gates, search, filterStatus, filterType, filterPlaza]);
+  }, [gates, search, filterStatus, filterType, filterPlaza, filterDirection, filterCategory]);
 
   // Unique plazas for filter
   const plazas = useMemo(() => [...new Set(gates.map(g => g.plaza).filter(Boolean))], [gates]);
@@ -419,6 +426,28 @@ export default function GatesDataManagement() {
             </SelectContent>
           </Select>
         )}
+
+        {/* Filter: Direction */}
+        <Select value={filterDirection} onValueChange={setFilterDirection}>
+          <SelectTrigger className="h-9 w-28 text-xs">
+            <SelectValue placeholder="المسار" />
+          </SelectTrigger>
+          <SelectContent dir="rtl">
+            <SelectItem value="all">كل المسارات</SelectItem>
+            {DIRECTIONS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        {/* Filter: Category */}
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="h-9 w-28 text-xs">
+            <SelectValue placeholder="الفئة" />
+          </SelectTrigger>
+          <SelectContent dir="rtl">
+            <SelectItem value="all">كل الفئات</SelectItem>
+            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
 
         {/* View toggle */}
         <div className="flex border rounded-lg overflow-hidden">
