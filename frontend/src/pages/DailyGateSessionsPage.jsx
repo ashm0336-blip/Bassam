@@ -642,8 +642,8 @@ export default function DailyGateSessionsPage() {
                                     const isHov = hoveredGate?.id === gate.id;
                                     const isDraft = activeSession?.status === "draft" && canCreateSession;
                                     const ar = imgRatio || 1;
-                                    const baseR = 0.45;
-                                    const r = isDragging ? baseR * 1.8 : isHov ? baseR * 1.5 : baseR;
+                                    const baseR = 0.3;
+                                    const r = isDragging ? baseR * 2 : isHov ? baseR * 1.6 : baseR;
                                     const showLabel = isDragging || isHov;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
@@ -654,10 +654,10 @@ export default function DailyGateSessionsPage() {
                                         onClick={() => { if (!hasDraggedRef.current && isDraft) { setSelectedGate(gate); setShowGateDialog(true); } }}
                                         style={{ cursor: isDraft ? (isDragging ? "grabbing" : "grab") : "default" }}>
                                         {/* Pulse */}
-                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 1.5} ry={(r + 1.5) * ar} fill={markerColor} fillOpacity="0">
-                                          <animate attributeName="fill-opacity" values="0.12;0;0.12" dur="2s" repeatCount="indefinite" />
-                                          <animate attributeName="rx" values={`${r + 0.5};${r + 2.5};${r + 0.5}`} dur="2s" repeatCount="indefinite" />
-                                          <animate attributeName="ry" values={`${(r + 0.5) * ar};${(r + 2.5) * ar};${(r + 0.5) * ar}`} dur="2s" repeatCount="indefinite" />
+                                        <ellipse cx={gate.x} cy={gate.y} rx={r + 0.8} ry={(r + 0.8) * ar} fill={markerColor} fillOpacity="0">
+                                          <animate attributeName="fill-opacity" values="0.1;0;0.1" dur="2s" repeatCount="indefinite" />
+                                          <animate attributeName="rx" values={`${r + 0.3};${r + 1.2};${r + 0.3}`} dur="2s" repeatCount="indefinite" />
+                                          <animate attributeName="ry" values={`${(r + 0.3) * ar};${(r + 1.2) * ar};${(r + 0.3) * ar}`} dur="2s" repeatCount="indefinite" />
                                         </ellipse>
                                         {/* Outer indicator ring for open gates */}
                                         {isOpen && !isDragging && indicatorColor !== statusColor && (
