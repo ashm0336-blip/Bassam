@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
-  Plus, Trash2, Save, X, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
+  Plus, Trash2, Save, X, Upload, Layers, Edit2, Image as ImageIcon,
   CheckCircle2, AlertTriangle, BarChart3, ArrowUpDown, Ruler, ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,6 +99,7 @@ export default function MapManagementPage({ department = "plazas" }) {
   };
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
+  useRealtimeRefresh(["maps"], fetchFloors);
 
   useEffect(() => {
     return () => { if (localImagePreview) URL.revokeObjectURL(localImagePreview); };
@@ -221,9 +223,6 @@ export default function MapManagementPage({ department = "plazas" }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={fetchFloors} data-testid="refresh-floors-button">
-              <RefreshCw className="w-4 h-4 ml-2" />{isAr ? "تحديث" : "Refresh"}
-            </Button>
             {canEditMaps && <Button
               onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", floor_number: 0, image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}
               className="bg-blue-600 hover:bg-blue-700"

@@ -714,11 +714,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             <Plus className="w-4 h-4" />موظف جديد
           </Button>
         )}
-
-        {/* Refresh */}
-        <Button variant="outline" size="icon" className="h-9 w-9" onClick={fetchEmployees}>
-          <RefreshCw className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* ── Empty ────────────────────────────────────────── */}

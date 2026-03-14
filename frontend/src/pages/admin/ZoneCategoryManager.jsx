@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
-  Plus, Edit2, Trash2, Save, RefreshCw, Palette, Layers,
+  Plus, Edit2, Trash2, Save, Palette, Layers,
   ChevronDown, ChevronUp, Eye, Sparkles, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -201,15 +202,16 @@ export default function ZoneCategoryManager() {
 
   const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/admin/zone-categories`, getAuthHeaders());
       setCategories(res.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  };
+  }, []);
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useRealtimeRefresh(["settings"], fetchCategories);
 
   const handleSave = async () => {
     if (!form.value || !form.label_ar) return;
@@ -297,9 +299,6 @@ export default function ZoneCategoryManager() {
           <p className="text-sm text-muted-foreground mt-0.5 mr-10">{isAr ? "إضافة وتعديل فئات المصليات مع اللون والنقش — تنعكس مباشرة على الخرائط" : "Manage prayer area categories with color & pattern — reflected live on maps"}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchCategories} data-testid="refresh-categories">
-            <RefreshCw className="w-4 h-4 ml-1" />{isAr ? "تحديث" : "Refresh"}
-          </Button>
           {categories.length === 0 && (
             <Button variant="outline" size="sm" onClick={handleSeed} data-testid="seed-categories">
               {isAr ? "تهيئة افتراضية" : "Seed Defaults"}

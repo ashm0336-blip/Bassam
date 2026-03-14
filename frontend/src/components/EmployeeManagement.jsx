@@ -356,13 +356,9 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     fetchDepartmentSettings(); fetchEmployees(); if(department==='gates') fetchGates();
   }, [department]);
 
-  useRealtimeRefresh(["employees", "settings"], useCallback(() => { fetchEmployees(true); }, [fetchEmployees]));
-
   useEffect(() => {
     fetchSchedule();
   }, [selectedMonth, department]);
-
-  useRealtimeRefresh(["schedules"], useCallback(() => { fetchSchedule(true); }, [fetchSchedule]));
 
   const fetchDepartmentSettings = async () => {
     try {
@@ -382,7 +378,7 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     try { const r = await axios.get(`${API}/gates`); setGates(r.data); } catch(e) { console.error(e); }
   };
 
-  const fetchEmployees = async (silent=false) => {
+  const fetchEmployees = useCallback(async (silent=false) => {
     try {
       const token = localStorage.getItem("token");
       const dept = department || user?.department;
@@ -391,9 +387,9 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
       setEmployees(res.data);
     } catch(e) { if (!silent) toast.error(isAr ? "فشل في جلب الموظفين" : "Failed"); }
     finally { if (!silent) setLoading(false); }
-  };
+  }, [department]);
 
-  const fetchSchedule = async (silent=false) => {
+  const fetchSchedule = useCallback(async (silent=false) => {
     if (!silent) setScheduleLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -401,7 +397,10 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
       setSchedule(res.data);
     } catch(e) { if (!silent) setSchedule(null); }
     finally { if (!silent) setScheduleLoading(false); }
-  };
+  }, [department, selectedMonth]);
+
+  useRealtimeRefresh(["employees", "settings"], useCallback(() => fetchEmployees(true), [fetchEmployees]));
+  useRealtimeRefresh(["schedules"], useCallback(() => fetchSchedule(true), [fetchSchedule]));
 
   // Merge base employee data + monthly schedule (للجدول والتعديل)
   const mergedEmployees = useMemo(() => {

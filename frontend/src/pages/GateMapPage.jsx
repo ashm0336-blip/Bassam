@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
-  Plus, Trash2, Save, Upload, Layers, Edit2, RefreshCw, Image as ImageIcon,
+  Plus, Trash2, Save, Upload, Layers, Edit2, Image as ImageIcon,
   ZoomIn, ZoomOut, Maximize2, Move, DoorOpen, DoorClosed, Wrench,
   ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair,
   Check
@@ -107,6 +108,7 @@ export default function GateMapPage() {
   }, [selectedFloor]);
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
+  useRealtimeRefresh(["maps"], fetchFloors);
   useEffect(() => { if (selectedFloor) { fetchMarkers(); setSelectedMarkerId(null); } }, [selectedFloor, fetchMarkers]);
   useEffect(() => { return () => { if (localImagePreview) URL.revokeObjectURL(localImagePreview); }; }, [localImagePreview]);
 
@@ -405,7 +407,6 @@ export default function GateMapPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={fetchFloors} data-testid="refresh-btn"><RefreshCw className="w-4 h-4 ml-2" />{isAr ? "تحديث" : "Refresh"}</Button>
             {canEditMaps && <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700" data-testid="add-gate-floor-btn">
               <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة طابق" : "Add Floor"}
             </Button>}
