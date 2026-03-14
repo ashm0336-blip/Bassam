@@ -148,7 +148,7 @@ export default function DailyGateSessionsPage() {
       const rect = node.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       const prev = zoomRef.current;
-      const nz = Math.max(0.5, Math.min(6, prev * (e.deltaY < 0 ? 1.15 : 1/1.15)));
+      const nz = Math.max(0.5, Math.min(50, prev * (e.deltaY < 0 ? 1.15 : 1/1.15)));
       const s = nz / prev;
       zoomRef.current = nz; setZoom(nz);
       setPanOffset(p => ({ x: mx - s*(mx-p.x), y: my - s*(my-p.y) }));
@@ -165,7 +165,7 @@ export default function DailyGateSessionsPage() {
         const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
         const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
         const prev = zoomRef.current;
-        const nz = Math.max(0.5, Math.min(6, pinchZoom * (d / pinchDist)));
+        const nz = Math.max(0.5, Math.min(50, pinchZoom * (d / pinchDist)));
         const s = nz / prev;
         zoomRef.current = nz; setZoom(nz);
         setPanOffset(p => ({ x: cx - s * (cx - p.x), y: cy - s * (cy - p.y) }));
@@ -620,7 +620,7 @@ export default function DailyGateSessionsPage() {
                         <div className="absolute top-3 left-3 z-10 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.max(0.5,p*0.8); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomOut className="w-3.5 h-3.5" /></Button>
                           <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom*100)}%</span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(6,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-3.5 h-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { const c=mapContainerRef.current; if(!c)return; const r=c.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2; const p=zoomRef.current; const nz=Math.min(50,p*1.25); const s=nz/p; zoomRef.current=nz; setZoom(nz); setPanOffset(o=>({x:cx-s*(cx-o.x),y:cy-s*(cy-o.y)})); }}><ZoomIn className="w-3.5 h-3.5" /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { zoomRef.current=1; setZoom(1); setPanOffset({x:0,y:0}); }}><Maximize2 className="w-3.5 h-3.5" /></Button>
                         </div>
                         <div style={{ transform: `translate(${panOffset.x}px,${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -630,7 +630,7 @@ export default function DailyGateSessionsPage() {
                             if (imgRatio && ce) { const cw=ce.clientWidth, ch=ce.clientHeight; if (cw/ch > imgRatio) ws = { position:"relative", height:"100%", width: ch*imgRatio }; else ws = { position:"relative", width:"100%", height: cw/imgRatio }; }
                             return (
                               <div style={ws}>
-                                <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
+                                <img src={selectedFloor.image_url} alt="" style={{ width:"100%", height:"100%", display:"block", imageRendering:"high-quality" }} draggable={false} className="pointer-events-none select-none" onLoad={(e) => setImgRatio(e.target.naturalWidth/e.target.naturalHeight)} />
                                 <svg ref={svgRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%", overflow:"visible" }} viewBox="0 0 100 100" preserveAspectRatio="none" data-testid="gate-map-svg">
                                   {activeGates.map(gate => {
                                     const isOpen = gate.status === "open";
