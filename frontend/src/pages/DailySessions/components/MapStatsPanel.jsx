@@ -52,7 +52,7 @@ export function MapStatsPanel({ sessionStats, densityStats, changedZones, ZONE_T
 
   return (
     <div
-      className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto overflow-x-hidden shadow-xl"
+      className="absolute top-0 bottom-0 right-0 bg-white border-l border-slate-200 overflow-y-auto overflow-x-hidden shadow-xl"
       style={{ width: '40%', transform: collapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
       data-testid="map-stats-panel"
     >

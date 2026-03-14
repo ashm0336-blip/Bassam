@@ -767,7 +767,7 @@ export default function DailyGateSessionsPage() {
 
                     {/* ── Side Panel: Gate Stats ── */}
                     <div
-                      className="absolute top-0 bottom-0 right-0 bg-gradient-to-b from-slate-50/98 to-white/98 backdrop-blur-sm border-l border-slate-200/80 overflow-y-auto shadow-xl z-25"
+                      className="absolute top-0 bottom-0 right-0 bg-white border-l border-slate-200 overflow-y-auto shadow-xl z-25"
                       style={{ width: '38%', transform: statsPanelCollapsed ? 'translateX(100%)' : 'translateX(0)', transition: 'transform 0.3s ease' }}
                       data-testid="gates-stats-panel"
                     >
