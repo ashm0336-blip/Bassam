@@ -398,30 +398,29 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   }), [employees]);
 
   // ── Account Action ─────────────────────────────────────────
+  const [actionConfirm, setActionConfirm] = useState(null);
+
   const handleAccountAction = async (empId, action, empName) => {
-    const confirmMsgs = {
-      "activate-account":  `تفعيل حساب "${empName}"؟`,
-      "freeze-account":    `تجميد حساب "${empName}" مؤقتاً؟`,
-      "terminate-account": `إنهاء خدمة "${empName}" نهائياً؟ لا يمكن التراجع`,
-      "reset-pin":         `إعادة تعيين PIN الخاصة بـ "${empName}"؟`,
-    };
-    if (!window.confirm(confirmMsgs[action] || "تأكيد العملية؟")) return;
+    setActionConfirm({ empId, action, empName });
+  };
+
+  const executeAccountAction = async () => {
+    if (!actionConfirm) return;
+    const { empId, action } = actionConfirm;
     try {
       await axios.post(`${API}/employees/${empId}/${action}`, {}, headers());
       toast.success("تم تنفيذ العملية بنجاح");
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشلت العملية"); }
+    finally { setActionConfirm(null); }
   };
 
   // ── Change Role ────────────────────────────────────────────
   const handleChangeRole = async (emp, newRole) => {
-    if (!window.confirm(`تغيير صلاحية "${emp.name}" إلى "${ROLE_LABELS_MAP[newRole] || newRole}"؟`)) return;
     try {
-      // Update role on the user account (users collection)
       if (emp.user_id) {
         await axios.put(`${API}/users/${emp.user_id}/role`, { role: newRole }, headers());
       }
-      // Also sync on employee record
       await axios.put(`${API}/employees/${emp.id}`, { user_role: newRole }, headers());
       toast.success(`تم تغيير الصلاحية إلى: ${ROLE_LABELS_MAP[newRole] || newRole}`);
       fetchEmployees();
@@ -485,23 +484,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      // تحقق هل الموظف في جدول شهري حالي
-      const currentMonth = new Date().toLocaleDateString("en-CA", { timeZone:"Asia/Riyadh" }).slice(0,7);
-      let hasSchedule = false;
-      try {
-        const res = await axios.get(`${API}/schedules/${department}/${currentMonth}`, headers());
-        const sched = res.data;
-        if (sched?.assignments?.some(a => a.employee_id === deleteTarget.id)) {
-          hasSchedule = true;
-        }
-      } catch { /* لا جدول = لا مشكلة */ }
-
-      const confirmMsg = hasSchedule
-        ? `تحذير: الموظف "${deleteTarget.name}" مضمَّن في جدول ${currentMonth} الحالي!\n\nهل أنت متأكد من الحذف النهائي؟ سيتم إزالته من الجدول.`
-        : `هل أنت متأكد من حذف الموظف "${deleteTarget.name}" نهائياً؟\nسيتم حذف حسابه وبيانات تسجيل الدخول.`;
-
-      if (!window.confirm(confirmMsg)) return;
-
       await axios.delete(`${API}/employees/${deleteTarget.id}`, headers());
       toast.success("تم حذف الموظف");
       setDeleteDialog(false);
@@ -1080,6 +1062,25 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             <Button variant="destructive" onClick={handleDelete} className="gap-1.5">
               <Trash2 className="w-4 h-4" />حذف نهائياً
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account Action Confirmation */}
+      <Dialog open={!!actionConfirm} onOpenChange={(open) => { if (!open) setActionConfirm(null); }}>
+        <DialogContent className="font-cairo max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تأكيد العملية</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            {actionConfirm?.action === "activate-account" && `تفعيل حساب "${actionConfirm?.empName}"؟`}
+            {actionConfirm?.action === "freeze-account" && `تجميد حساب "${actionConfirm?.empName}" مؤقتاً؟`}
+            {actionConfirm?.action === "terminate-account" && `إنهاء خدمة "${actionConfirm?.empName}" نهائياً؟ لا يمكن التراجع`}
+            {actionConfirm?.action === "reset-pin" && `إعادة تعيين PIN الخاصة بـ "${actionConfirm?.empName}"؟`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActionConfirm(null)}>إلغاء</Button>
+            <Button onClick={executeAccountAction} className="gap-1.5">تأكيد</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

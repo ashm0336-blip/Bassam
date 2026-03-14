@@ -279,6 +279,7 @@ export default function TasksPage({ department }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus]   = useState("all");   // فلتر الحالة
@@ -397,13 +398,18 @@ export default function TasksPage({ department }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("هل أنت متأكد من حذف المهمة؟")) return;
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await axios.delete(`${API}/tasks/${id}`, { headers:{ Authorization:`Bearer ${token()}` } });
+      await axios.delete(`${API}/tasks/${deleteConfirmId}`, { headers:{ Authorization:`Bearer ${token()}` } });
       toast.success("تم حذف المهمة");
       fetchTasks(selectedDate);
       if (view==="calendar") fetchCalendar(currentMonth);
     } catch { toast.error("فشل الحذف"); }
+    finally { setDeleteConfirmId(null); }
   };
 
   const handleStatus = async (id, status) => {
@@ -1296,6 +1302,24 @@ export default function TasksPage({ department }) {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Task Confirmation */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="font-cairo max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />تأكيد حذف المهمة
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={confirmDeleteTask} className="gap-1.5">
+              <Trash2 className="w-4 h-4" />حذف
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

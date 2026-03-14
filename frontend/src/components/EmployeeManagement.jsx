@@ -475,16 +475,22 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل الحذف":"Failed")); }
   };
 
-  const handleUnlockSchedule = async () => {
+  const [unlockConfirm, setUnlockConfirm] = useState(false);
+
+  const handleUnlockSchedule = () => {
     if(!schedule) return;
-    if(!window.confirm(isAr ? "هل تريد فتح الجدول للتعديل؟ سيتم تغيير حالته إلى مسودة." : "Unlock schedule for editing?")) return;
+    setUnlockConfirm(true);
+  };
+
+  const confirmUnlock = async () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(`${API}/admin/schedules/${schedule.id}/unlock`, {}, { headers:{ Authorization:`Bearer ${token}` } });
       toast.success(isAr ? "تم فتح الجدول للتعديل" : "Schedule unlocked");
       fetchSchedule();
-      onScheduleChange?.(); // badge → "مسودة" فوراً
+      onScheduleChange?.();
     } catch(e) { toast.error(e.response?.data?.detail||(isAr?"فشل فتح الجدول":"Failed to unlock")); }
+    finally { setUnlockConfirm(false); }
   };
 
   const handleAssignmentChange = useCallback(async (employeeId, field, value) => {
@@ -1176,6 +1182,18 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Unlock Schedule Confirmation */}
+      <Dialog open={unlockConfirm} onOpenChange={setUnlockConfirm}>
+        <DialogContent className="font-cairo max-w-sm" dir="rtl">
+          <DialogHeader><DialogTitle>{isAr ? "فتح الجدول للتعديل" : "Unlock Schedule"}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">{isAr ? "سيتم تغيير حالة الجدول إلى مسودة. هل تريد المتابعة؟" : "Schedule will be set to draft. Continue?"}</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlockConfirm(false)}>{isAr ? "إلغاء" : "Cancel"}</Button>
+            <Button onClick={confirmUnlock}>{isAr ? "فتح للتعديل" : "Unlock"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

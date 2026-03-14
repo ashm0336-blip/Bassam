@@ -108,6 +108,7 @@ export default function DepartmentSettings({ department }) {
 
   const [shifts, setShifts] = useState([]);
   const [counts, setCounts] = useState({ employees: 0, shifts: 0, gates: 0, maps: 0, categories: 0, schedule: null });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const [formData, setFormData] = useState({
     value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: 0
@@ -247,14 +248,20 @@ export default function DepartmentSettings({ department }) {
   };
 
   const handleDelete = async (settingId) => {
-    if (!confirm(language === 'ar' ? "هل أنت متأكد من الحذف؟" : "Are you sure you want to delete?")) return;
+    setDeleteConfirm(settingId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API}/${department}/settings/${settingId}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/${department}/settings/${deleteConfirm}`, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(language === 'ar' ? "تم الحذف بنجاح" : "Deleted successfully");
       fetchAllSettings();
     } catch (error) {
       toast.error(language === 'ar' ? "فشل الحذف" : "Failed to delete");
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -603,6 +610,26 @@ export default function DepartmentSettings({ department }) {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open) setDeleteConfirm(null); }}>
+        <DialogContent className="font-cairo max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            {language === 'ar' ? 'هل أنت متأكد من الحذف؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure? This cannot be undone.'}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+            <Button variant="destructive" onClick={confirmDelete} className="gap-1.5">
+              <Trash2 className="w-4 h-4" />{language === 'ar' ? 'حذف' : 'Delete'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

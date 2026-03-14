@@ -179,19 +179,24 @@ export default function AlertsPage() {
     }
   };
 
+  const [deleteAlertId, setDeleteAlertId] = useState(null);
+
   const handleDelete = async (alertId) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا البلاغ؟")) return;
-    
+    setDeleteAlertId(alertId);
+  };
+
+  const confirmDeleteAlert = async () => {
+    if (!deleteAlertId) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API}/admin/alerts/${alertId}`, {
+      await axios.delete(`${API}/admin/alerts/${deleteAlertId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("تم حذف البلاغ");
       fetchAlerts();
     } catch (error) {
       toast.error("فشل الحذف");
-    }
+    } finally { setDeleteAlertId(null); }
   };
 
   // Filter alerts
@@ -532,6 +537,17 @@ export default function AlertsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteAlertId} onOpenChange={(open) => { if (!open) setDeleteAlertId(null); }}>
+        <DialogContent className="font-cairo max-w-sm" dir="rtl">
+          <DialogHeader><DialogTitle className="text-destructive">تأكيد الحذف</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">هل أنت متأكد من حذف هذا البلاغ؟</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAlertId(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={confirmDeleteAlert}>حذف</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
