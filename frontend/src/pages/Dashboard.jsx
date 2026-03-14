@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context/LanguageContext";
+import { isUserInteracting } from "@/lib/autoRefresh";
 import {
   Users, DoorOpen, AlertTriangle, TrendingUp, Clock, Activity,
   ShieldAlert, Calendar, Building, MapPin, RefreshCw,
@@ -125,7 +126,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(() => { if (!isUserInteracting()) fetchData(); }, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
 

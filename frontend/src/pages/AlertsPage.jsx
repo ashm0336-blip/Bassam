@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { isUserInteracting } from "@/lib/autoRefresh";
 import HijriDateTimePicker from "@/components/HijriDateTimePicker";
 import {
   AlertTriangle,
@@ -104,7 +105,7 @@ export default function AlertsPage() {
 
   useEffect(() => {
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 30000);
+    const interval = setInterval(() => { if (!isUserInteracting()) fetchAlerts(); }, 30000);
     return () => clearInterval(interval);
   }, []);
 

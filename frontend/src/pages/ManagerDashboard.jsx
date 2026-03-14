@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
+import { isUserInteracting } from "@/lib/autoRefresh";
 import { 
   Users, 
   DoorOpen, 
@@ -31,7 +32,7 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     fetchAllStats();
-    const interval = setInterval(fetchAllStats, 30000); // تحديث كل 30 ثانية
+    const interval = setInterval(() => { if (!isUserInteracting()) fetchAllStats(); }, 30000);
     return () => clearInterval(interval);
   }, []);
 

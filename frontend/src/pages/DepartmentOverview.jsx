@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { isUserInteracting } from "@/lib/autoRefresh";
 import {
   Users, Clock, Coffee, Zap, ShieldCheck, ShieldX, ShieldOff, UserPlus,
   CalendarDays, TrendingUp, TrendingDown, AlertTriangle, Activity,
@@ -137,7 +138,7 @@ export default function DepartmentOverview({ department = "planning" }) {
     finally { setLoading(false); setRefreshing(false); setLastRefresh(new Date()); }
   }, [department, monthKey]);
 
-  useEffect(() => { fetchData(); const t = setInterval(() => fetchData(true), 60000); return () => clearInterval(t); }, [fetchData]);
+  useEffect(() => { fetchData(); const t = setInterval(() => { if (!isUserInteracting()) fetchData(true); }, 60000); return () => clearInterval(t); }, [fetchData]);
 
   // ── Derived Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
