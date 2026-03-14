@@ -406,7 +406,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
     };
     if (!window.confirm(confirmMsgs[action] || "تأكيد العملية؟")) return;
     try {
-      await axios.post(`${API}/employees/${empId}/account-action`, { action }, headers());
+      await axios.post(`${API}/employees/${empId}/${action}`, {}, headers());
       toast.success("تم تنفيذ العملية بنجاح");
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشلت العملية"); }

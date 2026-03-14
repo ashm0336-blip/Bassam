@@ -30,6 +30,7 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - Audit log for prayer halls
 
 ## Recent Changes (March 2026)
+- **Bug Fix**: Fixed employee account activation - EmployeesList.jsx was sending requests to wrong endpoint `/account-action` instead of `/{action}` (activate-account, freeze-account, etc.)
 - Removed yellow warning circles from gate points on map
 - Made gate point circles smaller for precision
 - Added keyboard controls for gate point movement
@@ -53,9 +54,11 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 
 ## Key Files
 - `/app/frontend/src/pages/DailyGateSessionsPage.jsx`
-- `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx`
+- `/app/frontend/src/components/EmployeesList.jsx`
+- `/app/frontend/src/components/EmployeeManagement.jsx`
 - `/app/frontend/src/contexts/AuthContext.jsx`
 - `/app/frontend/src/App.js`
 - `/app/backend/server.py`
-- `/app/backend/routers/auth.py`
-- `/app/backend/routers/settings.py`
+- `/app/backend/routes/auth.py`
+- `/app/backend/routes/employees.py`
+- `/app/backend/routes/settings.py`
