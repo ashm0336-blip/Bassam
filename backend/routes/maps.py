@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import uuid
 
 from database import db
-from auth import require_admin, log_activity, get_current_user
+from auth import require_admin, require_department_manager, log_activity, get_current_user
 from models import (
     InteractiveMap, InteractiveMapCreate, MapMarker, MapMarkerCreate,
     MapFloor, MapFloorCreate, MapZone, MapZoneCreate, MapZoneUpdate,
@@ -105,7 +105,7 @@ async def get_floor(floor_id: str):
 
 
 @router.post("/admin/floors")
-async def create_floor(floor_data: MapFloorCreate, admin: dict = Depends(require_admin)):
+async def create_floor(floor_data: MapFloorCreate, admin: dict = Depends(require_department_manager)):
     floor_obj = MapFloor(**floor_data.model_dump())
     await db.map_floors.insert_one(floor_obj.model_dump())
     await log_activity("إضافة طابق", admin, floor_obj.id, f"طابق {floor_data.name_ar}")
@@ -113,7 +113,7 @@ async def create_floor(floor_data: MapFloorCreate, admin: dict = Depends(require
 
 
 @router.put("/admin/floors/{floor_id}")
-async def update_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_admin)):
+async def update_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_department_manager)):
     existing = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الطابق غير موجود")
@@ -125,7 +125,7 @@ async def update_floor(floor_id: str, floor_data: dict, admin: dict = Depends(re
 
 
 @router.delete("/admin/floors/{floor_id}")
-async def delete_floor(floor_id: str, admin: dict = Depends(require_admin)):
+async def delete_floor(floor_id: str, admin: dict = Depends(require_department_manager)):
     result = await db.map_floors.delete_one({"id": floor_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="الطابق غير موجود")
@@ -174,7 +174,7 @@ async def get_zone(zone_id: str):
 
 
 @router.post("/admin/zones")
-async def create_zone(zone_data: MapZoneCreate, admin: dict = Depends(require_admin)):
+async def create_zone(zone_data: MapZoneCreate, admin: dict = Depends(require_department_manager)):
     zone_obj = MapZone(**zone_data.model_dump())
     await db.map_zones.insert_one(zone_obj.model_dump())
     await log_activity("إضافة منطقة", admin, zone_obj.id, f"منطقة {zone_data.name_ar} ({zone_data.zone_code})")
@@ -182,7 +182,7 @@ async def create_zone(zone_data: MapZoneCreate, admin: dict = Depends(require_ad
 
 
 @router.put("/admin/zones/{zone_id}")
-async def update_zone(zone_id: str, zone_data: MapZoneUpdate, admin: dict = Depends(require_admin)):
+async def update_zone(zone_id: str, zone_data: MapZoneUpdate, admin: dict = Depends(require_department_manager)):
     existing = await db.map_zones.find_one({"id": zone_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
@@ -195,7 +195,7 @@ async def update_zone(zone_id: str, zone_data: MapZoneUpdate, admin: dict = Depe
 
 
 @router.delete("/admin/zones/{zone_id}")
-async def delete_zone(zone_id: str, admin: dict = Depends(require_admin)):
+async def delete_zone(zone_id: str, admin: dict = Depends(require_department_manager)):
     result = await db.map_zones.delete_one({"id": zone_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
@@ -204,7 +204,7 @@ async def delete_zone(zone_id: str, admin: dict = Depends(require_admin)):
 
 
 @router.put("/admin/zones/bulk-update-crowd")
-async def bulk_update_zone_crowd(request: Request, admin: dict = Depends(require_admin)):
+async def bulk_update_zone_crowd(request: Request, admin: dict = Depends(require_department_manager)):
     updates = await request.json()
     updated_count = 0
     for update in updates:
@@ -250,7 +250,7 @@ async def get_gate_map_floors():
 
 
 @router.post("/admin/gate-map/floors")
-async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = Depends(require_admin)):
+async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = Depends(require_department_manager)):
     floor = GateMapFloor(**floor_data.model_dump())
     doc = floor.model_dump()
     await db.gate_map_floors.insert_one(doc)
@@ -259,7 +259,7 @@ async def create_gate_map_floor(floor_data: GateMapFloorCreate, admin: dict = De
 
 
 @router.put("/admin/gate-map/floors/{floor_id}")
-async def update_gate_map_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_admin)):
+async def update_gate_map_floor(floor_id: str, floor_data: dict, admin: dict = Depends(require_department_manager)):
     existing = await db.gate_map_floors.find_one({"id": floor_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الطابق غير موجود")
@@ -271,7 +271,7 @@ async def update_gate_map_floor(floor_id: str, floor_data: dict, admin: dict = D
 
 
 @router.delete("/admin/gate-map/floors/{floor_id}")
-async def delete_gate_map_floor(floor_id: str, admin: dict = Depends(require_admin)):
+async def delete_gate_map_floor(floor_id: str, admin: dict = Depends(require_department_manager)):
     await db.gate_map_floors.delete_one({"id": floor_id})
     await db.gate_markers.delete_many({"floor_id": floor_id})
     return {"message": "تم الحذف"}
@@ -287,7 +287,7 @@ async def get_gate_markers(floor_id: Optional[str] = None):
 
 
 @router.post("/admin/gate-map/markers")
-async def create_gate_marker(data: GateMarkerCreate, admin: dict = Depends(require_admin)):
+async def create_gate_marker(data: GateMarkerCreate, admin: dict = Depends(require_department_manager)):
     marker = GateMarker(**data.model_dump())
     doc = marker.model_dump()
     await db.gate_markers.insert_one(doc)
@@ -296,7 +296,7 @@ async def create_gate_marker(data: GateMarkerCreate, admin: dict = Depends(requi
 
 
 @router.put("/admin/gate-map/markers/{marker_id}")
-async def update_gate_marker(marker_id: str, data: GateMarkerUpdate, admin: dict = Depends(require_admin)):
+async def update_gate_marker(marker_id: str, data: GateMarkerUpdate, admin: dict = Depends(require_department_manager)):
     update = {k: v for k, v in data.model_dump().items() if v is not None}
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.gate_markers.update_one({"id": marker_id}, {"$set": update})
@@ -305,13 +305,13 @@ async def update_gate_marker(marker_id: str, data: GateMarkerUpdate, admin: dict
 
 
 @router.delete("/admin/gate-map/markers/{marker_id}")
-async def delete_gate_marker(marker_id: str, admin: dict = Depends(require_admin)):
+async def delete_gate_marker(marker_id: str, admin: dict = Depends(require_department_manager)):
     await db.gate_markers.delete_one({"id": marker_id})
     return {"message": "تم الحذف"}
 
 
 @router.put("/admin/gate-map/markers/bulk-status")
-async def bulk_update_gate_markers(request: Request, admin: dict = Depends(require_admin)):
+async def bulk_update_gate_markers(request: Request, admin: dict = Depends(require_department_manager)):
     updates = await request.json()
     count = 0
     for u in updates:
@@ -325,7 +325,7 @@ async def bulk_update_gate_markers(request: Request, admin: dict = Depends(requi
 
 
 @router.post("/admin/gate-map/sync-gates")
-async def sync_gates_to_markers(request: Request, admin: dict = Depends(require_admin)):
+async def sync_gates_to_markers(request: Request, admin: dict = Depends(require_department_manager)):
     """Sync gates from gates collection to gate markers for a specific floor."""
     data = await request.json()
     floor_id = data.get("floor_id")
@@ -370,7 +370,7 @@ async def get_gate_daily_logs(limit: int = 30):
 
 
 @router.post("/admin/gate-map/daily-logs")
-async def create_gate_daily_log(request: Request, admin: dict = Depends(require_admin)):
+async def create_gate_daily_log(request: Request, admin: dict = Depends(require_department_manager)):
     data = await request.json()
     log = GateDailyLog(**data)
     existing = await db.gate_daily_logs.find_one({"date": log.date}, {"_id": 0})
@@ -384,7 +384,7 @@ async def create_gate_daily_log(request: Request, admin: dict = Depends(require_
 
 
 @router.post("/admin/gate-map/auto-log")
-async def auto_create_daily_log(admin: dict = Depends(require_admin)):
+async def auto_create_daily_log(admin: dict = Depends(require_department_manager)):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     markers = await db.gate_markers.find({}, {"_id": 0}).to_list(500)
     total = len(markers)

@@ -3,7 +3,7 @@ from pathlib import Path
 import uuid
 import aiofiles
 
-from auth import require_admin, log_activity
+from auth import require_admin, require_department_manager, log_activity
 
 router = APIRouter()
 
@@ -13,7 +13,7 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/admin/upload/map-image")
-async def upload_map_image(file: UploadFile = File(...), admin: dict = Depends(require_admin)):
+async def upload_map_image(file: UploadFile = File(...), admin: dict = Depends(require_department_manager)):
     if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. الرجاء رفع ملف صورة")
     file_ext = file.filename.split(".")[-1] if "." in file.filename else "png"
@@ -31,7 +31,7 @@ async def upload_map_image(file: UploadFile = File(...), admin: dict = Depends(r
 
 
 @router.delete("/admin/upload/map-image/{filename}")
-async def delete_map_image(filename: str, admin: dict = Depends(require_admin)):
+async def delete_map_image(filename: str, admin: dict = Depends(require_department_manager)):
     file_path = UPLOADS_DIR / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="الملف غير موجود")
