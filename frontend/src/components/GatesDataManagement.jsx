@@ -432,7 +432,7 @@ export default function GatesDataManagement() {
           </button>
         </div>
 
-        {/* Export */}
+        {/* Export / Import */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
@@ -441,16 +441,39 @@ export default function GatesDataManagement() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" dir="rtl">
             <DropdownMenuItem onClick={() => {
-              const csv = ["رقم,اسم,المنطقة,النوع,المسار,التصنيف,الحالة", ...gates.map(g =>
-                `${g.number},${g.name},${g.plaza},${g.gate_type},${g.direction},${g.classification},${g.status}`)].join("\n");
-              const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8;" });
-              const u = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = u; a.download = "gates.csv"; a.click(); URL.revokeObjectURL(u);
-              toast.success(language === 'ar' ? "تم التصدير" : "Exported");
+              const tk = localStorage.getItem("token");
+              fetch(`${API}/gates/export`, { headers: { Authorization: `Bearer ${tk}` } })
+                .then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = "gates.xlsx"; a.click(); URL.revokeObjectURL(u); toast.success("تم التصدير"); })
+                .catch(() => toast.error("فشل التصدير"));
             }}>
-              <Download className="w-4 h-4 ml-2" />{language === 'ar' ? 'تصدير CSV' : 'Export CSV'}
+              <Download className="w-4 h-4 ml-2" />{language === 'ar' ? 'تصدير Excel' : 'Export Excel'}
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              fetch(`${API}/gates/export/template`).then(r => r.blob())
+                .then(b => { const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = "gates_template.xlsx"; a.click(); URL.revokeObjectURL(u); toast.success("تم تحميل القالب"); })
+                .catch(() => toast.error("فشل"));
+            }}>
+              <FileText className="w-4 h-4 ml-2" />{language === 'ar' ? 'قالب الاستيراد' : 'Import Template'}
+            </DropdownMenuItem>
+            {canWrite("manage_gates") && (
+              <DropdownMenuItem onClick={() => document.getElementById("import-gates-xlsx")?.click()}>
+                <Upload className="w-4 h-4 ml-2" />{language === 'ar' ? 'استيراد Excel' : 'Import Excel'}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
+        <input id="import-gates-xlsx" type="file" accept=".xlsx,.xls" className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0]; e.target.value = "";
+            if (!file) return;
+            const fd = new FormData(); fd.append("file", file);
+            try {
+              const tk = localStorage.getItem("token");
+              const res = await axios.post(`${API}/gates/import`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
+              toast.success(res.data.message || "تم الاستيراد");
+              fetchGates();
+            } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
+          }} />
 
         {/* Add Gate */}
         {canWrite("manage_gates") && (
