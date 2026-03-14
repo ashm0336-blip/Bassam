@@ -904,28 +904,6 @@ export default function DailyGateSessionsPage() {
 
                         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-                        {/* Mini Gate Cards */}
-                        <div>
-                          <p className="text-[12px] font-bold font-cairo text-slate-600 mb-2">{isAr?"حالة الأبواب":"Gate Status"}</p>
-                          <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent mb-2" />
-                          <div className="grid grid-cols-5 gap-1.5 max-h-[260px] overflow-y-auto pr-0.5">
-                            {activeGates.map(gate => {
-                              const sc = STATUS_CONFIG[gate.status] || STATUS_CONFIG.closed;
-                              const isOpen = gate.status === "open";
-                              const INDICATOR_COLORS = { light: "#22c55e", medium: "#f59e0b", crowded: "#ef4444" };
-                              const indColor = isOpen ? (INDICATOR_COLORS[gate.indicator || "light"] || "#22c55e") : sc.color;
-                              return (
-                                <button key={gate.id} onClick={() => { if (activeSession?.status === "draft") { setSelectedGate(gate); setShowGateDialog(true); } }}
-                                  className="relative flex flex-col items-center justify-center rounded-lg border-2 p-1.5 transition-all hover:scale-105 hover:shadow-md"
-                                  style={{ borderColor: indColor+"60", backgroundColor: indColor+"08" }}
-                                  data-testid={`panel-gate-${gate.id}`}>
-                                  <div className="w-3 h-3 rounded-full mb-0.5" style={{ backgroundColor: indColor }} />
-                                  <span className="text-[7px] font-bold text-slate-600 leading-tight truncate w-full text-center">{gate.name_ar}</span>
-                                  <span className="text-[7px] font-medium mt-0.5" style={{ color: sc.color }}>{isAr ? sc.label_ar : sc.label_en}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
                         </div>
                       </div>
                     </div>
