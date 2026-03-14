@@ -739,13 +739,6 @@ export default function DailyGateSessionsPage() {
                                             <text x={gate.x + r * 0.7} y={gate.y - r * ar * 0.7} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="0.55" fontWeight="800">{gate.assigned_staff}</text>
                                           </g>
                                         )}
-                                        {/* Warning: open gate with no staff */}
-                                        {!isDragging && gate.status === "open" && (gate.assigned_staff || 0) === 0 && (
-                                          <g style={{ pointerEvents: "none" }}>
-                                            <circle cx={gate.x + r * 0.7} cy={gate.y - r * ar * 0.7} r="0.4" fill="#f59e0b" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
-                                            <text x={gate.x + r * 0.7} y={gate.y - r * ar * 0.7} textAnchor="middle" dominantBaseline="central" fill="white" fontSize="0.5" fontWeight="800">!</text>
-                                          </g>
-                                        )}
                                         {/* Crosshair in edit mode */}
                                         {isDraft && (isHov || isDragging) && (
                                           <g transform={`translate(${gate.x}, ${gate.y})`} style={{ pointerEvents: "none" }}>

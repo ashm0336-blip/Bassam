@@ -1,80 +1,61 @@
-# Crowd Management System - PRD
+# Crowd Management Application - PRD
 
 ## Original Problem Statement
-Enterprise-grade crowd management application for managing prayer halls, gates, employee schedules, and daily operations. Built with FARM stack (FastAPI, React, MongoDB).
+Enterprise-grade crowd management application for managing prayer halls, gates, employees, schedules, and daily inspection tours at Al-Haram.
 
-## Core Requirements
-- Dashboard & Overviews with real-time KPIs
-- Employee & Schedule Management (static employees + dynamic monthly schedules)
-- Tasks Management (Kanban, Calendar, Performance Tracking)
-- Daily Sessions (Prayer Halls + Gates inspection tours)
-- Real-time Updates (30-60s polling)
-- Responsive design (mobile + tablet)
-- Arabic-first UI (RTL)
+## Core Modules
+- Real-time dashboards (Operations Room)
+- Employee scheduling with approval workflow
+- Advanced task management (Kanban/Calendar)
+- Daily inspection tours for prayer halls and gates
+- Fine-grained role-based access control (RBAC)
+- Map calibration with real-world measurements
+- Employee management and profiles
 
-## Key Technical Concepts
-- **Timezone**: All date/time uses UTC+3 offset
-- **Architecture**: Employees tab (static data) vs Schedule tab (monthly assignments)
-- **Approved data only**: Stats reflect only approved schedules
-- **Component-driven UI**: Shadcn/UI + TailwindCSS + Cairo font
+## Tech Stack
+- **Backend**: FastAPI + MongoDB
+- **Frontend**: React (Vite) + Shadcn UI
+- **Auth**: JWT-based with role permissions
 
 ## What's Been Implemented
+- Full dashboard with operations room
+- Employee & schedule management with lock/approval
+- Tasks module (calendar, Kanban, list views)
+- Daily sessions for prayer halls & gates (map-based)
+- Map calibration system with real-world metrics
+- Fine-grained permissions system
+- Employee profile pages
+- Gates map with interactive SVG points
+- Real-time measurement during drawing
+- Audit log for prayer halls
 
-### Core Features (Complete)
-- Full dashboard with Operations Room
-- Employee management with account creation/reset
-- Monthly schedule with approve/lock/unlock workflow
-- Tasks page (Kanban + Calendar + List views)
-- Daily Sessions for Prayer Halls (map editor, prayer tours, audit log)
-- Daily Sessions for Gates
-- Responsive design overhaul
-- Real-time polling on all key pages
+## Recent Changes (March 2026)
+- Removed yellow warning circles from gate points on map
+- Made gate point circles smaller for precision
+- Added keyboard controls for gate point movement
+- Improved map performance (removed animations)
+- Increased max zoom to 5000%
+- Unified map UI (legends, zoom controls)
+- Fixed permissions for General Manager map access
 
-### Recent Implementation (March 12, 2026)
-- **P0: Link Crowd Densities to Prayer-Specific Zones** - COMPLETE & TESTED
-  - Density tab shows zones from specific prayer session
-  - Prayer status indicators + empty state for prayers without sessions
-- **UI Cleanup: Remove duplicate stats headers** - COMPLETE
-  - Removed from Density tab and Employees tab in Prayer Halls
-- **Multi-Select Employee Assignment for Zones** - COMPLETE & TESTED
-  - Zone cards + map click: multi-select popover with checkboxes grouped by shift
-  - Read-only mode with clear message for completed sessions
-  - Removed redundant "Quick Assign" button
-- **Map Scale Calibration System** - COMPLETE
-  - Two-point calibration tool: user clicks 2 known points on map + enters real distance in meters
-  - Auto-computes area (m²), safe/medium/max capacity, carpet rows/count for any drawn zone
-  - Calibration saved per floor in MongoDB
-  - Shoelace formula with aspect ratio correction for precise polygon area
-  - Files: `calibration.js`, `DailySessionsPage.jsx`, `Dialogs.jsx`
-  - Renamed/reordered tabs: الموظفين ← الكثافات ← الأبواب (matches Prayer Halls)
-  - Removed stats banner, added side panel with KPIs + mini gate cards
-  - Legend moved to toolbar
-  - Gate changes log under the map (cards showing status/indicator changes)
-  - Employees tab completely rewritten: map with coverage overlay + side panel + multi-select gate assignment popovers
+## Upcoming Tasks (P0)
+1. Comparative Density Report - visual comparison of crowd densities between prayer times
+2. Gates Audit Log - full implementation similar to prayer halls
 
-## Prioritized Backlog
-
-### P0 - Upcoming
-- Comparative density report between prayers (e.g., Fajr vs Dhuhr chart)
-- Gate audit log (سجل تغييرات الأبواب) under map - records open/close/crowded changes
-
-### P1 - Advanced Task Features
-- Recurring Tasks (daily/weekly/monthly)
-- Task Templates (e.g., "Friday Checklist")
-- Comments on Tasks
-- Attachments & Images on Tasks
-- Pre-deadline Reminders
-- Assign Task to entire Department
-- Weekly/Monthly Performance Reports
-
-### P2 - Future
-- Push Notifications (إشعارات الدفع) — Service Worker + Web Push API for real-time alerts on mobile/desktop even when site is closed
+## Future Tasks
+- P1: Advanced task features (recurring, templates, comments, reminders)
+- P1: Full attendance system (check-in/check-out)
+- P2: Push notifications
 
 ## Credentials
-- **Admin**: admin@crowd.sa / admin123
-- **Employee (Bassam)**: ID 1037299037 / PIN 0000
+- Admin: admin@crowd.sa / admin123
+- Employee (Bassam): ID 1037299037 / PIN 100100
 
-## Architecture
-- **Backend**: FastAPI at /app/backend/server.py with modular routers in /app/backend/routes/
-- **Frontend**: React (CRA) at /app/frontend/src/ with page-based structure
-- **Database**: MongoDB (collections: users, employees, monthly_schedules, tasks, map_sessions, gate_sessions)
+## Key Files
+- `/app/frontend/src/pages/DailyGateSessionsPage.jsx`
+- `/app/frontend/src/pages/DailySessions/components/MapCanvas.jsx`
+- `/app/frontend/src/contexts/AuthContext.jsx`
+- `/app/frontend/src/App.js`
+- `/app/backend/server.py`
+- `/app/backend/routers/auth.py`
+- `/app/backend/routers/settings.py`
