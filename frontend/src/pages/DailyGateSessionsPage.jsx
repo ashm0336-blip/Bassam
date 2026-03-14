@@ -676,8 +676,8 @@ export default function DailyGateSessionsPage() {
                                     const isHov = hoveredGate?.id === gate.id;
                                     const isDraft = activeSession?.status === "draft" && canCreateSession;
                                     const ar = imgRatio || 1;
-                                    const baseR = 0.3;
-                                    const r = isDragging ? baseR * 2 : isHov ? baseR * 1.6 : baseR;
+                                    const baseR = 0.18;
+                                    const r = isDragging ? baseR * 2.5 : isHov ? baseR * 2 : baseR;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
                                         onMouseEnter={() => { if (!draggingGateId) setHoveredGate(gate); }}
