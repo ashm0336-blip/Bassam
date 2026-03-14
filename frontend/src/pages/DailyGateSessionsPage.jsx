@@ -6,7 +6,7 @@ import {
   RefreshCw, Edit2, MessageSquare, Layers, ZoomIn, ZoomOut, Maximize2,
   RotateCcw, CircleDot, CircleOff, Tag, CalendarRange, DoorOpen, DoorClosed,
   Wrench, ArrowUpRight, ArrowDownRight, Users, FileStack, Database,
-  Crosshair, Activity, AlertTriangle, UserCheck,
+  Crosshair, Activity, AlertTriangle, UserCheck, MapPin, Shield,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -837,6 +837,70 @@ export default function DailyGateSessionsPage() {
                             );
                           })}
                         </div>
+
+                        <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
+
+                        {/* Distribution Analytics */}
+                        {activeGates.length > 0 && (() => {
+                          const total = activeGates.length;
+                          const countField = (field, val) => activeGates.filter(g => Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val).length;
+                          const INDICATOR_LABELS = { light: isAr?"خفيف":"Light", medium: isAr?"متوسط":"Medium", crowded: isAr?"مزدحم":"Crowded" };
+                          const DIR_LABELS = { entry: isAr?"دخول":"Entry", exit: isAr?"خروج":"Exit", both: isAr?"دخول وخروج":"Both" };
+                          const DIR_COLORS = { entry: "#2563eb", exit: "#dc2626", both: "#7c3aed" };
+                          const CLASS_LABELS = { general: isAr?"عام":"General", men: isAr?"رجال":"Men", women: isAr?"نساء":"Women", emergency: isAr?"طوارئ":"Emergency" };
+                          const CLASS_COLORS = { general: "#0f766e", men: "#1d4ed8", women: "#be185d", emergency: "#dc2626" };
+                          const TYPE_LABELS = { main: isAr?"رئيسي":"Main", secondary: isAr?"فرعي":"Secondary", escalator: isAr?"سلم":"Escalator", elevator: isAr?"مصعد":"Elevator", stairs: isAr?"درج":"Stairs", bridge: isAr?"جسر":"Bridge" };
+                          const TYPE_COLORS = { main: "#6d28d9", secondary: "#0284c7", escalator: "#0f766e", elevator: "#b45309", stairs: "#7c3aed", bridge: "#be185d" };
+
+                          const ChipRow = ({ label, count, color }) => count > 0 ? (
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border" style={{ borderColor: color+"40", backgroundColor: color+"08" }}>
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                              <span className="text-[8px] font-bold" style={{ color }}>{count}</span>
+                              <span className="text-[7px] font-medium" style={{ color: color+"cc" }}>{label}</span>
+                            </div>
+                          ) : null;
+
+                          // Get unique plazas
+                          const plazas = {};
+                          activeGates.forEach(g => { if (g.plaza) plazas[g.plaza] = (plazas[g.plaza] || 0) + 1; });
+
+                          return (
+                            <div className="space-y-2.5">
+                              {/* المناطق */}
+                              {Object.keys(plazas).length > 0 && (
+                                <div>
+                                  <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{isAr?"توزيع المناطق":"Plazas"}</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {Object.entries(plazas).map(([name, cnt]) => (
+                                      <ChipRow key={name} label={name} count={cnt} color={activeGates.find(g => g.plaza === name)?.plaza_color || "#0284c7"} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {/* المسار */}
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><ArrowLeftRight className="w-3 h-3" />{isAr?"المسار":"Direction"}</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(DIR_LABELS).map(([key, label]) => <ChipRow key={key} label={label} count={countField('direction', key)} color={DIR_COLORS[key] || "#6b7280"} />)}
+                                </div>
+                              </div>
+                              {/* النوع */}
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><Tag className="w-3 h-3" />{isAr?"نوع الباب":"Type"}</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(TYPE_LABELS).map(([key, label]) => <ChipRow key={key} label={label} count={countField('gate_type', key)} color={TYPE_COLORS[key] || "#6b7280"} />)}
+                                </div>
+                              </div>
+                              {/* التصنيف */}
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><Shield className="w-3 h-3" />{isAr?"التصنيف":"Class"}</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(CLASS_LABELS).map(([key, label]) => <ChipRow key={key} label={label} count={countField('classification', key)} color={CLASS_COLORS[key] || "#6b7280"} />)}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
