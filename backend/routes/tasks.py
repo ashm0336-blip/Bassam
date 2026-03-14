@@ -70,10 +70,8 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
 
     if role in MANAGER_ROLES:
         dept = department or user.get("department")
-        if role != "system_admin" and dept:
+        if dept:
             query["department"] = dept
-        elif department:
-            query["department"] = department
     else:
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
         if not emp:
@@ -129,10 +127,8 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
     query = {}
     if role in MANAGER_ROLES:
         dept = department or user.get("department")
-        if role != "system_admin" and dept:
+        if dept:
             query["department"] = dept
-        elif department:
-            query["department"] = department
     else:
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
         if emp:
@@ -172,7 +168,7 @@ async def get_tasks_calendar(department: str, month: str,
 
     if role in MANAGER_ROLES:
         dept = department or user.get("department")
-        if role != "system_admin" and dept:
+        if dept:
             query["department"] = dept
     else:
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
@@ -233,7 +229,7 @@ async def get_tasks_archive(department: str, user: dict = Depends(get_current_us
     query = {}
     if role in MANAGER_ROLES:
         dept = department or user.get("department")
-        if role != "system_admin" and dept:
+        if dept:
             query["department"] = dept
     else:
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
