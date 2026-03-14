@@ -460,13 +460,13 @@ async def get_zone_categories():
 
 
 @router.get("/admin/zone-categories")
-async def get_all_zone_categories(admin: dict = Depends(require_admin)):
+async def get_all_zone_categories(admin: dict = Depends(require_department_manager)):
     categories = await db.zone_categories.find({}, {"_id": 0}).sort("order", 1).to_list(100)
     return categories
 
 
 @router.post("/admin/zone-categories")
-async def create_zone_category(data: ZoneCategoryCreate, admin: dict = Depends(require_admin)):
+async def create_zone_category(data: ZoneCategoryCreate, admin: dict = Depends(require_department_manager)):
     existing = await db.zone_categories.find_one({"value": data.value}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="فئة بهذا المعرف موجودة مسبقاً")
@@ -479,7 +479,7 @@ async def create_zone_category(data: ZoneCategoryCreate, admin: dict = Depends(r
 
 
 @router.put("/admin/zone-categories/{cat_id}")
-async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dict = Depends(require_admin)):
+async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dict = Depends(require_department_manager)):
     existing = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الفئة غير موجودة")
@@ -528,7 +528,7 @@ async def update_zone_category(cat_id: str, data: ZoneCategoryUpdate, admin: dic
 
 
 @router.delete("/admin/zone-categories/{cat_id}")
-async def delete_zone_category(cat_id: str, admin: dict = Depends(require_admin)):
+async def delete_zone_category(cat_id: str, admin: dict = Depends(require_department_manager)):
     existing = await db.zone_categories.find_one({"id": cat_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الفئة غير موجودة")
@@ -538,7 +538,7 @@ async def delete_zone_category(cat_id: str, admin: dict = Depends(require_admin)
 
 
 @router.post("/admin/zone-categories/seed")
-async def seed_zone_categories(admin: dict = Depends(require_admin)):
+async def seed_zone_categories(admin: dict = Depends(require_department_manager)):
     count = await db.zone_categories.count_documents({})
     if count > 0:
         return {"message": "الفئات موجودة مسبقاً", "count": count}

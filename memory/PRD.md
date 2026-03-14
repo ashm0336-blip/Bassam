@@ -30,14 +30,9 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - Audit log for prayer halls
 
 ## Recent Changes (March 2026)
-- **Bug Fix**: Fixed employee account activation - EmployeesList.jsx was sending requests to wrong endpoint `/account-action` instead of `/{action}` (activate-account, freeze-account, etc.)
+- **Bug Fix**: Zone categories permissions - changed from `require_admin` to `require_department_manager` so General Manager and Department Manager can access categories in Prayer Hall settings
+- **Bug Fix**: Fixed employee account activation - EmployeesList.jsx was sending requests to wrong endpoint `/account-action` instead of `/{action}`
 - Removed yellow warning circles from gate points on map
-- Made gate point circles smaller for precision
-- Added keyboard controls for gate point movement
-- Improved map performance (removed animations)
-- Increased max zoom to 5000%
-- Unified map UI (legends, zoom controls)
-- Fixed permissions for General Manager map access
 
 ## Upcoming Tasks (P0)
 1. Comparative Density Report - visual comparison of crowd densities between prayer times
@@ -54,6 +49,8 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 
 ## Key Files
 - `/app/frontend/src/pages/DailyGateSessionsPage.jsx`
+- `/app/frontend/src/pages/DepartmentSettings.jsx`
+- `/app/frontend/src/pages/admin/ZoneCategoryManager.jsx`
 - `/app/frontend/src/components/EmployeesList.jsx`
 - `/app/frontend/src/components/EmployeeManagement.jsx`
 - `/app/frontend/src/contexts/AuthContext.jsx`
@@ -62,3 +59,4 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - `/app/backend/routes/auth.py`
 - `/app/backend/routes/employees.py`
 - `/app/backend/routes/settings.py`
+- `/app/backend/auth.py`
