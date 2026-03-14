@@ -678,18 +678,46 @@ export default function DailyGateSessionsPage() {
                                     const ar = imgRatio || 1;
                                     const baseR = 0.3;
                                     const r = isDragging ? baseR * 2 : isHov ? baseR * 1.6 : baseR;
-                                    const showLabel = isDragging || isHov;
                                     return (
                                       <g key={gate.id} data-testid={`gate-marker-${gate.id}`} data-gate-id={gate.id}
                                         onMouseEnter={() => { if (!draggingGateId) setHoveredGate(gate); }}
                                         onMouseLeave={() => setHoveredGate(null)}
-                                        onMouseDown={(e) => handleGateMouseDown(e, gate.id)}
-                                        onTouchStart={(e) => handleGateTouchStart(e, gate.id)}
-                                        onClick={() => {
-                                          if (!hasDraggedRef.current && isDraft) { setSelectedGate(gate); setShowGateDialog(true); }
-                                          setSelectedGateId(gate.id);
+                                        onMouseDown={(e) => {
+                                          if (!isDraft) return;
+                                          e.stopPropagation();
+                                          // Start long-press timer for drag
+                                          const timer = setTimeout(() => { handleGateMouseDown(e, gate.id); }, 300);
+                                          e.currentTarget._longPressTimer = timer;
+                                          e.currentTarget._startPos = { x: e.clientX, y: e.clientY };
                                         }}
-                                        style={{ cursor: isDraft ? (isDragging ? "grabbing" : "grab") : "pointer" }}>
+                                        onMouseMove={(e) => {
+                                          // If moved significantly, start drag immediately
+                                          if (e.currentTarget._startPos && !draggingGateId) {
+                                            const dx = e.clientX - e.currentTarget._startPos.x;
+                                            const dy = e.clientY - e.currentTarget._startPos.y;
+                                            if (Math.abs(dx) + Math.abs(dy) > 5) {
+                                              clearTimeout(e.currentTarget._longPressTimer);
+                                              handleGateMouseDown(e, gate.id);
+                                              e.currentTarget._startPos = null;
+                                            }
+                                          }
+                                        }}
+                                        onMouseUp={(e) => {
+                                          clearTimeout(e.currentTarget._longPressTimer);
+                                          e.currentTarget._startPos = null;
+                                        }}
+                                        onTouchStart={(e) => handleGateTouchStart(e, gate.id)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (!hasDraggedRef.current) {
+                                            setSelectedGateId(gate.id);
+                                          }
+                                        }}
+                                        onDoubleClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isDraft) { setSelectedGate(gate); setShowGateDialog(true); }
+                                        }}
+                                        style={{ cursor: isDraft ? (isDragging ? "grabbing" : "pointer") : "pointer" }}>
                                         {/* Selection ring */}
                                         {selectedGateId === gate.id && !isDragging && (
                                           <ellipse cx={gate.x} cy={gate.y} rx={r + 0.6} ry={(r + 0.6) * ar} fill="none" stroke="#3b82f6" strokeWidth="0.2" strokeDasharray="0.6 0.3" vectorEffect="non-scaling-stroke" />
@@ -723,13 +751,6 @@ export default function DailyGateSessionsPage() {
                                           <g transform={`translate(${gate.x}, ${gate.y})`} style={{ pointerEvents: "none" }}>
                                             <line x1="-0.25" y1="0" x2="0.25" y2="0" stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
                                             <line x1="0" y1={-0.25 * ar} x2="0" y2={0.25 * ar} stroke="white" strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
-                                          </g>
-                                        )}
-                                        {/* Label */}
-                                        {showLabel && (
-                                          <g style={{ pointerEvents: "none" }}>
-                                            <rect x={gate.x - 6} y={gate.y - r * ar - 2.2} width="12" height="1.6" rx="0.4" fill="white" fillOpacity="0.92" stroke={isDragging ? "#3b82f6" : markerColor} strokeWidth="0.06" vectorEffect="non-scaling-stroke" />
-                                            <text x={gate.x} y={gate.y - r * ar - 1.1} textAnchor="middle" dominantBaseline="middle" fill={isDragging ? "#3b82f6" : "#1e293b"} fontSize="1.1" fontWeight="700" fontFamily="Cairo, sans-serif">{gate.name_ar}</text>
                                           </g>
                                         )}
                                       </g>
