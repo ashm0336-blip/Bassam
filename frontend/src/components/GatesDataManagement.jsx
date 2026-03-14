@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import { PLAZA_COLORS, GATE_TYPES, DIRECTIONS, CATEGORIES, CLASSIFICATIONS, GATE_STATUSES, CURRENT_INDICATORS } from "@/constants/gateData";
 import {
   Plus, Edit, Trash2, Loader2,
@@ -50,6 +51,8 @@ export default function GatesDataManagement() {
     fetchGates();
     fetchEmployees();
   }, []);
+
+  useRealtimeRefresh(["gate_sessions", "maps", "employees"], useCallback(() => { fetchGates(); fetchEmployees(); }, []));
 
   const fetchEmployees = async () => {
     try {
@@ -192,10 +195,6 @@ export default function GatesDataManagement() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchGates} className="gap-1.5 h-9">
-            <RefreshCw className="w-3.5 h-3.5" />
-            {language === 'ar' ? 'تحديث' : 'Refresh'}
-          </Button>
           {canWrite("manage_gates") && (
             <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 h-9">
               <Plus className="w-4 h-4" />

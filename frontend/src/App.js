@@ -269,8 +269,8 @@ function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AuthProvider>
-          <WebSocketProvider>
+        <WebSocketProvider>
+          <AuthProvider>
             <SidebarProvider>
               <HeaderProvider>
                 <BrowserRouter>
@@ -280,8 +280,8 @@ function App() {
                 <Toaster position="top-left" />
               </HeaderProvider>
             </SidebarProvider>
-          </WebSocketProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </WebSocketProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

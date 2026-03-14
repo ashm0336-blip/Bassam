@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { useRealtimeRefresh } from './WebSocketContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -152,13 +153,16 @@ export const AuthProvider = ({ children }) => {
   const canRead = (permission) => hasPermission(permission, 'read');
   const canWrite = (permission) => hasPermission(permission, 'write');
 
-  const refreshPermissions = async () => {
+  const refreshPermissions = useCallback(async () => {
     if (!token) return;
     try {
       const res = await axios.get(`${API}/auth/my-permissions`);
       setUser(prev => prev ? { ...prev, permissions: res.data.permissions || [] } : prev);
     } catch {}
-  };
+  }, [token]);
+
+  // Auto-refresh permissions when admin changes them
+  useRealtimeRefresh(["permissions"], refreshPermissions);
 
   const logout = () => {
     localStorage.removeItem('token');
