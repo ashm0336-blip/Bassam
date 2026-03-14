@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Save, Upload, Layers, Edit2, Image as ImageIcon,
   ZoomIn, ZoomOut, Maximize2, Move, DoorOpen, DoorClosed, Wrench,
   ArrowUpRight, ArrowDownRight, ArrowLeftRight, Users, Crosshair,
-  Check
+  Check, RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

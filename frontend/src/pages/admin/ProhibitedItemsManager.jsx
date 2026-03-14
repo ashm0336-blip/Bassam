@@ -126,8 +126,10 @@ export default function ProhibitedItemsManager() {
       const token = localStorage.getItem("token");
       
       if (selectedItem) {
-        // Update existing (not implemented in backend yet, need PUT endpoint)
-        toast.info(language === 'ar' ? 'التعديل قيد التطوير' : 'Edit under development');
+        await axios.put(`${API}/admin/prohibited-items/${selectedItem.id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
       } else {
         await axios.post(`${API}/admin/prohibited-items`, formData, {
           headers: { Authorization: `Bearer ${token}` }

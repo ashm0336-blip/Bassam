@@ -620,6 +620,19 @@ async def delete_prohibited_item(item_id: str, admin: dict = Depends(require_adm
     return {"message": "تم حذف العنصر بنجاح"}
 
 
+@router.put("/admin/prohibited-items/{item_id}")
+async def update_prohibited_item(item_id: str, item: ProhibitedItemCreate, admin: dict = Depends(require_admin)):
+    existing = await db.prohibited_items.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="العنصر غير موجود")
+    update_data = {k: v for k, v in item.model_dump().items() if v is not None}
+    if update_data:
+        await db.prohibited_items.update_one({"id": item_id}, {"$set": update_data})
+    await log_activity("تعديل عنصر ممنوع", admin, item_id, item.name_ar)
+    updated = await db.prohibited_items.find_one({"id": item_id}, {"_id": 0})
+    return updated
+
+
 # ============= Department Settings =============
 @router.get("/{department}/settings/{setting_type}")
 async def get_department_settings(department: str, setting_type: str, user: dict = Depends(get_current_user)):
