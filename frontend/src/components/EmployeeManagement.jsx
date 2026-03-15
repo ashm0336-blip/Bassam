@@ -546,7 +546,8 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     const permanent = statsEmployees.filter(e=>e.employment_type==='permanent'||!e.employment_type).length;
     const seasonal  = statsEmployees.filter(e=>e.employment_type==='seasonal').length;
     const temporary = statsEmployees.filter(e=>e.employment_type==='temporary').length;
-    const fieldOps  = statsEmployees.filter(e=>(e.user_role||'field_staff')!=='admin_staff').length;
+    // ميدانيون = فقط الموظفين المفعّلين بدور field_staff (وليس كل من لم يُحدد دوره)
+    const fieldOps  = statsEmployees.filter(e=>e.account_status==='active' && e.user_role==='field_staff').length;
     const tasked    = statsEmployees.filter(e=>e.is_tasked).length;
 
     // توزيع الورديات
@@ -564,16 +565,23 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
       return { ...day, available:avail, resting, total, pct: total>0?Math.round(avail/total*100):0 };
     });
 
-    // توزيع حسب الفئة (user_role)
+    // توزيع حسب الدور — فقط الموظفين المفعّلين (لا نحسب الحسابات المعلقة أو غير الموجودة)
     const ROLE_MAP = {
       field_staff:'موظف ميداني', shift_supervisor:'مشرف وردية',
       department_manager:'مدير إدارة', admin_staff:'موظف إداري',
       general_manager:'مدير عام',
     };
-    const roleStats = Object.entries(
-      statsEmployees.reduce((acc,e)=>{ const r=ROLE_MAP[e.user_role||'field_staff']||e.user_role||'—'; acc[r]=(acc[r]||0)+1; return acc; }, {})
-    ).map(([label,count])=>({ label, count, pct: total>0?Math.round(count/total*100):0 }))
-     .sort((a,b)=>b.count-a.count);
+    const activeEmployees = statsEmployees.filter(e => e.account_status === 'active');
+    const pendingCount = statsEmployees.filter(e => e.account_status === 'pending' || e.account_status === 'no_account' || !e.account_status).length;
+    const roleEntries = activeEmployees.reduce((acc, e) => {
+      const r = ROLE_MAP[e.user_role] || e.user_role || '—';
+      acc[r] = (acc[r] || 0) + 1;
+      return acc;
+    }, {});
+    if (pendingCount > 0) roleEntries['غير مفعّل'] = pendingCount;
+    const roleStats = Object.entries(roleEntries)
+      .map(([label, count]) => ({ label, count, pct: total > 0 ? Math.round(count / total * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
 
     // نسبة اكتمال الجدول (لكل موظف: له وردية + له يوم راحة واحد على الأقل)
     const completionScore = schedule?.assignments?.length > 0
@@ -676,9 +684,9 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
             color:"#7c3aed", grad:"from-violet-50 to-purple-50/60", border:"#c4b5fd", Icon:Zap,
           },
           {
-            label:"ميدانيون",
-            value: statistics.fieldOps,
-            desc:"موظفو الخدمة الميدانية",
+            label:"حسابات نشطة",
+            value: statsEmployees.filter(e=>e.account_status==='active').length,
+            desc:"حسابات مفعّلة",
             color:"#0f766e", grad:"from-teal-50 to-emerald-50/60", border:"#99f6e4", Icon:UserCheck,
           },
         ];
