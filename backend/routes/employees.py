@@ -302,7 +302,7 @@ async def reset_employee_pin(employee_id: str, user: dict = Depends(get_current_
     await log_activity("reset_pin", user, emp["name"],
         f"{user['name']} أعاد تعيين PIN لـ {emp['name']}"
     )
-    return {"message": f"تم إعادة تعيين PIN — كلمة المرور الجديدة: {default_pin}"}
+    return {"message": f"تم إعادة تعيين PIN بنجاح"}
 
 
 @router.delete("/employees/{employee_id}")

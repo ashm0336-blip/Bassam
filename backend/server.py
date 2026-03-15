@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from pathlib import Path
 import os
 import logging
@@ -17,6 +19,11 @@ from database import db, client
 
 # Create the main app
 app = FastAPI(title="Al-Haram OS API", description="منصة خدمات الحشود API")
+
+# Rate limiter
+from routes.auth import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -117,6 +124,15 @@ app.include_router(api_router)
 # ============= WebSocket Endpoint =============
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # Authenticate via token query param
+    token = websocket.query_params.get("token")
+    if token:
+        try:
+            import jwt as pyjwt
+            pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
+        except Exception:
+            await websocket.close(code=4001, reason="Unauthorized")
+            return
     await ws_manager.connect(websocket)
     try:
         while True:
@@ -128,10 +144,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=False,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=True,
+    allow_origins=[
+        os.environ.get("FRONTEND_URL", ""),
+        "https://xiixiix.com",
+        "https://www.xiixiix.com",
+        "https://prayer-track.preview.emergentagent.com",
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Real-time broadcast middleware — must be added AFTER CORS

@@ -11,7 +11,8 @@ export function WebSocketProvider({ children }) {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = window.location.host;
-      const ws = new WebSocket(`${protocol}//${host}/ws`);
+      const token = localStorage.getItem("token") || "";
+      const ws = new WebSocket(`${protocol}//${host}/ws?token=${token}`);
 
       ws.onopen = () => {
         console.log("[WS] Connected");

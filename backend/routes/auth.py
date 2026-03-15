@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
@@ -10,7 +10,10 @@ from models import (
     UserCreate, UserUpdate, UserLogin, UserResponse, TokenResponse,
     PinChangeRequest, AccountStatusUpdate,
 )
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 MAX_FAILED_ATTEMPTS = 5   # قفل بعد 5 محاولات
@@ -43,7 +46,8 @@ async def get_activity_logs(
     if action and action != "all":
         query["action"] = action
     if user_email:
-        query["user_email"] = {"$regex": user_email, "$options": "i"}
+        safe_email = re.escape(user_email)
+        query["user_email"] = {"$regex": safe_email, "$options": "i"}
     if date:
         start = datetime.fromisoformat(f"{date}T00:00:00")
         end   = datetime.fromisoformat(f"{date}T23:59:59")
@@ -74,12 +78,13 @@ async def setup_admin():
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(admin_user)
-    return {"message": "✅ تم إنشاء مستخدم الأدمن", "email": "admin@crowd.sa", "password": "admin123"}
+    return {"message": "✅ تم إنشاء مستخدم الأدمن"}
 
 
 # ─── Login (مرن: بريد إلكتروني أو رقم هوية) ──────────────────
 @router.post("/auth/login", response_model=TokenResponse)
-async def login(credentials: UserLogin):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin):
     identifier = credentials.identifier.strip()
 
     # ── البحث عن المستخدم ──
@@ -209,7 +214,7 @@ async def reset_pin(user_id: str, manager: dict = Depends(get_current_user)):
     await log_activity("reset_pin", manager, target["name"],
         f"أعاد {manager['name']} تعيين PIN للمستخدم {target['name']}"
     )
-    return {"message": f"تم إعادة تعيين PIN. كلمة المرور الجديدة: {default_pin}"}
+    return {"message": f"تم إعادة تعيين PIN بنجاح"}
 
 
 # ─── تغيير حالة الحساب (تفعيل/تجميد/إنهاء) ────────────────────

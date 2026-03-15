@@ -12,16 +12,23 @@ UPLOADS_DIR = ROOT_DIR / "uploads" / "maps"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
 @router.post("/admin/upload/map-image")
 async def upload_map_image(file: UploadFile = File(...), admin: dict = Depends(require_department_manager)):
     if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. الرجاء رفع ملف صورة")
-    file_ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    allowed_ext = {"png", "jpg", "jpeg", "webp", "svg"}
+    file_ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
+    if file_ext not in allowed_ext:
+        raise HTTPException(status_code=400, detail=f"امتداد غير مسموح. المسموح: {', '.join(allowed_ext)}")
     unique_filename = f"{uuid.uuid4()}.{file_ext}"
     file_path = UPLOADS_DIR / unique_filename
     try:
         async with aiofiles.open(file_path, 'wb') as out_file:
             content = await file.read()
+            if len(content) > MAX_FILE_SIZE:
+                raise HTTPException(status_code=400, detail="حجم الملف يتجاوز 10MB")
             await out_file.write(content)
         file_url = f"/api/uploads/maps/{unique_filename}"
         await log_activity("رفع صورة خريطة", admin, unique_filename, file.filename)
