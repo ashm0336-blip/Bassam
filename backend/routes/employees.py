@@ -243,9 +243,17 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
             raise HTTPException(status_code=400, detail="لا يوجد رقم هوية للموظف — أضفه أولاً")
         await db.employees.update_one({"id": employee_id}, {"$set": {"user_id": uid}})
 
+    # دائماً إعادة ضبط كلمة المرور للرقم الوظيفي عند التفعيل
+    default_pin = emp.get("employee_number") or "0000"
     await db.users.update_one(
         {"id": uid},
-        {"$set": {"account_status": "active", "is_active": True, "failed_attempts": 0}}
+        {"$set": {
+            "account_status": "active",
+            "is_active": True,
+            "failed_attempts": 0,
+            "password": hash_password(default_pin),
+            "must_change_pin": True,
+        }}
     )
     await log_activity("account_activated", user, emp["name"], f"تفعيل حساب: {emp['name']}")
     
