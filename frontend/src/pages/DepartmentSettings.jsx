@@ -215,7 +215,7 @@ export default function DepartmentSettings({ department }) {
       setEditMode(false);
       setSelectedItem(null);
       const maxOrder = settingType === 'shifts' ? shifts.length + 1 : 0;
-      setFormData({ value: "", label: "", description: "", color: "#3b82f6", start_time: "", end_time: "", order: maxOrder });
+      setFormData({ value: "", label: "", description: settingType === 'shifts' ? "primary" : "", color: "#3b82f6", start_time: "", end_time: "", order: maxOrder });
     }
     setDialogOpen(true);
   };
@@ -228,7 +228,12 @@ export default function DepartmentSettings({ department }) {
       // Auto-generate value from label if empty
       const submitData = { ...formData };
       if (!submitData.value && submitData.label) {
-        submitData.value = submitData.label.replace(/\s+/g, '_').toLowerCase();
+        // لورديات: إضافة فئة الوردية للقيمة لضمان عدم التكرار
+        if (activeTab === 'shifts' && submitData.description) {
+          submitData.value = `${submitData.label.replace(/\s+/g, '_')}_${submitData.description}`;
+        } else {
+          submitData.value = submitData.label.replace(/\s+/g, '_').toLowerCase();
+        }
       }
       const payload = { department, setting_type: activeTab, ...submitData };
       if (editMode) {

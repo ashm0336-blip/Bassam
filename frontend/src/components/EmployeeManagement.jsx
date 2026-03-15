@@ -733,7 +733,12 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
                   statistics.shiftStats.filter(s=>s.count>0).map((s,i) => (
                     <div key={i}>
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[10px] font-semibold" style={{ color: s.color||"#2563eb" }}>{s.label}</span>
+                        <span className="text-[10px] font-semibold" style={{ color: s.color||"#2563eb" }}>
+                          {s.label}
+                          <span className={`text-[8px] mr-1 px-1 py-0.5 rounded ${s.description === 'secondary' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                            {s.description === 'secondary' ? 'فرعية' : 'رئيسية'}
+                          </span>
+                        </span>
                         <span className="text-[10px] font-bold text-slate-600">{s.count} <span className="text-[9px] text-slate-400">({s.pct}%)</span></span>
                       </div>
                       <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -1099,12 +1104,16 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Select value={emp.shift||""} onValueChange={v=>handleQuickMove(emp.id,'shift',v)}>
-                          <SelectTrigger className="h-7 w-32 text-[11px]"><SelectValue placeholder="..."/></SelectTrigger>
+                          <SelectTrigger className="h-7 w-40 text-[11px]"><SelectValue placeholder="..."/></SelectTrigger>
                           <SelectContent>
                             {shifts.map(s=>(
                               <SelectItem key={s.id} value={s.value}>
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor:s.color }}/>{s.label}
+                                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor:s.color }}/>
+                                  <span>{s.label}</span>
+                                  <span className={`text-[9px] px-1 py-0.5 rounded ${s.description === 'secondary' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                                    {s.description === 'secondary' ? (isAr ? 'فرعية' : 'Sub') : (isAr ? 'رئيسية' : 'Main')}
+                                  </span>
                                 </div>
                               </SelectItem>
                             ))}
@@ -1112,7 +1121,7 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
                         </Select>
                       ) : emp.shift ? (
                         <Badge style={{ backgroundColor: shifts.find(s=>s.value===emp.shift)?.color||'#6b7280' }}
-                          className="text-white text-[10px]">{emp.shift}</Badge>
+                          className="text-white text-[10px]">{shifts.find(s=>s.value===emp.shift)?.label || emp.shift}</Badge>
                       ) : <span className="text-[10px] text-muted-foreground">-</span>}
                     </TableCell>
 
