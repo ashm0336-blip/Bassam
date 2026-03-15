@@ -248,7 +248,19 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
         {"$set": {"account_status": "active", "is_active": True, "failed_attempts": 0}}
     )
     await log_activity("account_activated", user, emp["name"], f"تفعيل حساب: {emp['name']}")
-    return {"message": f"تم تفعيل حساب {emp['name']} ✅", "user_id": uid}
+    
+    # Get login info for the admin
+    u = await db.users.find_one({"id": uid}, {"_id": 0, "national_id": 1, "must_change_pin": 1})
+    nat_id = u.get("national_id", "") if u else ""
+    default_pin = emp.get("employee_number") or "0000"
+    
+    return {
+        "message": f"تم تفعيل حساب {emp['name']} ✅",
+        "user_id": uid,
+        "login_info": f"رقم الهوية: {nat_id} — الرقم السري: {default_pin}",
+        "national_id": nat_id,
+        "default_pin": default_pin,
+    }
 
 
 @router.post("/employees/{employee_id}/freeze-account")
@@ -308,7 +320,7 @@ async def reset_employee_pin(employee_id: str, user: dict = Depends(get_current_
     await log_activity("reset_pin", user, emp["name"],
         f"{user['name']} أعاد تعيين PIN لـ {emp['name']}"
     )
-    return {"message": f"تم إعادة تعيين PIN بنجاح"}
+    return {"message": f"تم إعادة تعيين PIN بنجاح — الرقم السري الجديد: {default_pin}"}
 
 
 @router.delete("/employees/{employee_id}")

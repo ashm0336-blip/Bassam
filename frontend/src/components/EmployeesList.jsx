@@ -410,8 +410,13 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
     if (!actionConfirm) return;
     const { empId, action } = actionConfirm;
     try {
-      await axios.post(`${API}/employees/${empId}/${action}`, {}, headers());
-      toast.success("تم تنفيذ العملية بنجاح");
+      const res = await axios.post(`${API}/employees/${empId}/${action}`, {}, headers());
+      const msg = res.data?.message || "تم تنفيذ العملية بنجاح";
+      if (res.data?.login_info) {
+        toast.success(msg + "\n" + res.data.login_info, { duration: 10000 });
+      } else {
+        toast.success(msg, { duration: 5000 });
+      }
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشلت العملية"); }
     finally { setActionConfirm(null); }

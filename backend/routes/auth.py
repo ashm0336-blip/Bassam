@@ -215,7 +215,7 @@ async def reset_pin(user_id: str, manager: dict = Depends(get_current_user)):
     await log_activity("reset_pin", manager, target["name"],
         f"أعاد {manager['name']} تعيين PIN للمستخدم {target['name']}"
     )
-    return {"message": f"تم إعادة تعيين PIN بنجاح"}
+    return {"message": f"تم إعادة تعيين PIN بنجاح — الرقم السري الجديد: {default_pin}"}
 
 
 # ─── تغيير حالة الحساب (تفعيل/تجميد/إنهاء) ────────────────────
