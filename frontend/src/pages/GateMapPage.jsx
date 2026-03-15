@@ -23,9 +23,13 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
   open: { color: "#22c55e", label_ar: "مفتوح", label_en: "Open", icon: DoorOpen },
-  closed: { color: "#ef4444", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
-  crowded: { color: "#f97316", label_ar: "مزدحم", label_en: "Crowded", icon: DoorOpen },
-  maintenance: { color: "#6b7280", label_ar: "صيانة", label_en: "Maintenance", icon: Wrench },
+  closed: { color: "#6b7280", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
+};
+
+const INDICATOR_CONFIG = {
+  "خفيف": { color: "#22c55e", label_en: "Light" },
+  "متوسط": { color: "#f97316", label_en: "Moderate" },
+  "مزدحم": { color: "#ef4444", label_en: "Crowded" },
 };
 
 const DIRECTIONS_MAP = {
@@ -431,10 +435,19 @@ export default function GateMapPage() {
 
           {/* Legend */}
           <div className="flex items-center gap-2.5">
+            <span className="text-[10px] font-bold text-slate-500">{isAr ? "الحالة:" : "Status:"}</span>
             {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
               <span key={key} className="flex items-center gap-1 text-[10px] font-medium">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
                 {isAr ? cfg.label_ar : cfg.label_en}
+              </span>
+            ))}
+            <span className="text-slate-300 mx-0.5">|</span>
+            <span className="text-[10px] font-bold text-slate-500">{isAr ? "المؤشر:" : "Flow:"}</span>
+            {Object.entries(INDICATOR_CONFIG).map(([key, cfg]) => (
+              <span key={key} className="flex items-center gap-1 text-[10px] font-medium">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+                {isAr ? key : cfg.label_en}
               </span>
             ))}
           </div>
