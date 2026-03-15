@@ -28,7 +28,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
   open: { color: "#22c55e", label_ar: "مفتوح", label_en: "Open", icon: DoorOpen },
-  closed: { color: "#ef4444", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
+  closed: { color: "#6b7280", label_ar: "مغلق", label_en: "Closed", icon: DoorClosed },
   maintenance: { color: "#6b7280", label_ar: "صيانة", label_en: "Maintenance", icon: Wrench },
 };
 
@@ -887,10 +887,11 @@ export default function DailyGateSessionsPage() {
 
                         <div className="h-px bg-gradient-to-l from-transparent via-slate-200 to-transparent" />
 
-                        {/* Distribution Analytics */}
+                        {/* Distribution Analytics — open gates only */}
                         {activeGates.length > 0 && (() => {
-                          const total = activeGates.length;
-                          const countField = (field, val) => activeGates.filter(g => Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val).length;
+                          const openOnly = activeGates.filter(g => g.status === "open");
+                          const total = openOnly.length;
+                          const countField = (field, val) => openOnly.filter(g => Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val).length;
                           const INDICATOR_LABELS = { light: isAr?"خفيف":"Light", medium: isAr?"متوسط":"Medium", crowded: isAr?"مزدحم":"Crowded" };
                           const DIR_LABELS = { entry: isAr?"دخول":"Entry", exit: isAr?"خروج":"Exit", both: isAr?"دخول وخروج":"Both" };
                           const DIR_COLORS = { entry: "#2563eb", exit: "#dc2626", both: "#7c3aed" };
@@ -907,9 +908,9 @@ export default function DailyGateSessionsPage() {
                             </div>
                           ) : null;
 
-                          // Get unique plazas
+                          // Get unique plazas — open gates only
                           const plazas = {};
-                          activeGates.forEach(g => { if (g.plaza) plazas[g.plaza] = (plazas[g.plaza] || 0) + 1; });
+                          openOnly.forEach(g => { if (g.plaza) plazas[g.plaza] = (plazas[g.plaza] || 0) + 1; });
 
                           return (
                             <div className="space-y-2.5">
@@ -919,7 +920,7 @@ export default function DailyGateSessionsPage() {
                                   <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{isAr?"توزيع المناطق":"Plazas"}</p>
                                   <div className="flex flex-wrap gap-1">
                                     {Object.entries(plazas).map(([name, cnt]) => (
-                                      <ChipRow key={name} label={name} count={cnt} color={activeGates.find(g => g.plaza === name)?.plaza_color || "#0284c7"} />
+                                      <ChipRow key={name} label={name} count={cnt} color={openOnly.find(g => g.plaza === name)?.plaza_color || "#0284c7"} />
                                     ))}
                                   </div>
                                 </div>
