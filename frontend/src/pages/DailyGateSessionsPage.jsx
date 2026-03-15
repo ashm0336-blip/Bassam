@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { PLAZA_COLORS } from "@/constants/gateData";
 import { GatesTab } from "./DailyGateSessions/GatesTab";
 import { EmployeesTab } from "./DailyGateSessions/EmployeesTab";
 import { ArchiveSidebar } from "@/components/shared/ArchiveSidebar";
@@ -792,7 +793,7 @@ export default function DailyGateSessionsPage() {
                                   {hasChange && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{backgroundColor:cl.bg,color:cl.color}}>{isAr?cl.ar:cl.en}</span>}
                                   <div className="border-t border-dashed border-slate-200" />
                                   <div className="space-y-1 text-[11px]">
-                                    {hoveredGate.plaza && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المنطقة":"Plaza"}</span><span className="font-medium" style={{color: hoveredGate.plaza_color || '#333'}}>{hoveredGate.plaza}</span></div>}
+                                    {hoveredGate.plaza && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المنطقة":"Plaza"}</span><span className="font-medium" style={{color: PLAZA_COLORS[hoveredGate.plaza] || hoveredGate.plaza_color || '#333'}}>{hoveredGate.plaza}</span></div>}
                                     {gateType && <div className="flex justify-between"><span className="text-slate-500">{isAr?"النوع":"Type"}</span><span className="font-medium">{gateType}</span></div>}
                                     {gateDir && <div className="flex justify-between"><span className="text-slate-500">{isAr?"المسار":"Direction"}</span><span>{gateDir}</span></div>}
                                     {hoveredGate.category && hoveredGate.category.length > 0 && <div className="flex justify-between"><span className="text-slate-500">{isAr?"الفئة":"Category"}</span><span>{hoveredGate.category.join("، ")}</span></div>}
@@ -920,7 +921,7 @@ export default function DailyGateSessionsPage() {
                                   <p className="text-[10px] font-bold text-slate-500 mb-1.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{isAr?"توزيع المناطق":"Plazas"}</p>
                                   <div className="flex flex-wrap gap-1">
                                     {Object.entries(plazas).map(([name, cnt]) => (
-                                      <ChipRow key={name} label={name} count={cnt} color={openOnly.find(g => g.plaza === name)?.plaza_color || "#0284c7"} />
+                                      <ChipRow key={name} label={name} count={cnt} color={PLAZA_COLORS[name] || openOnly.find(g => g.plaza === name)?.plaza_color || "#0284c7"} />
                                     ))}
                                   </div>
                                 </div>
