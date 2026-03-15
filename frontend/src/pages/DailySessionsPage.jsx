@@ -5,6 +5,10 @@ import {
   CalendarRange, Users, BarChart3, PanelLeftClose, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -93,6 +97,8 @@ export default function DailySessionsPage() {
   const [densityPanelCollapsed, setDensityPanelCollapsed] = useState(false);
   const [employeesPanelCollapsed, setEmployeesPanelCollapsed] = useState(false);
   const [bypassConfirm, setBypassConfirm] = useState(null); // prayer key awaiting bypass confirmation
+  const [deletePrayerConfirm, setDeletePrayerConfirm] = useState(null); // prayer key awaiting delete confirmation
+  const [deleteZoneConfirm, setDeleteZoneConfirm] = useState(null); // zone id awaiting delete confirmation
 
   // New session form state
   const [newSessionDate, setNewSessionDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -362,10 +368,15 @@ export default function DailySessionsPage() {
   const handleDeletePrayerSession = useCallback(async (prayerKey) => {
     const ps = prayerSessions[prayerKey];
     if (!ps) return;
+    setDeletePrayerConfirm(prayerKey);
+  }, [prayerSessions]);
+
+  const confirmDeletePrayerSession = useCallback(async () => {
+    const prayerKey = deletePrayerConfirm;
+    if (!prayerKey) return;
+    const ps = prayerSessions[prayerKey];
+    if (!ps) { setDeletePrayerConfirm(null); return; }
     const pt = PRAYER_TIMES.find(p => p.key === prayerKey);
-    if (!window.confirm(isAr
-      ? `هل تريد حذف جولة ${pt?.label_ar}؟ سيُمكن إعادة البدء بها من جديد`
-      : `Delete ${pt?.label_en} session? You can restart it.`)) return;
     try {
       await axios.delete(`${API}/admin/map-sessions/${ps.id}`, getAuthHeaders());
       setPrayerSessions(prev => { const n = { ...prev }; delete n[prayerKey]; return n; });
@@ -377,7 +388,8 @@ export default function DailySessionsPage() {
     } catch (e) {
       toast.error(e.response?.data?.detail || (isAr ? "تعذر الحذف" : "Delete failed"));
     }
-  }, [prayerSessions, activeSession, activeDailySession, isAr]);
+    setDeletePrayerConfirm(null);
+  }, [deletePrayerConfirm, prayerSessions, activeSession, activeDailySession, isAr]);
 
   useEffect(() => { fetchFloors(); }, [fetchFloors]);
   useEffect(() => { axios.get(`${API}/zone-categories`).then(res => { if (res.data?.length > 0) setZoneTypes(res.data); }).catch(() => {}); }, []);
@@ -438,7 +450,10 @@ export default function DailySessionsPage() {
     setSaving(true);
     try {
       const res = await axios.post(`${API}/admin/map-sessions`, { date: newSessionDate, floor_id: selectedFloor.id, clone_from: resolveCloneFrom() }, getAuthHeaders());
-      setActiveSession(res.data); await fetchSessions(); setShowNewSessionDialog(false);
+      setActiveDailySession(res.data);
+      setActiveSession(res.data);
+      setPrayerSessions({});
+      await fetchSessions(); setShowNewSessionDialog(false);
       toast.success(isAr ? "تم بدء جولة جديدة" : "New tour started");
     } catch (e) { toast.error(e.response?.data?.detail || (isAr ? "تعذر إنشاء الجلسة" : "Error")); }
     finally { setSaving(false); }
@@ -750,9 +765,7 @@ export default function DailySessionsPage() {
       // Delete / Backspace = حذف المنطقة المحددة مع التسجيل في السجل
       if ((e.key === "Delete" || e.key === "Backspace") && selectedZoneId && mapMode === "edit") {
         e.preventDefault();
-        if (window.confirm(isAr ? "حذف المنطقة؟ سيُسجَّل في سجل التغييرات." : "Delete zone? Will be logged.")) {
-          handleDeleteZone(selectedZoneId);
-        }
+        setDeleteZoneConfirm(selectedZoneId);
         return;
       }
       // Escape = إلغاء / رجوع
@@ -1466,6 +1479,7 @@ export default function DailySessionsPage() {
                     handleSmoothZone={handleSmoothZone} handleCopyZone={handleCopyZone}
                     handleToggleRemove={handleToggleRemove} handleDeleteZone={handleDeleteZone} handleUpdateZoneStyle={handleUpdateZoneStyle}
                     handleDeletePoint={handleDeletePoint}
+                    onDeleteZoneConfirm={(zoneId) => setDeleteZoneConfirm(zoneId)}
                     addDrawingPoint={addDrawingPoint}
                     onEditStart={onEditStart} setMapMode={setMapMode}
                     activePrayer={activePrayer} densityEdits={densityEdits}
@@ -1607,6 +1621,44 @@ export default function DailySessionsPage() {
       {contextMenu && (
         <div className="fixed inset-0 z-[9998]" onClick={() => setContextMenu(null)}/>
       )}
+
+      {/* تأكيد حذف جولة صلاة */}
+      <AlertDialog open={!!deletePrayerConfirm} onOpenChange={(open) => { if (!open) setDeletePrayerConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAr
+                ? `هل تريد حذف جولة ${PRAYER_TIMES.find(p => p.key === deletePrayerConfirm)?.label_ar || ""}؟ سيُمكن إعادة البدء بها من جديد`
+                : `Delete ${PRAYER_TIMES.find(p => p.key === deletePrayerConfirm)?.label_en || ""} session? You can restart it.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{isAr ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeletePrayerSession} className="bg-red-600 hover:bg-red-700 text-white">
+              {isAr ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* تأكيد حذف منطقة */}
+      <AlertDialog open={!!deleteZoneConfirm} onOpenChange={(open) => { if (!open) setDeleteZoneConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAr ? "حذف المنطقة؟ سيُسجَّل في سجل التغييرات." : "Delete zone? Will be logged."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{isAr ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { handleDeleteZone(deleteZoneConfirm); setDeleteZoneConfirm(null); }} className="bg-red-600 hover:bg-red-700 text-white">
+              {isAr ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -122,7 +122,10 @@ async def get_tasks(department: Optional[str] = None, status: Optional[str] = No
 
 # ── GET: إحصائيات المهام ─────────────────────────────────────────
 @router.get("/tasks/stats")
-async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends(get_current_user)):
+async def get_tasks_stats(department: Optional[str] = None,
+                          work_date: Optional[str] = None,
+                          month: Optional[str] = None,
+                          user: dict = Depends(get_current_user)):
     role = user.get("role", "")
     query = {}
     if role in MANAGER_ROLES:
@@ -133,6 +136,12 @@ async def get_tasks_stats(department: Optional[str] = None, user: dict = Depends
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
         if emp:
             query["assignee_ids"] = {"$in": [emp["id"]]}
+
+    # فلتر التاريخ
+    if work_date:
+        query["work_date"] = work_date
+    elif month:
+        query["work_date"] = {"$regex": f"^{month}"}
 
     tasks = await db.tasks.find(query, {"_id": 0}).to_list(1000)
 

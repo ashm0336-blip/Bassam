@@ -149,7 +149,7 @@ app.add_middleware(
         os.environ.get("FRONTEND_URL", ""),
         "https://xiixiix.com",
         "https://www.xiixiix.com",
-        "https://prayer-track.preview.emergentagent.com",
+        "https://realtime-crowd-app.preview.emergentagent.com",
     ],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Authorization", "Content-Type"],

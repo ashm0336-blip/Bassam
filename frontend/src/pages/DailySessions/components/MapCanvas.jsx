@@ -91,6 +91,7 @@ export function MapCanvas({
   ZONE_TYPES, wheelRef, onMapMouseUp,
   handleSmoothZone, handleCopyZone, handleToggleRemove, handleDeleteZone, handleUpdateZoneStyle, handleDeletePoint,
   addDrawingPoint, onEditStart, setMapMode,
+  onDeleteZoneConfirm,
   activePrayer, densityEdits, handleDensityChange, handleSaveDensityBatch, savingDensity,
   readOnly = false,
   scaleInfo = null,
@@ -645,8 +646,11 @@ export function MapCanvas({
                 setSelectedZoneId(null);
               }}
               onRemove={() => {
-                // حذف نهائي من الخريطة
-                if (window.confirm(isAr ? `⚠️ حذف نهائي للمنطقة "${selectedZoneData?.name_ar || ''}" من الخريطة؟\nلا يمكن التراجع.` : "Delete permanently?")) {
+                // حذف نهائي من الخريطة — يستخدم AlertDialog من المكون الأب
+                if (onDeleteZoneConfirm) {
+                  onDeleteZoneConfirm(selectedZoneId);
+                  setSelectedZoneId(null);
+                } else {
                   handleDeleteZone ? handleDeleteZone(selectedZoneId) : handleToggleRemove(selectedZoneId, false);
                   setSelectedZoneId(null);
                 }

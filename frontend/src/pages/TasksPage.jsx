@@ -294,7 +294,7 @@ export default function TasksPage({ department }) {
     try {
       const [tRes, sRes] = await Promise.all([
         axios.get(`${API}/tasks?department=${dept}&work_date=${date}`, { headers:{ Authorization:`Bearer ${token()}` } }),
-        axios.get(`${API}/tasks/stats?department=${dept}`, { headers:{ Authorization:`Bearer ${token()}` } }),
+        axios.get(`${API}/tasks/stats?department=${dept}&work_date=${date}`, { headers:{ Authorization:`Bearer ${token()}` } }),
       ]);
       setTasks(tRes.data);
       setStats(sRes.data);

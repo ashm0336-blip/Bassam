@@ -28,6 +28,7 @@ CHANNEL_MAP = [
     (re.compile(r"/api/tasks"), "tasks"),
     (re.compile(r"/api/alerts"), "alerts"),
     (re.compile(r"/api/admin/roles"), "permissions"),
+    (re.compile(r"/api/admin/role-permissions"), "permissions"),
     (re.compile(r"/api/admin/permissions"), "permissions"),
     (re.compile(r"/api/admin/sidebar"), "settings"),
     (re.compile(r"/api/admin/dropdown"), "settings"),

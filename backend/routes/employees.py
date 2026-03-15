@@ -217,10 +217,20 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
         update_data["rest_days"] = dump["rest_days"]
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.employees.update_one({"id": employee_id}, {"$set": update_data})
-    # Sync allowed_departments to user account if provided
-    if "allowed_departments" in dump and dump["allowed_departments"] is not None and existing.get("user_id"):
-        await db.users.update_one({"id": existing["user_id"]}, {"$set": {"allowed_departments": dump["allowed_departments"]}})
-    await log_activity("employee_updated", user, existing["name"], f"تم تحديث: {existing['name']}")
+
+    # ──── مزامنة البيانات مع حساب المستخدم ────
+    if existing.get("user_id"):
+        user_sync = {}
+        if "name" in update_data:
+            user_sync["name"] = update_data["name"]
+        if "department" in update_data:
+            user_sync["department"] = update_data["department"]
+        if "allowed_departments" in dump and dump["allowed_departments"] is not None:
+            user_sync["allowed_departments"] = dump["allowed_departments"]
+        if user_sync:
+            await db.users.update_one({"id": existing["user_id"]}, {"$set": user_sync})
+
+    await log_activity("employee_updated", user, update_data.get("name", existing["name"]), f"تم تحديث: {existing['name']}")
     return {"message": "تم تحديث الموظف بنجاح"}
 
 
@@ -340,9 +350,39 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
         raise HTTPException(status_code=403, detail="يمكنك حذف موظفي قسمك فقط")
     if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+
+    # ──── حذف شامل: تنظيف كل البيانات المرتبطة بالموظف ────
+    # 1) حذف حساب المستخدم نهائياً
+    if existing.get("user_id"):
+        await db.users.delete_one({"id": existing["user_id"]})
+    elif existing.get("national_id"):
+        await db.users.delete_one({"national_id": existing["national_id"]})
+
+    # 2) حذف المهام المُسندة لهذا الموظف فقط، وإزالته من المهام المشتركة
+    # مهام مُسندة له وحده
+    await db.tasks.delete_many({"assignee_ids": [employee_id]})
+    # إزالته من مهام مشتركة مع موظفين آخرين
+    await db.tasks.update_many(
+        {"assignee_ids": employee_id},
+        {"$pull": {"assignee_ids": employee_id}}
+    )
+
+    # 3) إزالته من الجداول الشهرية
+    await db.monthly_schedules.update_many(
+        {"assignments.employee_id": employee_id},
+        {"$pull": {"assignments": {"employee_id": employee_id}}}
+    )
+
+    # 4) حذف الإشعارات المرتبطة
+    if existing.get("user_id"):
+        await db.alerts.delete_many({"target_user_id": existing["user_id"]})
+
+    # 5) حذف سجل الموظف نفسه
     await db.employees.delete_one({"id": employee_id})
-    await log_activity("employee_deleted", user, existing["name"], f"تم حذف الموظف: {existing['name']} من {existing['department']}")
-    return {"message": "تم حذف الموظف بنجاح"}
+
+    await log_activity("employee_deleted", user, existing["name"],
+        f"تم حذف الموظف نهائياً: {existing['name']} من {existing['department']} (مع جميع البيانات المرتبطة)")
+    return {"message": "تم حذف الموظف وجميع بياناته المرتبطة بنجاح"}
 
 
 @router.get("/employees/{employee_id}/profile")
