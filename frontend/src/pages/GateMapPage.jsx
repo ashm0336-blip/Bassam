@@ -406,44 +406,47 @@ export default function GateMapPage() {
               <p className="text-sm text-muted-foreground mt-0.5">{isAr ? "ارفع الخريطة وحدد مواقع الأبواب" : "Upload map and position gates"}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {canEditMaps && <Button onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} className="bg-blue-600 hover:bg-blue-700" data-testid="add-gate-floor-btn">
-              <Plus className="w-4 h-4 ml-2" />{isAr ? "إضافة طابق" : "Add Floor"}
-            </Button>}
-          </div>
         </div>
       </div>
 
-      {/* Floor tabs + Sync */}
+      {/* Floor tabs + toolbar — unified bar */}
       {floors.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap bg-white border rounded-xl px-3 py-2">
           {floors.sort((a, b) => (a.order || 0) - (b.order || 0)).map(floor => (
             <div
               key={floor.id}
               onClick={() => { setSelectedFloor(floor); setZoom(1); setPanOffset({ x: 0, y: 0 }); zoomRef.current = 1; setImgRatio(null); }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all cursor-pointer ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-200" : "hover:border-slate-300 hover:bg-slate-50"}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer text-sm ${selectedFloor?.id === floor.id ? "border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-sm" : "hover:border-slate-300 hover:bg-slate-50 text-slate-600"}`}
               data-testid={`floor-tab-${floor.id}`}
             >
-              <Layers className={`w-4 h-4 ${selectedFloor?.id === floor.id ? "text-blue-600" : "text-slate-400"}`} />
-              <span className={`text-sm font-medium ${selectedFloor?.id === floor.id ? "text-blue-700" : ""}`}>{isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}</span>
+              <Layers className={`w-3.5 h-3.5 ${selectedFloor?.id === floor.id ? "text-blue-600" : "text-slate-400"}`} />
+              {isAr ? floor.name_ar : (floor.name_en || floor.name_ar)}
               {canEditMaps && <span role="button" tabIndex={0} className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition-colors" onClick={(e) => { e.stopPropagation(); setEditingFloor(floor); setFloorForm({ name_ar: floor.name_ar, name_en: floor.name_en || "", image_url: normalizeImageUrl(floor.image_url) || "", order: floor.order || 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }}>
                 <Edit2 className="w-3 h-3" />
               </span>}
             </div>
           ))}
-          <div className="flex-1" />
+
+          <div className="h-6 w-px bg-slate-200 mx-1" />
+
           {selectedFloor && canEditMaps && (
             <>
-              <Button variant="outline" onClick={handleSyncGates} disabled={syncing} data-testid="sync-gates-btn">
-                <RefreshCw className={`w-4 h-4 ml-1.5 ${syncing ? "animate-spin" : ""}`} />
-                {isAr ? "مزامنة الأبواب" : "Sync Gates"}
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleSyncGates} disabled={syncing} data-testid="sync-gates-btn">
+                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                {isAr ? "مزامنة" : "Sync"}
               </Button>
-              <Badge variant="secondary" className="text-xs px-2.5 py-1.5">
+              <Badge variant="secondary" className="text-[10px] px-2 py-1">
                 <Crosshair className="w-3 h-3 ml-1" />
-                {markers.length} {isAr ? "نقطة" : "markers"}
+                {markers.length} {isAr ? "نقطة" : "pts"}
               </Badge>
             </>
           )}
+
+          <div className="flex-1" />
+
+          {canEditMaps && <Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700 gap-1.5" onClick={() => { setEditingFloor(null); setFloorForm({ name_ar: "", name_en: "", image_url: "", order: 0 }); setLocalImagePreview(null); setShowFloorDialog(true); }} data-testid="add-gate-floor-btn">
+            <Plus className="w-3.5 h-3.5" />{isAr ? "طابق جديد" : "Add Floor"}
+          </Button>}
         </div>
       )}
 
@@ -466,26 +469,7 @@ export default function GateMapPage() {
 
       {/* Interactive Map */}
       {selectedFloor && (
-        <div className="space-y-3">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between bg-white border rounded-xl px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              {/* Smart cursor hint */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-700 font-medium">
-                <Crosshair className="w-3 h-3" />
-                {isAr ? "اسحب النقطة لتغيير موقعها • اسحب الخلفية للتنقل" : "Drag marker to reposition • Drag background to pan"}
-              </div>
-            </div>
-
-            {/* Zoom controls */}
-            <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-slate-50">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-3.5 h-3.5" /></Button>
-              <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom * 100)}%</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-3.5 h-3.5" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetView} data-testid="zoom-reset"><Maximize2 className="w-3.5 h-3.5" /></Button>
-            </div>
-          </div>
-
+        <div className="space-y-0">
           {/* Map Canvas */}
           {selectedFloor.image_url ? (
             <Card className="overflow-hidden">
@@ -504,6 +488,13 @@ export default function GateMapPage() {
                   onTouchCancel={handleTouchEnd}
                   data-testid="gate-map-canvas"
                 >
+                  {/* Zoom controls inside map */}
+                  <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 border rounded-lg p-0.5 bg-white/90 backdrop-blur-sm shadow-sm">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-3.5 h-3.5" /></Button>
+                    <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom * 100)}%</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetView} data-testid="zoom-reset"><Maximize2 className="w-3.5 h-3.5" /></Button>
+                  </div>
                   <div style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: "0 0", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {(() => {
                       const ce = mapContainerRef.current;
