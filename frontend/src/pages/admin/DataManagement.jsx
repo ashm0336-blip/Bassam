@@ -389,7 +389,7 @@ export default function DataManagement() {
                         <div className="flex items-center gap-2 justify-center">
                           <div 
                             className="w-4 h-4 rounded-full" 
-                            style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] }}
+                            style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}
                           />
                           <span className="text-sm">{gate.plaza}</span>
                         </div>

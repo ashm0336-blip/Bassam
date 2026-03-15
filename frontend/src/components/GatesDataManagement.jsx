@@ -543,7 +543,7 @@ export default function GatesDataManagement() {
                     </div>
                     <div>
                       <p className="font-bold text-sm">{gate.name}</p>
-                      <p className="text-[10px] text-muted-foreground">#{gate.number} · {gate.plaza}</p>
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">#{gate.number} · <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>{gate.plaza}</p>
                     </div>
                   </div>
                   {canWrite("manage_gates") && (
@@ -699,7 +699,7 @@ export default function GatesDataManagement() {
                       {/* المنطقة */}
                       <TableCell className="text-center">
                         <div className="flex items-center gap-1.5 justify-center">
-                          <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: gate.plaza_color || PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>
+                          <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>
                           <span className="text-[11px] font-medium">{gate.plaza}</span>
                         </div>
                       </TableCell>
