@@ -14,14 +14,14 @@ router = APIRouter()
 # ─── All permissions with Arabic labels ────────────────────────
 ALL_PERMISSIONS = {
     # Pages & Navigation
-    "page_dashboard":      {"ar": "لوحة التحكم (غرفة العمليات)",       "group": "pages",     "danger": False},
-    "page_overview":       {"ar": "نظرة عامة على الإدارة",             "group": "pages",     "danger": False},
+    "page_dashboard":      {"ar": "لوحة التحكم (غرفة العمليات)",       "group": "pages",     "danger": False, "read_only": True},
+    "page_overview":       {"ar": "نظرة عامة على الإدارة",             "group": "pages",     "danger": False, "read_only": True},
     "page_employees":      {"ar": "صفحة الموظفين",                   "group": "pages",     "danger": False},
     "page_daily_log":      {"ar": "السجل اليومي (الجولات)",           "group": "pages",     "danger": False},
     "page_transactions":   {"ar": "المهام اليومية",                   "group": "pages",     "danger": False},
     "page_settings":       {"ar": "إعدادات القسم",                   "group": "pages",     "danger": False},
     "page_alerts":         {"ar": "التنبيهات والبلاغات",              "group": "pages",     "danger": False},
-    "page_reports":        {"ar": "التقارير",                         "group": "pages",     "danger": False},
+    "page_reports":        {"ar": "التقارير",                         "group": "pages",     "danger": False, "read_only": True},
     "page_field":          {"ar": "الواجهة الميدانية",                 "group": "pages",     "danger": False},
 
     # Employee Management
@@ -234,6 +234,9 @@ async def update_role_permissions(role: str, data: dict, admin: dict = Depends(r
             raise HTTPException(status_code=400, detail=f"صلاحية غير صحيحة: {perm}")
         if level not in valid_levels:
             raise HTTPException(status_code=400, detail=f"مستوى غير صحيح: {level} — المسموح: read, write")
+        # Enforce read_only — downgrade write to read
+        if ALL_PERMISSIONS[perm].get("read_only") and level == "write":
+            permissions[perm] = "read"
 
     await db.role_permissions.update_one(
         {"role": role},

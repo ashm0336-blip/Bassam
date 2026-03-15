@@ -155,9 +155,12 @@ export default function PermissionsManager() {
 
   const LevelButton = ({ permKey, danger }) => {
     const currentLevel = getPermLevel(permKey);
+    const permInfo = allPerms[permKey] || {};
+    const isReadOnly = permInfo.read_only;
+    const levels = isReadOnly ? ["none", "read"] : ["none", "read", "write"];
     return (
       <div className="flex gap-1 shrink-0">
-        {["none", "read", "write"].map(level => {
+        {levels.map(level => {
           const cfg = LEVEL_CONFIG[level];
           const Icon = cfg.icon;
           const isActive = currentLevel === level;
