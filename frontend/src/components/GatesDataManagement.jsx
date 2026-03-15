@@ -157,7 +157,8 @@ export default function GatesDataManagement() {
       const payload = {
         ...formData,
         number: parseInt(formData.number),
-        current_flow: parseInt(formData.current_flow),
+        current_flow: formData.status === 'مغلق' ? 0 : parseInt(formData.current_flow),
+        current_indicator: formData.status === 'مغلق' ? '' : formData.current_indicator,
         max_flow: parseInt(formData.max_flow),
         plaza_color: PLAZA_COLORS[formData.plaza]
       };
@@ -328,12 +329,12 @@ export default function GatesDataManagement() {
                 ))}
               </Section>
 
-              {/* المؤشر */}
+              {/* المؤشر — أبواب مفتوحة فقط */}
               <Section icon={Activity} title="مؤشر الازدحام" iconBg="#fff7ed" iconColor="#f97316">
                 {CURRENT_INDICATORS.map(ind => (
-                  <Chip key={ind.value} label={ind.label} cnt={count('current_indicator', ind.value)} color={ind.color}/>
+                  <Chip key={ind.value} label={ind.label} cnt={gates.filter(g => g.status === 'مفتوح' && g.current_indicator === ind.value).length} color={ind.color}/>
                 ))}
-                <Chip label="غير محدد" cnt={gates.filter(g=>!g.current_indicator).length} color="#94a3b8"/>
+                <Chip label="مغلقة" cnt={gates.filter(g => g.status === 'مغلق').length} color="#94a3b8"/>
               </Section>
             </div>
 
@@ -553,7 +554,7 @@ export default function GatesDataManagement() {
                   {(Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).map(c => (
                     <span key={c} className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">{c}</span>
                   ))}
-                  {gate.current_indicator && (
+                  {isOpen && gate.current_indicator && (
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: indicatorColor+'15', color: indicatorColor }}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: indicatorColor }}/>{gate.current_indicator}
                     </span>
@@ -716,12 +717,14 @@ export default function GatesDataManagement() {
                       </TableCell>
                       {/* المؤشر */}
                       <TableCell className="text-center">
-                        {gate.current_indicator && (
+                        {isOpen && gate.current_indicator ? (
                           <div className="flex items-center gap-1 justify-center">
                             <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: indicatorColor }}/>
                             <span className="text-[10px] font-semibold" style={{ color: indicatorColor }}>{gate.current_indicator}</span>
                           </div>
-                        )}
+                        ) : !isOpen ? (
+                          <span className="text-[9px] text-slate-300">—</span>
+                        ) : null}
                       </TableCell>
                       {/* الموظفين */}
                       <TableCell className="text-center">
