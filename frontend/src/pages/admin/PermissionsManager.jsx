@@ -42,8 +42,16 @@ const PERM_TREE = [
     { key: "manage_accounts" },
     { key: "reset_pins" },
     { key: "change_roles", danger: true },
+    { key: "import_employees" },
+    { key: "export_employees" },
   ]},
-  { key: "page_daily_log", icon: Calendar, color: "#047857", label_ar: "السجل اليومي والجلسات", children: [
+  { key: "page_employees", icon: Calendar, color: "#0d9488", label_ar: "الجدول الشهري", skipPagePerm: true, children: [
+    { key: "create_schedule" },
+    { key: "approve_schedule" },
+    { key: "unlock_schedule" },
+    { key: "delete_schedule", danger: true },
+  ]},
+  { key: "page_daily_log", icon: Calendar, color: "#047857", label_ar: "الجولات اليومية (مصليات وأبواب)", children: [
     { key: "view_daily_sessions" },
     { key: "create_session" },
     { key: "approve_session" },

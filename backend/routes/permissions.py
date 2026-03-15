@@ -15,105 +15,127 @@ router = APIRouter()
 ALL_PERMISSIONS = {
     # Pages & Navigation
     "page_dashboard":      {"ar": "لوحة التحكم (غرفة العمليات)",       "group": "pages",     "danger": False},
-    "page_overview":       {"ar": "صفحة نظرة عامة",                  "group": "pages",     "danger": False},
+    "page_overview":       {"ar": "نظرة عامة على الإدارة",             "group": "pages",     "danger": False},
     "page_employees":      {"ar": "صفحة الموظفين",                   "group": "pages",     "danger": False},
-    "page_daily_log":      {"ar": "صفحة السجل اليومي",               "group": "pages",     "danger": False},
-    "page_transactions":   {"ar": "صفحة المهام اليومية",              "group": "pages",     "danger": False},
-    "page_settings":       {"ar": "صفحة إعدادات القسم",              "group": "pages",     "danger": False},
-    "page_alerts":         {"ar": "صفحة التنبيهات والبلاغات",          "group": "pages",     "danger": False},
-    "page_reports":        {"ar": "صفحة التقارير",                    "group": "pages",     "danger": False},
+    "page_daily_log":      {"ar": "السجل اليومي (الجولات)",           "group": "pages",     "danger": False},
+    "page_transactions":   {"ar": "المهام اليومية",                   "group": "pages",     "danger": False},
+    "page_settings":       {"ar": "إعدادات القسم",                   "group": "pages",     "danger": False},
+    "page_alerts":         {"ar": "التنبيهات والبلاغات",              "group": "pages",     "danger": False},
+    "page_reports":        {"ar": "التقارير",                         "group": "pages",     "danger": False},
     "page_field":          {"ar": "الواجهة الميدانية",                 "group": "pages",     "danger": False},
 
     # Employee Management
-    "add_employees":       {"ar": "إضافة موظفين",                   "group": "employees", "danger": False},
-    "edit_employees":      {"ar": "تعديل بيانات الموظفين",           "group": "employees", "danger": False},
-    "delete_employees":    {"ar": "حذف الموظفين",                    "group": "employees", "danger": True},
-    "manage_accounts":     {"ar": "إدارة حسابات الدخول",             "group": "employees", "danger": False},
+    "add_employees":       {"ar": "إضافة موظفين",                    "group": "employees", "danger": False},
+    "edit_employees":      {"ar": "تعديل بيانات الموظفين",            "group": "employees", "danger": False},
+    "delete_employees":    {"ar": "حذف الموظفين",                     "group": "employees", "danger": True},
+    "manage_accounts":     {"ar": "إدارة حسابات الدخول (تفعيل/تجميد/إنهاء)", "group": "employees", "danger": False},
     "reset_pins":          {"ar": "إعادة تعيين كلمات المرور",         "group": "employees", "danger": False},
-    "change_roles":        {"ar": "تغيير صلاحيات المستخدمين",        "group": "employees", "danger": True},
+    "change_roles":        {"ar": "تغيير أدوار المستخدمين",           "group": "employees", "danger": True},
+    "import_employees":    {"ar": "استيراد بيانات الموظفين",           "group": "employees", "danger": False},
+    "export_employees":    {"ar": "تصدير بيانات الموظفين",            "group": "employees", "danger": False},
 
-    # Daily Sessions
-    "view_daily_sessions": {"ar": "عرض السجلات اليومية",              "group": "sessions",  "danger": False},
-    "create_session":      {"ar": "إنشاء جلسة يومية",               "group": "sessions",  "danger": False},
-    "approve_session":     {"ar": "اعتماد الجلسة اليومية",           "group": "sessions",  "danger": False},
-    "delete_session":      {"ar": "حذف الجلسات اليومية",             "group": "sessions",  "danger": True},
+    # Monthly Schedule
+    "create_schedule":     {"ar": "إنشاء الجدول الشهري",              "group": "schedules", "danger": False},
+    "approve_schedule":    {"ar": "اعتماد الجدول الشهري",             "group": "schedules", "danger": False},
+    "unlock_schedule":     {"ar": "فتح الجدول للتعديل",               "group": "schedules", "danger": False},
+    "delete_schedule":     {"ar": "حذف الجدول الشهري",                "group": "schedules", "danger": True},
+
+    # Daily Sessions (Prayer Halls & Gates)
+    "view_daily_sessions": {"ar": "عرض الجولات اليومية",              "group": "sessions",  "danger": False},
+    "create_session":      {"ar": "إنشاء جولة يومية",                "group": "sessions",  "danger": False},
+    "approve_session":     {"ar": "اعتماد الجولة اليومية",            "group": "sessions",  "danger": False},
+    "delete_session":      {"ar": "حذف الجولات اليومية",              "group": "sessions",  "danger": True},
     "start_prayer_round":  {"ar": "بدء جولة صلاة",                   "group": "sessions",  "danger": False},
-    "complete_prayer_round":{"ar": "إنهاء جولة صلاة",               "group": "sessions",  "danger": False},
+    "complete_prayer_round":{"ar": "إنهاء جولة صلاة",                "group": "sessions",  "danger": False},
     "skip_prayer_round":   {"ar": "تجاوز جولة صلاة",                 "group": "sessions",  "danger": False},
 
     # Field Distribution
-    "distribute_employees": {"ar": "توزيع الموظفين على المناطق",    "group": "field",     "danger": False},
-    "auto_distribute":     {"ar": "التوزيع التلقائي",                "group": "field",     "danger": False},
-    "view_coverage_map":   {"ar": "عرض خريطة التغطية",               "group": "field",     "danger": False},
+    "distribute_employees": {"ar": "توزيع الموظفين على المناطق",     "group": "field",     "danger": False},
+    "auto_distribute":     {"ar": "التوزيع التلقائي",                 "group": "field",     "danger": False},
+    "view_coverage_map":   {"ar": "عرض خريطة التغطية",                "group": "field",     "danger": False},
 
     # Density & Data
-    "enter_density":       {"ar": "إدخال بيانات الكثافة",            "group": "density",   "danger": False},
-    "view_density_reports":{"ar": "عرض تقارير الكثافة",              "group": "density",   "danger": False},
+    "enter_density":       {"ar": "إدخال بيانات الكثافة",             "group": "density",   "danger": False},
+    "view_density_reports":{"ar": "عرض تقارير الكثافة",               "group": "density",   "danger": False},
 
-    # Settings
-    "manage_settings":     {"ar": "إدارة إعدادات القسم",             "group": "settings",  "danger": False},
-    "manage_maps":         {"ar": "إدارة خرائط الطوابق",             "group": "settings",  "danger": False},
-    "manage_shifts":       {"ar": "إدارة الورديات",                  "group": "settings",  "danger": False},
-    "manage_gates":        {"ar": "إدارة بيانات الأبواب (إضافة/تعديل/حذف)", "group": "settings", "danger": False},
-    "manage_categories":   {"ar": "إدارة فئات المصليات",             "group": "settings",  "danger": False},
+    # Settings & Administration
+    "manage_settings":     {"ar": "إدارة إعدادات القسم",              "group": "settings",  "danger": False},
+    "manage_maps":         {"ar": "إدارة خرائط الطوابق",              "group": "settings",  "danger": False},
+    "manage_shifts":       {"ar": "إدارة الورديات",                   "group": "settings",  "danger": False},
+    "manage_gates":        {"ar": "إدارة بيانات الأبواب",             "group": "settings",  "danger": False},
+    "manage_categories":   {"ar": "إدارة فئات المصليات",              "group": "settings",  "danger": False},
 }
 
 GROUP_LABELS = {
-    "pages":     {"ar": "الصفحات والتبويبات", "icon": "LayoutDashboard"},
+    "pages":     {"ar": "الصفحات والتنقل",   "icon": "LayoutDashboard"},
     "employees": {"ar": "إدارة الموظفين",     "icon": "Users"},
-    "sessions":  {"ar": "الجلسات اليومية",    "icon": "Calendar"},
+    "schedules": {"ar": "الجدول الشهري",      "icon": "CalendarDays"},
+    "sessions":  {"ar": "الجولات اليومية",    "icon": "Calendar"},
     "field":     {"ar": "التوزيع الميداني",   "icon": "MapPin"},
     "density":   {"ar": "الكثافات والبيانات", "icon": "Activity"},
-    "reports":   {"ar": "التقارير",            "icon": "BarChart3"},
-    "alerts":    {"ar": "البلاغات",            "icon": "Bell"},
     "settings":  {"ar": "الإعدادات",           "icon": "Settings"},
 }
 
 # Default permissions per role — format: {"perm": "read"|"write"}
 DEFAULT_PERMISSIONS = {
     "general_manager": {
+        # Pages
         "page_dashboard": "read", "page_overview": "read", "page_employees": "read",
         "page_daily_log": "read", "page_transactions": "read", "page_settings": "read",
         "page_alerts": "read", "page_reports": "read",
-        "view_daily_sessions": "read",
-        "create_session": "read", "approve_session": "read",
+        # Employees
+        "add_employees": "read", "edit_employees": "read", "export_employees": "read",
+        # Schedules
+        "approve_schedule": "write",
+        # Sessions
+        "view_daily_sessions": "read", "create_session": "read", "approve_session": "read",
         "start_prayer_round": "read", "complete_prayer_round": "read",
+        # Field & Density
         "distribute_employees": "read", "view_coverage_map": "read",
-        "view_density_reports": "read",
-        "enter_density": "read",
-        "add_employees": "read", "edit_employees": "read",
+        "view_density_reports": "read", "enter_density": "read",
+        # Settings
         "manage_settings": "read", "manage_maps": "read", "manage_shifts": "read",
     },
     "department_manager": {
+        # Pages
         "page_dashboard": "read", "page_overview": "write", "page_employees": "write",
         "page_daily_log": "write", "page_transactions": "write", "page_settings": "write",
         "page_alerts": "write", "page_reports": "read", "page_field": "write",
+        # Employees
         "add_employees": "write", "edit_employees": "write", "delete_employees": "write",
         "manage_accounts": "write", "reset_pins": "write",
+        "import_employees": "write", "export_employees": "write",
+        # Schedules
+        "create_schedule": "write", "approve_schedule": "write",
+        "unlock_schedule": "write", "delete_schedule": "write",
+        # Sessions
         "view_daily_sessions": "write", "create_session": "write",
         "approve_session": "write", "delete_session": "write",
         "start_prayer_round": "write", "complete_prayer_round": "write",
         "skip_prayer_round": "write",
+        # Field & Density
         "distribute_employees": "write", "auto_distribute": "write",
         "view_coverage_map": "write",
         "enter_density": "write", "view_density_reports": "write",
+        # Settings
         "manage_settings": "write", "manage_maps": "write",
         "manage_shifts": "write", "manage_gates": "write", "manage_categories": "write",
     },
     "shift_supervisor": {
+        # Pages
         "page_overview": "read", "page_daily_log": "read",
         "page_alerts": "read", "page_field": "write",
+        # Sessions
         "view_daily_sessions": "read",
         "start_prayer_round": "write", "complete_prayer_round": "write",
         "skip_prayer_round": "write",
+        # Field & Density
         "distribute_employees": "write", "auto_distribute": "write",
-        "view_coverage_map": "read",
-        "enter_density": "write",
+        "view_coverage_map": "read", "enter_density": "write",
     },
     "field_staff": {
         "page_overview": "read", "page_field": "write",
-        "enter_density": "write",
-        "view_coverage_map": "read",
+        "enter_density": "write", "view_coverage_map": "read",
     },
     "admin_staff": {
         "page_alerts": "read",

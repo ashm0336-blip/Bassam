@@ -607,8 +607,11 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
 
   // canEdit: يمنع التعديل عندما الجدول معتمد (active) أو مؤرشف
   const canEdit = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
-  // canUnlock: فقط مدير الإدارة والأدمن يقدرون يفتحون الجدول
-  const canUnlock = user?.role === 'system_admin' || user?.role === 'department_manager';
+  // canUnlock: صلاحية فتح الجدول
+  const canUnlock = canWrite('unlock_schedule');
+  const canCreateSched = canWrite('create_schedule');
+  const canApproveSched = canWrite('approve_schedule');
+  const canDeleteSched = canWrite('delete_schedule');
   const canViewEmp = canRead('edit_employees') || canRead('add_employees');
   const canAddEmp = canWrite('add_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
   const canDeleteEmp = canWrite('delete_employees');

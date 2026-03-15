@@ -357,6 +357,8 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const canManage    = canWrite("manage_accounts");
   const canResetPins = canWrite("reset_pins");
   const canChangeRoles = canWrite("change_roles");
+  const canImport    = canWrite("import_employees");
+  const canExport    = canRead("export_employees");
   const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
   const myLevel = ROLE_HIERARCHY[user?.role] || 0;
 
@@ -656,6 +658,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         </div>
 
         {/* Import / Export */}
+        {(canExport || canImport) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
@@ -663,6 +666,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" dir="rtl">
+            {canExport && (
             <DropdownMenuItem onClick={() => {
               const tk = token();
               fetch(`${API}/employees/export?department=${department}`, { headers:{ Authorization:`Bearer ${tk}` } })
@@ -671,6 +675,9 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             }}>
               <Download className="w-4 h-4 ml-2" />تصدير Excel
             </DropdownMenuItem>
+            )}
+            {canImport && (
+            <>
             <DropdownMenuItem onClick={() => {
               fetch(`${API}/employees/export/template`).then(r => r.blob())
                 .then(b => { const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href=u; a.download="template.xlsx"; a.click(); URL.revokeObjectURL(u); toast.success("تم تحميل القالب"); })
@@ -678,16 +685,15 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             }}>
               <FileText className="w-4 h-4 ml-2" />قالب الاستيراد
             </DropdownMenuItem>
-            {canAdd && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => document.getElementById("import-emp-xlsx").click()}>
-                  <Upload className="w-4 h-4 ml-2" />استيراد Excel
-                </DropdownMenuItem>
-              </>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => document.getElementById("import-emp-xlsx").click()}>
+              <Upload className="w-4 h-4 ml-2" />استيراد Excel
+            </DropdownMenuItem>
+            </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
         <input id="import-emp-xlsx" type="file" accept=".xlsx,.xls" className="hidden"
           onChange={e => { handleImport(e.target.files?.[0]); e.target.value = ""; }} />
 
