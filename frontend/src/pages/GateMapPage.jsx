@@ -429,6 +429,18 @@ export default function GateMapPage() {
 
           <div className="h-6 w-px bg-slate-200 mx-1" />
 
+          {/* Legend */}
+          <div className="flex items-center gap-2.5">
+            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+              <span key={key} className="flex items-center gap-1 text-[10px] font-medium">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+                {isAr ? cfg.label_ar : cfg.label_en}
+              </span>
+            ))}
+          </div>
+
+          <div className="h-6 w-px bg-slate-200 mx-1" />
+
           {selectedFloor && canEditMaps && (
             <>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleSyncGates} disabled={syncing} data-testid="sync-gates-btn">
@@ -488,8 +500,8 @@ export default function GateMapPage() {
                   onTouchCancel={handleTouchEnd}
                   data-testid="gate-map-canvas"
                 >
-                  {/* Zoom controls inside map */}
-                  <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 border rounded-lg p-0.5 bg-white/90 backdrop-blur-sm shadow-sm">
+                  {/* Zoom controls — top left inside map */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1 border rounded-lg p-0.5 bg-white/90 backdrop-blur-sm shadow-sm">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(0.8)} data-testid="zoom-out"><ZoomOut className="w-3.5 h-3.5" /></Button>
                     <span className="text-[11px] w-10 text-center font-medium text-slate-500">{Math.round(zoom * 100)}%</span>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomTo(1.25)} data-testid="zoom-in"><ZoomIn className="w-3.5 h-3.5" /></Button>
@@ -571,19 +583,6 @@ export default function GateMapPage() {
                         </div>
                       );
                     })()}
-                  </div>
-
-                  {/* Legend */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border shadow-sm">
-                    <div className="flex items-center gap-3">
-                      {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                        <span key={key} className="flex items-center gap-1 text-[10px]">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
-                          {isAr ? cfg.label_ar : cfg.label_en}
-                        </span>
-                      ))}
-                    </div>
-                    <span className="text-[10px] text-slate-400">{markers.length} {isAr ? "نقطة" : "markers"}</span>
                   </div>
 
                   {/* Tooltip (when hovering, not panning) */}
