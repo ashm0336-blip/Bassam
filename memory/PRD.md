@@ -3,67 +3,49 @@
 ## Original Problem Statement
 Enterprise-grade crowd management application for managing prayer halls, gates, employees, schedules, and daily inspection tours at Al-Haram.
 
-## Core Modules
-- Real-time dashboards (Operations Room)
-- Employee scheduling with approval workflow
-- Advanced task management (Kanban/Calendar)
-- Daily inspection tours for prayer halls and gates
-- Fine-grained role-based access control (RBAC)
-- Map calibration with real-world measurements
-- Employee management and profiles
-- Real-time WebSocket updates
-
 ## Tech Stack
-- **Backend**: FastAPI + MongoDB + WebSocket
+- **Backend**: FastAPI + MongoDB + WebSocket + slowapi (rate limiting)
 - **Frontend**: React (Vite) + Shadcn UI + WebSocket Client
-- **Auth**: JWT-based with role permissions
-- **Real-time**: WebSocket (ws_manager.py + WebSocketContext.jsx)
+- **Auth**: JWT + bcrypt + role-based permissions + department-based access
+- **Real-time**: WebSocket with JWT authentication
 
-## What's Been Implemented
-- Full dashboard with operations room + LIVE indicator
-- Employee & schedule management with lock/approval
-- Tasks module (calendar, Kanban, list views) — department-isolated
-- Daily sessions for prayer halls & gates (map-based)
-- Map calibration system with real-world metrics
-- Fine-grained permissions system
-- Employee profile pages
-- Gates map with interactive SVG points
-- WebSocket real-time updates (no polling)
+## Permissions Architecture
+- **Role-based**: Each role (general_manager, department_manager, shift_supervisor, field_staff, admin_staff) has default permissions
+- **Department-based**: Each employee has `allowed_departments` list — can access multiple departments
+- **38 total permissions** across 8 groups (pages, employees, sessions, field, density, settings, schedules)
+- system_admin has all permissions automatically
 
 ## Recent Changes (March 2026)
-- **Bug Fix**: Tasks were showing across all departments for system_admin — fixed department filtering in all 4 task endpoints
-- **Bug Fix**: Schedule tab crash (hoisting error in EmployeeManagement.jsx)
-- **Cleanup**: Removed ALL refresh buttons from: EmployeesList, MapManagementPage, GateMapPage, ZoneCategoryManager, Dashboard, DepartmentOverview
-- **WebSocket**: Full real-time system — any CRUD broadcasts to all connected clients
-- **Bug Fix**: Zone categories permissions — require_department_manager instead of require_admin
-- **Bug Fix**: Employee account activation endpoint fix
+- Multi-department access: employees can now access multiple departments via `allowed_departments`
+- Security: WebSocket auth, CORS restriction, rate limiting, file size limits, NoSQL injection prevention
+- Gates data tab redesigned: search, filters, cards/list views, import/export Excel
+- Closed gates excluded from all operational statistics
+- Real-time WebSocket updates (no polling)
+- All window.confirm() replaced with Dialog components
+- Plaza colors (PLAZA_COLORS) enforced as single source of truth everywhere
 
-## Upcoming Tasks (P0)
-1. Comparative Density Report
-2. Gates Audit Log
-
-## Future Tasks
-- P1: Advanced task features (recurring, templates, comments, reminders)
-- P1: Full attendance system (check-in/check-out)
-- P2: Push notifications
+## Upcoming Tasks
+- P0: Complete permissions matrix (38 permissions) with proper UI
+- P0: Link sidebar visibility to permissions automatically
+- P0: Daily prayer sessions page fixes
+- P1: Comparative Density Report
+- P1: Gates Audit Log
+- P2: Advanced task features, attendance system, push notifications
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 - Employee (Bassam): ID 1037299037 / PIN 100100
 
 ## Key Files
-- `/app/backend/ws_manager.py`
-- `/app/backend/server.py`
-- `/app/backend/routes/tasks.py`
-- `/app/backend/routes/employees.py`
-- `/app/backend/routes/settings.py`
-- `/app/frontend/src/context/WebSocketContext.jsx`
-- `/app/frontend/src/App.js`
-- `/app/frontend/src/pages/Dashboard.jsx`
-- `/app/frontend/src/pages/DepartmentOverview.jsx`
-- `/app/frontend/src/components/EmployeesList.jsx`
-- `/app/frontend/src/components/EmployeeManagement.jsx`
-- `/app/frontend/src/pages/DepartmentSettings.jsx`
-- `/app/frontend/src/pages/MapManagementPage.jsx`
-- `/app/frontend/src/pages/GateMapPage.jsx`
-- `/app/frontend/src/pages/admin/ZoneCategoryManager.jsx`
+- `/app/backend/ws_manager.py` — WebSocket + broadcast middleware
+- `/app/backend/routes/permissions.py` — ALL_PERMISSIONS, role defaults
+- `/app/backend/routes/employees.py` — allowed_departments support
+- `/app/backend/routes/settings.py` — sidebar filtering by allowed_departments
+- `/app/backend/routes/auth.py` — login, rate limiting
+- `/app/backend/routes/gate_io.py` — gates import/export
+- `/app/frontend/src/context/AuthContext.jsx` — canViewDepartment with allowed_departments
+- `/app/frontend/src/context/WebSocketContext.jsx` — WebSocket with JWT auth
+- `/app/frontend/src/components/EmployeesList.jsx` — allowed_departments checkboxes
+- `/app/frontend/src/components/GatesDataManagement.jsx` — redesigned with toolbar
+- `/app/frontend/src/pages/GateMapPage.jsx` — unified toolbar
+- `/app/frontend/src/constants/gateData.js` — PLAZA_COLORS (DO NOT CHANGE)

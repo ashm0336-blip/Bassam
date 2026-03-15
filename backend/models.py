@@ -35,6 +35,7 @@ class UserResponse(BaseModel):
     name: str
     role: str
     department: Optional[str] = None
+    allowed_departments: List[str] = []
     account_status: str = "active"
     must_change_pin: bool = False
     employee_id: Optional[str] = None
@@ -187,9 +188,11 @@ class EmployeeUpdate(BaseModel):
     season: Optional[str] = None
     contract_end: Optional[str] = None
     user_id: Optional[str] = None
+    allowed_departments: Optional[List[str]] = None
+    user_role: Optional[str] = None
+class ScheduleAssignment(BaseModel):
 
 # ============= Monthly Schedule Models =============
-class ScheduleAssignment(BaseModel):
     employee_id: str
     rest_days: List[str] = []
     location: str = ""

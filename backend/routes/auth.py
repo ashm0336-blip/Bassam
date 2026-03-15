@@ -157,6 +157,7 @@ async def login(request: Request, credentials: UserLogin):
             name=user["name"],
             role=user["role"],
             department=user.get("department"),
+            allowed_departments=user.get("allowed_departments", [user["department"]] if user.get("department") else []),
             account_status=user.get("account_status", "active"),
             must_change_pin=must_change,
             employee_id=user.get("employee_id"),
@@ -252,13 +253,15 @@ async def update_account_status(user_id: str, data: AccountStatusUpdate, manager
 # ─── Me ────────────────────────────────────────────────────────
 @router.get("/auth/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(get_current_user)):
+    dept = user.get("department")
     return UserResponse(
         id=user["id"],
         email=user.get("email"),
         national_id=user.get("national_id"),
         name=user["name"],
         role=user["role"],
-        department=user.get("department"),
+        department=dept,
+        allowed_departments=user.get("allowed_departments", [dept] if dept else []),
         account_status=user.get("account_status", "active"),
         must_change_pin=user.get("must_change_pin", False),
         employee_id=user.get("employee_id"),

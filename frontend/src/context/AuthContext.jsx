@@ -185,8 +185,8 @@ export const AuthProvider = ({ children }) => {
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
     if (user?.role === 'general_manager') return true;
-    if (user?.department === department) return true;
-    return false;
+    const depts = user?.allowed_departments || (user?.department ? [user.department] : []);
+    return depts.includes(department);
   };
 
   const canAddAlerts = () => {

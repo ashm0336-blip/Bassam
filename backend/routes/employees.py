@@ -62,8 +62,9 @@ async def _auto_create_user_account(employee_id: str, employee_doc: dict):
         "name": employee_doc.get("name", ""),
         "role": "field_staff",
         "department": employee_doc.get("department"),
-        "account_status": "pending",          # ينتظر تفعيل المدير
-        "must_change_pin": True,              # يُجبر على تغيير PIN
+        "allowed_departments": [employee_doc.get("department")] if employee_doc.get("department") else [],
+        "account_status": "pending",
+        "must_change_pin": True,
         "failed_attempts": 0,
         "employee_id": employee_id,
         "is_active": False,
@@ -142,12 +143,14 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
     # إضافة حالة الحساب والدور لكل موظف
     for emp in employees:
         if emp.get("user_id"):
-            u = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "account_status": 1, "role": 1})
+            u = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "account_status": 1, "role": 1, "allowed_departments": 1})
             emp["account_status"] = u.get("account_status", "no_account") if u else "no_account"
             emp["user_role"] = u.get("role", "field_staff") if u else "field_staff"
+            emp["allowed_departments"] = u.get("allowed_departments", [emp.get("department")] if emp.get("department") else []) if u else []
         else:
             emp["account_status"] = "no_account"
             emp["user_role"] = None
+            emp["allowed_departments"] = [emp.get("department")] if emp.get("department") else []
     return employees
 
 
@@ -214,6 +217,9 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
         update_data["rest_days"] = dump["rest_days"]
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.employees.update_one({"id": employee_id}, {"$set": update_data})
+    # Sync allowed_departments to user account if provided
+    if "allowed_departments" in dump and dump["allowed_departments"] is not None and existing.get("user_id"):
+        await db.users.update_one({"id": existing["user_id"]}, {"$set": {"allowed_departments": dump["allowed_departments"]}})
     await log_activity("employee_updated", user, existing["name"], f"تم تحديث: {existing['name']}")
     return {"message": "تم تحديث الموظف بنجاح"}
 

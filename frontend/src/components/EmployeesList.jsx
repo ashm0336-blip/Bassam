@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, DEPT_LABELS } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
@@ -331,7 +331,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const emptyForm = {
     name:"", employee_number:"", national_id:"", job_title:"",
     employment_type:"permanent", contact_phone:"", user_role:"field_staff",
-    season:"", contract_end:"",
+    season:"", contract_end:"", allowed_departments:[department],
   };
   const [form, setForm] = useState(emptyForm);
 
@@ -439,6 +439,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         contact_phone: emp.contact_phone||emp.phone||"",
         user_role: emp.user_role||"field_staff",
         season: emp.season||"", contract_end: emp.contract_end||"",
+        allowed_departments: emp.allowed_departments || [department],
       });
     } else {
       setEditEmp(null);
@@ -462,6 +463,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         employment_type: form.employment_type,
         season: form.season||undefined, contract_end: form.contract_end||undefined,
         department,
+        allowed_departments: form.allowed_departments,
       };
       if (editEmp) {
         await axios.put(`${API}/employees/${editEmp.id}`, payload, headers());
@@ -1033,6 +1035,23 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                 <p className="text-[10px] text-amber-700 leading-relaxed">حالة التكليف (مكلف / غير مكلف) تُحدَّد شهرياً من الجدول الشهري مباشرة</p>
               </div>
             )}
+
+            {/* الإدارات المسموحة */}
+            <div>
+              <Label className="text-[10px] font-semibold mb-1.5 block">الإدارات المسموحة</Label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {Object.entries(DEPT_LABELS).map(([key, labels]) => (
+                  <label key={key} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border cursor-pointer transition-all text-[11px] ${form.allowed_departments?.includes(key) ? 'border-primary bg-primary/5 font-bold' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    <input type="checkbox" className="rounded" checked={form.allowed_departments?.includes(key) || false}
+                      onChange={(e) => {
+                        const deps = form.allowed_departments || [];
+                        setForm({...form, allowed_departments: e.target.checked ? [...deps, key] : deps.filter(d=>d!==key)});
+                      }}/>
+                    {labels.ar}
+                  </label>
+                ))}
+              </div>
+            </div>
 
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={()=>setEmpDialog(false)}>إلغاء</Button>

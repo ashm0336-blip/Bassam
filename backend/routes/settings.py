@@ -361,14 +361,16 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             filtered_items.append(item)
             accessible_parent_ids.add(item.get("id"))
             continue
-        # Department sections — allow provisionally (will be pruned if no children pass)
+        # Department sections — check allowed_departments
         if item.get("department"):
             if user_role in ["system_admin", "general_manager"]:
                 filtered_items.append(item)
                 accessible_parent_ids.add(item.get("id"))
-            elif user_dept and user_dept == item.get("department"):
-                filtered_items.append(item)
-                accessible_parent_ids.add(item.get("id"))
+            else:
+                user_depts = user.get("allowed_departments", [user_dept] if user_dept else [])
+                if item.get("department") in user_depts:
+                    filtered_items.append(item)
+                    accessible_parent_ids.add(item.get("id"))
             continue
         # Standalone pages (no department, no parent) — must pass permission check
         if _has_page_perm(item):
