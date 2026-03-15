@@ -228,10 +228,16 @@ export default function GatesDataManagement() {
       {/* ══ ANALYTICS DASHBOARD — chip-based ═══════════════════ */}
       {gates.length > 0 && (() => {
         const total   = gates.length;
-        const noStaff = gates.filter(g => g.status === 'مفتوح' && getEmployeesAtGate(g.name).length === 0).length;
+        const openGates = gates.filter(g => g.status === 'مفتوح');
+        const openCount = openGates.length;
+        const noStaff = openGates.filter(g => getEmployeesAtGate(g.name).length === 0).length;
 
-        // helper: حساب عدد الأبواب بقيمة معينة
-        const count = (field, val) => gates.filter(g =>
+        // helper: حساب عدد الأبواب المفتوحة بقيمة معينة
+        const countOpen = (field, val) => openGates.filter(g =>
+          Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val
+        ).length;
+        // helper: حساب كل الأبواب
+        const countAll = (field, val) => gates.filter(g =>
           Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val
         ).length;
 
@@ -244,8 +250,9 @@ export default function GatesDataManagement() {
         const INDICATOR_COLORS= { "خفيف":"#22c55e","متوسط":"#f97316","مزدحم":"#ef4444" };
 
         // chip component
-        const Chip = ({ label, cnt, color, warn }) => {
-          const pct = total > 0 ? Math.round(cnt/total*100) : 0;
+        const Chip = ({ label, cnt, color, warn, ofTotal }) => {
+          const base = ofTotal || openCount;
+          const pct = base > 0 ? Math.round(cnt/base*100) : 0;
           return (
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all
               ${cnt === 0 ? "opacity-40" : ""}
@@ -291,10 +298,10 @@ export default function GatesDataManagement() {
             {/* الصف ١: KPIs مدمجة */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { label:"إجمالي",        value:total,   color:"#2563eb", Icon:DoorOpen,     desc:"باب مسجل" },
-                { label:"مفتوحة",        value:count('status','مفتوح'), color:"#059669", Icon:DoorOpen,  desc:"الآن" },
-                { label:"مغلقة",         value:count('status','مغلق'),  color:"#6b7280", Icon:DoorClosed,desc:"موقوف" },
-                { label:"بلا موظف",      value:noStaff, color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
+                { label:"إجمالي",        value:total,      color:"#2563eb", Icon:DoorOpen,     desc:"باب مسجل" },
+                { label:"مفتوحة",        value:openCount,  color:"#059669", Icon:DoorOpen,     desc:"الآن" },
+                { label:"مغلقة",         value:total - openCount, color:"#6b7280", Icon:DoorClosed, desc:"موقوف" },
+                { label:"بلا موظف",      value:noStaff,    color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
               ].map((s,i)=>(
                 <div key={i} className="rounded-2xl border p-2.5 flex items-center gap-2.5 transition-all hover:shadow-sm"
                   style={{ backgroundColor:s.color+"08", borderColor:s.color+"30" }}>
@@ -313,10 +320,10 @@ export default function GatesDataManagement() {
             {/* الصف ٢: chips المنطقة + الحالة + المؤشر */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
 
-              {/* المناطق */}
+              {/* المناطق — مفتوحة فقط */}
               <Section icon={MapPin} title="توزيع المناطق" iconBg="#e0f2fe" iconColor="#0284c7">
                 {Object.entries(PLAZA_COLORS).map(([name, color]) => (
-                  <Chip key={name} label={name} cnt={count('plaza', name)} color={color}/>
+                  <Chip key={name} label={name} cnt={countOpen('plaza', name)} color={color}/>
                 ))}
               </Section>
 
@@ -324,48 +331,47 @@ export default function GatesDataManagement() {
               <Section icon={Activity} title="حالة الأبواب" iconBg="#ecfdf5" iconColor="#059669"
                 warning={noStaff > 0 ? `${noStaff} مفتوح بلا غطاء` : undefined}>
                 {GATE_STATUSES.map(s => (
-                  <Chip key={s} label={s} cnt={count('status', s)} color={STATUS_COLORS[s]||"#6b7280"}
-                    warn={s==='مفتوح' && noStaff > 0}/>
+                  <Chip key={s} label={s} cnt={countAll('status', s)} color={STATUS_COLORS[s]||"#6b7280"}
+                    warn={s==='مفتوح' && noStaff > 0} ofTotal={total}/>
                 ))}
               </Section>
 
               {/* المؤشر — أبواب مفتوحة فقط */}
               <Section icon={Activity} title="مؤشر الازدحام" iconBg="#fff7ed" iconColor="#f97316">
                 {CURRENT_INDICATORS.map(ind => (
-                  <Chip key={ind.value} label={ind.label} cnt={gates.filter(g => g.status === 'مفتوح' && g.current_indicator === ind.value).length} color={ind.color}/>
+                  <Chip key={ind.value} label={ind.label} cnt={countOpen('current_indicator', ind.value)} color={ind.color}/>
                 ))}
-                <Chip label="مغلقة" cnt={gates.filter(g => g.status === 'مغلق').length} color="#94a3b8"/>
               </Section>
             </div>
 
             {/* الصف ٣: chips النوع + المسار + الفئة + التصنيف */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
 
-              {/* النوع */}
+              {/* النوع — مفتوحة فقط */}
               <Section icon={Tag} title="نوع الباب" iconBg="#f5f3ff" iconColor="#7c3aed">
                 {GATE_TYPES.map((t,i) => (
-                  <Chip key={t} label={t} cnt={count('gate_type', t)} color={TYPE_COLORS[i%TYPE_COLORS.length]}/>
+                  <Chip key={t} label={t} cnt={countOpen('gate_type', t)} color={TYPE_COLORS[i%TYPE_COLORS.length]}/>
                 ))}
               </Section>
 
-              {/* المسار */}
+              {/* المسار — مفتوحة فقط */}
               <Section icon={ArrowUpDown} title="المسار" iconBg="#fffbeb" iconColor="#d97706">
                 {DIRECTIONS.map(d => (
-                  <Chip key={d} label={d} cnt={count('direction', d)} color={DIR_COLORS[d]||"#6b7280"}/>
+                  <Chip key={d} label={d} cnt={countOpen('direction', d)} color={DIR_COLORS[d]||"#6b7280"}/>
                 ))}
               </Section>
 
-              {/* الفئة */}
+              {/* الفئة — مفتوحة فقط */}
               <Section icon={Users} title="الفئة" iconBg="#fdf4ff" iconColor="#a21caf">
                 {CATEGORIES.map(c => (
-                  <Chip key={c} label={c} cnt={count('category', c)} color={CAT_COLORS[c]||"#7c3aed"}/>
+                  <Chip key={c} label={c} cnt={countOpen('category', c)} color={CAT_COLORS[c]||"#7c3aed"}/>
                 ))}
               </Section>
 
-              {/* التصنيف */}
+              {/* التصنيف — مفتوحة فقط */}
               <Section icon={Shield} title="التصنيف" iconBg="#fef2f2" iconColor="#dc2626">
                 {CLASSIFICATIONS.map(c => (
-                  <Chip key={c} label={c} cnt={count('classification', c)} color={CLASS_COLORS[c]||"#6b7280"}/>
+                  <Chip key={c} label={c} cnt={countOpen('classification', c)} color={CLASS_COLORS[c]||"#6b7280"}/>
                 ))}
               </Section>
             </div>
