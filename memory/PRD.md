@@ -9,39 +9,30 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - **Auth**: JWT + bcrypt + role-based permissions + department-based access
 - **Real-time**: WebSocket with JWT authentication
 
-## Permissions Architecture
-- **Role-based**: Each role has default permissions
-- **Department-based**: Each employee has `allowed_departments` list
-- **38 total permissions** across 8 groups
-- system_admin has all permissions automatically
-- Real-time permissions sync via WebSocket "permissions" channel
-
 ## Data Integrity Rules
-- **Employee Deletion**: Cascade delete to users, tasks, monthly_schedules, alerts
-- **Employee Update**: Name/department sync to users collection
-- **Delete Confirmations**: All destructive actions use AlertDialog
-- **Task Stats**: Support work_date and month filters
-- **Shift Values**: Auto-generated with category suffix (_primary/_secondary)
-- **Stats Accuracy**: Only active accounts counted in role stats, pending shown as "غير مفعّل"
+- Employee Deletion: Cascade delete to users, tasks, monthly_schedules, alerts
+- Employee Update: Name/department sync to users collection
+- Delete Confirmations: All destructive actions use AlertDialog
+- Shift Values: Auto-generated with category suffix (_primary/_secondary)
+- Stats: Only active accounts counted in role distribution
 
 ## Recent Changes (March 2026)
-- Employee deletion cascade: user account + tasks + schedules + alerts cleaned up
-- Employee update sync: name/department synced to users collection
-- All window.confirm() replaced with AlertDialog components
-- WebSocket permissions broadcast fixed for /api/admin/role-permissions
-- Task stats date filtering: work_date and month parameters
-- Shift assignment fix: unique values with category suffix + visual tags in dropdowns
-- Stats accuracy fix: role distribution only counts active accounts, pending employees shown separately as "غير مفعّل", "حسابات نشطة" card replaces misleading "ميدانيون"
+- Employee deletion cascade + update sync
+- All window.confirm() replaced with AlertDialog
+- WebSocket permissions broadcast fixed
+- Task stats date filtering (work_date/month)
+- Shift assignment: unique values + visual category tags
+- Stats accuracy: role distribution only counts active accounts
+- Map calibration: editable distance, AutoCAD-style crosshair points, points preserved on re-open
 
 ## Pending Issues
 - Issue 2 (P1): Daily Prayer Hall Session auto-start (needs user verification)
-- Issue 4 (P0): Permissions real-time sync (fixed, needs user verification)
 
 ## Upcoming Tasks
-- P0: Comparative Density Report for Daily Sessions
-- P0: Gates Audit Log (real-time)
-- P1: Advanced task features (recurring tasks, templates, comments/attachments)
-- P1: Full Attendance System (check-in/check-out)
+- P0: Comparative Density Report
+- P0: Gates Audit Log
+- P1: Advanced task features
+- P1: Full Attendance System
 - P2: Push Notifications
 - Backlog: Soft delete / recycle bin
 
@@ -51,7 +42,8 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 ## Key Files
 - `/app/backend/routes/employees.py` -- cascade delete, update sync
 - `/app/backend/routes/tasks.py` -- stats with date filter
-- `/app/backend/ws_manager.py` -- WebSocket + broadcast middleware
-- `/app/frontend/src/components/EmployeeManagement.jsx` -- shift dropdown, stats fix
-- `/app/frontend/src/pages/DepartmentSettings.jsx` -- shift creation with unique values
-- `/app/frontend/src/pages/DailySessionsPage.jsx` -- AlertDialog for delete confirmations
+- `/app/backend/ws_manager.py` -- WebSocket broadcast
+- `/app/frontend/src/components/EmployeeManagement.jsx` -- shift dropdown, stats
+- `/app/frontend/src/pages/DepartmentSettings.jsx` -- shift creation
+- `/app/frontend/src/pages/MapManagementPage.jsx` -- calibration system
+- `/app/frontend/src/pages/DailySessionsPage.jsx` -- AlertDialog, prayer sessions

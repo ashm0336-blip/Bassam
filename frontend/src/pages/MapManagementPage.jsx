@@ -410,7 +410,13 @@ export default function MapManagementPage({ department = "plazas" }) {
                     {floor.image_url && (
                       <Button variant="outline" size="sm"
                         className={`hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors ${floor.scale_calibration ? "border-emerald-300 text-emerald-700" : ""}`}
-                        onClick={() => { setCalibFloor(floor); setCalibPoints([]); setCalibDistance(floor.scale_calibration?.distance_meters?.toString() || ""); setCalibZoom(1); calibZoomRef.current = 1; setCalibPan({ x: 0, y: 0 }); }}
+                        onClick={() => {
+                          const existingPoints = floor.scale_calibration ? [floor.scale_calibration.point1, floor.scale_calibration.point2] : [];
+                          setCalibFloor(floor);
+                          setCalibPoints(existingPoints);
+                          setCalibDistance(floor.scale_calibration?.distance_meters?.toString() || "");
+                          setCalibZoom(1); calibZoomRef.current = 1; setCalibPan({ x: 0, y: 0 });
+                        }}
                         data-testid={`floor-calibrate-${floor.id}`}>
                         <Ruler className="w-3.5 h-3.5 ml-1" />
                         {floor.scale_calibration ? (isAr ? "مُعاير" : "Cal'd") : (isAr ? "معايرة" : "Cal")}
@@ -562,7 +568,7 @@ export default function MapManagementPage({ department = "plazas" }) {
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-700 leading-relaxed font-cairo">
               {calibPoints.length === 0 && (isAr ? "الخطوة 1: اضغط على النقطة الأولى على الخريطة (مثلاً: زاوية عمود أو بداية ممر)" : "Step 1: Click the first point on the map")}
               {calibPoints.length === 1 && (isAr ? "الخطوة 2: اضغط على النقطة الثانية (النقطة التي تعرف المسافة بينها وبين الأولى)" : "Step 2: Click the second point")}
-              {calibPoints.length === 2 && (isAr ? "الخطوة 3: أدخل المسافة الحقيقية بين النقطتين بالأمتار" : "Step 3: Enter the real distance in meters")}
+              {calibPoints.length === 2 && (isAr ? "الخطوة 3: أدخل أو عدّل المسافة الحقيقية بين النقطتين بالأمتار — يمكنك إعادة تحديد النقاط أو تعديل المسافة فقط" : "Step 3: Enter/edit the real distance — you can reset points or just change the distance")}
             </div>
 
             {/* Map with zoom/pan + click-to-place-points */}
@@ -643,18 +649,30 @@ export default function MapManagementPage({ department = "plazas" }) {
                     <div style={{ position: "relative", width: "100%", height: "100%" }} data-calib-inner="true">
                       <img src={normalizeImageUrl(calibFloor.image_url)} alt=""
                         className="w-full h-full object-contain pointer-events-none select-none" draggable={false} />
-                      {/* Calibration points overlay */}
+                      {/* Calibration points overlay — AutoCAD-style crosshair */}
                       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        {calibPoints.map((pt, i) => (
-                          <g key={i}>
-                            <circle cx={pt.x} cy={pt.y} r="1.5" fill="#2563eb" fillOpacity="0.2" stroke="#2563eb" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
-                            <circle cx={pt.x} cy={pt.y} r="0.5" fill="#2563eb" />
-                            <text x={pt.x} y={pt.y - 2.5} textAnchor="middle" fill="#1d4ed8" fontSize="2.5" fontWeight="800" fontFamily="Cairo">{i + 1}</text>
-                          </g>
-                        ))}
+                        {calibPoints.map((pt, i) => {
+                          const armLen = 0.8 / calibZoom; // ذراع الصليب — يصغر مع الزوم
+                          const r = 0.15 / calibZoom;     // نقطة مركزية دقيقة
+                          const fontSize = 1.5 / calibZoom;
+                          return (
+                            <g key={i}>
+                              {/* Crosshair lines */}
+                              <line x1={pt.x - armLen} y1={pt.y} x2={pt.x + armLen} y2={pt.y}
+                                stroke={i === 0 ? "#dc2626" : "#2563eb"} strokeWidth={0.15 / calibZoom} vectorEffect="non-scaling-stroke" />
+                              <line x1={pt.x} y1={pt.y - armLen} x2={pt.x} y2={pt.y + armLen}
+                                stroke={i === 0 ? "#dc2626" : "#2563eb"} strokeWidth={0.15 / calibZoom} vectorEffect="non-scaling-stroke" />
+                              {/* Center dot */}
+                              <circle cx={pt.x} cy={pt.y} r={r} fill={i === 0 ? "#dc2626" : "#2563eb"} />
+                              {/* Label */}
+                              <text x={pt.x + armLen + 0.3 / calibZoom} y={pt.y - armLen} textAnchor="start"
+                                fill={i === 0 ? "#dc2626" : "#1d4ed8"} fontSize={fontSize} fontWeight="800" fontFamily="Cairo">{i + 1}</text>
+                            </g>
+                          );
+                        })}
                         {calibPoints.length === 2 && (
                           <line x1={calibPoints[0].x} y1={calibPoints[0].y} x2={calibPoints[1].x} y2={calibPoints[1].y}
-                            stroke="#2563eb" strokeWidth="0.3" strokeDasharray="1 0.5" vectorEffect="non-scaling-stroke" />
+                            stroke="#2563eb" strokeWidth={0.15 / calibZoom} strokeDasharray={`${0.6 / calibZoom} ${0.3 / calibZoom}`} vectorEffect="non-scaling-stroke" />
                         )}
                       </svg>
                     </div>
@@ -687,10 +705,10 @@ export default function MapManagementPage({ department = "plazas" }) {
               </div>
             )}
 
-            {/* Existing calibration */}
-            {calibFloor?.scale_calibration && (
-              <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-[10px] text-slate-500 text-center">
-                {isAr ? `معايرة حالية: ${calibFloor.scale_calibration.distance_meters} متر — سيتم استبدالها عند الحفظ` : `Current: ${calibFloor.scale_calibration.distance_meters}m — will be replaced`}
+            {/* Existing calibration info */}
+            {calibFloor?.scale_calibration && calibPoints.length === 2 && (
+              <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-700 text-center font-cairo">
+                {isAr ? `المعايرة الحالية: ${calibFloor.scale_calibration.distance_meters} متر — عدّل الرقم أعلاه واحفظ، أو أعد تحديد النقاط` : `Current: ${calibFloor.scale_calibration.distance_meters}m — edit above & save, or reset points`}
               </div>
             )}
           </div>
@@ -701,8 +719,8 @@ export default function MapManagementPage({ department = "plazas" }) {
                 <Save className="w-4 h-4 ml-1" />{isAr ? "حفظ المعايرة" : "Save Calibration"}
               </Button>
             )}
-            <Button variant="outline" onClick={() => { setCalibPoints([]); setCalibDistance(""); }}>
-              {isAr ? "إعادة التحديد" : "Reset"}
+            <Button variant="outline" onClick={() => { setCalibPoints([]); }}>
+              {isAr ? "إعادة تحديد النقاط" : "Reset Points"}
             </Button>
             <Button variant="outline" onClick={() => { setCalibFloor(null); setCalibPoints([]); }}>
               {isAr ? "إغلاق" : "Close"}
