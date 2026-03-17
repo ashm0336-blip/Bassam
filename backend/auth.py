@@ -50,8 +50,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 async def require_admin(user: dict = Depends(get_current_user)):
-    if user["role"] != "system_admin":
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مسؤول النظام")
+    if user["role"] not in ("system_admin", "general_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مسؤول النظام أو المدير العام")
     return user
 
 

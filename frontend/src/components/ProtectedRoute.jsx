@@ -57,7 +57,7 @@ export const DepartmentProtectedRoute = ({ children, department }) => {
 };
 
 export const AdminProtectedRoute = ({ children }) => {
-  const { isAdmin, isAuthenticated, loading } = useAuth();
+  const { isAdmin, isGeneralManager, isAuthenticated, loading } = useAuth();
   const { language } = useLanguage();
 
   if (loading) {
@@ -79,7 +79,7 @@ export const AdminProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin()) {
+  if (!isAdmin() && !isGeneralManager()) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-md mx-auto">
@@ -92,8 +92,8 @@ export const AdminProtectedRoute = ({ children }) => {
             </h2>
             <p className="text-muted-foreground">
               {language === 'ar' 
-                ? 'هذه الصفحة متاحة للمدير العام فقط'
-                : 'This page is only accessible to super admins'}
+                ? 'هذه الصفحة متاحة لمسؤول النظام والمدير العام فقط'
+                : 'This page is only accessible to admins and general managers'}
             </p>
           </CardContent>
         </Card>
