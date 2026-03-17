@@ -555,7 +555,7 @@ export default function MapManagementPage({ department = "plazas" }) {
 
       {/* ── Calibration Dialog ── */}
       <Dialog open={!!calibFloor} onOpenChange={(open) => { if (!open) { setCalibFloor(null); setCalibPoints([]); } }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden" dir="rtl" data-testid="calibration-dialog">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl" data-testid="calibration-dialog">
           <DialogHeader>
             <DialogTitle className="font-cairo flex items-center gap-2">
               <Ruler className="w-5 h-5 text-blue-600" />
