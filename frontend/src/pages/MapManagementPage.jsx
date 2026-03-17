@@ -577,9 +577,9 @@ export default function MapManagementPage({ department = "plazas" }) {
                 {/* Zoom controls inside map */}
                 <div className="absolute top-3 left-3 z-20 flex items-center gap-1 border rounded-lg p-1 bg-white/90 backdrop-blur shadow-sm"
                   onMouseDown={e => e.stopPropagation()}>
-                  <button onClick={() => { const nz = Math.max(0.5, calibZoomRef.current * 0.8); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
+                  <button onClick={() => { const nz = Math.max(0.3, calibZoomRef.current / 1.15); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomOut className="w-4 h-4 text-slate-600" /></button>
                   <span className="text-[11px] w-10 text-center font-mono text-slate-500">{Math.round(calibZoom * 100)}%</span>
-                  <button onClick={() => { const nz = Math.min(10, calibZoomRef.current * 1.25); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
+                  <button onClick={() => { const nz = Math.min(8, calibZoomRef.current * 1.15); calibZoomRef.current = nz; setCalibZoom(nz); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><ZoomIn className="w-4 h-4 text-slate-600" /></button>
                   <button onClick={() => { calibZoomRef.current = 1; setCalibZoom(1); setCalibPan({ x: 0, y: 0 }); }} className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-100"><Maximize2 className="w-4 h-4 text-slate-600" /></button>
                 </div>
 
@@ -602,8 +602,8 @@ export default function MapManagementPage({ department = "plazas" }) {
                       const rect = el.getBoundingClientRect();
                       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
                       const prev = calibZoomRef.current;
-                      const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-                      const nz = Math.max(0.5, Math.min(10, prev * delta));
+                      const delta = e.deltaY < 0 ? 1.06 : 1 / 1.06;
+                      const nz = Math.max(0.3, Math.min(8, prev * delta));
                       const s = nz / prev;
                       calibZoomRef.current = nz;
                       setCalibZoom(nz);
