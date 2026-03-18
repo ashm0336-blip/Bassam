@@ -148,7 +148,11 @@ export const Layout = () => {
         <div className="relative">
           {hasChildren ? (
             <div
-              onClick={() => toggleMenu(item.id)}
+              onClick={() => {
+                toggleMenu(item.id);
+                navigate(item.href);
+                if (mobile) setMobileMenuOpen(false);
+              }}
               className={`
                 flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
                 transition-colors duration-200 relative cursor-pointer
