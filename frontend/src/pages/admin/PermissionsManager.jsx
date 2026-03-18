@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
-  Users, Calendar, MapPin, Activity, BarChart3, Bell, Settings, LayoutDashboard,
-  RefreshCw, Save, RotateCcw, Shield, ShieldCheck, FileText,
-  ChevronDown, ChevronUp, AlertTriangle, Loader2,
-  History, Eye, Pencil, X as XIcon, Layers,
+  Shield, ShieldCheck, Save, RotateCcw, Loader2, History, AlertTriangle,
+  LayoutDashboard, ClipboardList, Navigation, DoorOpen, LayoutGrid, Users as UsersIcon,
+  Circle, MapPin, Bell, Eye, EyeOff, Pencil, ChevronDown, ChevronLeft,
+  CalendarDays, Clock, Layers, Tag, Calendar, Settings, Zap, FileText,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -21,66 +21,249 @@ const ROLE_CONFIG = {
   admin_staff:        { ar: "موظف إداري",      color: "#64748b", bg: "#f8fafc", level: 1 },
 };
 
-const LEVEL_CONFIG = {
-  none:  { ar: "لا شي", icon: XIcon,   color: "text-slate-400", activeBg: "bg-slate-200 dark:bg-slate-700 ring-1 ring-slate-300" },
-  read:  { ar: "قراءة", icon: Eye,     color: "text-blue-600",  activeBg: "bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400" },
-  write: { ar: "تعديل", icon: Pencil,  color: "text-emerald-600", activeBg: "bg-emerald-100 dark:bg-emerald-900/40 ring-2 ring-emerald-400" },
-};
-
-// Tree structure mapping permissions to their page location
-const PERM_TREE = [
-  { key: "page_dashboard", icon: LayoutDashboard, color: "#0891b2", label_ar: "لوحة التحكم (غرفة العمليات)", children: [] },
-  { key: "page_overview", icon: Layers, color: "#6366f1", label_ar: "نظرة عامة على الإدارة", children: [] },
-  { key: "page_transactions", icon: FileText, color: "#7c3aed", label_ar: "المهام اليومية", children: [] },
-  { key: "page_alerts", icon: Bell, color: "#f59e0b", label_ar: "التنبيهات والبلاغات", children: [] },
-  { key: "page_reports", icon: BarChart3, color: "#06b6d4", label_ar: "التقارير", children: [] },
-  { key: "page_field", icon: MapPin, color: "#f97316", label_ar: "الواجهة الميدانية", children: [] },
-  { key: "page_employees", icon: Users, color: "#1d4ed8", label_ar: "إدارة الموظفين", children: [
-    { key: "add_employees" },
-    { key: "edit_employees" },
-    { key: "delete_employees", danger: true },
-    { key: "manage_accounts" },
-    { key: "reset_pins" },
-    { key: "change_roles", danger: true },
-    { key: "import_employees" },
-    { key: "export_employees" },
-  ]},
-  { key: "page_employees", icon: Calendar, color: "#0d9488", label_ar: "الجدول الشهري", skipPagePerm: true, children: [
-    { key: "create_schedule" },
-    { key: "approve_schedule" },
-    { key: "unlock_schedule" },
-    { key: "delete_schedule", danger: true },
-  ]},
-  { key: "page_daily_log", icon: Calendar, color: "#047857", label_ar: "الجولات اليومية (مصليات وأبواب)", children: [
-    { key: "view_daily_sessions" },
-    { key: "create_session" },
-    { key: "approve_session" },
-    { key: "delete_session", danger: true },
-    { key: "start_prayer_round" },
-    { key: "complete_prayer_round" },
-    { key: "skip_prayer_round" },
-    { key: "distribute_employees" },
-    { key: "auto_distribute" },
-    { key: "view_coverage_map" },
-    { key: "enter_density" },
-    { key: "view_density_reports" },
-  ]},
-  { key: "page_settings", icon: Settings, color: "#64748b", label_ar: "إعدادات القسم", children: [
-    { key: "manage_settings" },
-    { key: "manage_maps" },
-    { key: "manage_shifts" },
-    { key: "manage_gates" },
-    { key: "manage_categories" },
-  ]},
+// ── شجرة الموقع الكاملة مع ربط الصلاحيات ──
+const SITE_TREE = [
+  {
+    id: "dashboard", label: "لوحة التحكم", subtitle: "غرفة العمليات", Icon: LayoutDashboard, color: "#0891b2",
+    viewOnly: true,
+    viewPerms: ["page_dashboard"],
+  },
+  {
+    id: "dept_common", label: "محتوى الإدارات", subtitle: "ينطبق على جميع الإدارات المسموحة", Icon: LayoutGrid, color: "#6366f1",
+    isGroup: true,
+    children: [
+      {
+        id: "overview", label: "نظرة عامة", Icon: Circle, color: "#6366f1",
+        viewOnly: true,
+        viewPerms: ["page_overview"],
+      },
+      {
+        id: "tasks", label: "المهام اليومية", Icon: FileText, color: "#7c3aed",
+        viewPerms: ["page_transactions"],
+        editPerms: ["page_transactions"],
+      },
+      {
+        id: "settings_page", label: "الإعدادات", Icon: Settings, color: "#64748b",
+        viewPerms: ["page_settings"],
+        editPerms: ["page_settings"],
+        children: [
+          {
+            id: "employees", label: "الموظفون", Icon: UsersIcon, color: "#1d4ed8",
+            viewPerms: ["page_employees"],
+            editPerms: ["page_employees", "add_employees", "edit_employees", "delete_employees", "manage_accounts", "reset_pins", "change_roles", "import_employees", "export_employees"],
+          },
+          {
+            id: "schedule", label: "الجدول الشهري", Icon: CalendarDays, color: "#0d9488",
+            viewPerms: ["page_employees"],
+            editPerms: ["create_schedule", "approve_schedule", "unlock_schedule", "delete_schedule"],
+          },
+          {
+            id: "shifts", label: "الورديات", Icon: Clock, color: "#d97706",
+            viewPerms: ["page_settings"],
+            editPerms: ["manage_shifts"],
+          },
+          {
+            id: "maps", label: "الخرائط", Icon: Layers, color: "#059669",
+            viewPerms: ["page_settings"],
+            editPerms: ["manage_maps"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "sessions", label: "الجولات اليومية", subtitle: "جولات المصليات والأبواب", Icon: Calendar, color: "#047857",
+    viewPerms: ["view_daily_sessions", "page_daily_log"],
+    editPerms: ["create_session", "approve_session", "delete_session", "start_prayer_round", "complete_prayer_round", "skip_prayer_round"],
+  },
+  {
+    id: "field_ops", label: "التوزيع الميداني", subtitle: "توزيع الموظفين والكثافة", Icon: MapPin, color: "#f97316",
+    viewPerms: ["page_field", "view_coverage_map"],
+    editPerms: ["distribute_employees", "auto_distribute", "enter_density", "view_density_reports"],
+  },
+  {
+    id: "gates_data", label: "بيانات الأبواب", subtitle: "خاص بإدارة الأبواب", Icon: DoorOpen, color: "#059669",
+    viewPerms: ["page_settings"],
+    editPerms: ["manage_gates"],
+  },
+  {
+    id: "categories", label: "فئات المصليات", subtitle: "خاص بإدارة المصليات", Icon: Tag, color: "#8b5cf6",
+    viewPerms: ["page_settings"],
+    editPerms: ["manage_categories"],
+  },
+  {
+    id: "alerts", label: "الإشعارات والتنبيهات", Icon: Bell, color: "#f59e0b",
+    viewPerms: ["page_alerts"],
+    editPerms: ["page_alerts"],
+  },
 ];
 
+// ── حساب حالة العنصر من الصلاحيات الحالية ──
+function getNodeState(node, perms) {
+  const vKeys = node.viewPerms || [];
+  const eKeys = node.editPerms || [];
+  const hasView = vKeys.length > 0 && vKeys.some(k => perms[k] === "read" || perms[k] === "write");
+  const hasEdit = eKeys.length > 0 && eKeys.some(k => perms[k] === "write");
+  return { visible: hasView || hasEdit, editable: hasEdit };
+}
+
+// ── تطبيق التغيير على الصلاحيات ──
+function applyNodeChange(node, field, value, perms) {
+  const updated = { ...perms };
+
+  if (field === "visible") {
+    if (value) {
+      // تشغيل المشاهدة → كل مفاتيح العرض تصير read
+      (node.viewPerms || []).forEach(k => { if (!updated[k]) updated[k] = "read"; });
+    } else {
+      // إيقاف المشاهدة → حذف كل المفاتيح
+      (node.viewPerms || []).forEach(k => { delete updated[k]; });
+      (node.editPerms || []).forEach(k => { delete updated[k]; });
+      // إيقاف الأبناء أيضاً
+      if (node.children) {
+        node.children.forEach(child => {
+          (child.viewPerms || []).forEach(k => { delete updated[k]; });
+          (child.editPerms || []).forEach(k => { delete updated[k]; });
+          if (child.children) {
+            child.children.forEach(gc => {
+              (gc.viewPerms || []).forEach(k => { delete updated[k]; });
+              (gc.editPerms || []).forEach(k => { delete updated[k]; });
+            });
+          }
+        });
+      }
+    }
+  } else if (field === "editable") {
+    if (value) {
+      // تشغيل التعديل → كل مفاتيح التعديل تصير write + ضمان المشاهدة
+      (node.viewPerms || []).forEach(k => { if (!updated[k]) updated[k] = "read"; });
+      (node.editPerms || []).forEach(k => { updated[k] = "write"; });
+    } else {
+      // إيقاف التعديل → إرجاع مفاتيح التعديل لـ read أو حذفها
+      (node.editPerms || []).forEach(k => {
+        if ((node.viewPerms || []).includes(k)) { updated[k] = "read"; }
+        else { delete updated[k]; }
+      });
+    }
+  }
+
+  return updated;
+}
+
+// ── مكوّن عنصر الشجرة ──
+function TreeNode({ node, perms, onChange, depth = 0, roleColor }) {
+  const [expanded, setExpanded] = useState(true);
+  const state = getNodeState(node, perms);
+  const hasChildren = node.children?.length > 0;
+  const NodeIcon = node.Icon || Circle;
+
+  const handleToggle = (field) => {
+    const newVal = !state[field];
+    onChange(applyNodeChange(node, field, newVal, perms));
+  };
+
+  // عدد الأبناء المفعّلين
+  const activeChildCount = hasChildren
+    ? node.children.filter(c => getNodeState(c, perms).visible).length
+    : 0;
+
+  const indent = depth * 20;
+
+  return (
+    <div data-testid={`tree-node-${node.id}`}>
+      {/* العنصر نفسه */}
+      <div
+        className={`flex items-center justify-between py-2.5 px-3 transition-colors
+          ${depth === 0 ? 'border-b border-slate-100' : ''}
+          ${!state.visible && depth > 0 ? 'opacity-40' : ''}
+          ${hasChildren ? 'hover:bg-slate-50/50' : 'hover:bg-slate-50/30'}`}
+        style={{ paddingRight: `${12 + indent}px` }}
+      >
+        {/* يسار: أيقونة + اسم */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1"
+          onClick={() => hasChildren && setExpanded(!expanded)}
+          style={{ cursor: hasChildren ? "pointer" : "default" }}>
+          {hasChildren && (
+            <span className="text-slate-400 transition-transform" style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </span>
+          )}
+          {!hasChildren && depth > 0 && <span className="w-3.5" />}
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: node.color + "15", color: node.color }}>
+            <NodeIcon className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-cairo font-bold text-[13px] leading-tight truncate">{node.label}</p>
+            {node.subtitle && <p className="text-[9px] text-muted-foreground leading-tight">{node.subtitle}</p>}
+          </div>
+          {hasChildren && (
+            <span className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+              {activeChildCount}/{node.children.length}
+            </span>
+          )}
+        </div>
+
+        {/* يمين: أزرار التحكم */}
+        {!node.isGroup && (
+          <div className="flex items-center gap-1.5 flex-shrink-0 mr-2">
+            {/* زر المشاهدة */}
+            <button
+              onClick={() => handleToggle("visible")}
+              data-testid={`toggle-view-${node.id}`}
+              title={state.visible ? "إخفاء" : "إظهار"}
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all
+                ${state.visible
+                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                  : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`}
+            >
+              {state.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{state.visible ? "ظاهر" : "مخفي"}</span>
+            </button>
+
+            {/* زر التعديل */}
+            {!node.viewOnly && (
+              <button
+                onClick={() => handleToggle("editable")}
+                data-testid={`toggle-edit-${node.id}`}
+                title={state.editable ? "إيقاف التعديل" : "تفعيل التعديل"}
+                disabled={!state.visible}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all
+                  ${!state.visible
+                    ? "bg-slate-50 text-slate-300 cursor-not-allowed"
+                    : state.editable
+                      ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300"
+                      : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{state.editable ? "تعديل" : "قراءة"}</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* الأبناء */}
+      {hasChildren && expanded && (
+        <div className={depth === 0 ? "border-b border-slate-100" : ""}>
+          {node.children.map(child => (
+            <TreeNode
+              key={child.id} node={child} perms={perms}
+              onChange={onChange} depth={depth + 1} roleColor={roleColor}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── المكوّن الرئيسي ──
 export default function PermissionsManager() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
-  const [resetting, setResetting] = useState({});
   const [activeRole, setActiveRole] = useState("department_manager");
-  const [expandedNodes, setExpandedNodes] = useState({});
   const [pendingChanges, setPendingChanges] = useState({});
 
   const fetchPermissions = useCallback(async () => {
@@ -95,26 +278,11 @@ export default function PermissionsManager() {
         if (!init[role]) init[role] = { ...perms };
       });
       setPendingChanges(init);
-      // Expand all by default
-      const exp = {};
-      PERM_TREE.forEach(node => { if (node.children?.length > 0) exp[node.key] = true; });
-      setExpandedNodes(exp);
     } catch { toast.error("فشل جلب الصلاحيات"); }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchPermissions(); }, [fetchPermissions]);
-
-  const setPermLevel = (role, perm, level) => {
-    setPendingChanges(prev => {
-      const current = { ...(prev[role] || {}) };
-      if (level === "none") { delete current[perm]; }
-      else { current[perm] = level; }
-      return { ...prev, [role]: current };
-    });
-  };
-
-  const getPermLevel = (perm) => pendingChanges[activeRole]?.[perm] || "none";
 
   const saveRole = async (role) => {
     setSaving(prev => ({ ...prev, [role]: true }));
@@ -127,13 +295,11 @@ export default function PermissionsManager() {
   };
 
   const resetRole = async (role) => {
-    setResetting(prev => ({ ...prev, [role]: true }));
     try {
       await axios.post(`${API}/admin/role-permissions/${role}/reset`, {}, getAuthHeaders());
       toast.success("تمت إعادة التعيين");
       fetchPermissions();
     } catch { toast.error("فشلت إعادة التعيين"); }
-    finally { setResetting(prev => ({ ...prev, [role]: false })); }
   };
 
   const hasChanges = (role) => {
@@ -147,63 +313,33 @@ export default function PermissionsManager() {
   if (loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!data) return null;
 
-  const allPerms = data.all_permissions || {};
   const activePerms = pendingChanges[activeRole] || {};
   const readCount = Object.values(activePerms).filter(v => v === "read").length;
   const writeCount = Object.values(activePerms).filter(v => v === "write").length;
-  const totalActive = readCount + writeCount;
-
-  const LevelButton = ({ permKey, danger }) => {
-    const currentLevel = getPermLevel(permKey);
-    const permInfo = allPerms[permKey] || {};
-    const isReadOnly = permInfo.read_only;
-    const levels = isReadOnly ? ["none", "read"] : ["none", "read", "write"];
-    return (
-      <div className="flex gap-1 shrink-0">
-        {levels.map(level => {
-          const cfg = LEVEL_CONFIG[level];
-          const Icon = cfg.icon;
-          const isActive = currentLevel === level;
-          return (
-            <button key={level} type="button" onClick={() => setPermLevel(activeRole, permKey, level)}
-              data-testid={`${permKey}-${level}`} title={cfg.ar}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all
-                ${isActive ? cfg.activeBg + ' ' + cfg.color : 'bg-transparent text-muted-foreground hover:bg-muted'}`}>
-              <Icon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{cfg.ar}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-5" data-testid="permissions-manager" dir="rtl">
+      {/* العنوان */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-cairo font-bold text-xl flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" /> إدارة الصلاحيات
+            <Shield className="w-5 h-5 text-primary" /> الصلاحيات والتحكم
           </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">حدد مستوى الوصول لكل صفحة وصلاحية</p>
+          <p className="text-sm text-muted-foreground mt-0.5">تحكم بما يراه ويعدّله كل دور في الموقع</p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {Object.entries(LEVEL_CONFIG).map(([key, cfg]) => {
-            const Icon = cfg.icon;
-            return <span key={key} className="flex items-center gap-1"><Icon className={`w-3.5 h-3.5 ${cfg.color}`} />{cfg.ar}</span>;
-          })}
-          <Button variant="outline" size="sm" onClick={fetchPermissions} className="gap-1.5 mr-2">
-            <RefreshCw className="w-3.5 h-3.5" /> تحديث
-          </Button>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-blue-600" />ظاهر</span>
+          <span className="flex items-center gap-1"><EyeOff className="w-3.5 h-3.5 text-slate-400" />مخفي</span>
+          <span className="flex items-center gap-1"><Pencil className="w-3.5 h-3.5 text-emerald-600" />تعديل</span>
         </div>
       </div>
 
-      {/* Role Tabs */}
+      {/* تبويبات الأدوار */}
       <div className="flex gap-2 flex-wrap">
         {Object.entries(ROLE_CONFIG).map(([role, cfg]) => {
           const changed = hasChanges(role);
           const perms = pendingChanges[role] || {};
-          const count = Object.keys(perms).length;
+          const activeCount = Object.keys(perms).length;
           return (
             <button key={role} onClick={() => setActiveRole(role)} data-testid={`role-tab-${role}`}
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-cairo font-semibold text-sm transition-all
@@ -211,70 +347,34 @@ export default function PermissionsManager() {
               style={activeRole === role ? { borderColor: cfg.color, backgroundColor: cfg.bg, color: cfg.color } : {}}>
               <Shield className="w-4 h-4" />
               {cfg.ar}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeRole === role ? 'bg-white/60' : 'bg-muted'}`}>{count}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeRole === role ? 'bg-white/60' : 'bg-muted'}`}>{activeCount}</span>
               {changed && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-background" />}
             </button>
           );
         })}
       </div>
 
-      {/* Main Content */}
+      {/* المحتوى */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Tree */}
-        <div className="lg:col-span-2 space-y-2">
-          {PERM_TREE.map(node => {
-            const NodeIcon = node.icon || LayoutDashboard;
-            const nodeColor = node.color || "#64748b";
-            const nodeLabel = node.label_ar || allPerms[node.key]?.ar || node.key;
-            const hasKids = node.children?.length > 0;
-            const isExpanded = expandedNodes[node.key] !== false;
-            const isPage = node.key.startsWith("page_");
-            const activeKids = hasKids ? node.children.filter(c => activePerms[c.key]).length : 0;
-
-            return (
-              <Card key={node.key} className="overflow-hidden border">
-                {/* Parent node */}
-                <div className={`flex items-center justify-between p-3 ${hasKids ? 'cursor-pointer hover:bg-muted/30' : ''}`}
-                  onClick={() => hasKids && setExpandedNodes(prev => ({ ...prev, [node.key]: !prev[node.key] }))}>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: nodeColor + "18", color: nodeColor }}>
-                      <NodeIcon className="w-4 h-4" />
-                    </div>
-                    <span className="font-cairo font-bold text-sm">{nodeLabel}</span>
-                    {hasKids && <span className="text-[11px] text-muted-foreground">{activeKids}/{node.children.length}</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isPage && <LevelButton permKey={node.key} />}
-                    {hasKids && (isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />)}
-                  </div>
-                </div>
-
-                {/* Children */}
-                {hasKids && isExpanded && (
-                  <div className="border-t divide-y">
-                    {node.children.map(child => {
-                      const childLabel = allPerms[child.key]?.ar || child.key;
-                      const isDanger = child.danger || allPerms[child.key]?.danger;
-                      return (
-                        <div key={child.key} className={`flex items-center justify-between px-4 pr-12 py-2.5 ${isDanger ? 'bg-red-50/30 dark:bg-red-950/10' : ''}`} data-testid={`perm-${child.key}`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="w-1 h-4 rounded-full mr-1" style={{ backgroundColor: nodeColor + "40" }} />
-                            {isDanger && <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
-                            <span className={`text-sm font-cairo ${isDanger ? 'text-red-700 dark:text-red-400' : ''}`}>{childLabel}</span>
-                            {isDanger && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full border border-red-200 dark:bg-red-900/30 dark:text-red-400">حساسة</span>}
-                          </div>
-                          <LevelButton permKey={child.key} danger={isDanger} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
-            );
-          })}
+        {/* الشجرة */}
+        <div className="lg:col-span-2">
+          <Card className="overflow-hidden">
+            <div className="divide-y-0">
+              {SITE_TREE.map(node => (
+                <TreeNode
+                  key={node.id}
+                  node={node}
+                  perms={activePerms}
+                  onChange={(newPerms) => setPendingChanges(prev => ({ ...prev, [activeRole]: newPerms }))}
+                  depth={0}
+                  roleColor={ROLE_CONFIG[activeRole]?.color}
+                />
+              ))}
+            </div>
+          </Card>
         </div>
 
-        {/* Summary */}
+        {/* الملخص */}
         <div className="space-y-4">
           <Card>
             <CardContent className="p-4 space-y-4">
@@ -287,23 +387,19 @@ export default function PermissionsManager() {
                 <p className="text-xs text-muted-foreground mt-0.5">المستوى {ROLE_CONFIG[activeRole]?.level}</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2">
-                  <p className="text-xl font-bold text-emerald-600">{writeCount}</p>
-                  <p className="text-[9px] text-emerald-600/70">تعديل</p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2">
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-blue-50 rounded-lg p-2.5">
                   <p className="text-xl font-bold text-blue-600">{readCount}</p>
-                  <p className="text-[9px] text-blue-600/70">قراءة</p>
+                  <p className="text-[9px] text-blue-600/70 flex items-center justify-center gap-1"><Eye className="w-3 h-3" />مشاهدة</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2">
-                  <p className="text-xl font-bold text-slate-400">{Object.keys(allPerms).length - totalActive}</p>
-                  <p className="text-[9px] text-muted-foreground">بدون</p>
+                <div className="bg-emerald-50 rounded-lg p-2.5">
+                  <p className="text-xl font-bold text-emerald-600">{writeCount}</p>
+                  <p className="text-[9px] text-emerald-600/70 flex items-center justify-center gap-1"><Pencil className="w-3 h-3" />تعديل</p>
                 </div>
               </div>
 
               {hasChanges(activeRole) && (
-                <div className="flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+                <div className="flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> تغييرات غير محفوظة
                 </div>
               )}
@@ -315,9 +411,9 @@ export default function PermissionsManager() {
                 حفظ صلاحيات {ROLE_CONFIG[activeRole]?.ar}
               </Button>
 
-              <Button variant="outline" onClick={() => resetRole(activeRole)} disabled={resetting[activeRole]}
+              <Button variant="outline" onClick={() => resetRole(activeRole)}
                 className="w-full gap-1.5 text-muted-foreground" data-testid={`reset-${activeRole}`}>
-                {resetting[activeRole] ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                <RotateCcw className="w-4 h-4" />
                 إعادة للافتراضي
               </Button>
 
