@@ -18,7 +18,6 @@ import PlazasDepartment from "@/pages/PlazasDepartment";
 import GatesDepartment from "@/pages/GatesDepartment";
 import CrowdServicesDepartment from "@/pages/CrowdServicesDepartment";
 import MatafDepartment from "@/pages/MatafDepartment";
-import ReportsPage from "@/pages/ReportsPage";
 import AlertsPage from "@/pages/AlertsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
@@ -26,8 +25,6 @@ import ProhibitedItemsPage from "@/pages/ProhibitedItemsPage";
 import LoginPage from "@/pages/LoginPage";
 import AdminPage from "@/pages/AdminPage";
 import HaramMapPage from "@/pages/HaramMapPage";
-import MapManagementPage from "@/pages/MapManagementPage";
-import GateMapPage from "@/pages/GateMapPage";
 import DailySessionsPage from "@/pages/DailySessionsPage";
 import DailyGateSessionsPage from "@/pages/DailyGateSessionsPage";
 import FieldWorkerPage from "@/pages/FieldWorkerPage";
@@ -165,11 +162,6 @@ function AppRoutes() {
             <MatafDepartment />
           </DepartmentProtectedRoute>
         } />
-        <Route path="reports" element={
-          <PermissionProtectedRoute permission="page_reports">
-            <ReportsPage />
-          </PermissionProtectedRoute>
-        } />
         <Route path="alerts" element={
           <PermissionProtectedRoute permission="page_alerts">
             <AlertsPage />
@@ -190,16 +182,6 @@ function AppRoutes() {
           <DepartmentProtectedRoute department="haram_map">
             <HaramMapPage />
           </DepartmentProtectedRoute>
-        } />
-        <Route path="map-management" element={
-          <AdminProtectedRoute>
-            <MapManagementPage />
-          </AdminProtectedRoute>
-        } />
-        <Route path="gate-map" element={
-          <AdminProtectedRoute>
-            <GateMapPage />
-          </AdminProtectedRoute>
         } />
         <Route path="daily-sessions" element={
           <PermissionProtectedRoute permission="view_daily_sessions">
