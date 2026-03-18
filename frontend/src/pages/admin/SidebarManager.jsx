@@ -729,28 +729,6 @@ export default function SidebarManager() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="subtitle_ar">{language === 'ar' ? 'العنوان الفرعي (عربي)' : 'Subtitle (Arabic)'}</Label>
-                <Input
-                  id="subtitle_ar"
-                  value={formData.subtitle_ar}
-                  onChange={(e) => setFormData({ ...formData, subtitle_ar: e.target.value })}
-                  placeholder="مثال: نظرة شاملة على..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="subtitle_en">{language === 'ar' ? 'العنوان الفرعي (إنجليزي)' : 'Subtitle (English)'}</Label>
-                <Input
-                  id="subtitle_en"
-                  value={formData.subtitle_en}
-                  onChange={(e) => setFormData({ ...formData, subtitle_en: e.target.value })}
-                  placeholder="Example: Overview of..."
-                />
-              </div>
-            </div>
-
             <div>
               <Label htmlFor="href">{language === 'ar' ? 'الرابط' : 'URL Path'} *</Label>
               <Input
@@ -814,60 +792,37 @@ export default function SidebarManager() {
             </div>
 
             <div>
-              <Label htmlFor="parent">{language === 'ar' ? 'قائمة رئيسية (اختياري)' : 'Parent Menu (Optional)'}</Label>
+              <Label htmlFor="parent">{language === 'ar' ? 'تابع لـ (القائمة الأب)' : 'Parent Menu'}</Label>
               <Select
                 value={formData.parent_id}
                 onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={language === 'ar' ? 'لا يوجد (قائمة رئيسية)' : 'None (Main Menu)'} />
+                  <SelectValue placeholder={language === 'ar' ? 'بدون — عنصر رئيسي' : 'None (Root Item)'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    {language === 'ar' ? 'لا يوجد (قائمة رئيسية)' : 'None (Main Menu)'}
+                    {language === 'ar' ? 'بدون — عنصر رئيسي' : 'None (Root Item)'}
                   </SelectItem>
-                  {menuItems.filter(item => !item.parent_id).map((item) => (
-                    <SelectItem key={item.id} value={item.id}>
-                      {language === 'ar' ? item.name_ar : item.name_en}
-                    </SelectItem>
-                  ))}
+                  {menuItems
+                    .filter(item => item.id !== selectedItem?.id) // لا يكون أب لنفسه
+                    .sort((a, b) => (a.order || 0) - (b.order || 0))
+                    .map((item) => {
+                      const parentName = item.parent_id
+                        ? menuItems.find(p => p.id === item.parent_id)?.name_ar
+                        : null;
+                      const label = parentName
+                        ? `${parentName} ← ${item.name_ar}`
+                        : item.name_ar;
+                      return (
+                        <SelectItem key={item.id} value={item.id}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })
+                  }
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                {language === 'ar' 
-                  ? 'إذا اخترت قائمة رئيسية، سيظهر هذا القسم كقائمة فرعية تحتها'
-                  : 'If you select a parent menu, this item will appear as a submenu under it'
-                }
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="is_public">{language === 'ar' ? 'متاح للجميع' : 'Public Access'}</Label>
-                <Switch
-                  id="is_public"
-                  checked={formData.is_public}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_public: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="is_secondary">{language === 'ar' ? 'قائمة ثانوية (تحت الخط)' : 'Secondary Menu (Below Line)'}</Label>
-                <Switch
-                  id="is_secondary"
-                  checked={formData.is_secondary}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_secondary: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="admin_only">{language === 'ar' ? 'للمسؤولين فقط' : 'Admin Only'}</Label>
-                <Switch
-                  id="admin_only"
-                  checked={formData.admin_only}
-                  onCheckedChange={(checked) => setFormData({ ...formData, admin_only: checked })}
-                />
-              </div>
             </div>
 
             <DialogFooter>
