@@ -171,12 +171,7 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggl
       <TableCell className="text-center">
         {(() => {
           const IconComp = getIconComponent(item.icon);
-          return (
-            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200">
-              <IconComp className="w-4 h-4 text-slate-600" />
-              <span className="text-[10px] text-slate-500">{item.icon}</span>
-            </div>
-          );
+          return <IconComp className="w-5 h-5 text-slate-600 mx-auto" />;
         })()}
       </TableCell>
       <TableCell className="text-center">
