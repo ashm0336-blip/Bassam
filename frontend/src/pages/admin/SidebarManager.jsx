@@ -89,7 +89,7 @@ const DEPARTMENTS = [
 ];
 
 // Sortable Row Component
-function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpanded, onToggleExpand, hasChildren }) {
+function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpanded, onToggleExpand, hasChildren, depth = 0 }) {
   const {
     attributes,
     listeners,
@@ -106,9 +106,10 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
   };
 
   const isChild = !!item.parent_id;
+  const indentClass = depth === 2 ? 'pr-16' : isChild ? 'pr-8' : '';
 
   return (
-    <TableRow ref={setNodeRef} style={style} className={isChild ? 'bg-muted/30' : ''}>
+    <TableRow ref={setNodeRef} style={style} className={depth === 2 ? 'bg-muted/15' : isChild ? 'bg-muted/30' : ''}>
       <TableCell className="w-12 text-center">
         <div {...attributes} {...listeners} className="cursor-move hover:bg-muted p-1 rounded inline-block">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -116,19 +117,19 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
       </TableCell>
       <TableCell className="font-medium text-center">{item.order}</TableCell>
       <TableCell className="text-right">
-        <div className={`flex items-center gap-2 flex-row-reverse justify-end ${isChild ? 'pl-6' : ''}`}>
+        <div className={`flex items-center gap-2 flex-row-reverse justify-end ${indentClass}`}>
           <div className="text-right">
             <div className="font-medium">{language === 'ar' ? item.name_ar : item.name_en}</div>
             <div className="text-xs text-muted-foreground">
               {language === 'ar' ? item.name_en : item.name_ar}
             </div>
-            {item.parent_id && (
+            {isChild && (
               <Badge variant="outline" className="text-xs mt-1">
-                {language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu'}
+                {depth === 2 ? (language === 'ar' ? '↳↳ تبويب فرعي' : '↳↳ Sub-tab') : (language === 'ar' ? '↳ قائمة فرعية' : '↳ Submenu')}
               </Badge>
             )}
           </div>
-          {hasChildren && !isChild && (
+          {hasChildren && (
             <Button
               variant="ghost"
               size="sm"
@@ -230,7 +231,7 @@ export default function SidebarManager() {
     }));
   };
 
-  // Get flat list with nested items for display
+  // Get flat list with nested items for display (supports 3 levels)
   const getDisplayItems = () => {
     const result = [];
     const parentItems = menuItems.filter(item => !item.parent_id);
@@ -241,7 +242,20 @@ export default function SidebarManager() {
       // If parent is expanded, add its children
       if (expandedItems[parent.id]) {
         const children = menuItems.filter(item => item.parent_id === parent.id);
-        result.push(...children);
+        children.forEach(child => {
+          result.push(child);
+          // If child is expanded, add its grandchildren (level 3)
+          const grandchildren = menuItems.filter(item => item.parent_id === child.id);
+          if (grandchildren.length > 0) {
+            child._hasChildren = true;
+            if (expandedItems[child.id]) {
+              grandchildren.forEach(gc => {
+                gc._depth = 2;
+                result.push(gc);
+              });
+            }
+          }
+        });
       }
     });
     
@@ -614,7 +628,8 @@ export default function SidebarManager() {
                           onToggleActive={handleToggleActive}
                           isExpanded={isExpanded}
                           onToggleExpand={toggleExpand}
-                          hasChildren={children.length > 0}
+                          hasChildren={children.length > 0 || item._hasChildren}
+                          depth={item._depth || 0}
                         />
                       );
                     })}
