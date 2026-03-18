@@ -33,7 +33,9 @@ import {
   Shield,
   AlertCircle,
   GripVertical,
-  ChevronDown
+  ChevronDown,
+  Pencil,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,7 +91,7 @@ const DEPARTMENTS = [
 ];
 
 // Sortable Row Component
-function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpanded, onToggleExpand, hasChildren, depth = 0 }) {
+function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggleEditable, isExpanded, onToggleExpand, hasChildren, depth = 0 }) {
   const {
     attributes,
     listeners,
@@ -166,18 +168,32 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, isExpan
         </div>
       </TableCell>
       <TableCell className="text-center">
-        <Button
-          size="sm"
-          variant="ghost"
+        <button
           onClick={() => onToggleActive(item)}
-          className="h-7 w-7 p-0 mx-auto"
+          title={item.is_active ? (language === 'ar' ? 'إخفاء' : 'Hide') : (language === 'ar' ? 'إظهار' : 'Show')}
+          className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300
+            ${item.is_active
+              ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200 ring-1 ring-emerald-300'
+              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
         >
-          {item.is_active ? (
-            <Eye className="w-4 h-4 text-green-600" />
-          ) : (
-            <EyeOff className="w-4 h-4 text-muted-foreground" />
-          )}
-        </Button>
+          {item.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+        </button>
+      </TableCell>
+      <TableCell className="text-center">
+        {item.is_active && !item.is_public && item.href !== '/' ? (
+          <button
+            onClick={() => onToggleEditable(item)}
+            title={item.is_editable ? (language === 'ar' ? 'منع التعديل — عرض فقط' : 'Disable edit') : (language === 'ar' ? 'السماح بالتعديل' : 'Enable edit')}
+            className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300
+              ${item.is_editable
+                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 ring-1 ring-blue-300'
+                : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+          >
+            {item.is_editable ? <Pencil className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5" />}
+          </button>
+        ) : (
+          <span className="text-slate-300">—</span>
+        )}
       </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-2">
@@ -438,10 +454,29 @@ export default function SidebarManager() {
       );
       toast.success(language === 'ar' ? "تم تحديث الحالة" : "Status updated");
       fetchMenuItems();
-      refreshMenu(); // ✨ تحديث القائمة الجانبية فوراً
+      refreshMenu();
     } catch (error) {
       console.error("Error toggling status:", error);
       toast.error(language === 'ar' ? "فشل تحديث الحالة" : "Failed to update status");
+    }
+  };
+
+  const handleToggleEditable = async (item) => {
+    try {
+      const token = localStorage.getItem("token");
+      const newVal = !item.is_editable;
+      await axios.put(
+        `${API}/admin/sidebar-menu/${item.id}`,
+        { is_editable: newVal },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === 'ar'
+        ? (newVal ? "تم تفعيل صلاحية التعديل" : "تم تقييد التعديل — عرض فقط")
+        : (newVal ? "Edit enabled" : "View only"));
+      fetchMenuItems();
+      refreshMenu();
+    } catch (error) {
+      toast.error(language === 'ar' ? "فشل تحديث الصلاحية" : "Failed to update");
     }
   };
 
@@ -603,6 +638,7 @@ export default function SidebarManager() {
                       <TableHead className="text-center">{language === 'ar' ? 'الأيقونة' : 'Icon'}</TableHead>
                       <TableHead className="text-center">{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
                       <TableHead className="text-center">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead className="text-center">{language === 'ar' ? 'التعديل' : 'Edit'}</TableHead>
                       <TableHead className="text-center">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -626,6 +662,7 @@ export default function SidebarManager() {
                             setDeleteDialogOpen(true);
                           }}
                           onToggleActive={handleToggleActive}
+                          onToggleEditable={handleToggleEditable}
                           isExpanded={isExpanded}
                           onToggleExpand={toggleExpand}
                           hasChildren={children.length > 0 || item._hasChildren}
