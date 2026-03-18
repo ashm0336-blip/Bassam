@@ -183,7 +183,8 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggl
         {(() => {
           // صفحات عرض فقط — لا يظهر فيها زر التعديل
           const href = item.href || '';
-          const isViewOnly = href === '/' || item.name_ar === 'نظرة عامة' || item.is_public || (href.includes('tab=dashboard') && !href.includes('tab=dashboardX'));
+          const isParentDept = !item.parent_id && item.department; // الإدارة نفسها = نظرة عامة
+          const isViewOnly = href === '/' || item.is_public || isParentDept || (href.includes('tab=dashboard') && !href.includes('tab=dashboardX'));
           if (!item.is_active || isViewOnly) {
             return <span className="text-slate-300">—</span>;
           }
