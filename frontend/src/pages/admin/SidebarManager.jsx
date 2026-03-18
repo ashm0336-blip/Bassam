@@ -36,6 +36,12 @@ import {
   ChevronDown,
   Pencil,
   Lock,
+  LayoutDashboard, Map, ClipboardList, LayoutGrid, DoorOpen,
+  Users, Circle, FileText, Bell, Settings as SettingsIcon,
+  Calendar, BarChart3, PieChart, TrendingUp, Activity,
+  Home, User, UserCheck, Building, MapPin, Navigation,
+  Layers, List, Grid, Database, Archive, Folder,
+  CalendarDays, Clock, Tag, Zap, ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,6 +76,18 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Icon name → Component mapping
+const ICON_MAP = {
+  LayoutDashboard, Map, ClipboardList, LayoutGrid, DoorOpen,
+  Users, Circle, FileText, Bell, Settings: SettingsIcon, Shield,
+  Calendar, BarChart3, PieChart, TrendingUp, Activity,
+  Home, User, UserCheck, Building, MapPin, Navigation,
+  Layers, List, Grid, Database, Archive, Folder,
+  CalendarDays, Clock, Tag, Zap,
+};
+
+const getIconComponent = (iconName) => ICON_MAP[iconName] || Circle;
 
 // Popular Lucide icons for menu items
 const AVAILABLE_ICONS = [
@@ -143,29 +161,32 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggl
           )}
         </div>
       </TableCell>
-      <TableCell className="text-center text-xs">{item.href}</TableCell>
-      <TableCell className="text-center">
-        <Badge variant="outline">{item.icon}</Badge>
+      <TableCell className="text-center text-xs">
+        <a href={item.href} target="_blank" rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 transition-colors" dir="ltr">
+          {item.href}
+          <ExternalLink className="w-3 h-3 opacity-40" />
+        </a>
       </TableCell>
       <TableCell className="text-center">
-        <div className="flex flex-wrap gap-1 justify-center">
-          {item.is_public && (
-            <Badge variant="default" className="text-xs">
-              {language === 'ar' ? 'عام' : 'Public'}
-            </Badge>
-          )}
-          {item.admin_only && (
-            <Badge variant="destructive" className="text-xs">
-              <Shield className="w-3 h-3 ml-1" />
-              {language === 'ar' ? 'أدمن' : 'Admin'}
-            </Badge>
-          )}
-          {item.department && (
-            <Badge variant="secondary" className="text-xs">
-              {DEPARTMENTS.find(d => d.value === item.department)?.[`label_${language}`]}
-            </Badge>
-          )}
-        </div>
+        {(() => {
+          const IconComp = getIconComponent(item.icon);
+          return (
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200">
+              <IconComp className="w-4 h-4 text-slate-600" />
+              <span className="text-[10px] text-slate-500">{item.icon}</span>
+            </div>
+          );
+        })()}
+      </TableCell>
+      <TableCell className="text-center">
+        {item.department ? (
+          <Badge variant="secondary" className="text-xs">
+            {DEPARTMENTS.find(d => d.value === item.department)?.[`label_${language}`] || item.department}
+          </Badge>
+        ) : (
+          <span className="text-[10px] text-slate-400">{language === 'ar' ? 'عام' : 'Public'}</span>
+        )}
       </TableCell>
       <TableCell className="text-center">
         <button
