@@ -180,20 +180,26 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggl
         </button>
       </TableCell>
       <TableCell className="text-center">
-        {item.is_active && !item.is_public && item.href !== '/' ? (
-          <button
-            onClick={() => onToggleEditable(item)}
-            title={item.is_editable ? (language === 'ar' ? 'منع التعديل — عرض فقط' : 'Disable edit') : (language === 'ar' ? 'السماح بالتعديل' : 'Enable edit')}
-            className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300
-              ${item.is_editable
-                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 ring-1 ring-blue-300'
-                : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-          >
-            {item.is_editable ? <Pencil className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5" />}
-          </button>
-        ) : (
-          <span className="text-slate-300">—</span>
-        )}
+        {(() => {
+          // صفحات عرض فقط — لا يظهر فيها زر التعديل
+          const href = item.href || '';
+          const isViewOnly = href === '/' || item.name_ar === 'نظرة عامة' || item.is_public || (href.includes('tab=dashboard') && !href.includes('tab=dashboardX'));
+          if (!item.is_active || isViewOnly) {
+            return <span className="text-slate-300">—</span>;
+          }
+          return (
+            <button
+              onClick={() => onToggleEditable(item)}
+              title={item.is_editable ? (language === 'ar' ? 'منع التعديل — عرض فقط' : 'Disable edit') : (language === 'ar' ? 'السماح بالتعديل' : 'Enable edit')}
+              className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300
+                ${item.is_editable
+                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 ring-1 ring-blue-300'
+                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+            >
+              {item.is_editable ? <Pencil className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5" />}
+            </button>
+          );
+        })()}
       </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-2">
