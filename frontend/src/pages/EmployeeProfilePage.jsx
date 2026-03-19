@@ -106,7 +106,7 @@ export default function EmployeeProfilePage({ self = false }) {
                 {account?.role && (
                   <Badge variant="outline" className="text-xs">
                     <Shield className="w-3 h-3 ml-1" />
-                    {ROLE_LABELS[account.role] || account.role}
+                    {account.permission_group_name_ar || ROLE_LABELS[account.role] || account.role}
                   </Badge>
                 )}
               </div>

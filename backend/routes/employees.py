@@ -137,10 +137,12 @@ async def get_employees_availability(department: str, user: dict = Depends(get_c
 @router.get("/employees")
 async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
-    if user["role"] == "department_manager":
-        query["department"] = user.get("department")
-    elif department and user["role"] in ["system_admin", "general_manager"]:
+    if department:
         query["department"] = department
+    elif user["role"] not in ["system_admin"] and not user.get("permission_group_id"):
+        # No department filter and no group — show only user's department
+        if user.get("department"):
+            query["department"] = user.get("department")
     employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
     # إضافة حالة الحساب والدور ومجموعة الصلاحيات لكل موظف
     for emp in employees:
@@ -404,6 +406,11 @@ async def get_employee_profile(employee_id: str, user: dict = Depends(get_curren
     account = None
     if emp.get("national_id"):
         account = await db.users.find_one({"national_id": emp["national_id"]}, {"_id": 0, "password": 0})
+        # Add permission group name
+        if account and account.get("permission_group_id"):
+            grp = await db.permission_groups.find_one({"id": account["permission_group_id"]}, {"_id": 0, "name_ar": 1, "name_en": 1})
+            account["permission_group_name_ar"] = grp.get("name_ar", "") if grp else ""
+            account["permission_group_name_en"] = grp.get("name_en", "") if grp else ""
 
     # Get recent activity
     activities = await db.activity_logs.find(
