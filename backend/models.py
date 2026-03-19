@@ -190,6 +190,7 @@ class EmployeeUpdate(BaseModel):
     user_id: Optional[str] = None
     allowed_departments: Optional[List[str]] = None
     user_role: Optional[str] = None
+    permission_group_id: Optional[str] = None
 class ScheduleAssignment(BaseModel):
 
 # ============= Monthly Schedule Models =============

@@ -134,39 +134,39 @@ const ALL_ASSIGNABLE_ROLES = [
   { value: 'admin_staff',        ar: 'موظف إداري',   level: 1 },
 ];
 
-function RoleSelector({ emp, canChangeRoles, myLevel, onChangeRole, isAr }) {
+function RoleSelector({ emp, canChangeRoles, myLevel, onChangeRole, isAr, permGroups = [] }) {
   if (!emp.user_id) return <span className="text-[9px] text-slate-400" title="فعّل الحساب أولاً">—</span>;
-  const currentRole = emp.user_role || 'field_staff';
-  const assignable = ALL_ASSIGNABLE_ROLES.filter(r => r.level < myLevel);
+  const currentGroupId = emp.permission_group_id;
+  const currentGroup = permGroups.find(g => g.id === currentGroupId);
   if (!canChangeRoles) {
     return (
-      <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
-        {ROLE_LABELS_MAP[currentRole] || currentRole}
+      <span className="text-[10px] font-medium text-primary">
+        {currentGroup?.name_ar || 'بدون مجموعة'}
       </span>
     );
   }
-  return assignable.length > 0 ? (
-    <Select value={currentRole} onValueChange={(r) => onChangeRole(emp, r)}>
-      <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[90px] justify-center"
-        style={{ color: ROLE_COLORS[currentRole] }}
-        data-testid={`role-select-${emp.id}`}>
-        <SelectValue />
+  return (
+    <Select value={currentGroupId || "none"} onValueChange={(v) => onChangeRole(emp, v === "none" ? null : v)}>
+      <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[100px] justify-center text-primary"
+        data-testid={`group-select-${emp.id}`}>
+        <SelectValue placeholder="اختر مجموعة" />
       </SelectTrigger>
       <SelectContent dir="rtl">
-        {assignable.map(r => (
-          <SelectItem key={r.value} value={r.value} className="text-[11px]">
+        <SelectItem value="none" className="text-[11px]">
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <Shield className="w-3 h-3" /> بدون مجموعة
+          </div>
+        </SelectItem>
+        {permGroups.map(g => (
+          <SelectItem key={g.id} value={g.id} className="text-[11px]">
             <div className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3" style={{ color: ROLE_COLORS[r.value] }} />
-              {r.ar}
+              <Shield className="w-3 h-3 text-primary" />
+              {g.name_ar}
             </div>
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
-  ) : (
-    <span className="text-[10px] font-medium" style={{ color: ROLE_COLORS[currentRole] }}>
-      {ROLE_LABELS_MAP[currentRole] || currentRole}
-    </span>
   );
 }
 
@@ -208,7 +208,7 @@ function AvatarInitial({ name, size = "md" }) {
 
 // ── Employee Card — تصميم احترافي متناسق ──────────────────────
 function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
-    onEdit, onDelete, onAccountAction, onChangeRole, isAr }) {
+    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
   const avatarColors = ["#7c3aed","#047857","#0284c7","#b45309","#dc2626","#0f766e"];
@@ -294,7 +294,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
             <div className="flex items-center gap-1">
               <Shield className="w-3 h-3 text-violet-400" />
               <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
-                myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr}/>
+                myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr} permGroups={permGroups}/>
             </div>
           )}
         </div>
@@ -330,10 +330,11 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
 
   const emptyForm = {
     name:"", employee_number:"", national_id:"", job_title:"",
-    employment_type:"permanent", contact_phone:"", user_role:"field_staff",
+    employment_type:"permanent", contact_phone:"", permission_group_id:"",
     season:"", contract_end:"", allowed_departments:[department],
   };
   const [form, setForm] = useState(emptyForm);
+  const [permGroups, setPermGroups] = useState([]);
 
   // Live national ID check
   const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
@@ -366,8 +367,12 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/employees?department=${department}`, headers());
-      setEmployees(res.data);
+      const [empRes, grpRes] = await Promise.all([
+        axios.get(`${API}/employees?department=${department}`, headers()),
+        axios.get(`${API}/admin/permission-groups`, headers()).catch(() => ({ data: [] })),
+      ]);
+      setEmployees(empRes.data);
+      setPermGroups(grpRes.data);
     } catch { toast.error("فشل جلب بيانات الموظفين"); }
     finally { setLoading(false); }
   }, [department]);
@@ -422,16 +427,18 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
     finally { setActionConfirm(null); }
   };
 
-  // ── Change Role ────────────────────────────────────────────
-  const handleChangeRole = async (emp, newRole) => {
+  // ── Change Permission Group ────────────────────────────────
+  const handleChangeRole = async (emp, newGroupId) => {
     try {
       if (emp.user_id) {
-        await axios.put(`${API}/users/${emp.user_id}/role`, { role: newRole }, headers());
+        await axios.put(`${API}/admin/users/${emp.user_id}/permission-group`,
+          { permission_group_id: newGroupId }, headers());
       }
-      await axios.put(`${API}/employees/${emp.id}`, { user_role: newRole }, headers());
-      toast.success(`تم تغيير الصلاحية إلى: ${ROLE_LABELS_MAP[newRole] || newRole}`);
+      await axios.put(`${API}/employees/${emp.id}`, { permission_group_id: newGroupId }, headers());
+      const grpName = permGroups.find(g => g.id === newGroupId)?.name_ar || 'بدون مجموعة';
+      toast.success(`تم تغيير المجموعة إلى: ${grpName}`);
       fetchEmployees();
-    } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير الصلاحية"); }
+    } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير المجموعة"); }
   };
 
   // ── Open Dialog ───────────────────────────────────────────
@@ -444,7 +451,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         national_id: emp.national_id||"", job_title: emp.job_title||"",
         employment_type: emp.employment_type||"permanent",
         contact_phone: emp.contact_phone||emp.phone||"",
-        user_role: emp.user_role||"field_staff",
+        permission_group_id: emp.permission_group_id||"",
         season: emp.season||"", contract_end: emp.contract_end||"",
         allowed_departments: emp.allowed_departments || [department],
       });
@@ -468,6 +475,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         job_title: form.job_title, contact_phone: form.contact_phone||undefined,
         national_id: form.national_id||undefined,
         employment_type: form.employment_type,
+        permission_group_id: form.permission_group_id||undefined,
         season: form.season||undefined, contract_end: form.contract_end||undefined,
         department,
         allowed_departments: form.allowed_departments,
@@ -738,7 +746,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
               onDelete={(e) => { setDeleteTarget(e); setDeleteDialog(true); }}
               onAccountAction={handleAccountAction}
               onChangeRole={handleChangeRole}
-              isAr={isAr} />
+              isAr={isAr} permGroups={permGroups} />
           ))}
         </div>
       )}
@@ -1048,6 +1056,30 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             )}
 
             {/* الإدارات المسموحة */}
+            <div>
+              <Label className="text-[11px] font-semibold mb-2 block flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-primary"/>مجموعة الصلاحيات
+              </Label>
+              <Select value={form.permission_group_id || "none"} onValueChange={v => setForm({...form, permission_group_id: v === "none" ? "" : v})}>
+                <SelectTrigger className="h-9" data-testid="permission-group-select">
+                  <SelectValue placeholder="اختر مجموعة صلاحيات..." />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  <SelectItem value="none">بدون مجموعة (افتراضي)</SelectItem>
+                  {permGroups.map(g => (
+                    <SelectItem key={g.id} value={g.id}>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5 text-primary" />
+                        {g.name_ar}
+                        <span className="text-[9px] text-muted-foreground">({Object.values(g.page_permissions || {}).filter(p=>p.visible).length} صفحة)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[9px] text-muted-foreground mt-1">تحدد الصفحات اللي يشوفها ويقدر يعدّلها</p>
+            </div>
+
             <div>
               <Label className="text-[10px] font-semibold mb-1.5 block">الإدارات المسموحة</Label>
               <div className="grid grid-cols-2 gap-1.5">

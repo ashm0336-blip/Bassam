@@ -9,50 +9,51 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - **Auth**: JWT + bcrypt + group-based permissions
 - **Real-time**: WebSocket with JWT authentication
 
-## NEW Permissions System (March 19, 2026)
-### Architecture: Permission Groups + Individual Overrides
-- **permission_groups** collection: each group has name + page_permissions (href → {visible, editable})
-- Users get assigned a `permission_group_id` 
-- Users can optionally have `custom_permissions` that override group settings
+## Permissions System (March 19, 2026) — Group-Based
+### Architecture:
+- **permission_groups** collection: each group has name + `page_permissions` ({href: {visible, editable}})
+- Users assigned a `permission_group_id` on their user document
+- Optional `custom_permissions` per-user that override group settings
 - system_admin always has full access (hardcoded)
-- Sidebar filtering uses resolved permissions from group + custom
-- Real-time updates via WebSocket
+- Sidebar filtering uses resolved permissions: system_admin > custom > group > fallback
 
-### Default Groups (auto-seeded):
+### Default Groups (8, auto-seeded):
 1. مدير عام (49 pages, all editable)
-2. مدير إدارة التخطيط (10 pages)
-3. مدير إدارة المصليات (12 pages)
-4. مدير إدارة الأبواب (12 pages)
-5. مدير إدارة الساحات (10 pages)
-6. مدير خدمات الحشود (10 pages)
-7. مدير صحن المطاف (10 pages)
+2-7. مدير لكل إدارة (10-12 pages each)
 8. موظف ميداني (3 pages)
 
-### Permission Resolution Order:
-1. system_admin → all access
-2. custom_permissions (per user) → overrides group
-3. permission_group → base permissions
-4. No group → fallback to department-based visibility
+### Key Files:
+- `/app/backend/routes/perm_groups.py` — Groups CRUD + permission resolution + my-permissions
+- `/app/backend/seed_sidebar.py` — Auto-seed ALL system config (sidebar, dropdown, zones, groups)
+- `/app/backend/routes/settings.py` — Sidebar filtering using group permissions
+- `/app/backend/routes/employees.py` — Employee CRUD with permission_group_id sync
+- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — Group management UI
+- `/app/frontend/src/components/EmployeesList.jsx` — Employee list with group selector
 
 ## Auto-Seed System
-- `seed_sidebar.py` runs on every server startup
+- Runs on every server startup
 - Seeds: sidebar_menu (50), dropdown_options (30), zone_categories (15), permission_groups (8)
-- Full sync for sidebar_menu (drop + rebuild), idempotent for others
+- Full sync for sidebar_menu (drop + rebuild preserving role_visibility)
+- Ensures production matches preview 100% on deploy
 
-## Key Files
-- `/app/backend/routes/perm_groups.py` — NEW: Permission Groups CRUD + resolution
-- `/app/backend/seed_sidebar.py` — Auto-seed ALL system config
-- `/app/backend/routes/settings.py` — sidebar-menu filtering (uses new groups)
-- `/app/backend/routes/permissions.py` — LEGACY (empty, kept for import compat)
-- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — NEEDS UPDATE for groups
+## Completed (March 19, 2026):
+- Full permission groups backend (CRUD + resolution)
+- Permission groups management UI (admin page)
+- Group selector in employee add/edit form
+- Group selector in employee list table/cards
+- Fixed child page visibility bug (3-level depth)
+- Auto-seed for all system config data
+- CORS fix for deployment
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
-## In Progress
-- **Frontend for Permission Groups management** — needs new UI to replace old role-based permissions page
-
-## Pending
+## Pending:
+- Individual permissions override UI (tab in employee profile) — low priority, backend ready
 - Daily Prayer Hall Session auto-starts (P1)
 - Comparative Density Report (P0)
 - Gates Audit Log (P0)
+- Advanced Task Features (P1)
+- Full Attendance System (P1)
+- Push Notifications (P2)
+- Recycle Bin (P2)
