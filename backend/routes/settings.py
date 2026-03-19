@@ -260,141 +260,56 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     user_role = user.get("role")
     user_dept = user.get("department")
 
-    # Get user's permissions for page-level filtering
-    user_permissions = {}
+    # الأدمن يشوف كل شي
     if user_role == "system_admin":
-        from routes.permissions import ALL_PERMISSIONS
-        user_permissions = {k: "write" for k in ALL_PERMISSIONS.keys()}
-    else:
-        from routes.permissions import _normalize_permissions, DEFAULT_PERMISSIONS
-        doc = await db.role_permissions.find_one({"role": user_role}, {"_id": 0})
-        if doc:
-            user_permissions = _normalize_permissions(doc.get("permissions", {}))
-        else:
-            user_permissions = DEFAULT_PERMISSIONS.get(user_role, {})
+        return items
 
-    # Map sidebar items to page permissions by href pattern or name
-    PAGE_PERM_MAP = {
-        "daily-sessions": "page_daily_log",
-        "daily-gates": "page_daily_log",
-        "map-management": "page_settings",
-        "gate-map": "page_settings",
-        "?tab=transactions": "page_transactions",
-        "?tab=settings": "page_settings",
-        "?tab=employees": "page_employees",
-        "tasks": "page_transactions",
-        "alerts": "page_alerts",
-        "reports": "page_reports",
-        "field-worker": "page_field",
-        "/field": "page_field",
-        "employee-profile": "page_overview",
-    }
+    # المدير العام يشوف كل شي ما عدا اللي مخفية عنه
+    user_depts = user.get("allowed_departments", [user_dept] if user_dept else [])
 
-    # Names that map to page_overview
-    OVERVIEW_NAMES = ["نظرة عامة", "Overview"]
-    # Names that map to page_daily_log
-    DAILY_LOG_NAMES = ["السجل اليومي", "Daily Log", "المهام اليومية", "Daily Tasks"]
-    # Names that map to page_settings
-    SETTINGS_NAMES = ["الإعدادات", "Settings"]
-    # Notification names — requires page_alerts permission
-    NOTIFICATION_NAMES = ["الإشعارات", "Notifications"]
-    # Public items (visible to all logged-in users)
-    PUBLIC_NAMES = []
-    # Dashboard names
-    DASHBOARD_NAMES = ["لوحة التحكم", "Dashboard"]
+    def _is_visible(item):
+        """هل هذا العنصر ظاهر لهذا المستخدم؟"""
+        # فحص role_visibility
+        rv = item.get("role_visibility", {})
+        role_cfg = rv.get(user_role)
+        if role_cfg and not role_cfg.get("visible", True):
+            return False  # مخفي عن هذا الدور صراحة
 
-    def _has_page_perm(item):
-        """Check if user has permission for this sidebar item — strict mode"""
-        if user_role == "system_admin":
-            return True
-        href = item.get("href", "")
-        name = item.get("name_ar", "")
-        
-        # Public items — always visible
-        if name in PUBLIC_NAMES or item.get("is_public"):
+        dept = item.get("department", "")
+
+        # صفحات "الكل" — ظاهرة للجميع
+        if dept == "all" or not dept:
             return True
 
-        # Dashboard
-        if name in DASHBOARD_NAMES:
-            return "page_dashboard" in user_permissions
+        # صفحات "مسؤول النظام" — فقط للأدمن
+        if dept == "system_admin":
+            return False
 
-        # Notifications
-        if name in NOTIFICATION_NAMES:
-            return "page_alerts" in user_permissions
+        # صفحات الإدارات — فحص الوصول
+        if user_role == "general_manager":
+            return True
+        return dept in user_depts
 
-        # Check if it's an overview page by name
-        if name in OVERVIEW_NAMES:
-            return "page_overview" in user_permissions
-
-        # Check daily log names
-        if name in DAILY_LOG_NAMES:
-            return "page_daily_log" in user_permissions
-
-        # Check settings names
-        if name in SETTINGS_NAMES:
-            return "page_settings" in user_permissions
-        
-        # Check href patterns
-        for pattern, perm in PAGE_PERM_MAP.items():
-            if pattern in href:
-                return perm in user_permissions
-        
-        # Default: DENY — only explicitly allowed items are shown
-        return False
-
-    filtered_items = []
+    # فلترة العناصر الرئيسية
     accessible_parent_ids = set()
+    filtered = []
     for item in items:
         if item.get("parent_id"):
             continue
-        if item.get("admin_only") and user_role != "system_admin":
-            continue
-        if item.get("roles") and user_role not in item.get("roles"):
-            continue
-        # Public items — check specific permissions
-        if item.get("is_public"):
-            name = item.get("name_ar", "")
-            if name in DASHBOARD_NAMES and "page_dashboard" not in user_permissions:
-                continue
-            if name in NOTIFICATION_NAMES and "page_alerts" not in user_permissions:
-                continue
-            filtered_items.append(item)
-            accessible_parent_ids.add(item.get("id"))
-            continue
-        # Department sections — check allowed_departments
-        if item.get("department"):
-            if user_role in ["system_admin", "general_manager"]:
-                filtered_items.append(item)
-                accessible_parent_ids.add(item.get("id"))
-            else:
-                user_depts = user.get("allowed_departments", [user_dept] if user_dept else [])
-                if item.get("department") in user_depts:
-                    filtered_items.append(item)
-                    accessible_parent_ids.add(item.get("id"))
-            continue
-        # Standalone pages (no department, no parent) — must pass permission check
-        if _has_page_perm(item):
-            filtered_items.append(item)
-            accessible_parent_ids.add(item.get("id"))
+        if _is_visible(item):
+            filtered.append(item)
+            accessible_parent_ids.add(item["id"])
 
-    # Filter children by parent access AND page permissions
-    child_count = {}
+    # فلترة الأبناء (مستوى 2 + 3)
     for item in items:
-        if item.get("parent_id") and item.get("parent_id") in accessible_parent_ids:
-            if _has_page_perm(item):
-                filtered_items.append(item)
-                pid = item.get("parent_id")
-                child_count[pid] = child_count.get(pid, 0) + 1
+        pid = item.get("parent_id")
+        if not pid:
+            continue
+        if pid in accessible_parent_ids and _is_visible(item):
+            filtered.append(item)
+            accessible_parent_ids.add(item["id"])  # لدعم المستوى الثالث
 
-    # Remove parents with ZERO accessible children (empty sections)
-    filtered_items = [item for item in filtered_items if item.get("parent_id") or child_count.get(item.get("id"), 0) > 0 or not items_have_children(item.get("id"), items)]
-
-    return filtered_items
-
-
-def items_have_children(parent_id, all_items):
-    """Check if a parent item has any children in the full list"""
-    return any(i.get("parent_id") == parent_id for i in all_items)
+    return filtered
 
 
 @router.post("/admin/sidebar-menu")
