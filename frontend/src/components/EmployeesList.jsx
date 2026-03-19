@@ -14,6 +14,9 @@ import {
   Loader2, MoreVertical, User, Users, Briefcase, Calendar, Hash,
   RefreshCw, Filter, ChevronDown, Phone, Building2, Shield,
   Check, X, Info, UserCheck, CalendarDays, Clock, Zap,
+  Eye, EyeOff, Pencil, Lock, Settings,
+  LayoutDashboard, Navigation, DoorOpen, LayoutGrid as LayoutGridIcon,
+  Circle, Bell, MapPin,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -335,6 +338,10 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   };
   const [form, setForm] = useState(emptyForm);
   const [permGroups, setPermGroups] = useState([]);
+  const [customPermEmp, setCustomPermEmp] = useState(null);
+  const [customPerms, setCustomPerms] = useState({});
+  const [menuItems, setMenuItems] = useState([]);
+  const [savingCustom, setSavingCustom] = useState(false);
 
   // Live national ID check
   const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
@@ -367,12 +374,14 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
-      const [empRes, grpRes] = await Promise.all([
+      const [empRes, grpRes, menuRes] = await Promise.all([
         axios.get(`${API}/employees?department=${department}`, headers()),
         axios.get(`${API}/admin/permission-groups`, headers()).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/sidebar-menu`, headers()).catch(() => ({ data: [] })),
       ]);
       setEmployees(empRes.data);
       setPermGroups(grpRes.data);
+      setMenuItems(menuRes.data);
     } catch { toast.error("فشل جلب بيانات الموظفين"); }
     finally { setLoading(false); }
   }, [department]);
@@ -440,6 +449,61 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير المجموعة"); }
   };
+
+  // ── Custom Permissions Dialog ─────────────────────────────
+  const openCustomPerms = async (emp) => {
+    if (!emp.user_id) return toast.error("فعّل حساب الموظف أولاً");
+    setCustomPermEmp(emp);
+    // Fetch user's current custom_permissions
+    try {
+      const res = await axios.get(`${API}/employees/${emp.id}/profile`, headers());
+      setCustomPerms(res.data?.account?.custom_permissions || {});
+    } catch {
+      setCustomPerms({});
+    }
+  };
+
+  const saveCustomPerms = async () => {
+    if (!customPermEmp?.user_id) return;
+    setSavingCustom(true);
+    try {
+      await axios.put(`${API}/admin/users/${customPermEmp.user_id}/custom-permissions`,
+        { custom_permissions: customPerms }, headers());
+      toast.success("تم حفظ الصلاحيات الفردية");
+      setCustomPermEmp(null);
+      fetchEmployees();
+    } catch (e) { toast.error(e.response?.data?.detail || "فشل الحفظ"); }
+    finally { setSavingCustom(false); }
+  };
+
+  const toggleCustomPerm = (href, field) => {
+    setCustomPerms(prev => {
+      const current = prev[href] || {};
+      const updated = { ...current };
+      if (field === "visible") {
+        updated.visible = !updated.visible;
+        if (!updated.visible) updated.editable = false;
+      } else {
+        updated.editable = !updated.editable;
+      }
+      // If both false, remove the override
+      if (!updated.visible && !updated.editable) {
+        const next = { ...prev };
+        delete next[href];
+        return next;
+      }
+      return { ...prev, [href]: updated };
+    });
+  };
+
+  const removeCustomOverride = (href) => {
+    setCustomPerms(prev => {
+      const next = { ...prev };
+      delete next[href];
+      return next;
+    });
+  };
+
 
   // ── Open Dialog ───────────────────────────────────────────
   const handleOpenDialog = (emp=null) => {
@@ -880,6 +944,11 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                               <Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات
                             </DropdownMenuItem>
                           )}
+                          {canChangeRoles && emp.user_id && (
+                            <DropdownMenuItem onClick={() => openCustomPerms(emp)}>
+                              <Settings className="w-4 h-4 ml-2 text-violet-500"/>صلاحيات فردية
+                            </DropdownMenuItem>
+                          )}
                           {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
                             <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
                               <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN
@@ -1143,6 +1212,119 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionConfirm(null)}>إلغاء</Button>
             <Button onClick={executeAccountAction} className="gap-1.5">تأكيد</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Custom Permissions Dialog ─────────────────────── */}
+      <Dialog open={!!customPermEmp} onOpenChange={(open) => { if (!open) setCustomPermEmp(null); }}>
+        <DialogContent className="font-cairo sm:max-w-[600px] max-h-[85vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-violet-500" />
+              صلاحيات فردية — {customPermEmp?.name}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              تتجاوز صلاحيات المجموعة لهذا الموظف فقط
+              {(() => {
+                const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
+                return grp ? <Badge variant="outline" className="mr-2 text-[9px]"><Shield className="w-2.5 h-2.5 ml-1"/>{grp.name_ar}</Badge> : null;
+              })()}
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-1 mt-2">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground px-2 pb-1 border-b">
+              <span>الصفحة</span>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>ظاهر</span>
+                <span className="flex items-center gap-1"><Pencil className="w-3 h-3"/>تعديل</span>
+                <span className="w-8 text-center">حذف</span>
+              </div>
+            </div>
+
+            {(() => {
+              const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
+              const grpPerms = grp?.page_permissions || {};
+              const roots = menuItems.filter(i => !i.parent_id && i.department !== 'system_admin' && !i.admin_only)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+              return roots.map(root => {
+                const children = menuItems.filter(i => i.parent_id === root.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+                const allItems = [root, ...children];
+                children.forEach(c => {
+                  const gc = menuItems.filter(i => i.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+                  allItems.push(...gc);
+                });
+
+                return allItems.map(item => {
+                  const depth = !item.parent_id ? 0 : menuItems.find(p => p.id === item.parent_id)?.parent_id ? 2 : 1;
+                  const grpPerm = grpPerms[item.href] || { visible: false, editable: false };
+                  const custom = customPerms[item.href];
+                  const hasOverride = !!custom;
+                  const effectiveVisible = hasOverride ? custom.visible : grpPerm.visible;
+                  const effectiveEditable = hasOverride ? custom.editable : grpPerm.editable;
+
+                  return (
+                    <div key={item.id}
+                      className={`flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/30 transition-colors
+                        ${hasOverride ? 'bg-violet-50 ring-1 ring-violet-200' : ''}`}
+                      style={{ paddingRight: `${8 + depth * 20}px` }}>
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className={`text-[11px] font-cairo truncate ${hasOverride ? 'font-bold text-violet-700' : ''}`}>
+                          {item.name_ar}
+                        </span>
+                        {!hasOverride && grpPerm.visible && (
+                          <span className="text-[8px] text-muted-foreground">(من المجموعة)</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <button onClick={() => toggleCustomPerm(item.href, 'visible')}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all text-[10px]
+                            ${effectiveVisible
+                              ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-300'
+                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
+                          {effectiveVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        </button>
+                        <button onClick={() => effectiveVisible && toggleCustomPerm(item.href, 'editable')}
+                          disabled={!effectiveVisible}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                            ${!effectiveVisible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
+                              : effectiveEditable ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
+                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
+                          {effectiveEditable ? <Pencil className="w-3 h-3" /> : <Lock className="w-2.5 h-2.5" />}
+                        </button>
+                        <div className="w-8 text-center">
+                          {hasOverride && (
+                            <button onClick={() => removeCustomOverride(item.href)}
+                              className="text-red-400 hover:text-red-600 transition-colors" title="إزالة التخصيص">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              });
+            })()}
+          </div>
+
+          {Object.keys(customPerms).length > 0 && (
+            <div className="mt-3 px-2 py-2 bg-violet-50 rounded-lg">
+              <p className="text-[10px] text-violet-700 font-bold">
+                {Object.keys(customPerms).length} تخصيص فردي
+                <span className="font-normal text-violet-500 mr-1">— تتجاوز إعدادات المجموعة</span>
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="mt-3">
+            <Button variant="outline" onClick={() => setCustomPermEmp(null)}>إلغاء</Button>
+            <Button onClick={saveCustomPerms} disabled={savingCustom} className="gap-1.5 bg-violet-600 hover:bg-violet-700">
+              {savingCustom ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              حفظ الصلاحيات
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
