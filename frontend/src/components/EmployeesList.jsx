@@ -334,7 +334,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const emptyForm = {
     name:"", employee_number:"", national_id:"", job_title:"",
     employment_type:"permanent", contact_phone:"", permission_group_id:"",
-    season:"", contract_end:"", allowed_departments:[department],
+    season:"", contract_end:"",
   };
   const [form, setForm] = useState(emptyForm);
   const [permGroups, setPermGroups] = useState([]);
@@ -517,7 +517,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         contact_phone: emp.contact_phone||emp.phone||"",
         permission_group_id: emp.permission_group_id||"",
         season: emp.season||"", contract_end: emp.contract_end||"",
-        allowed_departments: emp.allowed_departments || [department],
       });
     } else {
       setEditEmp(null);
@@ -542,7 +541,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
         permission_group_id: form.permission_group_id||undefined,
         season: form.season||undefined, contract_end: form.contract_end||undefined,
         department,
-        allowed_departments: form.allowed_departments,
       };
       if (editEmp) {
         await axios.put(`${API}/employees/${editEmp.id}`, payload, headers());
@@ -1147,22 +1145,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                 </SelectContent>
               </Select>
               <p className="text-[9px] text-muted-foreground mt-1">تحدد الصفحات اللي يشوفها ويقدر يعدّلها</p>
-            </div>
-
-            <div>
-              <Label className="text-[10px] font-semibold mb-1.5 block">الإدارات المسموحة</Label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {Object.entries(DEPT_LABELS).map(([key, labels]) => (
-                  <label key={key} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border cursor-pointer transition-all text-[11px] ${form.allowed_departments?.includes(key) ? 'border-primary bg-primary/5 font-bold' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <input type="checkbox" className="rounded" checked={form.allowed_departments?.includes(key) || false}
-                      onChange={(e) => {
-                        const deps = form.allowed_departments || [];
-                        setForm({...form, allowed_departments: e.target.checked ? [...deps, key] : deps.filter(d=>d!==key)});
-                      }}/>
-                    {labels.ar}
-                  </label>
-                ))}
-              </div>
             </div>
 
             <DialogFooter className="mt-4">
