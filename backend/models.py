@@ -39,6 +39,8 @@ class UserResponse(BaseModel):
     account_status: str = "active"
     must_change_pin: bool = False
     employee_id: Optional[str] = None
+    permission_group_id: Optional[str] = None
+    permission_group_name: Optional[str] = None
     created_at: str
 
 class TokenResponse(BaseModel):

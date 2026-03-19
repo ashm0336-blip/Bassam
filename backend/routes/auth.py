@@ -147,6 +147,13 @@ async def login(request: Request, credentials: UserLogin):
 
     token = create_token(user["id"], user.get("email") or user.get("national_id", ""), user["role"], user.get("department"))
 
+    # Get permission group name
+    login_grp_name = None
+    login_grp_id = user.get("permission_group_id")
+    if login_grp_id:
+        login_grp = await db.permission_groups.find_one({"id": login_grp_id}, {"_id": 0, "name_ar": 1})
+        login_grp_name = login_grp.get("name_ar") if login_grp else None
+
     return TokenResponse(
         access_token=token,
         must_change_pin=must_change,
@@ -161,6 +168,8 @@ async def login(request: Request, credentials: UserLogin):
             account_status=user.get("account_status", "active"),
             must_change_pin=must_change,
             employee_id=user.get("employee_id"),
+            permission_group_id=login_grp_id,
+            permission_group_name=login_grp_name,
             created_at=user["created_at"],
         )
     )
@@ -254,6 +263,12 @@ async def update_account_status(user_id: str, data: AccountStatusUpdate, manager
 @router.get("/auth/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(get_current_user)):
     dept = user.get("department")
+    # Get permission group name
+    grp_name = None
+    grp_id = user.get("permission_group_id")
+    if grp_id:
+        grp = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1})
+        grp_name = grp.get("name_ar") if grp else None
     return UserResponse(
         id=user["id"],
         email=user.get("email"),
@@ -265,6 +280,8 @@ async def get_me(user: dict = Depends(get_current_user)):
         account_status=user.get("account_status", "active"),
         must_change_pin=user.get("must_change_pin", False),
         employee_id=user.get("employee_id"),
+        permission_group_id=grp_id,
+        permission_group_name=grp_name,
         created_at=user["created_at"],
     )
 

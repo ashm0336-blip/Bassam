@@ -118,7 +118,7 @@ export const Layout = () => {
 
   // Auto-expand department menu for department managers
   useEffect(() => {
-    if (autoExpanded || !user?.department || user?.role === 'system_admin' || user?.role === 'general_manager') return;
+    if (autoExpanded || !user?.department || user?.role === 'system_admin' || user?.permission_group_name) return;
     const deptParent = parentItems.find(item => item.department === user.department && childrenMap[item.id]?.length > 0);
     if (deptParent) {
       setExpandedMenuId(deptParent.id);
@@ -308,7 +308,7 @@ export const Layout = () => {
               <button onClick={() => navigate('/my-profile')} className="flex-1 min-w-0 text-right hover:opacity-80 transition-opacity cursor-pointer">
                 <p className="text-sm font-medium truncate">{user?.name || t('platformName')}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {ROLE_LABELS[user?.role]?.[language] || user?.role}
+                  {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
                 </p>
               </button>
               <Button
@@ -405,7 +405,7 @@ export const Layout = () => {
             <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="flex-1 min-w-0 text-right">
               <p className="text-sm font-medium truncate">{user?.name}</p>
               <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
-                {ROLE_LABELS[user?.role]?.[language] || user?.role}
+                {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
               </span>
             </button>
           </div>
@@ -508,7 +508,7 @@ export const Layout = () => {
             {headerSettings.show_user_name && user && (
               <div className="hidden lg:flex items-center gap-2 mr-2">
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user.role]?.color || 'bg-slate-100 text-slate-700'}`} data-testid="header-role-badge">
-                  {ROLE_LABELS[user.role]?.[language] || user.role}
+                  {user.permission_group_name || ROLE_LABELS[user.role]?.[language] || user.role}
                 </span>
                 <span className="text-sm font-medium">
                   {language === 'ar' ? headerSettings.custom_greeting_ar : headerSettings.custom_greeting_en}، {user.name}

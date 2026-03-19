@@ -49,24 +49,65 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="رمز غير صالح")
 
 
+async def _user_has_group_permission(user: dict, required_perms: list) -> bool:
+    """Check if user's permission group grants any of the required permissions."""
+    group_id = user.get("permission_group_id")
+    if not group_id:
+        return False
+    group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+    if not group:
+        return False
+    pp = group.get("page_permissions", {})
+    # Check if user has editable access to any page that maps to required perms
+    for href, perm in pp.items():
+        if perm.get("editable"):
+            return True
+    return False
+
+
 async def require_admin(user: dict = Depends(get_current_user)):
-    if user["role"] not in ("system_admin", "general_manager"):
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مسؤول النظام أو المدير العام")
-    return user
+    """System admin OR user with admin-level group permissions."""
+    if user["role"] == "system_admin":
+        return user
+    # Check if user's group has admin-level access (all pages editable)
+    group_id = user.get("permission_group_id")
+    if group_id:
+        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+        if group:
+            pp = group.get("page_permissions", {})
+            editable_count = sum(1 for v in pp.values() if v.get("editable"))
+            if editable_count >= 20:  # Has broad admin-like access
+                return user
+    if user["role"] == "general_manager":
+        return user
+    raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
 
 async def require_department_manager(user: dict = Depends(get_current_user)):
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"]:
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية - يتطلب صلاحيات مدير أو أعلى")
-    return user
+    """User with department management permissions (via role OR group)."""
+    if user["role"] in ["system_admin", "general_manager", "department_manager"]:
+        return user
+    # Check group permissions
+    group_id = user.get("permission_group_id")
+    if group_id:
+        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+        if group:
+            pp = group.get("page_permissions", {})
+            has_edit = any(v.get("editable") for v in pp.values())
+            if has_edit:
+                return user
+    raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
 
 def check_department_access(user: dict, department: str) -> bool:
     if user["role"] in ["system_admin", "general_manager"]:
         return True
+    # Group-based: if user has permission_group_id, they have access based on group
+    if user.get("permission_group_id"):
+        return True
     if user["role"] == "department_manager":
         return user.get("department") == department
-    return False
+    return user.get("department") == department
 
 
 async def log_activity(action: str, user: dict, target: str = None, details: str = None):
@@ -76,7 +117,7 @@ async def log_activity(action: str, user: dict, target: str = None, details: str
             "action": action,
             "user_id": user["id"],
             "user_name": user["name"],
-            "user_email": user["email"],
+            "user_email": user.get("email"),
             "target": target,
             "details": details,
             "timestamp": datetime.now(timezone.utc).isoformat()

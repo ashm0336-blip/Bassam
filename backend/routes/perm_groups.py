@@ -222,8 +222,16 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
                 for key in mapping.get("view", []):
                     permissions[key] = "write"
 
+    # Get group name
+    group_name = None
+    grp_id = user.get("permission_group_id")
+    if grp_id:
+        grp_doc = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1})
+        group_name = grp_doc.get("name_ar") if grp_doc else None
+
     return {"permissions": permissions, "role": role,
-            "permission_group_id": user.get("permission_group_id")}
+            "permission_group_id": grp_id,
+            "permission_group_name": group_name}
 
 
 # ═══════════════════════════════════════════

@@ -97,6 +97,8 @@ export const AuthProvider = ({ children }) => {
         ...prev,
         ...meRes.data,
         permissions: permRes.data.permissions || prev.permissions || [],
+        permission_group_id: permRes.data.permission_group_id || prev.permission_group_id || null,
+        permission_group_name: permRes.data.permission_group_name || prev.permission_group_name || null,
       } : prev);
     } catch {}
   }, [token]);
@@ -117,14 +119,18 @@ export const AuthProvider = ({ children }) => {
 
       // Fetch effective permissions
       let permissions = [];
+      let permission_group_id = null;
+      let permission_group_name = null;
       try {
         const permRes = await axios.get(`${API}/auth/my-permissions`, {
           headers: { Authorization: `Bearer ${access_token}` }
         });
         permissions = permRes.data.permissions || [];
+        permission_group_id = permRes.data.permission_group_id || null;
+        permission_group_name = permRes.data.permission_group_name || null;
       } catch {}
 
-      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions };
+      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, permission_group_id, permission_group_name };
       prevRoleRef.current = userData.role;
       setUser(fullUser);
       return { success: true, must_change_pin, user: fullUser };
@@ -157,7 +163,11 @@ export const AuthProvider = ({ children }) => {
     if (!token) return;
     try {
       const res = await axios.get(`${API}/auth/my-permissions`);
-      setUser(prev => prev ? { ...prev, permissions: res.data.permissions || [] } : prev);
+      setUser(prev => prev ? { ...prev,
+        permissions: res.data.permissions || [],
+        permission_group_id: res.data.permission_group_id || null,
+        permission_group_name: res.data.permission_group_name || null,
+      } : prev);
     } catch {}
   }, [token]);
 
@@ -193,7 +203,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const canAddAlerts = () => {
-    return user?.role === 'system_admin' || user?.role === 'department_manager' || user?.role === 'field_staff' || user?.role === 'shift_supervisor';
+    if (user?.role === 'system_admin') return true;
+    return hasPermission('page_alerts', 'write');
   };
 
   const isReadOnly = () => {
