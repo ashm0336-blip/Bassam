@@ -11,11 +11,22 @@ from employee_status import build_employee_statuses, aggregate_statuses, get_sa_
 router = APIRouter()
 
 
-def _can_manage_employees(user: dict) -> bool:
-    """Check if user can manage employees via role OR group."""
+async def _can_manage_employees(user: dict) -> bool:
+    """Check if user can manage employees via role OR group permissions."""
     if user["role"] in ["system_admin", "general_manager", "department_manager"]:
         return True
-    return bool(user.get("permission_group_id"))
+    group_id = user.get("permission_group_id")
+    if not group_id:
+        return False
+    group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+    if not group:
+        return False
+    pp = group.get("page_permissions", {})
+    # Check if any Staff page is editable
+    for href, perm in pp.items():
+        if "sub=Staff" in href and perm.get("editable"):
+            return True
+    return False
 
 
 async def _auto_create_user_account(employee_id: str, employee_doc: dict):
@@ -171,7 +182,7 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
 async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_current_user)):
     if user["role"] == "department_manager" and not user.get("permission_group_id") and employee.department != user.get("department"):
         raise HTTPException(status_code=403, detail="يمكنك إضافة موظفين لقسمك فقط")
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
     # التحقق من تكرار رقم الهوية
@@ -217,7 +228,7 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     if user["role"] == "department_manager" and existing["department"] != user.get("department"):
         raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي قسمك فقط")
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     dump = employee.model_dump()
     update_data = {}
@@ -257,7 +268,7 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     if user["role"] == "department_manager" and emp["department"] != user.get("department"):
         raise HTTPException(status_code=403, detail="إدارتك فقط")
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="غير مصرح")
 
     uid = emp.get("user_id")
@@ -363,7 +374,7 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     if user["role"] == "department_manager" and existing["department"] != user.get("department"):
         raise HTTPException(status_code=403, detail="يمكنك حذف موظفي قسمك فقط")
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
     # ──── حذف شامل: تنظيف كل البيانات المرتبطة بالموظف ────
@@ -496,7 +507,7 @@ async def get_schedule(department: str, month: str, user: dict = Depends(get_cur
 
 @router.post("/admin/schedules")
 async def create_schedule(data: MonthlyScheduleCreate, user: dict = Depends(get_current_user)):
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     existing = await db.monthly_schedules.find_one({"department": data.department, "month": data.month}, {"_id": 0})
     if existing:
@@ -531,7 +542,7 @@ async def create_schedule(data: MonthlyScheduleCreate, user: dict = Depends(get_
 
 @router.put("/admin/schedules/{schedule_id}/assignment/{employee_id}")
 async def update_assignment(schedule_id: str, employee_id: str, data: ScheduleAssignmentUpdate, user: dict = Depends(get_current_user)):
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
     if not schedule:
@@ -571,7 +582,7 @@ async def update_assignment(schedule_id: str, employee_id: str, data: ScheduleAs
 
 @router.put("/admin/schedules/{schedule_id}/status")
 async def update_schedule_status(schedule_id: str, status: str = "active", user: dict = Depends(get_current_user)):
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
     if not schedule:
@@ -612,7 +623,7 @@ async def unlock_schedule(schedule_id: str, user: dict = Depends(get_current_use
 
 @router.delete("/admin/schedules/{schedule_id}")
 async def delete_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
-    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not _can_manage_employees(user):
+    if user["role"] not in ["system_admin", "general_manager", "department_manager"] and not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     schedule = await db.monthly_schedules.find_one({"id": schedule_id}, {"_id": 0})
     if not schedule:
