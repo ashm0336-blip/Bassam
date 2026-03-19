@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useRealtimeRefresh } from './WebSocketContext';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -50,6 +51,9 @@ export const SidebarProvider = ({ children }) => {
       fetchMenuItems();
     }
   }, [user, fetchMenuItems]);
+
+  // تحديث السايدبار لحظياً عند تغيير الصلاحيات
+  useRealtimeRefresh(["permissions", "settings"], refreshMenu);
 
   const value = {
     menuItems,
