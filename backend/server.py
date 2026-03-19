@@ -165,7 +165,7 @@ async def startup_db_client():
     from auth import hash_password
     import uuid
     from datetime import datetime, timezone
-    from seed_sidebar import seed_sidebar_menu
+    from seed_sidebar import run_all_seeds
 
     for attempt in range(5):
         try:
@@ -186,8 +186,9 @@ async def startup_db_client():
             else:
                 logger.info(f"✅ Database connected — {count} user(s) found")
 
-            # Seed sidebar menu (idempotent — safe on every start)
-            await seed_sidebar_menu(db)
+            # Seed ALL system config data (idempotent — safe on every start)
+            logger.info("📋 Running system data seeds...")
+            await run_all_seeds(db)
             break
         except Exception as e:
             logger.warning(f"⚠️ Startup DB attempt {attempt + 1}/5 failed: {e}")

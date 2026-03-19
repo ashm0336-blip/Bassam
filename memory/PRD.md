@@ -20,6 +20,13 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - Backend maps role_visibility to permission keys via MENU_TO_PERM_MAP
 - Frontend canWrite/canRead work unchanged (data source changed)
 
+## Auto-Seed System (NEW - March 19, 2026)
+- **seed_sidebar.py** runs on every server startup
+- Seeds 3 collections: sidebar_menu (50), dropdown_options (30), zone_categories (15)
+- Fully idempotent — skips existing items, only adds missing ones
+- Ensures production DB matches preview 100% on every deploy
+- Also patches missing fields (role_visibility, is_editable) on existing items
+
 ## Site Structure (50 items, 3 levels)
 - 10 root pages (Dashboard, 6 departments, Field, Notifications, Admin)
 - Each department: Daily Tasks + Settings (+ Daily Log for some)
@@ -30,11 +37,13 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - Sidebar filtering: role_visibility + department access (allowed_departments)
 - Employee deletion cascades to: users, tasks, schedules, alerts
 - Employee update syncs name/department to users collection
+- CORS: allow_origins=["*"] for deployment compatibility
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
 ## Key Files
+- `/app/backend/seed_sidebar.py` — Auto-seed ALL system config on startup
 - `/app/backend/routes/permissions.py` — MENU_TO_PERM_MAP, my-permissions endpoint
 - `/app/backend/routes/settings.py` — sidebar-menu filtering by role_visibility
 - `/app/backend/ws_manager.py` — WebSocket broadcast (permissions channel)
@@ -44,3 +53,15 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - `/app/frontend/src/context/AuthContext.jsx` — canWrite/canRead, WebSocket refresh
 - `/app/frontend/src/context/SidebarContext.jsx` — WebSocket refresh on permissions change
 - `/app/frontend/src/components/Layout.jsx` — sidebar rendering, department click behavior
+
+## Pending Issues
+- Daily Prayer Hall Session auto-starts (P1)
+- Incorrect "Early Finished" task counters (P1 - user verification pending)
+
+## Upcoming Tasks
+- P0: Comparative Density Report
+- P0: Gates Audit Log
+- P1: Advanced Task Features (recurring, templates, comments)
+- P1: Full Attendance System
+- P2: Push Notifications
+- P2: Recycle Bin
