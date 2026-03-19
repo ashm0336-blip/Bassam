@@ -6,62 +6,53 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 ## Tech Stack
 - **Backend**: FastAPI + MongoDB + WebSocket + slowapi
 - **Frontend**: React (Vite) + Shadcn UI + WebSocket Client
-- **Auth**: JWT + bcrypt + role-based + department-based
+- **Auth**: JWT + bcrypt + group-based permissions
 - **Real-time**: WebSocket with JWT authentication
 
-## Permissions System (NEW - March 2026)
-- Based on `role_visibility` stored on each sidebar menu item
-- Each item has `{role: {visible: true/false, editable: true/false}}`
-- `visible: false` = page hidden from sidebar + inaccessible
-- `editable: false` = view only (no add/edit/delete buttons)
-- `editable: true` = full access (all buttons visible)
-- Changes reflect instantly via WebSocket (no refresh needed)
-- Admin manages from: إدارة النظام → الصلاحيات والتحكم
-- Backend maps role_visibility to permission keys via MENU_TO_PERM_MAP
-- Frontend canWrite/canRead work unchanged (data source changed)
+## NEW Permissions System (March 19, 2026)
+### Architecture: Permission Groups + Individual Overrides
+- **permission_groups** collection: each group has name + page_permissions (href → {visible, editable})
+- Users get assigned a `permission_group_id` 
+- Users can optionally have `custom_permissions` that override group settings
+- system_admin always has full access (hardcoded)
+- Sidebar filtering uses resolved permissions from group + custom
+- Real-time updates via WebSocket
 
-## Auto-Seed System (NEW - March 19, 2026)
-- **seed_sidebar.py** runs on every server startup
-- Seeds 3 collections: sidebar_menu (50), dropdown_options (30), zone_categories (15)
-- Fully idempotent — skips existing items, only adds missing ones
-- Ensures production DB matches preview 100% on every deploy
-- Also patches missing fields (role_visibility, is_editable) on existing items
+### Default Groups (auto-seeded):
+1. مدير عام (49 pages, all editable)
+2. مدير إدارة التخطيط (10 pages)
+3. مدير إدارة المصليات (12 pages)
+4. مدير إدارة الأبواب (12 pages)
+5. مدير إدارة الساحات (10 pages)
+6. مدير خدمات الحشود (10 pages)
+7. مدير صحن المطاف (10 pages)
+8. موظف ميداني (3 pages)
 
-## Site Structure (50 items, 3 levels)
-- 10 root pages (Dashboard, 6 departments, Field, Notifications, Admin)
-- Each department: Daily Tasks + Settings (+ Daily Log for some)
-- Settings sub-tabs: Staff, Monthly Schedule, Shifts, Maps (+ Gates Data / Categories)
+### Permission Resolution Order:
+1. system_admin → all access
+2. custom_permissions (per user) → overrides group
+3. permission_group → base permissions
+4. No group → fallback to department-based visibility
 
-## Key Architecture
-- `require_admin` allows system_admin AND general_manager
-- Sidebar filtering: role_visibility + department access (allowed_departments)
-- Employee deletion cascades to: users, tasks, schedules, alerts
-- Employee update syncs name/department to users collection
-- CORS: allow_origins=["*"] for deployment compatibility
+## Auto-Seed System
+- `seed_sidebar.py` runs on every server startup
+- Seeds: sidebar_menu (50), dropdown_options (30), zone_categories (15), permission_groups (8)
+- Full sync for sidebar_menu (drop + rebuild), idempotent for others
+
+## Key Files
+- `/app/backend/routes/perm_groups.py` — NEW: Permission Groups CRUD + resolution
+- `/app/backend/seed_sidebar.py` — Auto-seed ALL system config
+- `/app/backend/routes/settings.py` — sidebar-menu filtering (uses new groups)
+- `/app/backend/routes/permissions.py` — LEGACY (empty, kept for import compat)
+- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — NEEDS UPDATE for groups
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
-## Key Files
-- `/app/backend/seed_sidebar.py` — Auto-seed ALL system config on startup
-- `/app/backend/routes/permissions.py` — MENU_TO_PERM_MAP, my-permissions endpoint
-- `/app/backend/routes/settings.py` — sidebar-menu filtering by role_visibility
-- `/app/backend/ws_manager.py` — WebSocket broadcast (permissions channel)
-- `/app/backend/auth.py` — require_admin (system_admin + general_manager)
-- `/app/backend/models.py` — SidebarMenuItemUpdate with role_visibility, is_editable
-- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — unified permissions + sidebar management
-- `/app/frontend/src/context/AuthContext.jsx` — canWrite/canRead, WebSocket refresh
-- `/app/frontend/src/context/SidebarContext.jsx` — WebSocket refresh on permissions change
-- `/app/frontend/src/components/Layout.jsx` — sidebar rendering, department click behavior
+## In Progress
+- **Frontend for Permission Groups management** — needs new UI to replace old role-based permissions page
 
-## Pending Issues
+## Pending
 - Daily Prayer Hall Session auto-starts (P1)
-- Incorrect "Early Finished" task counters (P1 - user verification pending)
-
-## Upcoming Tasks
-- P0: Comparative Density Report
-- P0: Gates Audit Log
-- P1: Advanced Task Features (recurring, templates, comments)
-- P1: Full Attendance System
-- P2: Push Notifications
-- P2: Recycle Bin
+- Comparative Density Report (P0)
+- Gates Audit Log (P0)

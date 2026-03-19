@@ -264,31 +264,26 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
     if user_role == "system_admin":
         return items
 
-    # المدير العام يشوف كل شي ما عدا اللي مخفية عنه
-    user_depts = user.get("allowed_departments", [user_dept] if user_dept else [])
+    # Resolve permissions from group + custom
+    from routes.perm_groups import resolve_user_page_permissions
+    page_perms = await resolve_user_page_permissions(user)
 
     def _is_visible(item):
-        """هل هذا العنصر ظاهر لهذا المستخدم؟"""
-        # فحص role_visibility
-        rv = item.get("role_visibility", {})
-        role_cfg = rv.get(user_role)
-        if role_cfg and not role_cfg.get("visible", True):
-            return False  # مخفي عن هذا الدور صراحة
-
-        dept = item.get("department", "")
-
-        # صفحات "الكل" — ظاهرة للجميع
-        if dept == "all" or not dept:
-            return True
-
-        # صفحات "مسؤول النظام" — فقط للأدمن
-        if dept == "system_admin":
+        href = item.get("href", "")
+        perm = page_perms.get(href)
+        if perm:
+            return perm.get("visible", False)
+        # Fallback: admin-only pages hidden for non-admin
+        if item.get("admin_only") or item.get("department") == "system_admin":
             return False
-
-        # صفحات الإدارات — فحص الوصول
-        if user_role == "general_manager":
-            return True
-        return dept in user_depts
+        # No group assigned yet — show pages in user's department
+        if not user.get("permission_group_id") and not user.get("custom_permissions"):
+            dept = item.get("department", "")
+            user_depts = user.get("allowed_departments", [user_dept] if user_dept else [])
+            if dept == "all" or not dept:
+                return True
+            return dept in user_depts
+        return False
 
     # فلترة العناصر الرئيسية (الجذور)
     accessible_parent_ids = set()

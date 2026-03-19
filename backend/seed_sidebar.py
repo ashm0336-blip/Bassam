@@ -164,6 +164,7 @@ async def run_all_seeds(db):
     await _sync_sidebar_menu(db)
     await _seed_dropdown_options(db)
     await _seed_zone_categories(db)
+    await _seed_default_permission_groups(db)
 
 
 async def _sync_sidebar_menu(db):
@@ -254,3 +255,140 @@ async def _seed_zone_categories(db):
         logger.info(f"  zone_categories: +{inserted} inserted (total: {total})")
     else:
         logger.info(f"  zone_categories: {total} items OK")
+
+
+# ═══════════════════════════════════════════════════════════
+#  DEFAULT PERMISSION GROUPS
+# ═══════════════════════════════════════════════════════════
+
+def _build_dept_pages(dept_key):
+    """Build page_permissions for a single department (visible + editable)."""
+    bh = DEPT_HREF[dept_key]
+    pages = {
+        "/": {"visible": True, "editable": False},
+        bh: {"visible": True, "editable": True},
+        f"{bh}?tab=transactions": {"visible": True, "editable": True},
+        f"{bh}?tab=settings": {"visible": True, "editable": True},
+        f"{bh}?tab=settings&sub=Staff": {"visible": True, "editable": True},
+        f"{bh}?tab=settings&sub=MonthlySchedule": {"visible": True, "editable": True},
+        f"{bh}?tab=settings&sub=Shifts": {"visible": True, "editable": True},
+        f"{bh}?tab=settings&sub=Maps": {"visible": True, "editable": True},
+        "/notifications": {"visible": True, "editable": False},
+        "/field": {"visible": True, "editable": True},
+    }
+    if dept_key == "haram_map":
+        pages["/daily-sessions"] = {"visible": True, "editable": True}
+        pages[f"{bh}?tab=settings&sub=Categories"] = {"visible": True, "editable": True}
+    elif dept_key == "gates":
+        pages["/daily-gates"] = {"visible": True, "editable": True}
+        pages[f"{bh}?tab=settings&sub=GatesData"] = {"visible": True, "editable": True}
+    return pages
+
+
+def _build_all_pages_visible(editable=False):
+    """Build page_permissions with ALL pages visible."""
+    items = _sidebar_items()
+    return {item["href"]: {"visible": True, "editable": editable} for item in items
+            if item.get("department") != "system_admin" and not item.get("admin_only")}
+
+
+DEFAULT_GROUPS = [
+    {
+        "name_ar": "مدير عام",
+        "name_en": "General Manager",
+        "description_ar": "يشوف كل الإدارات مع صلاحية التعديل",
+        "is_system": False,
+        "page_permissions": "_all_editable",
+    },
+    {
+        "name_ar": "مدير إدارة التخطيط",
+        "name_en": "Planning Manager",
+        "description_ar": "مدير إدارة تخطيط خدمات الحشود",
+        "is_system": False,
+        "page_permissions": "_dept_planning",
+    },
+    {
+        "name_ar": "مدير إدارة المصليات",
+        "name_en": "Prayer Areas Manager",
+        "description_ar": "مدير إدارة المصليات",
+        "is_system": False,
+        "page_permissions": "_dept_haram_map",
+    },
+    {
+        "name_ar": "مدير إدارة الأبواب",
+        "name_en": "Gates Manager",
+        "description_ar": "مدير إدارة الأبواب",
+        "is_system": False,
+        "page_permissions": "_dept_gates",
+    },
+    {
+        "name_ar": "مدير إدارة الساحات",
+        "name_en": "Plazas Manager",
+        "description_ar": "مدير إدارة الساحات",
+        "is_system": False,
+        "page_permissions": "_dept_plazas",
+    },
+    {
+        "name_ar": "مدير خدمات الحشود",
+        "name_en": "Crowd Services Manager",
+        "description_ar": "مدير خدمات حشود الحرم",
+        "is_system": False,
+        "page_permissions": "_dept_crowd_services",
+    },
+    {
+        "name_ar": "مدير صحن المطاف",
+        "name_en": "Mataf Manager",
+        "description_ar": "مدير صحن المطاف",
+        "is_system": False,
+        "page_permissions": "_dept_mataf",
+    },
+    {
+        "name_ar": "موظف ميداني",
+        "name_en": "Field Staff",
+        "description_ar": "موظف ميداني — عرض فقط مع صلاحية الواجهة الميدانية",
+        "is_system": False,
+        "page_permissions": "_field_only",
+    },
+]
+
+
+async def _seed_default_permission_groups(db):
+    existing = await db.permission_groups.find({}, {"_id": 0, "name_en": 1}).to_list(100)
+    existing_names = {g["name_en"] for g in existing}
+
+    inserted = 0
+    for grp in DEFAULT_GROUPS:
+        if grp["name_en"] in existing_names:
+            continue
+        # Resolve page_permissions placeholder
+        pp = grp["page_permissions"]
+        if pp == "_all_editable":
+            pp = _build_all_pages_visible(editable=True)
+        elif pp == "_field_only":
+            pp = {
+                "/": {"visible": True, "editable": False},
+                "/field": {"visible": True, "editable": True},
+                "/notifications": {"visible": True, "editable": False},
+            }
+        elif pp.startswith("_dept_"):
+            dept_key = pp.replace("_dept_", "")
+            pp = _build_dept_pages(dept_key)
+
+        doc = {
+            "id": str(uuid.uuid4()),
+            "name_ar": grp["name_ar"],
+            "name_en": grp["name_en"],
+            "description_ar": grp["description_ar"],
+            "is_system": grp["is_system"],
+            "page_permissions": pp,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.permission_groups.insert_one({**doc})
+        inserted += 1
+
+    total = await db.permission_groups.count_documents({})
+    if inserted:
+        logger.info(f"  permission_groups: +{inserted} inserted (total: {total})")
+    else:
+        logger.info(f"  permission_groups: {total} groups OK")

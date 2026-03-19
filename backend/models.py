@@ -344,6 +344,30 @@ class SidebarMenuItemUpdate(BaseModel):
     is_editable: Optional[bool] = None
     role_visibility: Optional[Dict] = None
 
+
+# ============= Permission Group Models =============
+class PermissionGroup(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name_ar: str
+    name_en: str = ""
+    description_ar: str = ""
+    is_system: bool = False
+    page_permissions: Dict = Field(default_factory=dict)
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class PermissionGroupCreate(BaseModel):
+    name_ar: str
+    name_en: str = ""
+    description_ar: str = ""
+    page_permissions: Dict = Field(default_factory=dict)
+
+class PermissionGroupUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    description_ar: Optional[str] = None
+    page_permissions: Optional[Dict] = None
+
 # ============= Zone Category Models =============
 class ZoneCategory(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

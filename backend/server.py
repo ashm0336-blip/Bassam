@@ -39,6 +39,7 @@ from routes.sessions import router as sessions_router
 from routes.transactions import router as transactions_router
 from routes.uploads import router as uploads_router
 from routes.permissions import router as permissions_router
+from routes.perm_groups import router as perm_groups_router
 from routes.seed import router as seed_router
 from routes.ops import router as ops_router
 from routes.field import router as field_router
@@ -50,6 +51,7 @@ from routes.tasks import router as tasks_router
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
 api_router.include_router(permissions_router)
+api_router.include_router(perm_groups_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(employees_router)
 api_router.include_router(settings_router)
