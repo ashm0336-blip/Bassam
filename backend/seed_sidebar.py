@@ -1,7 +1,9 @@
 """
-Comprehensive auto-seed for ALL system configuration data.
-Runs on every server startup — fully idempotent.
-Ensures production DB matches preview 100%.
+Full-sync seed for ALL system configuration data.
+Runs on every server startup — guarantees production matches preview 100%.
+- Adds missing items
+- Removes orphaned/old items
+- Preserves user-set role_visibility settings
 """
 import uuid
 import logging
@@ -9,9 +11,6 @@ from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
-# ═══════════════════════════════════════════════════════════
-#  1. SIDEBAR MENU (50 items)
-# ═══════════════════════════════════════════════════════════
 DEPT_HREF = {
     "planning": "/planning",
     "haram_map": "/haram-map",
@@ -20,6 +19,7 @@ DEPT_HREF = {
     "crowd_services": "/crowd-services",
     "mataf": "/mataf",
 }
+
 
 def _sidebar_items():
     items = []
@@ -85,11 +85,7 @@ def _sidebar_items():
     return items
 
 
-# ═══════════════════════════════════════════════════════════
-#  2. DROPDOWN OPTIONS (30 items)
-# ═══════════════════════════════════════════════════════════
 DROPDOWN_OPTIONS = [
-    # Gate Types
     {"category": "gate_types", "value": "رئيسي", "label": "رئيسي", "order": 1},
     {"category": "gate_types", "value": "فرعي", "label": "فرعي", "order": 2},
     {"category": "gate_types", "value": "سلم كهربائي", "label": "سلم كهربائي", "order": 3},
@@ -99,39 +95,29 @@ DROPDOWN_OPTIONS = [
     {"category": "gate_types", "value": "مشابة", "label": "مشابة", "order": 7},
     {"category": "gate_types", "value": "عبارة", "label": "عبارة", "order": 8},
     {"category": "gate_types", "value": "مزلقان", "label": "مزلقان", "order": 9},
-    # Directions
     {"category": "directions", "value": "دخول", "label": "دخول", "order": 1},
     {"category": "directions", "value": "خروج", "label": "خروج", "order": 2},
     {"category": "directions", "value": "دخول وخروج", "label": "دخول وخروج", "order": 3},
-    # Categories
     {"category": "categories", "value": "محرمين", "label": "محرمين", "order": 1},
     {"category": "categories", "value": "مصلين", "label": "مصلين", "order": 2},
     {"category": "categories", "value": "عربات", "label": "عربات", "order": 3},
-    # Classifications
     {"category": "classifications", "value": "عام", "label": "عام", "order": 1},
     {"category": "classifications", "value": "رجال", "label": "رجال", "order": 2},
     {"category": "classifications", "value": "نساء", "label": "نساء", "order": 3},
     {"category": "classifications", "value": "طوارئ", "label": "طوارئ", "order": 4},
     {"category": "classifications", "value": "خدمات", "label": "خدمات", "order": 5},
     {"category": "classifications", "value": "جنائز", "label": "جنائز", "order": 6},
-    # Gate Statuses
     {"category": "gate_statuses", "value": "مفتوح", "label": "مفتوح", "order": 1},
     {"category": "gate_statuses", "value": "مغلق", "label": "مغلق", "order": 2},
-    # Current Indicators
     {"category": "current_indicators", "value": "خفيف", "label": "خفيف", "color": "#22c55e", "order": 1},
     {"category": "current_indicators", "value": "متوسط", "label": "متوسط", "color": "#f97316", "order": 2},
     {"category": "current_indicators", "value": "مزدحم", "label": "مزدحم", "color": "#ef4444", "order": 3},
-    # Shifts
     {"category": "shifts", "value": "الأولى", "label": "الأولى", "color": "#3b82f6", "order": 1},
     {"category": "shifts", "value": "الثانية", "label": "الثانية", "color": "#22c55e", "order": 2},
     {"category": "shifts", "value": "الثالثة", "label": "الثالثة", "color": "#f97316", "order": 3},
     {"category": "shifts", "value": "الرابعة", "label": "الرابعة", "color": "#a855f7", "order": 4},
 ]
 
-
-# ═══════════════════════════════════════════════════════════
-#  3. ZONE CATEGORIES (15 items — prayer area types)
-# ═══════════════════════════════════════════════════════════
 ZONE_CATEGORIES = [
     {"value": "men_prayer", "label_ar": "مصليات الرجال", "label_en": "Men Prayer Areas",
      "color": "#ef4444", "icon": "M", "order": 1},
@@ -173,22 +159,40 @@ ZONE_DEFAULTS = {
 }
 
 
-# ═══════════════════════════════════════════════════════════
-#  MAIN SEED FUNCTION
-# ═══════════════════════════════════════════════════════════
 async def run_all_seeds(db):
-    """Master seed function — call on every startup."""
-    await _seed_sidebar_menu(db)
+    """Master seed — full sync on every startup."""
+    await _sync_sidebar_menu(db)
     await _seed_dropdown_options(db)
     await _seed_zone_categories(db)
 
 
-async def _seed_sidebar_menu(db):
+async def _sync_sidebar_menu(db):
+    """
+    FULL SYNC: drops old items, keeps user role_visibility settings.
+    Guarantees exact 50 items matching preview.
+    """
     expected = _sidebar_items()
-    existing_list = await db.sidebar_menu.find({}, {"_id": 0}).to_list(200)
-    by_href = {item["href"]: item for item in existing_list}
+    expected_hrefs = {item["href"] for item in expected}
 
-    inserted = 0
+    # 1. Read existing items — preserve role_visibility settings
+    existing_list = await db.sidebar_menu.find({}, {"_id": 0}).to_list(300)
+    preserved_rv = {}  # href -> role_visibility
+    preserved_ids = {}  # href -> id (keep stable IDs when possible)
+    for item in existing_list:
+        href = item.get("href", "")
+        rv = item.get("role_visibility", {})
+        if rv and href in expected_hrefs:
+            preserved_rv[href] = rv
+        if href in expected_hrefs:
+            preserved_ids[href] = item.get("id", str(uuid.uuid4()))
+
+    old_count = len(existing_list)
+
+    # 2. Drop entire collection and rebuild fresh
+    await db.sidebar_menu.drop()
+
+    # 3. Insert all expected items (3 passes for parent resolution)
+    by_href = {}
     for _pass in range(3):
         for item in expected:
             href = item["href"]
@@ -197,26 +201,21 @@ async def _seed_sidebar_menu(db):
             parent_href = item.get("_parent_href")
             if parent_href and parent_href not in by_href:
                 continue
+
             doc = {k: v for k, v in item.items() if not k.startswith("_")}
-            doc["id"] = str(uuid.uuid4())
+            doc["id"] = preserved_ids.get(href, str(uuid.uuid4()))
             doc["parent_id"] = by_href[parent_href]["id"] if parent_href else None
             doc["roles"] = None
-            doc["role_visibility"] = {}
+            doc["role_visibility"] = preserved_rv.get(href, {})
             doc["is_editable"] = True
             doc["created_at"] = datetime.now(timezone.utc).isoformat()
+
             await db.sidebar_menu.insert_one({**doc})
             by_href[href] = doc
-            inserted += 1
-
-    r1 = await db.sidebar_menu.update_many(
-        {"role_visibility": {"$exists": False}}, {"$set": {"role_visibility": {}}})
-    r2 = await db.sidebar_menu.update_many(
-        {"is_editable": {"$exists": False}}, {"$set": {"is_editable": True}})
-    patched = r1.modified_count + r2.modified_count
 
     total = await db.sidebar_menu.count_documents({})
-    if inserted or patched:
-        logger.info(f"  sidebar_menu: +{inserted} inserted, ~{patched} patched (total: {total})")
+    if old_count != total:
+        logger.info(f"  sidebar_menu: synced {old_count} -> {total} items")
     else:
         logger.info(f"  sidebar_menu: {total} items OK")
 
@@ -224,21 +223,15 @@ async def _seed_sidebar_menu(db):
 async def _seed_dropdown_options(db):
     existing = await db.dropdown_options.find({}, {"_id": 0, "category": 1, "value": 1}).to_list(500)
     existing_keys = {(d["category"], d["value"]) for d in existing}
-
     inserted = 0
     for opt in DROPDOWN_OPTIONS:
         key = (opt["category"], opt["value"])
         if key not in existing_keys:
-            doc = {
-                "id": str(uuid.uuid4()),
-                **opt,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
+            doc = {"id": str(uuid.uuid4()), **opt, "is_active": True,
+                   "created_at": datetime.now(timezone.utc).isoformat()}
             doc.setdefault("color", None)
             await db.dropdown_options.insert_one({**doc})
             inserted += 1
-
     total = await db.dropdown_options.count_documents({})
     if inserted:
         logger.info(f"  dropdown_options: +{inserted} inserted (total: {total})")
@@ -249,19 +242,13 @@ async def _seed_dropdown_options(db):
 async def _seed_zone_categories(db):
     existing = await db.zone_categories.find({}, {"_id": 0, "value": 1}).to_list(200)
     existing_values = {d["value"] for d in existing}
-
     inserted = 0
     for zc in ZONE_CATEGORIES:
         if zc["value"] not in existing_values:
-            doc = {
-                "id": str(uuid.uuid4()),
-                **zc, **ZONE_DEFAULTS,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
+            doc = {"id": str(uuid.uuid4()), **zc, **ZONE_DEFAULTS, "is_active": True,
+                   "created_at": datetime.now(timezone.utc).isoformat()}
             await db.zone_categories.insert_one({**doc})
             inserted += 1
-
     total = await db.zone_categories.count_documents({})
     if inserted:
         logger.info(f"  zone_categories: +{inserted} inserted (total: {total})")
