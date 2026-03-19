@@ -290,7 +290,7 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             return True
         return dept in user_depts
 
-    # فلترة العناصر الرئيسية
+    # فلترة العناصر الرئيسية (الجذور)
     accessible_parent_ids = set()
     filtered = []
     for item in items:
@@ -300,14 +300,20 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             filtered.append(item)
             accessible_parent_ids.add(item["id"])
 
-    # فلترة الأبناء (مستوى 2 + 3)
-    for item in items:
-        pid = item.get("parent_id")
-        if not pid:
-            continue
-        if pid in accessible_parent_ids and _is_visible(item):
-            filtered.append(item)
-            accessible_parent_ids.add(item["id"])  # لدعم المستوى الثالث
+    # فلترة الأبناء — تكرار حتى ما يضاف شي جديد (يدعم 3+ مستويات)
+    added = True
+    seen_ids = {item["id"] for item in filtered}
+    while added:
+        added = False
+        for item in items:
+            pid = item.get("parent_id")
+            if not pid or item["id"] in seen_ids:
+                continue
+            if pid in accessible_parent_ids and _is_visible(item):
+                filtered.append(item)
+                accessible_parent_ids.add(item["id"])
+                seen_ids.add(item["id"])
+                added = True
 
     return filtered
 
