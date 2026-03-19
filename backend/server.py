@@ -145,12 +145,7 @@ async def websocket_endpoint(websocket: WebSocket):
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=[
-        os.environ.get("FRONTEND_URL", ""),
-        "https://xiixiix.com",
-        "https://www.xiixiix.com",
-        "https://task-counter-fix-1.preview.emergentagent.com",
-    ],
+    allow_origins=["*"],
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Authorization", "Content-Type"],
 )
@@ -165,11 +160,12 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db_client():
-    """Create default admin user if no users exist - with retry for Atlas MongoDB"""
+    """Create default admin user + seed sidebar menu on startup"""
     import asyncio
     from auth import hash_password
     import uuid
     from datetime import datetime, timezone
+    from seed_sidebar import seed_sidebar_menu
 
     for attempt in range(5):
         try:
@@ -189,6 +185,9 @@ async def startup_db_client():
                 logger.info("✅ Default admin user created: admin@crowd.sa")
             else:
                 logger.info(f"✅ Database connected — {count} user(s) found")
+
+            # Seed sidebar menu (idempotent — safe on every start)
+            await seed_sidebar_menu(db)
             break
         except Exception as e:
             logger.warning(f"⚠️ Startup DB attempt {attempt + 1}/5 failed: {e}")
