@@ -99,13 +99,14 @@ const AVAILABLE_ICONS = [
 ];
 
 const DEPARTMENTS = [
-  { value: "none", label_ar: "لا يوجد (عام)", label_en: "None (Public)" },
+  { value: "all", label_ar: "الكل", label_en: "Everyone" },
   { value: "planning", label_ar: "إدارة التخطيط", label_en: "Planning" },
   { value: "haram_map", label_ar: "إدارة المصليات", label_en: "Prayer Areas" },
   { value: "plazas", label_ar: "إدارة الساحات", label_en: "Plazas Management" },
   { value: "gates", label_ar: "إدارة الأبواب", label_en: "Gates Management" },
   { value: "crowd_services", label_ar: "خدمات الحشود", label_en: "Crowd Services" },
-  { value: "mataf", label_ar: "صحن المطاف", label_en: "Mataf Management" }
+  { value: "mataf", label_ar: "صحن المطاف", label_en: "Mataf Management" },
+  { value: "system_admin", label_ar: "مسؤول النظام", label_en: "System Admin" },
 ];
 
 // Sortable Row Component
@@ -175,13 +176,21 @@ function SortableRow({ item, language, onEdit, onDelete, onToggleActive, onToggl
         })()}
       </TableCell>
       <TableCell className="text-center">
-        {item.department ? (
-          <Badge variant="secondary" className="text-xs">
-            {DEPARTMENTS.find(d => d.value === item.department)?.[`label_${language}`] || item.department}
-          </Badge>
-        ) : (
-          <span className="text-[10px] text-slate-400">{language === 'ar' ? 'عام' : 'Public'}</span>
-        )}
+        {(() => {
+          const dept = item.department;
+          if (!dept || dept === 'all') {
+            return <Badge variant="default" className="text-xs bg-slate-600">الكل</Badge>;
+          }
+          if (dept === 'system_admin') {
+            return <Badge variant="destructive" className="text-xs">مسؤول النظام</Badge>;
+          }
+          const deptInfo = DEPARTMENTS.find(d => d.value === dept);
+          return (
+            <Badge variant="secondary" className="text-xs">
+              {deptInfo?.[`label_${language}`] || dept}
+            </Badge>
+          );
+        })()}
       </TableCell>
       <TableCell className="text-center">
         <button
