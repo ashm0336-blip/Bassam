@@ -185,110 +185,94 @@ async def _ensure_defaults():
                 )
 
 
-# ─── GET all role permissions ───────────────────────────────────
+# ─── GET all role permissions (compatibility — reads from role_visibility) ──
 @router.get("/admin/role-permissions")
 async def get_all_role_permissions(admin: dict = Depends(require_admin)):
-    await _ensure_defaults()
-    docs = await db.role_permissions.find({}, {"_id": 0}).to_list(20)
-    result = {}
-    for doc in docs:
-        perms = _normalize_permissions(doc.get("permissions", {}))
-        result[doc["role"]] = {
-            "permissions": perms,
-            "updated_at": doc.get("updated_at"),
-            "updated_by": doc.get("updated_by"),
-        }
-    return {
-        "roles": result,
-        "all_permissions": ALL_PERMISSIONS,
-        "group_labels": GROUP_LABELS,
-        "defaults": DEFAULT_PERMISSIONS,
-    }
+    return {"roles": {}, "all_permissions": ALL_PERMISSIONS, "group_labels": GROUP_LABELS, "defaults": {}}
 
 
 # ─── GET permissions for a specific role ───────────────────────
 @router.get("/admin/role-permissions/{role}")
 async def get_role_permissions(role: str, admin: dict = Depends(require_admin)):
-    await _ensure_defaults()
-    doc = await db.role_permissions.find_one({"role": role}, {"_id": 0})
-    if not doc:
-        return {"role": role, "permissions": DEFAULT_PERMISSIONS.get(role, [])}
-    return doc
+    return {"role": role, "permissions": {}}
 
 
-# ─── UPDATE role permissions ────────────────────────────────────
+# ─── UPDATE role permissions (no longer used — permissions managed via sidebar menu role_visibility) ──
 @router.put("/admin/role-permissions/{role}")
 async def update_role_permissions(role: str, data: dict, admin: dict = Depends(require_admin)):
-    if role == "system_admin":
-        raise HTTPException(status_code=403, detail="لا يمكن تعديل صلاحيات مسؤول النظام")
-
-    permissions = data.get("permissions", {})
-    # Support both old array and new dict format
-    if isinstance(permissions, list):
-        permissions = {p: "write" for p in permissions}
-
-    # Validate permissions exist and levels are valid
-    valid_levels = {"read", "write"}
-    for perm, level in permissions.items():
-        if perm not in ALL_PERMISSIONS:
-            raise HTTPException(status_code=400, detail=f"صلاحية غير صحيحة: {perm}")
-        if level not in valid_levels:
-            raise HTTPException(status_code=400, detail=f"مستوى غير صحيح: {level} — المسموح: read, write")
-        # Enforce read_only — downgrade write to read
-        if ALL_PERMISSIONS[perm].get("read_only") and level == "write":
-            permissions[perm] = "read"
-
-    await db.role_permissions.update_one(
-        {"role": role},
-        {"$set": {
-            "permissions": permissions,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "updated_by": admin.get("name", admin.get("email", "admin")),
-        }},
-        upsert=True,
-    )
-
-    read_count = sum(1 for v in permissions.values() if v == "read")
-    write_count = sum(1 for v in permissions.values() if v == "write")
-    await log_activity(
-        "permissions_updated", admin, role,
-        f"تم تحديث صلاحيات {role} — {read_count} قراءة، {write_count} تعديل"
-    )
-    return {"message": f"تم تحديث صلاحيات {role} ✅", "permissions": permissions}
+    return {"message": "الصلاحيات تُدار الآن من إدارة القائمة الجانبية"}
 
 
-# ─── RESET role permissions to defaults ────────────────────────
+# ─── RESET role permissions — resets role_visibility on all menu items ──
 @router.post("/admin/role-permissions/{role}/reset")
 async def reset_role_permissions(role: str, admin: dict = Depends(require_admin)):
     if role == "system_admin":
         raise HTTPException(status_code=403, detail="لا يمكن تعديل صلاحيات مسؤول النظام")
-    defaults = DEFAULT_PERMISSIONS.get(role, [])
-    await db.role_permissions.update_one(
-        {"role": role},
-        {"$set": {
-            "permissions": defaults,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "updated_by": admin.get("name", "admin"),
-        }},
-        upsert=True,
-    )
+    # Reset all menu items' role_visibility for this role to defaults (visible=true, editable=false)
+    menu_items = await db.sidebar_menu.find({}, {"_id": 0}).to_list(200)
+    for item in menu_items:
+        rv = item.get("role_visibility", {})
+        rv[role] = {"visible": True, "editable": False}
+        await db.sidebar_menu.update_one({"id": item["id"]}, {"$set": {"role_visibility": rv}})
     await log_activity("permissions_reset", admin, role, f"تم إعادة تعيين صلاحيات {role} للافتراضية")
-    return {"message": "تمت إعادة التعيين للافتراضية ✅", "permissions": defaults}
+    return {"message": "تمت إعادة التعيين للافتراضية ✅"}
 
 
-# ─── GET current user's permissions (for AuthContext) ──────────
+# ── خريطة ربط عناصر القائمة بمفاتيح الصلاحيات القديمة ──
+# name_en → list of permission keys
+MENU_TO_PERM_MAP = {
+    # Pages
+    "Dashboard":         {"view": ["page_dashboard"]},
+    "Overview":          {"view": ["page_overview"]},
+    "Daily Tasks":       {"view": ["page_transactions"], "edit": ["page_transactions"]},
+    "Daily Log":         {"view": ["page_daily_log", "view_daily_sessions"], "edit": ["create_session", "approve_session", "delete_session", "start_prayer_round", "complete_prayer_round", "skip_prayer_round"]},
+    "Settings":          {"view": ["page_settings"], "edit": ["page_settings", "manage_settings"]},
+    # Settings sub-tabs
+    "Staff":             {"view": ["page_employees"], "edit": ["page_employees", "add_employees", "edit_employees", "delete_employees", "manage_accounts", "reset_pins", "change_roles", "import_employees", "export_employees"]},
+    "Monthly Schedule":  {"view": ["page_employees"], "edit": ["create_schedule", "approve_schedule", "unlock_schedule", "delete_schedule"]},
+    "Shifts":            {"view": ["page_settings"], "edit": ["manage_shifts"]},
+    "Maps":              {"view": ["page_settings"], "edit": ["manage_maps"]},
+    "Gates Data":        {"view": ["page_settings"], "edit": ["manage_gates"]},
+    "Categories":        {"view": ["page_settings"], "edit": ["manage_categories"]},
+    # General pages
+    "Field Worker":      {"view": ["page_field", "view_coverage_map"], "edit": ["distribute_employees", "auto_distribute", "enter_density", "view_density_reports"]},
+    "Notifications":     {"view": ["page_alerts"], "edit": ["page_alerts"]},
+    "System Admin":      {"view": [], "edit": []},  # handled by role check
+}
+
+
+# ─── GET current user's permissions (from role_visibility) ──────
 @router.get("/auth/my-permissions")
 async def get_my_permissions(user: dict = Depends(get_current_user)):
     role = user.get("role", "field_staff")
+
+    # Admin gets all permissions as write
     if role == "system_admin":
-        # Admin gets all permissions as write
         return {"permissions": {k: "write" for k in ALL_PERMISSIONS.keys()}, "role": role}
-    await _ensure_defaults()
-    doc = await db.role_permissions.find_one({"role": role}, {"_id": 0})
-    if doc:
-        permissions = _normalize_permissions(doc.get("permissions", {}))
-    else:
-        permissions = DEFAULT_PERMISSIONS.get(role, {})
+
+    # Build permissions from sidebar menu role_visibility
+    menu_items = await db.sidebar_menu.find({}, {"_id": 0}).to_list(200)
+    permissions = {}
+
+    for item in menu_items:
+        rv = item.get("role_visibility", {})
+        role_cfg = rv.get(role, {"visible": True, "editable": False})  # default: visible, not editable
+        name_en = item.get("name_en", "")
+        mapping = MENU_TO_PERM_MAP.get(name_en, {})
+
+        if role_cfg.get("visible", True):
+            # Add view permissions
+            for key in mapping.get("view", []):
+                if key not in permissions:
+                    permissions[key] = "read"
+            # Add edit permissions if editable
+            if role_cfg.get("editable", False):
+                for key in mapping.get("edit", []):
+                    permissions[key] = "write"
+                # Also upgrade view keys to write if they're in edit list
+                for key in mapping.get("view", []):
+                    permissions[key] = "write"
+
     return {"permissions": permissions, "role": role}
 
 
