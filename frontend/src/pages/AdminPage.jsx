@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminDashboard from "./admin/AdminDashboard";
 import ActivityLog from "./admin/ActivityLog";
 import SystemSettings from "./admin/SystemSettings";
-import SidebarManager from "./admin/SidebarManager";
 import PermissionsManager from "./admin/PermissionsManager";
 import MyAccountTab from "./admin/MyAccountTab";
 
@@ -15,7 +14,6 @@ export default function AdminPage() {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState("overview");
-  const [accessSubTab, setAccessSubTab] = useState("permissions");
 
   return (
     <div className="space-y-6" data-testid="admin-page">
@@ -70,30 +68,7 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="access" className="mt-6">
-          <div className="space-y-4">
-            {/* Sub-tabs */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 w-fit" data-testid="access-sub-tabs">
-              {[
-                { id: "permissions", label: isAr ? "الصلاحيات حسب الدور" : "Role Permissions", icon: Shield },
-                { id: "sidebar", label: isAr ? "إدارة القائمة الجانبية" : "Sidebar Manager", icon: LayoutDashboard },
-              ].map(tab => {
-                const Icon = tab.icon;
-                const isActive = accessSubTab === tab.id;
-                return (
-                  <button key={tab.id} onClick={() => setAccessSubTab(tab.id)} data-testid={`sub-tab-${tab.id}`}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-cairo font-semibold transition-all
-                      ${isActive ? 'bg-white shadow-md text-primary' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}>
-                    <Icon className="w-4 h-4" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Sub-tab content */}
-            {accessSubTab === "permissions" && <PermissionsManager />}
-            {accessSubTab === "sidebar" && <SidebarManager />}
-          </div>
+          <PermissionsManager />
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6">
