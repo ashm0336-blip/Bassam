@@ -34,8 +34,8 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 function ConditionalDashboard() {
   const { user, hasPermission } = useAuth();
   
-  // Department users — only redirect if they have page_overview permission
-  if (user?.department && user?.role !== 'system_admin' && user?.role !== 'general_manager') {
+  // Department users — redirect to their department if they don't have dashboard
+  if (user?.department && user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
     if (hasPermission('page_overview')) {
       const departmentRoutes = {
         'planning': '/planning',
@@ -54,7 +54,7 @@ function ConditionalDashboard() {
   }
   
   // Check dashboard permission for non-admin users
-  if (user?.role !== 'system_admin' && user?.role !== 'general_manager' && !hasPermission('page_dashboard')) {
+  if (user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
     if (hasPermission('page_alerts')) {
       return <Navigate to="/notifications" replace />;
     }

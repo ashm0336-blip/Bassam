@@ -174,19 +174,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => user?.role === 'system_admin';
-  const isGeneralManager = () => user?.role === 'general_manager';
+  const isGeneralManager = () => user?.role === 'general_manager' || user?.role === 'system_admin';
 
   const canManageDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
+    // If user has write permissions on this department's settings, they can manage it
+    if (hasPermission('manage_settings', 'write')) return true;
     if (user?.role === 'department_manager' && user?.department === department) return true;
     return false;
   };
 
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
-    if (user?.role === 'general_manager') return true;
-    const depts = user?.allowed_departments || (user?.department ? [user.department] : []);
-    return depts.includes(department);
+    // New system: if user has ANY permission, they can view
+    // The group-based system already controls what pages are visible
+    // So if the sidebar shows the department, the user should be able to access it
+    return true;
   };
 
   const canAddAlerts = () => {

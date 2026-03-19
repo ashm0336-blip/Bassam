@@ -633,7 +633,7 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
   const canChangeRoles = canWrite('change_roles');
 
   // If can't even read employees, hide the whole section
-  if (!canViewEmp && user?.role !== 'system_admin') return (
+  if (!canViewEmp && user?.role !== 'system_admin' && !canRead('page_employees')) return (
     <div className="flex items-center justify-center min-h-[300px] text-muted-foreground text-sm">
       {language === 'ar' ? 'ليس لديك صلاحية لعرض بيانات الموظفين' : 'No permission to view employees'}
     </div>

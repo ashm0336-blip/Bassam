@@ -27,11 +27,10 @@ export const DepartmentProtectedRoute = ({ children, department }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check department access + at least page_overview permission
+  // Check department access
   const hasDeptAccess = canViewDepartment(department);
-  const hasPagePerm = user?.role === 'system_admin' || hasPermission('page_overview');
 
-  if (!hasDeptAccess || !hasPagePerm) {
+  if (!hasDeptAccess) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-md mx-auto">
