@@ -4,53 +4,43 @@
 Enterprise-grade crowd management application for managing prayer halls, gates, employees, schedules, and daily inspection tours at Al-Haram.
 
 ## Tech Stack
-- **Backend**: FastAPI + MongoDB + WebSocket + slowapi (rate limiting)
+- **Backend**: FastAPI + MongoDB + WebSocket + slowapi
 - **Frontend**: React (Vite) + Shadcn UI + WebSocket Client
-- **Auth**: JWT + bcrypt + role-based permissions + department-based access
+- **Auth**: JWT + bcrypt + role-based + department-based
 - **Real-time**: WebSocket with JWT authentication
 
-## Permissions Architecture
-- `require_admin` allows both system_admin AND general_manager
-- `require_department_manager` allows system_admin, general_manager, department_manager
-- `AdminProtectedRoute` allows system_admin AND general_manager
-- 38 total permissions across 8 groups
-- Real-time permissions sync via WebSocket "permissions" channel
+## Permissions System (NEW - March 2026)
+- Based on `role_visibility` stored on each sidebar menu item
+- Each item has `{role: {visible: true/false, editable: true/false}}`
+- `visible: false` = page hidden from sidebar + inaccessible
+- `editable: false` = view only (no add/edit/delete buttons)
+- `editable: true` = full access (all buttons visible)
+- Changes reflect instantly via WebSocket (no refresh needed)
+- Admin manages from: إدارة النظام → الصلاحيات والتحكم
+- Backend maps role_visibility to permission keys via MENU_TO_PERM_MAP
+- Frontend canWrite/canRead work unchanged (data source changed)
 
-## Data Integrity Rules
-- Employee Deletion: Cascade delete to users, tasks, monthly_schedules, alerts
-- Employee Update: Name/department sync to users collection
-- Shift Values: Auto-generated with category suffix (_primary/_secondary)
-- Stats: Only active accounts counted in role distribution
+## Site Structure (50 items, 3 levels)
+- 10 root pages (Dashboard, 6 departments, Field, Notifications, Admin)
+- Each department: Daily Tasks + Settings (+ Daily Log for some)
+- Settings sub-tabs: Staff, Monthly Schedule, Shifts, Maps (+ Gates Data / Categories)
 
-## Recent Changes (March 2026)
-- **CRITICAL FIX**: `require_admin` now allows general_manager (was system_admin only)
-- **CRITICAL FIX**: `AdminProtectedRoute` now allows general_manager
-- Employee deletion cascade + update sync
-- All window.confirm() replaced with AlertDialog
-- WebSocket permissions broadcast fixed
-- Task stats date filtering
-- Shift assignment: unique values + visual category tags
-- Stats accuracy: role distribution only counts active accounts
-- Map calibration: editable distance, AutoCAD-style crosshair, smoother zoom
-
-## Pending Issues
-- Issue 2 (P1): Daily Prayer Hall Session auto-start (needs user verification)
-
-## Upcoming Tasks
-- P0: Comparative Density Report
-- P0: Gates Audit Log
-- P1: Advanced task features
-- P1: Full Attendance System
-- P2: Push Notifications
+## Key Architecture
+- `require_admin` allows system_admin AND general_manager
+- Sidebar filtering: role_visibility + department access (allowed_departments)
+- Employee deletion cascades to: users, tasks, schedules, alerts
+- Employee update syncs name/department to users collection
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
 ## Key Files
-- `/app/backend/auth.py` -- require_admin, require_department_manager
-- `/app/frontend/src/components/ProtectedRoute.jsx` -- AdminProtectedRoute
-- `/app/backend/routes/employees.py` -- cascade delete, update sync
-- `/app/backend/routes/tasks.py` -- stats with date filter
-- `/app/backend/ws_manager.py` -- WebSocket broadcast
-- `/app/frontend/src/components/EmployeeManagement.jsx` -- shift dropdown, stats
-- `/app/frontend/src/pages/MapManagementPage.jsx` -- calibration system
+- `/app/backend/routes/permissions.py` — MENU_TO_PERM_MAP, my-permissions endpoint
+- `/app/backend/routes/settings.py` — sidebar-menu filtering by role_visibility
+- `/app/backend/ws_manager.py` — WebSocket broadcast (permissions channel)
+- `/app/backend/auth.py` — require_admin (system_admin + general_manager)
+- `/app/backend/models.py` — SidebarMenuItemUpdate with role_visibility, is_editable
+- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — unified permissions + sidebar management
+- `/app/frontend/src/context/AuthContext.jsx` — canWrite/canRead, WebSocket refresh
+- `/app/frontend/src/context/SidebarContext.jsx` — WebSocket refresh on permissions change
+- `/app/frontend/src/components/Layout.jsx` — sidebar rendering, department click behavior

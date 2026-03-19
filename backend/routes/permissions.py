@@ -153,54 +153,18 @@ ROLE_HIERARCHY = {
 }
 
 
-def _normalize_permissions(perms):
-    """Convert old array format to new dict format for backward compatibility"""
-    if isinstance(perms, list):
-        return {p: "write" for p in perms}
-    if isinstance(perms, dict):
-        return perms
-    return {}
-
-
-async def _ensure_defaults():
-    """Seed default permissions if not exist"""
-    for role, perms in DEFAULT_PERMISSIONS.items():
-        existing = await db.role_permissions.find_one({"role": role})
-        if not existing:
-            await db.role_permissions.insert_one({
-                "id": str(uuid.uuid4()),
-                "role": role,
-                "permissions": perms,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                "updated_by": "system",
-            })
-        else:
-            # Migrate old array format to new dict format
-            existing_perms = existing.get("permissions", {})
-            if isinstance(existing_perms, list):
-                migrated = {p: "write" for p in existing_perms}
-                await db.role_permissions.update_one(
-                    {"role": role},
-                    {"$set": {"permissions": migrated}}
-                )
-
-
-# ─── GET all role permissions (compatibility — reads from role_visibility) ──
+# ─── (Old endpoints kept as stubs for backward compatibility) ──
 @router.get("/admin/role-permissions")
 async def get_all_role_permissions(admin: dict = Depends(require_admin)):
     return {"roles": {}, "all_permissions": ALL_PERMISSIONS, "group_labels": GROUP_LABELS, "defaults": {}}
 
-
-# ─── GET permissions for a specific role ───────────────────────
 @router.get("/admin/role-permissions/{role}")
 async def get_role_permissions(role: str, admin: dict = Depends(require_admin)):
     return {"role": role, "permissions": {}}
 
-
-# ─── UPDATE role permissions (no longer used — permissions managed via sidebar menu role_visibility) ──
 @router.put("/admin/role-permissions/{role}")
 async def update_role_permissions(role: str, data: dict, admin: dict = Depends(require_admin)):
-    return {"message": "الصلاحيات تُدار الآن من إدارة القائمة الجانبية"}
+    return {"message": "الصلاحيات تُدار الآن من شجرة الصفحات"}
 
 
 # ─── RESET role permissions — resets role_visibility on all menu items ──
