@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone
 import uuid
 
@@ -341,6 +341,8 @@ class SidebarMenuItemUpdate(BaseModel):
     parent_id: Optional[str] = None
     department: Optional[str] = None
     admin_only: Optional[bool] = None
+    is_editable: Optional[bool] = None
+    role_visibility: Optional[Dict] = None
 
 # ============= Zone Category Models =============
 class ZoneCategory(BaseModel):
