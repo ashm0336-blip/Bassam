@@ -151,11 +151,9 @@ export default function LoginPage() {
         setShowPinChange(true);
       } else {
         const u = result.user;
-        const roleName = ROLE_LABELS[u?.role]?.ar || u?.role;
-        const deptName = DEPT_LABELS[u?.department]?.ar;
-        const greeting = deptName
-          ? `مرحباً ${u?.name} — ${roleName} في ${deptName}`
-          : `مرحباً ${u?.name} — ${roleName}`;
+        const groupName = u?.permission_group_name;
+        const roleName = groupName || ROLE_LABELS[u?.role]?.ar || u?.role;
+        const greeting = `مرحباً ${u?.name} — ${roleName}`;
         toast.success(greeting);
         navigate('/');
       }
