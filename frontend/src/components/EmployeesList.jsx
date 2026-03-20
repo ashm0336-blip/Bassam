@@ -137,39 +137,14 @@ const ALL_ASSIGNABLE_ROLES = [
   { value: 'admin_staff',        ar: 'موظف إداري',   level: 1 },
 ];
 
-function RoleSelector({ emp, canChangeRoles, myLevel, onChangeRole, isAr, permGroups = [] }) {
-  if (!emp.user_id) return <span className="text-[9px] text-slate-400" title="فعّل الحساب أولاً">—</span>;
-  const currentGroupId = emp.permission_group_id;
-  const currentGroup = permGroups.find(g => g.id === currentGroupId);
-  if (!canChangeRoles) {
-    return (
-      <span className="text-[10px] font-medium text-primary">
-        {currentGroup?.name_ar || 'بدون مجموعة'}
-      </span>
-    );
-  }
+function RoleSelector({ emp, permGroups = [] }) {
+  if (!emp.user_id) return <span className="text-[9px] text-slate-400">—</span>;
+  const currentGroup = permGroups.find(g => g.id === emp.permission_group_id);
+  const name = currentGroup?.name_ar || 'بدون مجموعة';
   return (
-    <Select value={currentGroupId || "none"} onValueChange={(v) => onChangeRole(emp, v === "none" ? null : v)}>
-      <SelectTrigger className="h-7 text-[10px] border-0 bg-transparent px-2 w-auto min-w-[100px] justify-center text-primary"
-        data-testid={`group-select-${emp.id}`}>
-        <SelectValue placeholder="اختر مجموعة" />
-      </SelectTrigger>
-      <SelectContent dir="rtl">
-        <SelectItem value="none" className="text-[11px]">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Shield className="w-3 h-3" /> بدون مجموعة
-          </div>
-        </SelectItem>
-        {permGroups.map(g => (
-          <SelectItem key={g.id} value={g.id} className="text-[11px]">
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3 text-primary" />
-              {g.name_ar}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${currentGroup ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>
+      <Shield className="w-3 h-3" />{name}
+    </span>
   );
 }
 
@@ -296,8 +271,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
           {canChangeRoles && (
             <div className="flex items-center gap-1">
               <Shield className="w-3 h-3 text-violet-400" />
-              <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
-                myLevel={myLevel} onChangeRole={onChangeRole} isAr={isAr} permGroups={permGroups}/>
+              <RoleSelector emp={emp} permGroups={permGroups}/>
             </div>
           )}
         </div>
@@ -959,11 +933,10 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                       <AccountStatusIcon emp={emp} canManageAccounts={canManage}
                         canResetPins={canResetPins} onAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
-                    {/* الصلاحيات — نفس dropdown EmployeeManagement */}
+                    {/* الصلاحيات */}
                     {canChangeRoles && (
                       <TableCell className="text-center">
-                        <RoleSelector emp={emp} canChangeRoles={canChangeRoles}
-                          myLevel={myLevel} onChangeRole={handleChangeRole} isAr={isAr}/>
+                        <RoleSelector emp={emp} permGroups={permGroups}/>
                       </TableCell>
                     )}
                     <TableCell>
