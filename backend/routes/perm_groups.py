@@ -125,12 +125,13 @@ async def delete_group(group_id: str, admin: dict = Depends(require_admin)):
 
 @router.put("/admin/users/{user_id}/permission-group")
 async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(require_admin)):
-    """Assign a permission group to a user."""
+    """Assign a permission group to a user. Auto-clears custom permissions to prevent conflicts."""
     group_id = data.get("permission_group_id")
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1})
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     old_group_id = target.get("permission_group_id")
+    old_custom = target.get("custom_permissions", {})
     new_group_name = "بدون مجموعة"
     old_group_name = "بدون مجموعة"
     if group_id:
@@ -141,11 +142,36 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(requ
     if old_group_id:
         old_grp = await db.permission_groups.find_one({"id": old_group_id}, {"_id": 0, "name_ar": 1})
         old_group_name = old_grp.get("name_ar", "") if old_grp else "بدون مجموعة"
-    await db.users.update_one({"id": user_id}, {"$set": {"permission_group_id": group_id}})
-    await log_activity("تغيير مجموعة صلاحيات", admin, target.get("name", user_id),
-        f"تم تغيير مجموعة {target.get('name')} من «{old_group_name}» إلى «{new_group_name}»")
+
+    # Auto-clear custom permissions when group changes to prevent conflicts
+    had_custom = len(old_custom) > 0
+    update_data = {"permission_group_id": group_id, "custom_permissions": {}}
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+
+    detail = f"تم تغيير مجموعة {target.get('name')} من «{old_group_name}» إلى «{new_group_name}»"
+    if had_custom:
+        detail += f" — تم مسح {len(old_custom)} صلاحية فردية سابقة تلقائياً"
+    await log_activity("تغيير مجموعة صلاحيات", admin, target.get("name", user_id), detail)
     await ws_manager.broadcast({"type": "permissions", "action": "user_changed", "user_id": user_id})
-    return {"message": "تم تعيين المجموعة"}
+    return {
+        "message": "تم تعيين المجموعة",
+        "custom_cleared": had_custom,
+        "custom_cleared_count": len(old_custom),
+    }
+
+
+@router.delete("/admin/users/{user_id}/custom-permissions")
+async def reset_user_custom_permissions(user_id: str, admin: dict = Depends(require_admin)):
+    """Reset (clear) all custom permission overrides for a user."""
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "custom_permissions": 1})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    old_count = len(target.get("custom_permissions", {}))
+    await db.users.update_one({"id": user_id}, {"$set": {"custom_permissions": {}}})
+    await log_activity("إعادة ضبط صلاحيات فردية", admin, target.get("name", user_id),
+        f"تم مسح {old_count} صلاحية فردية لـ {target.get('name', user_id)}")
+    await ws_manager.broadcast({"type": "permissions", "action": "user_changed", "user_id": user_id})
+    return {"message": f"تم مسح {old_count} صلاحية فردية", "cleared_count": old_count}
 
 
 @router.put("/admin/users/{user_id}/custom-permissions")
@@ -168,17 +194,33 @@ async def copy_user_permissions(user_id: str, data: dict, admin: dict = Depends(
     if not source_user_id:
         raise HTTPException(status_code=400, detail="يجب تحديد المستخدم المصدر")
     source = await db.users.find_one({"id": source_user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1})
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1})
     if not source or not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+
+    # Detect group mismatch warning
+    source_grp_id = source.get("permission_group_id")
+    target_grp_id = target.get("permission_group_id")
+    group_changed = source_grp_id != target_grp_id
+    source_grp_name = ""
+    if source_grp_id:
+        sg = await db.permission_groups.find_one({"id": source_grp_id}, {"_id": 0, "name_ar": 1})
+        source_grp_name = sg.get("name_ar", "") if sg else ""
+
     await db.users.update_one({"id": user_id}, {"$set": {
         "permission_group_id": source.get("permission_group_id"),
         "custom_permissions": source.get("custom_permissions", {}),
     }})
-    await log_activity("نسخ صلاحيات", admin, target.get("name", user_id),
-        f"تم نسخ صلاحيات {source.get('name')} إلى {target.get('name')}")
+    detail = f"تم نسخ صلاحيات {source.get('name')} إلى {target.get('name')}"
+    if group_changed:
+        detail += f" — تم تغيير المجموعة أيضاً إلى «{source_grp_name}»"
+    await log_activity("نسخ صلاحيات", admin, target.get("name", user_id), detail)
     await ws_manager.broadcast({"type": "permissions", "action": "user_changed", "user_id": user_id})
-    return {"message": f"تم نسخ صلاحيات {source.get('name')} بنجاح"}
+    return {
+        "message": f"تم نسخ صلاحيات {source.get('name')} بنجاح",
+        "group_changed": group_changed,
+        "new_group_name": source_grp_name,
+    }
 
 
 # ═══════════════════════════════════════════

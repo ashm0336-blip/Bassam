@@ -7,26 +7,25 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - **Backend**: FastAPI + MongoDB + WebSocket + slowapi
 - **Frontend**: React (CRA) + Shadcn UI + WebSocket Client
 - **Auth**: JWT + bcrypt + group-based permissions
-- **Real-time**: WebSocket with JWT authentication
 
-## Sidebar Structure (March 2026) — Updated
-Each department:
-- Department Name
-  - Daily Log (haram_map/gates only)
-  - Daily Tasks → `/dept?tab=transactions`
-  - Monthly Schedule → `/dept?tab=schedule` (standalone page)
-  - Settings → `/dept?tab=settings`
-    - Staff, Shifts, Maps, Categories/GatesData
+## Permission Safety System (March 2026) — Complete
+### Key Features:
+- Auto-clear custom permissions when changing permission group (prevents conflicts)
+- Reset button for custom permissions in the dialog
+- Backend returns `custom_cleared` flag when group changes
+- Copy permissions includes group change warning
+- Full audit trail in activity logs
 
-## Permissions System — Complete
+### Architecture:
+- permission_groups collection with page_permissions
 - 8 default groups with `is_system: true`
-- Group-based + custom per-user overrides
+- Users: permission_group_id + custom_permissions (auto-cleared on group change)
+- Resolution: system_admin > custom > group > fallback
 
-## Security Monitoring Dashboard — Complete
-- Admin > Overview: security KPIs + 4 sub-tabs
+## Sidebar Structure
+Each department: Daily Log > Daily Tasks > Monthly Schedule (standalone) > Settings
 
-## Security Audit — Complete
-- WebSocket auth, Rate limiting, DB indexes (30+), Error Boundary
+## Security: Monitoring Dashboard, DB Indexes (30+), WebSocket Auth, Rate Limiting, Error Boundary
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
@@ -34,7 +33,6 @@ Each department:
 ## Pending Tasks:
 - Comparative Density Report (P0)
 - Gates Audit Log (P0)
-- Daily Session auto-start fix (P1)
 - Advanced Task Features (P1)
 - Full Attendance System (P1)
 - Push Notifications (P2)

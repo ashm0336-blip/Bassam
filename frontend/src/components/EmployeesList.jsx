@@ -418,15 +418,32 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   // ── Change Permission Group ────────────────────────────────
   const handleChangeRole = async (emp, newGroupId) => {
     try {
+      let customCleared = false;
       if (emp.user_id) {
-        await axios.put(`${API}/admin/users/${emp.user_id}/permission-group`,
+        const res = await axios.put(`${API}/admin/users/${emp.user_id}/permission-group`,
           { permission_group_id: newGroupId }, headers());
+        customCleared = res.data?.custom_cleared;
+        if (customCleared) {
+          toast.info(`تم مسح ${res.data.custom_cleared_count} صلاحية فردية سابقة تلقائياً`, { duration: 4000 });
+        }
       }
       await axios.put(`${API}/employees/${emp.id}`, { permission_group_id: newGroupId }, headers());
       const grpName = permGroups.find(g => g.id === newGroupId)?.name_ar || 'بدون مجموعة';
       toast.success(`تم تغيير المجموعة إلى: ${grpName}`);
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير المجموعة"); }
+  };
+
+  // ── Reset Custom Permissions ──────────────────────────────
+  const handleResetCustomPerms = async (emp) => {
+    if (!emp.user_id) return;
+    try {
+      const res = await axios.delete(`${API}/admin/users/${emp.user_id}/custom-permissions`, headers());
+      toast.success(res.data?.message || "تم مسح الصلاحيات الفردية");
+      setCustomPermEmp(null);
+      setCustomPerms({});
+      fetchEmployees();
+    } catch (e) { toast.error(e.response?.data?.detail || "فشل إعادة الضبط"); }
   };
 
   // ── Custom Permissions Dialog ─────────────────────────────
@@ -1468,11 +1485,17 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
           </div>
 
           {Object.keys(customPerms).length > 0 && (
-            <div className="mt-3 px-2 py-2 bg-violet-50 rounded-lg">
+            <div className="mt-3 px-3 py-2.5 bg-violet-50 rounded-lg flex items-center justify-between">
               <p className="text-[10px] text-violet-700 font-bold">
                 {Object.keys(customPerms).length} تخصيص فردي
                 <span className="font-normal text-violet-500 mr-1">— تتجاوز إعدادات المجموعة</span>
               </p>
+              <Button variant="outline" size="sm" className="gap-1 text-[10px] h-7 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                onClick={() => handleResetCustomPerms(customPermEmp)}
+                data-testid="reset-custom-perms-btn">
+                <Trash2 className="w-3 h-3" />
+                إعادة ضبط الكل
+              </Button>
             </div>
           )}
 
