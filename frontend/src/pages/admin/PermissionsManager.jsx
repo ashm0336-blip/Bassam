@@ -443,6 +443,15 @@ export default function PermissionsManager() {
                     const indent = (item._depth || 0) * 28;
                     const isTopLevel = (item._depth || 0) === 0 && hasChildren;
 
+                    // Pages that are view-only by nature (no editable content)
+                    const href = item.href || "";
+                    const isViewOnlyPage = (
+                      href === "/" ||                                           // Dashboard
+                      (isTopLevel && !href.includes("?")) ||                   // Department overview pages
+                      href === "/notifications" ||                              // Notifications
+                      href === "/field"                                         // Field worker
+                    );
+
                     // For top-level departments: calc child summary
                     let deptChildCount = 0, deptVisibleCount = 0, deptEditableCount = 0;
                     if (isTopLevel) {
@@ -483,7 +492,9 @@ export default function PermissionsManager() {
                             {isTopLevel && deptChildCount > 0 ? (
                               <p className="text-[9px] text-muted-foreground">{deptVisibleCount}/{deptChildCount + 1} صفحة ظاهرة</p>
                             ) : (
-                              <p className="text-[9px] text-muted-foreground truncate">{item.name_en}</p>
+                              <p className="text-[9px] text-muted-foreground truncate">
+                                {isViewOnlyPage ? (item.name_en ? `${item.name_en} — عرض فقط` : 'عرض فقط') : item.name_en}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -515,14 +526,17 @@ export default function PermissionsManager() {
                             {perm.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                           </button>
 
-                          <button onClick={() => perm.visible && togglePerm(item, 'editable')}
-                            disabled={!perm.visible}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
-                              ${!perm.visible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
-                                : perm.editable ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
-                                : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
-                            {perm.editable ? <Pencil className="w-3.5 h-3.5" /> : <Lock className="w-3 h-3" />}
-                          </button>
+                          {/* Hide edit button for view-only pages */}
+                          {!isViewOnlyPage && (
+                            <button onClick={() => perm.visible && togglePerm(item, 'editable')}
+                              disabled={!perm.visible}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
+                                ${!perm.visible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
+                                  : perm.editable ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
+                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+                              {perm.editable ? <Pencil className="w-3.5 h-3.5" /> : <Lock className="w-3 h-3" />}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
