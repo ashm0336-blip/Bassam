@@ -202,10 +202,18 @@ export const AuthProvider = ({ children }) => {
 
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
-    // New system: if user has ANY permission, they can view
-    // The group-based system already controls what pages are visible
-    // So if the sidebar shows the department, the user should be able to access it
-    return true;
+    if (user?.role === 'general_manager') return true;
+    // Check if user has group permissions for this department's pages
+    const perms = user?.permissions || {};
+    if (typeof perms === 'object' && !Array.isArray(perms)) {
+      // If user has page_overview or page_dashboard, they can view departments
+      if (perms['page_overview'] || perms['page_dashboard']) return true;
+    }
+    // Department managers can always view their own department
+    if (user?.department === department) return true;
+    // Users with permission groups — check if sidebar would show this department
+    if (user?.permission_group_id) return true;
+    return false;
   };
 
   const canAddAlerts = () => {

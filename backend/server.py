@@ -126,15 +126,21 @@ app.include_router(api_router)
 # ============= WebSocket Endpoint =============
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # Authenticate via token query param
+    # Authenticate via token query param — REQUIRED
     token = websocket.query_params.get("token")
-    if token:
-        try:
-            import jwt as pyjwt
-            pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
-        except Exception:
-            await websocket.close(code=4001, reason="Unauthorized")
-            return
+    if not token:
+        # Must accept before closing to properly reject
+        await websocket.accept()
+        await websocket.close(code=4001, reason="Token required")
+        return
+    try:
+        import jwt as pyjwt
+        pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
+    except Exception:
+        # Must accept before closing to properly reject
+        await websocket.accept()
+        await websocket.close(code=4001, reason="Unauthorized")
+        return
     await ws_manager.connect(websocket)
     try:
         while True:
@@ -162,7 +168,7 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db_client():
-    """Create default admin user + seed sidebar menu on startup"""
+    """Create default admin user + seed sidebar menu + create DB indexes on startup"""
     import asyncio
     from auth import hash_password
     import uuid
@@ -184,20 +190,83 @@ async def startup_db_client():
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 await db.users.insert_one({**admin_doc})
-                logger.info("✅ Default admin user created: admin@crowd.sa")
+                logger.info("Default admin user created: admin@crowd.sa")
             else:
-                logger.info(f"✅ Database connected — {count} user(s) found")
+                logger.info(f"Database connected — {count} user(s) found")
+
+            # Create indexes for performance + data integrity
+            await _ensure_indexes()
 
             # Seed ALL system config data (idempotent — safe on every start)
-            logger.info("📋 Running system data seeds...")
+            logger.info("Running system data seeds...")
             await run_all_seeds(db)
             break
         except Exception as e:
-            logger.warning(f"⚠️ Startup DB attempt {attempt + 1}/5 failed: {e}")
+            logger.warning(f"Startup DB attempt {attempt + 1}/5 failed: {e}")
             if attempt < 4:
                 await asyncio.sleep(3)
             else:
-                logger.error("❌ Database unavailable at startup — app will still serve requests")
+                logger.error("Database unavailable at startup — app will still serve requests")
+
+
+async def _ensure_indexes():
+    """Create essential database indexes for performance and data integrity."""
+    try:
+        # Users — critical for login and lookups
+        await db.users.create_index("id", unique=True)
+        await db.users.create_index("email", sparse=True)
+        await db.users.create_index("national_id", sparse=True)
+        await db.users.create_index("permission_group_id")
+        await db.users.create_index("department")
+
+        # Employees — frequently queried by department
+        await db.employees.create_index("id", unique=True)
+        await db.employees.create_index("department")
+        await db.employees.create_index("national_id", sparse=True)
+        await db.employees.create_index("user_id", sparse=True)
+
+        # Tasks — queried by department, status, date
+        await db.tasks.create_index("id", unique=True)
+        await db.tasks.create_index("department")
+        await db.tasks.create_index("status")
+        await db.tasks.create_index("work_date")
+        await db.tasks.create_index([("department", 1), ("work_date", -1)])
+
+        # Alerts — queried by read status and department
+        await db.alerts.create_index("id", unique=True)
+        await db.alerts.create_index("is_read")
+        await db.alerts.create_index("department")
+        await db.alerts.create_index([("is_read", 1), ("department", 1)])
+
+        # Sessions — queried by date and floor
+        await db.map_sessions.create_index("id", unique=True)
+        await db.map_sessions.create_index([("date", -1), ("floor_id", 1)])
+        await db.map_sessions.create_index("parent_session_id")
+
+        await db.gate_sessions.create_index("id", unique=True)
+        await db.gate_sessions.create_index([("date", -1), ("floor_id", 1)])
+
+        # Activity logs — queried by timestamp
+        await db.activity_logs.create_index("id")
+        await db.activity_logs.create_index([("timestamp", -1)])
+
+        # Permission groups
+        await db.permission_groups.create_index("id", unique=True)
+
+        # Sidebar menu
+        await db.sidebar_menu.create_index("id")
+        await db.sidebar_menu.create_index("href")
+
+        # Monthly schedules
+        await db.monthly_schedules.create_index("id", unique=True)
+        await db.monthly_schedules.create_index([("department", 1), ("month", -1)])
+
+        # Department settings
+        await db.department_settings.create_index([("department", 1), ("setting_type", 1)])
+
+        logger.info("Database indexes ensured successfully")
+    except Exception as e:
+        logger.warning(f"Index creation warning: {e}")
 
 
 @app.on_event("shutdown")

@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { WebSocketProvider } from "@/context/WebSocketContext";
 import { HeaderProvider } from "@/context/HeaderContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DepartmentProtectedRoute, AdminProtectedRoute, PermissionProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
@@ -249,23 +250,25 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <WebSocketProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <HeaderProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                  <PWAInstallPrompt />
-                </BrowserRouter>
-                <Toaster position="top-left" />
-              </HeaderProvider>
-            </SidebarProvider>
-          </AuthProvider>
-        </WebSocketProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <WebSocketProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <HeaderProvider>
+                  <BrowserRouter>
+                    <AppRoutes />
+                    <PWAInstallPrompt />
+                  </BrowserRouter>
+                  <Toaster position="top-left" />
+                </HeaderProvider>
+              </SidebarProvider>
+            </AuthProvider>
+          </WebSocketProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

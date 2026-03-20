@@ -297,64 +297,73 @@ DEFAULT_GROUPS = [
         "name_ar": "مدير عام",
         "name_en": "General Manager",
         "description_ar": "يشوف كل الإدارات مع صلاحية التعديل",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_all_editable",
     },
     {
         "name_ar": "مدير إدارة التخطيط",
         "name_en": "Planning Manager",
         "description_ar": "مدير إدارة تخطيط خدمات الحشود",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_planning",
     },
     {
         "name_ar": "مدير إدارة المصليات",
         "name_en": "Prayer Areas Manager",
         "description_ar": "مدير إدارة المصليات",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_haram_map",
     },
     {
         "name_ar": "مدير إدارة الأبواب",
         "name_en": "Gates Manager",
         "description_ar": "مدير إدارة الأبواب",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_gates",
     },
     {
         "name_ar": "مدير إدارة الساحات",
         "name_en": "Plazas Manager",
         "description_ar": "مدير إدارة الساحات",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_plazas",
     },
     {
         "name_ar": "مدير خدمات الحشود",
         "name_en": "Crowd Services Manager",
         "description_ar": "مدير خدمات حشود الحرم",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_crowd_services",
     },
     {
         "name_ar": "مدير صحن المطاف",
         "name_en": "Mataf Manager",
         "description_ar": "مدير صحن المطاف",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_dept_mataf",
     },
     {
         "name_ar": "موظف ميداني",
         "name_en": "Field Staff",
         "description_ar": "موظف ميداني — عرض فقط مع صلاحية الواجهة الميدانية",
-        "is_system": False,
+        "is_system": True,
         "page_permissions": "_field_only",
     },
 ]
 
 
 async def _seed_default_permission_groups(db):
-    existing = await db.permission_groups.find({}, {"_id": 0, "name_en": 1}).to_list(100)
+    existing = await db.permission_groups.find({}, {"_id": 0, "name_en": 1, "is_system": 1}).to_list(100)
     existing_names = {g["name_en"] for g in existing}
+
+    # Update existing default groups to mark as is_system if not already
+    default_names = {g["name_en"] for g in DEFAULT_GROUPS}
+    for g in existing:
+        if g["name_en"] in default_names and not g.get("is_system"):
+            await db.permission_groups.update_one(
+                {"name_en": g["name_en"]},
+                {"$set": {"is_system": True}}
+            )
 
     inserted = 0
     for grp in DEFAULT_GROUPS:

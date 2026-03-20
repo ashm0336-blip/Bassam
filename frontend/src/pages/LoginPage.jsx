@@ -310,7 +310,7 @@ export default function LoginPage() {
           </Card>
 
           <p className="text-center text-xs text-gray-400 mt-10">
-            © 2024 {pageSettings.site_name_ar}
+            © {new Date().getFullYear()} {pageSettings.site_name_ar}
           </p>
         </div>
       </div>

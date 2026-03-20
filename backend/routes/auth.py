@@ -142,7 +142,7 @@ async def login(request: Request, credentials: UserLogin):
     )
 
     await log_activity("login", user, None,
-        f"تسجيل دخول ناجح — {identifier} ({user.get('role')})"
+        f"تسجيل دخول ناجح — {identifier}"
     )
 
     token = create_token(user["id"], user.get("email") or user.get("national_id", ""), user["role"], user.get("department"))
@@ -177,7 +177,8 @@ async def login(request: Request, credentials: UserLogin):
 
 # ─── تغيير PIN (إجباري عند أول دخول) ──────────────────────────
 @router.post("/auth/change-pin")
-async def change_pin(data: PinChangeRequest, user: dict = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def change_pin(request: Request, data: PinChangeRequest, user: dict = Depends(get_current_user)):
     pin = data.new_pin.strip()
     if not pin.isdigit() or not (4 <= len(pin) <= 6):
         raise HTTPException(status_code=400, detail="PIN يجب أن يكون 4–6 أرقام")
@@ -192,7 +193,8 @@ async def change_pin(data: PinChangeRequest, user: dict = Depends(get_current_us
 
 # ─── إعادة تعيين PIN (المدير أو الأدمن) ───────────────────────
 @router.post("/auth/reset-pin/{user_id}")
-async def reset_pin(user_id: str, manager: dict = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def reset_pin(request: Request, user_id: str, manager: dict = Depends(get_current_user)):
     # المدير يعيد تعيين موظفيه فقط — الأدمن يعيد الجميع
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
@@ -307,7 +309,8 @@ async def update_profile(data: dict, user: dict = Depends(get_current_user)):
 
 # ─── تغيير كلمة المرور (يتطلب كلمة المرور الحالية) ──────────────
 @router.post("/auth/change-password")
-async def change_password(data: dict, user: dict = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def change_password(request: Request, data: dict, user: dict = Depends(get_current_user)):
     current_password = data.get("current_password", "").strip()
     new_password = data.get("new_password", "").strip()
 

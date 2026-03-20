@@ -55,11 +55,16 @@ class ConnectionManager:
         self.active_connections.discard(websocket)
         logger.info(f"WS disconnected — {len(self.active_connections)} active")
 
-    async def broadcast(self, channel: str, action: str = "updated"):
-        """Broadcast event to all connected clients."""
+    async def broadcast(self, channel, action: str = "updated"):
+        """Broadcast event to all connected clients.
+        channel can be a string or a dict (for direct JSON payloads).
+        """
         if not self.active_connections:
             return
-        message = json.dumps({"channel": channel, "action": action})
+        if isinstance(channel, dict):
+            message = json.dumps(channel)
+        else:
+            message = json.dumps({"channel": channel, "action": action})
         dead = set()
         for conn in self.active_connections:
             try:

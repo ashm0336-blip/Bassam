@@ -54,8 +54,6 @@ def get_time_status(due_at_str, status):
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
-    return datetime.now(SA_TZ).strftime("%Y-%m-%d")
-
 MANAGER_ROLES = {"system_admin", "general_manager", "department_manager"}
 
 
