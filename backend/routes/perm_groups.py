@@ -54,7 +54,10 @@ ALL_PERMISSIONS = {
 # ═══════════════════════════════════════════
 
 @router.get("/admin/permission-groups")
-async def list_groups(admin: dict = Depends(require_admin)):
+async def list_groups(user: dict = Depends(get_current_user)):
+    """List permission groups. Accessible by admin, general manager, and department managers."""
+    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     groups = await db.permission_groups.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
     # Add user count per group
     for g in groups:
@@ -63,7 +66,9 @@ async def list_groups(admin: dict = Depends(require_admin)):
 
 
 @router.get("/admin/permission-groups/{group_id}")
-async def get_group(group_id: str, admin: dict = Depends(require_admin)):
+async def get_group(group_id: str, user: dict = Depends(get_current_user)):
+    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0})
     if not group:
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
