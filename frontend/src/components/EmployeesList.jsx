@@ -317,6 +317,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const [menuItems, setMenuItems] = useState([]);
   const [savingCustom, setSavingCustom] = useState(false);
   const [copyPermEmp, setCopyPermEmp] = useState(null);
+  const [customPermExpanded, setCustomPermExpanded] = useState({});
   const [copySource, setCopySource] = useState("");
   const [profileEmp, setProfileEmp] = useState(null);
   const [profileData, setProfileData] = useState(null);
@@ -1392,7 +1393,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
 
       {/* ── Custom Permissions Dialog ─────────────────────── */}
       <Dialog open={!!customPermEmp} onOpenChange={(open) => { if (!open) setCustomPermEmp(null); }}>
-        <DialogContent className="font-cairo sm:max-w-[600px] max-h-[85vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="font-cairo sm:max-w-[640px] max-h-[85vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-violet-500" />
@@ -1407,80 +1408,150 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             </p>
           </DialogHeader>
 
-          <div className="space-y-1 mt-2">
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground px-2 pb-1 border-b">
-              <span>الصفحة</span>
-              <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>ظاهر</span>
-                <span className="flex items-center gap-1"><Pencil className="w-3 h-3"/>تعديل</span>
-                <span className="w-8 text-center">حذف</span>
-              </div>
-            </div>
+          {/* Legend */}
+          <div className="flex items-center gap-3 text-[9px] text-muted-foreground px-1 flex-wrap">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400"/> ظاهر</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400"/> تعديل</span>
+            <span className="flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 rounded text-violet-600 font-bold">مُخصص</span>
+            <span className="flex items-center gap-1 text-slate-400">(من المجموعة) = موروث</span>
+          </div>
 
+          <div className="space-y-1 mt-1">
             {(() => {
               const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
               const grpPerms = grp?.page_permissions || {};
+
+              // Build department groups
               const roots = menuItems.filter(i => !i.parent_id && i.department !== 'system_admin' && !i.admin_only)
                 .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-              return roots.map(root => {
-                const children = menuItems.filter(i => i.parent_id === root.id).sort((a, b) => (a.order || 0) - (b.order || 0));
-                const allItems = [root, ...children];
-                children.forEach(c => {
-                  const gc = menuItems.filter(i => i.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0));
-                  allItems.push(...gc);
-                });
+              // Separate: standalone items (no children) vs department parents (with children)
+              const deptRoots = roots.filter(r => menuItems.some(c => c.parent_id === r.id));
+              const standaloneRoots = roots.filter(r => !menuItems.some(c => c.parent_id === r.id));
 
-                return allItems.map(item => {
-                  const depth = !item.parent_id ? 0 : menuItems.find(p => p.id === item.parent_id)?.parent_id ? 2 : 1;
-                  const grpPerm = grpPerms[item.href] || { visible: false, editable: false };
-                  const custom = customPerms[item.href];
-                  const hasOverride = !!custom;
-                  const effectiveVisible = hasOverride ? custom.visible : grpPerm.visible;
-                  const effectiveEditable = hasOverride ? custom.editable : grpPerm.editable;
+              const renderPermRow = (item, depth, grpPerms) => {
+                const grpPerm = grpPerms[item.href] || { visible: false, editable: false };
+                const custom = customPerms[item.href];
+                const hasOverride = !!custom;
+                const effectiveVisible = hasOverride ? custom.visible : grpPerm.visible;
+                const effectiveEditable = hasOverride ? custom.editable : grpPerm.editable;
 
-                  return (
-                    <div key={item.id}
-                      className={`flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/30 transition-colors
-                        ${hasOverride ? 'bg-violet-50 ring-1 ring-violet-200' : ''}`}
-                      style={{ paddingRight: `${8 + depth * 20}px` }}>
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className={`text-[11px] font-cairo truncate ${hasOverride ? 'font-bold text-violet-700' : ''}`}>
-                          {item.name_ar}
-                        </span>
-                        {!hasOverride && grpPerm.visible && (
-                          <span className="text-[8px] text-muted-foreground">(من المجموعة)</span>
+                return (
+                  <div key={item.id}
+                    className={`flex items-center justify-between py-1.5 px-2 rounded transition-colors
+                      ${hasOverride ? 'bg-violet-50 ring-1 ring-violet-200' : 'hover:bg-muted/30'}`}
+                    style={{ paddingRight: `${8 + depth * 16}px` }}>
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span className={`text-[11px] font-cairo truncate ${hasOverride ? 'font-bold text-violet-700' : ''}`}>
+                        {item.name_ar}
+                      </span>
+                      {!hasOverride && grpPerm.visible && (
+                        <span className="text-[8px] text-slate-400 whitespace-nowrap">(من المجموعة)</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <button onClick={() => toggleCustomPerm(item.href, 'visible')}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                          ${effectiveVisible
+                            ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-300'
+                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
+                        {effectiveVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      </button>
+                      <button onClick={() => effectiveVisible && toggleCustomPerm(item.href, 'editable')}
+                        disabled={!effectiveVisible}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                          ${!effectiveVisible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
+                            : effectiveEditable ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
+                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
+                        {effectiveEditable ? <Pencil className="w-3 h-3" /> : <Lock className="w-2.5 h-2.5" />}
+                      </button>
+                      <div className="w-6 text-center">
+                        {hasOverride && (
+                          <button onClick={() => removeCustomOverride(item.href)}
+                            className="text-red-400 hover:text-red-600 transition-colors" title="إزالة التخصيص">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <button onClick={() => toggleCustomPerm(item.href, 'visible')}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all text-[10px]
-                            ${effectiveVisible
-                              ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-300'
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
-                          {effectiveVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Department groups with collapsible sections */}
+                  {deptRoots.map(root => {
+                    const children = menuItems.filter(i => i.parent_id === root.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+                    const allDescendants = [root];
+                    children.forEach(c => {
+                      allDescendants.push(c);
+                      menuItems.filter(gc => gc.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(gc => allDescendants.push(gc));
+                    });
+
+                    // Count overrides in this department
+                    const overrideCount = allDescendants.filter(d => customPerms[d.href]).length;
+                    const grpVisibleCount = allDescendants.filter(d => grpPerms[d.href]?.visible).length;
+                    const effectiveVisibleCount = allDescendants.filter(d => {
+                      const c = customPerms[d.href];
+                      return c ? c.visible : grpPerms[d.href]?.visible;
+                    }).length;
+
+                    const isExpanded = customPermExpanded?.[root.id] !== false; // default expanded
+
+                    return (
+                      <div key={root.id} className="border rounded-xl overflow-hidden mb-2" data-testid={`custom-dept-${root.department}`}>
+                        {/* Department header */}
+                        <button
+                          onClick={() => setCustomPermExpanded(prev => ({ ...prev, [root.id]: !isExpanded }))}
+                          className="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 hover:bg-slate-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                            <span className="font-cairo font-bold text-sm">{root.name_ar}</span>
+                            <span className="text-[9px] text-slate-400">{effectiveVisibleCount}/{allDescendants.length}</span>
+                            {overrideCount > 0 && (
+                              <Badge className="text-[8px] px-1.5 py-0 h-4 bg-violet-100 text-violet-700 border-violet-200">{overrideCount} مُخصص</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {grpVisibleCount > 0 ? (
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                                {grpVisibleCount} من المجموعة
+                              </span>
+                            ) : (
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">مخفية</span>
+                            )}
+                          </div>
                         </button>
-                        <button onClick={() => effectiveVisible && toggleCustomPerm(item.href, 'editable')}
-                          disabled={!effectiveVisible}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-                            ${!effectiveVisible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
-                              : effectiveEditable ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300'
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200'}`}>
-                          {effectiveEditable ? <Pencil className="w-3 h-3" /> : <Lock className="w-2.5 h-2.5" />}
-                        </button>
-                        <div className="w-8 text-center">
-                          {hasOverride && (
-                            <button onClick={() => removeCustomOverride(item.href)}
-                              className="text-red-400 hover:text-red-600 transition-colors" title="إزالة التخصيص">
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
+
+                        {/* Department pages */}
+                        {isExpanded && (
+                          <div className="divide-y divide-slate-100">
+                            {allDescendants.map(item => {
+                              const depth = item.id === root.id ? 0 :
+                                menuItems.find(p => p.id === item.parent_id)?.parent_id ? 2 : 1;
+                              return renderPermRow(item, depth, grpPerms);
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Standalone items (field worker, notifications, etc.) */}
+                  {standaloneRoots.length > 0 && (
+                    <div className="border rounded-xl overflow-hidden mb-2">
+                      <div className="px-3 py-2 bg-slate-50">
+                        <span className="font-cairo font-bold text-sm text-slate-600">صفحات عامة</span>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                        {standaloneRoots.map(item => renderPermRow(item, 0, grpPerms))}
                       </div>
                     </div>
-                  );
-                });
-              });
+                  )}
+                </>
+              );
             })()}
           </div>
 
