@@ -447,10 +447,10 @@ export default function PermissionsManager() {
                     const href = item.href || "";
                     const isViewOnlyPage = (
                       href === "/" ||                                           // Dashboard
-                      (isTopLevel && !href.includes("?")) ||                   // Department overview pages
-                      href === "/notifications" ||                              // Notifications
-                      href === "/field"                                         // Field worker
+                      (isTopLevel && !href.includes("?"))                      // Department overview pages
                     );
+                    // Settings parent is just a container for tabs — view only
+                    const isSettingsParent = href.includes("?tab=settings") && !href.includes("&sub=");
 
                     // For top-level departments: calc child summary
                     let deptChildCount = 0, deptVisibleCount = 0, deptEditableCount = 0;
@@ -493,7 +493,7 @@ export default function PermissionsManager() {
                               <p className="text-[9px] text-muted-foreground">{deptVisibleCount}/{deptChildCount + 1} صفحة ظاهرة</p>
                             ) : (
                               <p className="text-[9px] text-muted-foreground truncate">
-                                {isViewOnlyPage ? (item.name_en ? `${item.name_en} — عرض فقط` : 'عرض فقط') : item.name_en}
+                                {(isViewOnlyPage || isSettingsParent) ? (item.name_en ? `${item.name_en} — عرض فقط` : 'عرض فقط') : item.name_en}
                               </p>
                             )}
                           </div>
@@ -527,7 +527,7 @@ export default function PermissionsManager() {
                           </button>
 
                           {/* Hide edit button for view-only pages */}
-                          {!isViewOnlyPage && (
+                          {!isViewOnlyPage && !isSettingsParent && (
                             <button onClick={() => perm.visible && togglePerm(item, 'editable')}
                               disabled={!perm.visible}
                               className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
