@@ -322,7 +322,13 @@ export default function Dashboard() {
                       <Activity className="w-3 h-3 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-medium">{t.user_name}: <span className="text-muted-foreground">{t.action}</span></p>
+                      <p className="text-[11px] font-medium">{t.user_name}: <span className="text-muted-foreground">{
+                        {login:'تسجيل دخول', employee_created:'إضافة موظف', employee_updated:'تحديث بيانات',
+                         account_activated:'تفعيل حساب', account_frozen:'تجميد حساب', role_changed:'تغيير صلاحيات',
+                         'تغيير مجموعة صلاحيات':'تغيير صلاحيات', 'تخصيص صلاحيات فردية':'تخصيص صلاحيات',
+                         pin_reset:'إعادة تعيين PIN', schedule_created:'إنشاء جدول', task_created:'إنشاء مهمة',
+                        }[t.action] || t.action
+                      }</span></p>
                       {t.details && <p className="text-[10px] text-muted-foreground truncate">{t.details}</p>}
                     </div>
                   </div>

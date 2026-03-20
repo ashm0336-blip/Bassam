@@ -224,10 +224,16 @@ async def get_mataf_stats():
 
 
 @router.get("/alerts")
-async def get_alerts(department: Optional[str] = None, type: Optional[str] = None):
+async def get_alerts(department: Optional[str] = None, type: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
+    # Filter by department based on user's access
     if department:
         query["department"] = department
+    elif user.get("role") != "system_admin" and not user.get("permission_group_id"):
+        # User without group sees only their department's alerts
+        if user.get("department"):
+            query["$or"] = [{"department": user["department"]}, {"department": "all"}]
+    # Users with groups or admin see all alerts
     if type:
         query["type"] = type
     alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(100)
@@ -235,8 +241,12 @@ async def get_alerts(department: Optional[str] = None, type: Optional[str] = Non
 
 
 @router.get("/alerts/unread-count")
-async def get_unread_alerts_count():
-    count = await db.alerts.count_documents({"is_read": False})
+async def get_unread_alerts_count(user: dict = Depends(get_current_user)):
+    query = {"is_read": False}
+    if user.get("role") != "system_admin" and not user.get("permission_group_id"):
+        if user.get("department"):
+            query["$or"] = [{"department": user["department"]}, {"department": "all"}]
+    count = await db.alerts.count_documents(query)
     return {"count": count}
 
 
