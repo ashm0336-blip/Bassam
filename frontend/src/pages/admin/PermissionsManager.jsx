@@ -110,6 +110,14 @@ export default function PermissionsManager() {
       if (!activeGroupId && groupsRes.data.length > 0) {
         setActiveGroupId(groupsRes.data[0].id);
       }
+      // Auto-expand all top-level items with children
+      const autoExpand = {};
+      menuRes.data.forEach(item => {
+        if (!item.parent_id && menuRes.data.some(c => c.parent_id === item.id)) {
+          autoExpand[item.id] = true;
+        }
+      });
+      setExpandedItems(prev => ({ ...autoExpand, ...prev }));
     } catch { toast.error("فشل جلب البيانات"); }
     finally { setLoading(false); }
   }, [activeGroupId]);
@@ -157,6 +165,38 @@ export default function PermissionsManager() {
       setGroups(prev => prev.map(g =>
         g.id === activeGroupId ? { ...g, page_permissions: newPerms } : g));
       refreshMenu();
+    } catch { toast.error("فشل الحفظ"); }
+  };
+
+  // ── Toggle entire department (parent + all children + grandchildren) ──
+  const toggleDeptAll = async (parentItem, targetState) => {
+    if (!activeGroup) return;
+    const newPerms = { ...activePerms };
+    const allItems = [parentItem];
+    const children = menuItems.filter(i => i.parent_id === parentItem.id);
+    children.forEach(c => {
+      allItems.push(c);
+      menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc));
+    });
+    allItems.forEach(item => {
+      if (targetState === 'editable') {
+        newPerms[item.href] = { visible: true, editable: true };
+      } else if (targetState === 'visible') {
+        newPerms[item.href] = { visible: true, editable: false };
+      } else {
+        newPerms[item.href] = { visible: false, editable: false };
+      }
+    });
+    try {
+      await axios.put(`${API}/admin/permission-groups/${activeGroupId}`,
+        { page_permissions: newPerms }, headers());
+      setGroups(prev => prev.map(g =>
+        g.id === activeGroupId ? { ...g, page_permissions: newPerms } : g));
+      refreshMenu();
+      const name = parentItem.name_ar;
+      if (targetState === 'editable') toast.success(`تم تفعيل ${name} بالكامل (ظاهر + تعديل)`);
+      else if (targetState === 'visible') toast.success(`تم تفعيل ${name} (عرض فقط)`);
+      else toast.success(`تم إخفاء ${name} بالكامل`);
     } catch { toast.error("فشل الحفظ"); }
   };
 
@@ -401,6 +441,25 @@ export default function PermissionsManager() {
                     const isAdminPage = item.department === "system_admin" || item.admin_only;
                     const hasChildren = menuItems.some(i => i.parent_id === item.id) || item._hasChildren;
                     const indent = (item._depth || 0) * 28;
+                    const isTopLevel = (item._depth || 0) === 0 && hasChildren;
+
+                    // For top-level departments: calc child summary
+                    let deptChildCount = 0, deptVisibleCount = 0, deptEditableCount = 0;
+                    if (isTopLevel) {
+                      const allChildren = menuItems.filter(i => i.parent_id === item.id);
+                      allChildren.forEach(c => {
+                        deptChildCount++;
+                        const cp = activePerms[c.href];
+                        if (cp?.visible) deptVisibleCount++;
+                        if (cp?.editable) deptEditableCount++;
+                        menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => {
+                          deptChildCount++;
+                          const gp = activePerms[gc.href];
+                          if (gp?.visible) deptVisibleCount++;
+                          if (gp?.editable) deptEditableCount++;
+                        });
+                      });
+                    }
 
                     return (
                       <div key={item.id} data-testid={`tree-item-${item.id}`}
@@ -421,11 +480,33 @@ export default function PermissionsManager() {
                           <IconComp className="w-4.5 h-4.5 text-slate-500 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-cairo font-bold text-[13px] truncate">{item.name_ar}</p>
-                            <p className="text-[9px] text-muted-foreground truncate">{item.name_en}</p>
+                            {isTopLevel && deptChildCount > 0 ? (
+                              <p className="text-[9px] text-muted-foreground">{deptVisibleCount}/{deptChildCount + 1} صفحة ظاهرة</p>
+                            ) : (
+                              <p className="text-[9px] text-muted-foreground truncate">{item.name_en}</p>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-shrink-0 mr-3">
+                          {/* Quick department toggle for top-level items */}
+                          {isTopLevel && !isAdminPage && (
+                            <>
+                              <button onClick={() => toggleDeptAll(item, deptEditableCount === deptChildCount + 1 ? 'hidden' : 'editable')}
+                                title={deptEditableCount === deptChildCount + 1 ? 'إخفاء الإدارة كاملة' : 'تفعيل الإدارة كاملة'}
+                                className={`text-[8px] px-2 py-1 rounded-lg font-bold transition-all ${
+                                  deptEditableCount === deptChildCount + 1
+                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-600'
+                                    : deptVisibleCount > 0
+                                    ? 'bg-blue-100 text-blue-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                    : 'bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-700'
+                                }`}>
+                                {deptEditableCount === deptChildCount + 1 ? 'كامل ✓' : deptVisibleCount > 0 ? 'جزئي' : 'مخفي'}
+                              </button>
+                              <span className="w-px h-5 bg-slate-200" />
+                            </>
+                          )}
+
                           <button onClick={() => togglePerm(item, 'visible')}
                             className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
                               ${perm.visible
@@ -486,6 +567,39 @@ export default function PermissionsManager() {
                     <p className="text-[9px] text-emerald-600/70 flex items-center justify-center gap-1"><Pencil className="w-3 h-3" />تعديل</p>
                   </div>
                 </div>
+
+                {/* Department Access Summary */}
+                {(() => {
+                  const DEPT_INFO = [
+                    { key: "planning", ar: "التخطيط", href: "/planning" },
+                    { key: "haram_map", ar: "المصليات", href: "/haram-map" },
+                    { key: "gates", ar: "الأبواب", href: "/gates" },
+                    { key: "plazas", ar: "الساحات", href: "/plazas" },
+                    { key: "crowd_services", ar: "الحشود", href: "/crowd-services" },
+                    { key: "mataf", ar: "المطاف", href: "/mataf" },
+                  ];
+                  return (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-bold text-slate-500">الإدارات المتاحة:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {DEPT_INFO.map(d => {
+                          const p = activePerms[d.href];
+                          const visible = p?.visible;
+                          const editable = p?.editable;
+                          return (
+                            <span key={d.key} className={`text-[9px] px-2 py-1 rounded-full font-bold border ${
+                              editable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              visible ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                              'bg-slate-50 text-slate-300 border-slate-100 line-through'
+                            }`}>
+                              {d.ar} {editable ? '✎' : visible ? '◉' : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {activeGroup.user_count > 0 && (
                   <div className="bg-violet-50 rounded-lg p-2.5 text-center">
