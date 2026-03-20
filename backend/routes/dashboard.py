@@ -224,30 +224,113 @@ async def get_mataf_stats():
 
 
 @router.get("/alerts")
-async def get_alerts(department: Optional[str] = None, type: Optional[str] = None, user: dict = Depends(get_current_user)):
+async def get_alerts(department: Optional[str] = None, type: Optional[str] = None, category: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
-    # Filter by department based on user's access
-    if department:
-        query["department"] = department
-    elif user.get("role") != "system_admin" and not user.get("permission_group_id"):
-        # User without group sees only their department's alerts
-        if user.get("department"):
-            query["$or"] = [{"department": user["department"]}, {"department": "all"}]
-    # Users with groups or admin see all alerts
+    user_role = user.get("role", "")
+    user_dept = user.get("department")
+    user_id = user.get("id")
+
+    # Category filter: tasks, alerts, broadcasts
+    if category == "tasks":
+        query["type"] = {"$in": ["task", "task_done"]}
+        # Non-admin users see only their own task notifications
+        if user_role not in ("system_admin", "general_manager"):
+            query["target_user_id"] = user_id
+    elif category == "broadcasts":
+        query["type"] = "broadcast"
+        # Broadcasts visible to user's department or "all"
+        if user_role not in ("system_admin", "general_manager"):
+            dept_filter = [{"department": "all"}]
+            if user_dept:
+                dept_filter.append({"department": user_dept})
+            query["$or"] = dept_filter
+    elif category == "alerts":
+        query["type"] = {"$nin": ["task", "task_done", "broadcast"]}
+        if department:
+            query["department"] = department
+        elif user_role not in ("system_admin", "general_manager"):
+            if user_dept:
+                query["$or"] = [{"department": user_dept}, {"department": "all"}]
+    else:
+        # "all" — smart filter by role
+        if department:
+            query["department"] = department
+        elif user_role not in ("system_admin", "general_manager"):
+            if user_dept:
+                dept_or = [{"department": user_dept}, {"department": "all"}]
+                # Also include task notifications targeted to this user
+                dept_or.append({"target_user_id": user_id})
+                query["$or"] = dept_or
+
     if type:
         query["type"] = type
-    alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(100)
+
+    alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(200)
     return alerts
 
 
 @router.get("/alerts/unread-count")
 async def get_unread_alerts_count(user: dict = Depends(get_current_user)):
+    user_role = user.get("role", "")
+    user_dept = user.get("department")
+    user_id = user.get("id")
+
     query = {"is_read": False}
-    if user.get("role") != "system_admin" and not user.get("permission_group_id"):
-        if user.get("department"):
-            query["$or"] = [{"department": user["department"]}, {"department": "all"}]
+    if user_role not in ("system_admin", "general_manager"):
+        or_conds = [{"department": "all"}]
+        if user_dept:
+            or_conds.append({"department": user_dept})
+        or_conds.append({"target_user_id": user_id})
+        query["$or"] = or_conds
+
     count = await db.alerts.count_documents(query)
     return {"count": count}
+
+
+# ── Broadcasts (تعميمات) ──────────────────────────────────────
+@router.post("/broadcasts")
+async def create_broadcast(data: dict, user: dict = Depends(get_current_user)):
+    """Create a broadcast message to a department or all departments"""
+    title = data.get("title", "").strip()
+    message = data.get("message", "").strip()
+    target_dept = data.get("department", "all")
+    priority = data.get("priority", "normal")
+
+    if not title:
+        raise HTTPException(status_code=400, detail="يجب إدخال عنوان التعميم")
+
+    broadcast_id = str(uuid.uuid4())
+    broadcast_doc = {
+        "id": broadcast_id,
+        "type": "broadcast",
+        "title": title,
+        "message": message,
+        "department": target_dept,
+        "priority": priority,
+        "is_read": False,
+        "created_by": user.get("name", ""),
+        "created_by_id": user.get("id"),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "received_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.alerts.insert_one(broadcast_doc)
+    await log_activity("تعميم", user, title, f"تعميم {'لكل الإدارات' if target_dept == 'all' else f'لـ {target_dept}'}: {title}")
+
+    # Real-time notification
+    from ws_manager import ws_manager
+    await ws_manager.broadcast({
+        "type": "notification",
+        "channel": "alerts",
+        "action": "broadcast",
+        "payload": {
+            "title": f"تعميم: {title}",
+            "message": message[:120],
+            "priority": priority,
+            "department": target_dept,
+        }
+    })
+
+    return {"message": "تم إرسال التعميم بنجاح", "id": broadcast_id}
 
 
 

@@ -3,33 +3,24 @@
 ## Original Problem Statement
 Enterprise-grade crowd management application for Al-Haram. Arabic UI.
 
-## Tech Stack
-- **Backend**: FastAPI + MongoDB + WebSocket + slowapi
-- **Frontend**: React (CRA) + Shadcn UI + WebSocket Client
-
-## Real-time Notification System (March 2026) — Complete
+## Real-time Notification System — Complete
 ### Features:
-- WebSocket broadcasts notification payload (title, message, priority, target users)
-- Toast popup with icon (task/alert/urgent) appears instantly
-- Sound alert: gentle chime (normal) or double chime (urgent/high)
-- Browser Notification API: shows OS-level notification when tab not focused
-- Triggered on: task creation, task completion, admin alerts
-- Target filtering: notifications sent to specific user IDs only
+- WebSocket instant notifications (toast + sound + browser notification)
+- Smart filtering by role: admin sees all, manager sees department, employee sees own tasks
+- 4 tabs: All | My Tasks | Alerts | Broadcasts
+- Broadcasts system: send messages to a department or all departments
+- Mark as read with timestamp
+- Priority badges: urgent (red), high (orange), normal (gray)
 
-### Components:
-- Backend: ws_manager.broadcast() with notification payload in tasks.py, admin.py
-- Frontend: NotificationManager.jsx (listener component in Layout)
-- Sound: Web Audio API beeps (no external files needed)
+### API Endpoints:
+- GET /api/alerts?category=tasks|alerts|broadcasts — filtered by user role
+- POST /api/broadcasts — create broadcast (admin/managers)
+- PUT /api/alerts/{id} — mark read
+- GET /api/alerts/unread-count — smart count per user
 
 ## Permission System — Complete
-- Auto-clear custom permissions on group change
-- Tree view with expandable departments + quick toggle
-- Department access summary badges
-- Individual permissions dialog with collapsible department sections
-
-## Security — Complete
-- WebSocket auth, Rate limiting, DB indexes (30+), Error Boundary
-- Security monitoring dashboard in admin
+## Security — Complete  
+## Sidebar: Monthly Schedule standalone
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
@@ -37,7 +28,7 @@ Enterprise-grade crowd management application for Al-Haram. Arabic UI.
 ## Pending Tasks:
 - Comparative Density Report (P0)
 - Gates Audit Log (P0)
+- Task comments/replies (P1)
+- Daily summary notification (P1)
 - Advanced Task Features (P1)
-- Full Attendance System (P1)
-- Push Notifications - real mobile (P2)
-- Recycle Bin (P2)
+- Push Notifications - mobile (P2)
