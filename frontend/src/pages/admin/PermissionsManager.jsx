@@ -354,6 +354,9 @@ export default function PermissionsManager() {
               style={activeGroupId === g.id ? { borderColor: gc.color, backgroundColor: gc.bg, color: gc.color } : {}}>
               <Shield className="w-4 h-4" />
               {g.name_ar}
+              {g.user_count > 0 && (
+                <span className="text-[9px] bg-white/60 rounded-full px-1.5 py-0.5 font-bold">{g.user_count}</span>
+              )}
             </button>
           );
         })}
@@ -483,6 +486,13 @@ export default function PermissionsManager() {
                     <p className="text-[9px] text-emerald-600/70 flex items-center justify-center gap-1"><Pencil className="w-3 h-3" />تعديل</p>
                   </div>
                 </div>
+
+                {activeGroup.user_count > 0 && (
+                  <div className="bg-violet-50 rounded-lg p-2.5 text-center">
+                    <p className="text-xl font-bold text-violet-600">{activeGroup.user_count}</p>
+                    <p className="text-[9px] text-violet-600/70 flex items-center justify-center gap-1"><UsersIcon className="w-3 h-3" />موظف في هذه المجموعة</p>
+                  </div>
+                )}
 
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => openGroupDialog(activeGroup)}>

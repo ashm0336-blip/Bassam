@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [roleChangeAlert, setRoleChangeAlert] = useState(null);
   const prevRoleRef = useRef(null);
+  const prevGroupRef = useRef(undefined);
 
   useEffect(() => {
     if (token) {
@@ -86,13 +87,18 @@ export const AuthProvider = ({ children }) => {
         axios.get(`${API}/auth/my-permissions`).catch(() => ({ data: { permissions: [] } })),
       ]);
       const newRole = meRes.data.role;
+      const newGroupName = meRes.data.permission_group_name || permRes.data.permission_group_name;
       const oldRole = prevRoleRef.current;
+      const oldGroupName = prevGroupRef.current;
 
-      // Detect role change
-      if (oldRole && newRole !== oldRole) {
+      // Detect permission group change
+      if (oldGroupName !== undefined && newGroupName !== oldGroupName) {
+        setRoleChangeAlert({ oldRole: oldGroupName || oldRole, newRole: newGroupName || newRole });
+      } else if (oldRole && newRole !== oldRole) {
         setRoleChangeAlert({ oldRole, newRole });
       }
       prevRoleRef.current = newRole;
+      prevGroupRef.current = newGroupName;
       setUser(prev => prev ? {
         ...prev,
         ...meRes.data,

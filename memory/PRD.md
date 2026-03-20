@@ -9,45 +9,37 @@ Enterprise-grade crowd management application for managing prayer halls, gates, 
 - **Auth**: JWT + bcrypt + group-based permissions
 - **Real-time**: WebSocket with JWT authentication
 
-## Permissions System (March 19, 2026) — Group + Individual
+## Permissions System (March 2026) — Complete
 ### Architecture:
-- **permission_groups** collection: groups with page_permissions ({href: {visible, editable}})
-- Users assigned `permission_group_id` on their user document
-- **custom_permissions** per-user override group settings
+- permission_groups collection with page_permissions
+- Users assigned permission_group_id + optional custom_permissions
 - system_admin always has full access
-- Resolution: system_admin > custom_permissions > group > department fallback
+- Resolution: system_admin > custom > group > fallback
+- Real-time WebSocket updates on any change
 
-### Features:
-- Admin creates/edits/deletes/duplicates permission groups
-- 8 default groups auto-seeded (General Manager, 6 dept managers, Field Staff)
+### Features Implemented:
+- CRUD for permission groups (create/edit/delete/duplicate)
+- 8 default groups auto-seeded
 - Group selector in employee add/edit form
-- Group selector in employee table
-- Individual permissions dialog per employee (overrides group)
-- Real-time WebSocket updates
+- Group selector in employee table (inline change)
+- Individual permissions dialog per employee
+- Copy permissions from another employee
+- User count per group displayed
+- Permission change logging (detailed activity log)
+- Real-time notification on permission change
+- Header/sidebar show group name instead of old role
+- Login greeting shows group name
+- Backend checks use group permissions (not just role)
+- Security: field staff cannot manage employees
 
 ## Auto-Seed System
 - sidebar_menu (50), dropdown_options (30), zone_categories (15), permission_groups (8)
-- Full sync on every startup
-
-## Key Files:
-- `/app/backend/routes/perm_groups.py` — Groups CRUD + resolution + my-permissions
-- `/app/backend/seed_sidebar.py` — Auto-seed system
-- `/app/backend/routes/settings.py` — Sidebar filtering
-- `/app/backend/routes/employees.py` — Employee CRUD with group sync
-- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — Group management UI
-- `/app/frontend/src/components/EmployeesList.jsx` — Employee list with group + custom perms
+- Full sync on every startup for deployment consistency
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
-## Completed (March 19, 2026):
-- Permission groups system (backend + frontend)
-- Group selector in employee forms + table
-- Individual permissions override dialog
-- Auto-seed for deployment consistency
-- Child page visibility bug fix
-
-## Pending:
+## Pending Tasks:
 - Comparative Density Report (P0)
 - Gates Audit Log (P0)
 - Daily Session auto-start fix (P1)

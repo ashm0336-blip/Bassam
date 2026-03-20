@@ -16,7 +16,7 @@ import {
   Check, X, Info, UserCheck, CalendarDays, Clock, Zap,
   Eye, EyeOff, Pencil, Lock, Settings,
   LayoutDashboard, Navigation, DoorOpen, LayoutGrid as LayoutGridIcon,
-  Circle, Bell, MapPin,
+  Circle, Bell, MapPin, Copy,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -342,6 +342,8 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const [customPerms, setCustomPerms] = useState({});
   const [menuItems, setMenuItems] = useState([]);
   const [savingCustom, setSavingCustom] = useState(false);
+  const [copyPermEmp, setCopyPermEmp] = useState(null);
+  const [copySource, setCopySource] = useState("");
 
   // Live national ID check
   const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
@@ -503,6 +505,27 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
       return next;
     });
   };
+
+  // ── Copy Permissions Dialog ─────────────────────────────
+  const openCopyPerms = (emp) => {
+    if (!emp.user_id) return toast.error("فعّل حساب الموظف أولاً");
+    setCopyPermEmp(emp);
+    setCopySource("");
+  };
+
+  const executeCopyPerms = async () => {
+    if (!copyPermEmp?.user_id || !copySource) return;
+    setSavingCustom(true);
+    try {
+      await axios.put(`${API}/admin/users/${copyPermEmp.user_id}/copy-permissions`,
+        { source_user_id: copySource }, headers());
+      toast.success("تم نسخ الصلاحيات بنجاح");
+      setCopyPermEmp(null);
+      fetchEmployees();
+    } catch (e) { toast.error(e.response?.data?.detail || "فشل النسخ"); }
+    finally { setSavingCustom(false); }
+  };
+
 
 
   // ── Open Dialog ───────────────────────────────────────────
@@ -947,6 +970,11 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                               <Settings className="w-4 h-4 ml-2 text-violet-500"/>صلاحيات فردية
                             </DropdownMenuItem>
                           )}
+                          {canChangeRoles && emp.user_id && (
+                            <DropdownMenuItem onClick={() => openCopyPerms(emp)}>
+                              <Copy className="w-4 h-4 ml-2 text-sky-500"/>نسخ صلاحيات من موظف
+                            </DropdownMenuItem>
+                          )}
                           {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
                             <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
                               <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN
@@ -1194,6 +1222,50 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionConfirm(null)}>إلغاء</Button>
             <Button onClick={executeAccountAction} className="gap-1.5">تأكيد</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Copy Permissions Dialog ─────────────────────── */}
+      <Dialog open={!!copyPermEmp} onOpenChange={(open) => { if (!open) setCopyPermEmp(null); }}>
+        <DialogContent className="font-cairo sm:max-w-[400px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Copy className="w-5 h-5 text-sky-500" />
+              نسخ صلاحيات — {copyPermEmp?.name}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              اختر موظف لنسخ مجموعته وصلاحياته الفردية
+            </p>
+          </DialogHeader>
+          <div className="mt-3">
+            <Label className="text-[11px] font-semibold">نسخ من:</Label>
+            <Select value={copySource} onValueChange={setCopySource}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="اختر موظف..." />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {employees.filter(e => e.user_id && e.id !== copyPermEmp?.id).map(e => {
+                  const grp = permGroups.find(g => g.id === e.permission_group_id);
+                  return (
+                    <SelectItem key={e.user_id} value={e.user_id}>
+                      <div className="flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        {e.name}
+                        {grp && <span className="text-[9px] text-muted-foreground">({grp.name_ar})</span>}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setCopyPermEmp(null)}>إلغاء</Button>
+            <Button onClick={executeCopyPerms} disabled={!copySource || savingCustom} className="gap-1.5 bg-sky-600 hover:bg-sky-700">
+              {savingCustom ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
+              نسخ
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
