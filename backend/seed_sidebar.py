@@ -49,32 +49,34 @@ def _sidebar_items():
         bh = DEPT_HREF[dk]
         add(bh, name_ar=nar, name_en=nen, icon=icon, order=order, department=dk,
             subtitle_ar=f"إدارة {nar}", subtitle_en=f"{nen} management")
-        add(f"{bh}?tab=transactions", parent_href=bh,
-            name_ar="المهام اليومية", name_en="Daily Tasks", icon="FileText", order=3, department=dk)
         if dk == "haram_map":
             add("/daily-sessions", parent_href=bh,
                 name_ar="السجل اليومي", name_en="Daily Log", icon="Calendar", order=2, department=dk)
         elif dk == "gates":
             add("/daily-gates", parent_href=bh,
                 name_ar="السجل اليومي", name_en="Daily Log", icon="Calendar", order=2, department=dk)
-        s_order = 4 if dk not in ("haram_map", "gates") else 6
+        add(f"{bh}?tab=transactions", parent_href=bh,
+            name_ar="المهام اليومية", name_en="Daily Tasks", icon="FileText", order=3, department=dk)
+        # الجدول الشهري — مباشرة تحت الإدارة (بدلاً من داخل الإعدادات)
+        add(f"{bh}?tab=settings&sub=MonthlySchedule", parent_href=bh,
+            name_ar="الجدول الشهري", name_en="Monthly Schedule", icon="Calendar", order=4, department=dk)
+        s_order = 5 if dk not in ("haram_map", "gates") else 7
         settings_href = f"{bh}?tab=settings"
         add(settings_href, parent_href=bh,
             name_ar="الإعدادات", name_en="Settings", icon="Settings", order=s_order, department=dk)
         for sub_key, sub_ar, sub_en, sub_icon, sub_order in [
             ("Staff", "الموظفون", "Staff", "Users", 1),
-            ("MonthlySchedule", "الجدول الشهري", "Monthly Schedule", "CalendarDays", 2),
-            ("Shifts", "الورديات", "Shifts", "Clock", 3),
-            ("Maps", "الخرائط", "Maps", "Layers", 4),
+            ("Shifts", "الورديات", "Shifts", "Clock", 2),
+            ("Maps", "الخرائط", "Maps", "Layers", 3),
         ]:
             add(f"{bh}?tab=settings&sub={sub_key}", parent_href=settings_href,
                 name_ar=sub_ar, name_en=sub_en, icon=sub_icon, order=sub_order, department=dk)
         if dk == "haram_map":
             add(f"{bh}?tab=settings&sub=Categories", parent_href=settings_href,
-                name_ar="الفئات", name_en="Categories", icon="Tag", order=5, department=dk)
+                name_ar="الفئات", name_en="Categories", icon="Tag", order=4, department=dk)
         elif dk == "gates":
             add(f"{bh}?tab=settings&sub=GatesData", parent_href=settings_href,
-                name_ar="بيانات الأبواب", name_en="Gates Data", icon="DoorOpen", order=5, department=dk)
+                name_ar="بيانات الأبواب", name_en="Gates Data", icon="DoorOpen", order=4, department=dk)
 
     add("/field", name_ar="الواجهة الميدانية", name_en="Field Worker",
         icon="MapPin", order=8, department="all", is_secondary=True)
