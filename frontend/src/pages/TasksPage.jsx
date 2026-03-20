@@ -248,9 +248,10 @@ function CalendarCell({ date, data, isSelected, isToday, isFuture, onClick, onAd
 // ── Main Component ─────────────────────────────────────────────
 export default function TasksPage({ department }) {
   const { language } = useLanguage();
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const isAr = language === "ar";
-  const isManager = ["system_admin", "general_manager", "department_manager"].includes(user?.role);
+  // Use permission-based check: user can manage tasks if they have write access to transactions page
+  const isManager = user?.role === "system_admin" || hasPermission("page_transactions", "write");
 
   const dept = department || user?.department;
   const token = () => localStorage.getItem("token");

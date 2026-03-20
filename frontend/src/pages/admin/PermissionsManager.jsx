@@ -523,16 +523,6 @@ export default function PermissionsManager() {
                                 : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
                             {perm.editable ? <Pencil className="w-3.5 h-3.5" /> : <Lock className="w-3 h-3" />}
                           </button>
-
-                          <span className="w-px h-5 bg-slate-200 mx-1" />
-                          <button onClick={() => openPageDialog(item)}
-                            className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => { setPageToDelete(item); setDeletePageDialog(true); }}
-                            className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
                         </div>
                       </div>
                     );

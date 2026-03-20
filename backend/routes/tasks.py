@@ -57,6 +57,24 @@ def now_iso():
 MANAGER_ROLES = {"system_admin", "general_manager", "department_manager"}
 
 
+async def _can_manage_tasks(user: dict) -> bool:
+    """Check if user can manage tasks via role OR group permissions."""
+    if user.get("role") in MANAGER_ROLES:
+        return True
+    group_id = user.get("permission_group_id")
+    if not group_id:
+        return False
+    group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+    if not group:
+        return False
+    pp = group.get("page_permissions", {})
+    # Check if any transactions page is editable
+    for href, perm in pp.items():
+        if "tab=transactions" in href and perm.get("editable"):
+            return True
+    return False
+
+
 # ── GET: جلب المهام (مع فلترة بالتاريخ/الشهر) ───────────────────
 @router.get("/tasks")
 async def get_tasks(department: Optional[str] = None, status: Optional[str] = None,
@@ -273,7 +291,7 @@ async def get_tasks_archive(department: str, user: dict = Depends(get_current_us
 # ── POST: إنشاء مهمة ────────────────────────────────────────────
 @router.post("/tasks")
 async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in MANAGER_ROLES:
+    if not await _can_manage_tasks(user):
         raise HTTPException(status_code=403, detail="فقط المدير يمكنه إنشاء مهام")
     if not data.assignee_ids:
         raise HTTPException(status_code=400, detail="يجب تحديد موظف واحد على الأقل")
@@ -345,7 +363,7 @@ async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
 # ── PUT: تعديل مهمة ─────────────────────────────────────────────
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: str, data: TaskUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in MANAGER_ROLES:
+    if not await _can_manage_tasks(user):
         raise HTTPException(status_code=403, detail="فقط المدير يمكنه تعديل المهام")
 
     task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
@@ -371,7 +389,7 @@ async def update_task_status(task_id: str, data: TaskStatusUpdate, user: dict = 
         raise HTTPException(status_code=404, detail="المهمة غير موجودة")
 
     # الموظف يمكنه فقط تحديث مهامه
-    if user.get("role") not in MANAGER_ROLES:
+    if not await _can_manage_tasks(user):
         emp = await db.employees.find_one({"user_id": user["id"]}, {"_id": 0})
         if not emp or emp["id"] not in task.get("assignee_ids", []):
             raise HTTPException(status_code=403, detail="لا يمكنك تعديل هذه المهمة")
@@ -482,7 +500,7 @@ async def update_task_status(task_id: str, data: TaskStatusUpdate, user: dict = 
 # ── DELETE: حذف مهمة ────────────────────────────────────────────
 @router.delete("/tasks/{task_id}")
 async def delete_task(task_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in MANAGER_ROLES:
+    if not await _can_manage_tasks(user):
         raise HTTPException(status_code=403, detail="فقط المدير يمكنه حذف المهام")
     task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
     if not task:
