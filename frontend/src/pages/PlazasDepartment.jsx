@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
 import TasksPage from "@/pages/TasksPage";
+import EmployeeManagement from "@/components/EmployeeManagement";
 
 export default function PlazasDepartment() {
   const [searchParams] = useSearchParams();
@@ -12,6 +13,7 @@ export default function PlazasDepartment() {
       {activeTab === 'dashboard'     && <DepartmentOverview department="squares" />}
       {activeTab === 'employees'     && <DepartmentSettings department="squares" />}
       {activeTab === 'transactions'  && <TasksPage department="squares" />}
+      {activeTab === 'schedule'      && <EmployeeManagement department="squares" />}
       {activeTab === 'settings'      && <DepartmentSettings department="squares" />}
     </div>
   );

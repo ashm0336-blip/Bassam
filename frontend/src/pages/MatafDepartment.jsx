@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import DepartmentOverview from "@/pages/DepartmentOverview";
 import DepartmentSettings from "@/pages/DepartmentSettings";
 import TasksPage from "@/pages/TasksPage";
+import EmployeeManagement from "@/components/EmployeeManagement";
 
 export default function MatafDepartment() {
   const [searchParams] = useSearchParams();
@@ -12,6 +13,7 @@ export default function MatafDepartment() {
       {activeTab === 'dashboard'     && <DepartmentOverview department="mataf" />}
       {activeTab === 'employees'     && <DepartmentSettings department="mataf" />}
       {activeTab === 'transactions'  && <TasksPage department="mataf" />}
+      {activeTab === 'schedule'      && <EmployeeManagement department="mataf" />}
       {activeTab === 'settings'      && <DepartmentSettings department="mataf" />}
     </div>
   );

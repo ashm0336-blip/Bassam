@@ -57,8 +57,8 @@ def _sidebar_items():
                 name_ar="السجل اليومي", name_en="Daily Log", icon="Calendar", order=2, department=dk)
         add(f"{bh}?tab=transactions", parent_href=bh,
             name_ar="المهام اليومية", name_en="Daily Tasks", icon="FileText", order=3, department=dk)
-        # الجدول الشهري — مباشرة تحت الإدارة (بدلاً من داخل الإعدادات)
-        add(f"{bh}?tab=settings&sub=MonthlySchedule", parent_href=bh,
+        # الجدول الشهري — مباشرة تحت الإدارة (صفحة مستقلة)
+        add(f"{bh}?tab=schedule", parent_href=bh,
             name_ar="الجدول الشهري", name_en="Monthly Schedule", icon="Calendar", order=4, department=dk)
         s_order = 5 if dk not in ("haram_map", "gates") else 7
         settings_href = f"{bh}?tab=settings"
@@ -270,9 +270,9 @@ def _build_dept_pages(dept_key):
         "/": {"visible": True, "editable": False},
         bh: {"visible": True, "editable": True},
         f"{bh}?tab=transactions": {"visible": True, "editable": True},
+        f"{bh}?tab=schedule": {"visible": True, "editable": True},
         f"{bh}?tab=settings": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Staff": {"visible": True, "editable": True},
-        f"{bh}?tab=settings&sub=MonthlySchedule": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Shifts": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Maps": {"visible": True, "editable": True},
         "/notifications": {"visible": True, "editable": False},

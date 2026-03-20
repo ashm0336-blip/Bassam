@@ -270,10 +270,9 @@ export default function DepartmentSettings({ department }) {
     }
   };
 
-  // Build tabs list — order: الموظفون → الجدول الشهري → الورديات → الخرائط → (dept-specific)
+  // Build tabs list — order: الموظفون → الورديات → الخرائط → (dept-specific)
   const tabs = [];
   tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون'       : 'Staff',    icon: Users,       count: counts.employees });
-  tabs.push({ id: 'employees',      label: language === 'ar' ? 'الجدول الشهري'  : 'Schedule', icon: CalendarDays, count: counts.schedule });
   tabs.push({ id: 'shifts',         label: language === 'ar' ? 'الورديات'       : 'Shifts',   icon: Clock,       count: counts.shifts   });
   tabs.push({ id: 'maps',           label: language === 'ar' ? 'الخرائط'        : 'Maps',     icon: Layers,      count: counts.maps     });
   if (department === 'gates') {
