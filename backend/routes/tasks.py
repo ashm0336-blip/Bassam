@@ -322,6 +322,21 @@ async def create_task(data: TaskCreate, user: dict = Depends(get_current_user)):
             }
             await db.alerts.insert_one(alert)
 
+    # Broadcast real-time notification with payload
+    from ws_manager import ws_manager
+    await ws_manager.broadcast({
+        "type": "notification",
+        "channel": "alerts",
+        "action": "new_task",
+        "payload": {
+            "title": f"مهمة جديدة: {data.title}",
+            "message": f"من {user.get('name', 'المدير')} — {data.description[:80] if data.description else ''}",
+            "priority": data.priority,
+            "department": data.department,
+            "target_user_ids": [emp.get("user_id") for emp in emps if emp.get("user_id")],
+        }
+    })
+
     await log_activity("task_created", user, data.title, f"تم إنشاء مهمة لـ {len(emps)} موظف")
     task.pop("_id", None)
     return task
@@ -443,6 +458,20 @@ async def update_task_status(task_id: str, data: TaskStatusUpdate, user: dict = 
             "received_at": now.isoformat(),
         }
         await db.alerts.insert_one(alert)
+
+        # Broadcast real-time notification
+        from ws_manager import ws_manager
+        await ws_manager.broadcast({
+            "type": "notification",
+            "channel": "alerts",
+            "action": "task_done",
+            "payload": {
+                "title": f"{icon} مهمة مكتملة: {task['title']}",
+                "message": f"أتم {user.get('name', 'الموظف')} المهمة{perf_desc}",
+                "priority": "high" if p == "early" else "normal",
+                "target_user_ids": [task["created_by_id"]],
+            }
+        })
 
     return {
         "message": f"تم تحديث الحالة إلى: {STATUS_LABELS.get(data.status, data.status)}{perf_desc}",

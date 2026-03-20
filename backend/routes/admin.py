@@ -232,6 +232,21 @@ async def create_alert(alert: AlertCreate, user: dict = Depends(require_admin)):
     }
     await db.alerts.insert_one(alert_doc)
     await log_activity("إنشاء بلاغ", user, alert_id, f"بلاغ: {alert.title}")
+
+    # Broadcast real-time notification
+    from ws_manager import ws_manager
+    await ws_manager.broadcast({
+        "type": "notification",
+        "channel": "alerts",
+        "action": "new_alert",
+        "payload": {
+            "title": alert.title,
+            "message": alert.message[:120] if alert.message else "",
+            "priority": alert.priority,
+            "department": alert.department,
+        }
+    })
+
     return {"message": "تم إنشاء البلاغ بنجاح", "id": alert_id}
 
 

@@ -74,3 +74,7 @@ export function useRealtimeRefresh(channels, onRefresh) {
     }
   }, [lastEvent, channels, onRefresh]);
 }
+
+export function useLastEvent() {
+  return useContext(WebSocketContext);
+}

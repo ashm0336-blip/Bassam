@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, ROLE_LABELS, DEPT_LABELS } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useHeader } from "@/context/HeaderContext";
-import { useRealtimeRefresh } from "@/context/WebSocketContext";
+import { useRealtimeRefresh, useLastEvent } from "@/context/WebSocketContext";
+import { NotificationManager } from "@/components/NotificationManager";
 import axios from "axios";
 import { 
   LayoutDashboard, 
@@ -74,6 +75,7 @@ export const Layout = () => {
   const { t, language, toggleLanguage, isRTL } = useLanguage();
   const { menuItems, loading } = useSidebar();
   const { headerSettings } = useHeader();
+  const lastEvent = useLastEvent();
 
   // Fetch unread alerts count
   useEffect(() => {
@@ -238,6 +240,9 @@ export const Layout = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Real-time Notification Listener */}
+      <NotificationManager lastEvent={lastEvent} userId={user?.id} />
+
       {/* Desktop Sidebar - Fixed */}
       <aside 
         className={`
