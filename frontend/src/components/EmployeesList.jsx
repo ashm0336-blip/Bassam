@@ -1246,61 +1246,113 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
 
       {/* ── Employee Profile Dialog ────────────────────────── */}
       <Dialog open={!!profileEmp} onOpenChange={(open) => { if (!open) { setProfileEmp(null); setProfileData(null); } }}>
-        <DialogContent className="font-cairo sm:max-w-[550px] max-h-[85vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="font-cairo sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0" dir="rtl">
           {profileLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : profileData ? (() => {
             const emp = profileData.employee;
             const acc = profileData.account;
             const dept = emp?.department || acc?.department;
+            const DEPT_AR = { gates:'إدارة الأبواب', plazas:'إدارة الساحات', planning:'إدارة التخطيط', crowd_services:'خدمات الحشود', mataf:'صحن المطاف', haram_map:'إدارة المصليات' };
             const deptColor = { gates:'#1d4ed8', plazas:'#0d9488', planning:'#7c3aed', crowd_services:'#d97706', mataf:'#dc2626', haram_map:'#059669' }[dept] || '#666';
-            const statusCfg = { active:{l:'نشط',c:'#22c55e'}, frozen:{l:'مجمّد',c:'#ef4444'}, pending:{l:'معلّق',c:'#f59e0b'}, terminated:{l:'منتهي',c:'#6b7280'} }[acc?.account_status] || {l:'—',c:'#999'};
+            const STATUS_AR = { active:{t:'نشط',c:'#22c55e',bg:'#ecfdf5'}, frozen:{t:'مجمّد',c:'#3b82f6',bg:'#eff6ff'}, pending:{t:'معلّق',c:'#f59e0b',bg:'#fffbeb'}, terminated:{t:'منتهي',c:'#6b7280',bg:'#f9fafb'} };
+            const st = STATUS_AR[acc?.account_status] || STATUS_AR.pending;
             const grpName = acc?.permission_group_name_ar || acc?.permission_group_name;
             const name = emp?.name || acc?.name || '—';
+            const EMP_TYPE_AR = { permanent:'دائم', seasonal:'موسمي', temporary:'مؤقت' };
+            const ACTION_AR = {
+              login:'تسجيل دخول', employee_created:'إضافة للنظام', employee_updated:'تحديث بيانات',
+              account_activated:'تفعيل الحساب', account_frozen:'تجميد الحساب', account_terminated:'إنهاء الخدمة',
+              role_changed:'تغيير الدور', pin_changed:'تغيير كلمة المرور', pin_reset:'إعادة تعيين كلمة المرور',
+              'تغيير مجموعة صلاحيات':'تغيير الصلاحيات', 'تخصيص صلاحيات فردية':'تخصيص صلاحيات', 'نسخ صلاحيات':'نسخ صلاحيات',
+            };
+
             return (<>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-cairo font-bold shadow" style={{background:deptColor}}>{name.charAt(0)}</div>
-                <div className="flex-1">
-                  <h3 className="font-cairo font-bold text-lg">{name}</h3>
-                  {emp?.job_title && <p className="text-xs text-muted-foreground">{emp.job_title}</p>}
-                  <div className="flex gap-1.5 mt-2 flex-wrap">
-                    {dept && <Badge className="text-[9px]" style={{background:`${deptColor}15`,color:deptColor,border:`1px solid ${deptColor}30`}}>{DEPT_LABELS[dept]?.ar||dept}</Badge>}
-                    <Badge className="text-[9px]" style={{background:`${statusCfg.c}15`,color:statusCfg.c,border:`1px solid ${statusCfg.c}30`}}>{statusCfg.l}</Badge>
-                    <Badge variant="outline" className="text-[9px]"><Shield className="w-2.5 h-2.5 ml-1"/>{grpName || 'بدون مجموعة'}</Badge>
+              {/* Header */}
+              <div className="p-6 pb-4" style={{ background: `linear-gradient(135deg, ${deptColor}08, ${deptColor}15)`, borderBottom: `2px solid ${deptColor}20` }}>
+                <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-cairo font-bold shadow-lg" style={{ background: deptColor }}>
+                    {name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-cairo font-bold text-xl">{name}</h2>
+                    {emp?.job_title && <p className="text-sm text-muted-foreground mt-0.5">{emp.job_title}</p>}
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {dept && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${deptColor}15`, color: deptColor }}>
+                          <Building2 className="w-3 h-3" />{DEPT_AR[dept] || dept}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: st.bg, color: st.c }}>
+                        {st.t}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-violet-50 text-violet-700">
+                        <Shield className="w-3 h-3" />{grpName || (acc?.role === 'system_admin' ? 'مسؤول النظام' : 'بدون مجموعة')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                {[
-                  {l:'رقم الموظف', v:emp?.employee_number||'—'},
-                  {l:'رقم الهوية', v:emp?.national_id?`${emp.national_id.slice(0,3)}****${emp.national_id.slice(-3)}`:'—'},
-                  {l:'الجوال', v:emp?.contact_phone||'—'},
-                  {l:'نوع التوظيف', v:{permanent:'دائم',seasonal:'موسمي',temporary:'مؤقت'}[emp?.employment_type]||'—'},
-                  {l:'الوردية', v:emp?.shift||'—'},
-                  {l:'مجموعة الصلاحيات', v:grpName||'بدون مجموعة'},
-                ].map((item,i)=>(
-                  <div key={i} className="flex justify-between items-center py-1.5 border-b border-dashed text-xs">
-                    <span>{item.v}</span>
-                    <span className="text-muted-foreground text-[10px]">{item.l}</span>
+
+              {/* Body */}
+              <div className="p-6 pt-4 space-y-5">
+                {/* Info Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-cairo font-bold text-sm text-slate-700 flex items-center gap-1.5"><User className="w-4 h-4 text-primary"/>البيانات الشخصية</h4>
+                    {[
+                      { label: 'الرقم الوظيفي', value: emp?.employee_number },
+                      { label: 'رقم الهوية', value: emp?.national_id ? `${emp.national_id.slice(0,3)}****${emp.national_id.slice(-3)}` : null },
+                      { label: 'رقم الجوال', value: emp?.contact_phone },
+                      { label: 'نوع التوظيف', value: EMP_TYPE_AR[emp?.employment_type] },
+                    ].map((row, i) => (
+                      <div key={i} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                        <span className="text-sm font-medium">{row.value || '—'}</span>
+                        <span className="text-[10px] text-muted-foreground">{row.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              {profileData.activities?.length > 0 && (
-                <div className="mt-4">
-                  <p className="font-cairo font-bold text-xs mb-2">آخر الأحداث</p>
-                  <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
-                    {profileData.activities.slice(0,8).map((a,i)=>(
-                      <div key={i} className="flex items-center gap-2 text-[10px] py-1 px-2 rounded hover:bg-muted/50">
-                        <Clock className="w-3 h-3 text-primary flex-shrink-0"/>
-                        <span className="flex-1 truncate">{a.action}: {a.details||''}</span>
-                        <span className="text-muted-foreground whitespace-nowrap">{a.timestamp?new Date(a.timestamp).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}):''}</span>
+                  <div className="space-y-3">
+                    <h4 className="font-cairo font-bold text-sm text-slate-700 flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-primary"/>بيانات العمل</h4>
+                    {[
+                      { label: 'الوردية', value: emp?.shift },
+                      { label: 'الموقع', value: emp?.location },
+                      { label: 'أيام الراحة', value: emp?.rest_days?.join('، ') },
+                      { label: 'مجموعة الصلاحيات', value: grpName || (acc?.role === 'system_admin' ? 'مسؤول النظام' : 'بدون مجموعة') },
+                    ].map((row, i) => (
+                      <div key={i} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                        <span className="text-sm font-medium">{row.value || '—'}</span>
+                        <span className="text-[10px] text-muted-foreground">{row.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
+
+                {/* Activity Log */}
+                {profileData.activities?.length > 0 && (
+                  <div>
+                    <h4 className="font-cairo font-bold text-sm text-slate-700 flex items-center gap-1.5 mb-3"><Clock className="w-4 h-4 text-primary"/>سجل الأحداث</h4>
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto rounded-xl border">
+                      {profileData.activities.slice(0, 15).map((a, i) => (
+                        <div key={i} className={`flex items-start gap-3 py-2.5 px-3 ${i % 2 === 0 ? 'bg-slate-50/50' : ''}`}>
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <Clock className="w-2.5 h-2.5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold">{ACTION_AR[a.action] || a.action}</p>
+                            {a.details && <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{a.details}</p>}
+                          </div>
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap mt-0.5">
+                            {a.timestamp ? new Date(a.timestamp).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </>);
-          })() : <p className="text-center text-muted-foreground py-8">فشل جلب البيانات</p>}
+          })() : <p className="text-center text-muted-foreground py-12">فشل جلب البيانات</p>}
         </DialogContent>
       </Dialog>
 
