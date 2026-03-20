@@ -461,28 +461,34 @@ async def get_employee_profile(employee_id: str, user: dict = Depends(get_curren
 async def get_my_profile(user: dict = Depends(get_current_user)):
     """الموظف يشوف بياناته الشخصية"""
     emp = await db.employees.find_one({"national_id": user.get("national_id")}, {"_id": 0})
-    if not emp:
-        # Fallback: return basic user info
-        return {"employee": None, "account": {k: v for k, v in user.items() if k != "password"}, "activities": [], "schedules": [], "tasks": []}
 
+    account_data = {k: v for k, v in user.items() if k not in ("password", "_id")}
+    # Add permission group name
+    grp_id = user.get("permission_group_id")
+    if grp_id:
+        grp = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1, "name_en": 1})
+        account_data["permission_group_name_ar"] = grp.get("name_ar", "") if grp else ""
+    
+    name = emp.get("name") if emp else user.get("name", "")
     activities = await db.activity_logs.find(
-        {"$or": [{"user_name": emp.get("name")}, {"target": emp.get("name")}]},
+        {"$or": [{"user_name": name}, {"target": name}]},
         {"_id": 0}
-    ).sort("timestamp", -1).to_list(10)
+    ).sort("timestamp", -1).to_list(20)
 
-    schedules = await db.monthly_schedules.find(
-        {"department": emp.get("department"), "assignments.employee_id": emp["id"]},
-        {"_id": 0}
-    ).sort("month", -1).to_list(5)
-
-    tasks = await db.tasks.find(
-        {"assigned_to": emp["id"]},
-        {"_id": 0}
-    ).sort("due_date", -1).to_list(20)
+    schedules = []
+    tasks = []
+    if emp:
+        schedules = await db.monthly_schedules.find(
+            {"department": emp.get("department"), "assignments.employee_id": emp["id"]},
+            {"_id": 0}
+        ).sort("month", -1).to_list(5)
+        tasks = await db.tasks.find(
+            {"assigned_to": emp["id"]}, {"_id": 0}
+        ).sort("due_date", -1).to_list(20)
 
     return {
         "employee": emp,
-        "account": {k: v for k, v in user.items() if k != "password"},
+        "account": account_data,
         "activities": activities,
         "schedules": schedules,
         "tasks": tasks,

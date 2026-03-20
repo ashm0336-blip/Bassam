@@ -211,7 +211,7 @@ function AvatarInitial({ name, size = "md" }) {
 
 // ── Employee Card — تصميم احترافي متناسق ──────────────────────
 function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
-    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups }) {
+    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups, onOpenProfile }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
   const avatarColors = ["#7c3aed","#047857","#0284c7","#b45309","#dc2626","#0f766e"];
@@ -238,7 +238,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <button onClick={() => window.location.href = `/employee/${emp.id}`} className="font-cairo font-bold text-sm leading-tight truncate text-right hover:text-primary transition-colors cursor-pointer block">{emp.name}</button>
+            <button onClick={() => onOpenProfile(emp)} className="font-cairo font-bold text-sm leading-tight truncate text-right hover:text-primary transition-colors cursor-pointer block">{emp.name}</button>
             <p className="text-[11px] text-muted-foreground truncate mt-0.5">{emp.job_title || "—"}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {emp.employee_number && (
@@ -344,6 +344,9 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   const [savingCustom, setSavingCustom] = useState(false);
   const [copyPermEmp, setCopyPermEmp] = useState(null);
   const [copySource, setCopySource] = useState("");
+  const [profileEmp, setProfileEmp] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Live national ID check
   const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
@@ -524,6 +527,18 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشل النسخ"); }
     finally { setSavingCustom(false); }
+  };
+
+  // ── Profile Dialog ─────────────────────────────────────────
+  const openProfile = async (emp) => {
+    setProfileEmp(emp);
+    setProfileLoading(true);
+    setProfileData(null);
+    try {
+      const res = await axios.get(`${API}/employees/${emp.id}/profile`, headers());
+      setProfileData(res.data);
+    } catch { toast.error("فشل جلب البروفايل"); }
+    finally { setProfileLoading(false); }
   };
 
 
@@ -831,7 +846,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
               onDelete={(e) => { setDeleteTarget(e); setDeleteDialog(true); }}
               onAccountAction={handleAccountAction}
               onChangeRole={handleChangeRole}
-              isAr={isAr} permGroups={permGroups} />
+              isAr={isAr} permGroups={permGroups} onOpenProfile={openProfile} />
           ))}
         </div>
       )}
@@ -919,7 +934,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                       <div className="flex items-center gap-2.5">
                         <AvatarInitial name={emp.name} size="sm" />
                         <div className="min-w-0">
-                          <p className="font-bold text-sm leading-tight">{emp.name}</p>
+                          <button onClick={() => openProfile(emp)} className="font-bold text-sm leading-tight hover:text-primary transition-colors cursor-pointer">{emp.name}</button>
                           {emp.employee_number && (
                             <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                               <Hash className="w-2.5 h-2.5"/>{emp.employee_number}
@@ -965,6 +980,9 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                               <Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => openProfile(emp)}>
+                            <User className="w-4 h-4 ml-2 text-primary"/>عرض البروفايل
+                          </DropdownMenuItem>
                           {canChangeRoles && emp.user_id && (
                             <DropdownMenuItem onClick={() => openCustomPerms(emp)}>
                               <Settings className="w-4 h-4 ml-2 text-violet-500"/>صلاحيات فردية
@@ -1223,6 +1241,66 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
             <Button variant="outline" onClick={() => setActionConfirm(null)}>إلغاء</Button>
             <Button onClick={executeAccountAction} className="gap-1.5">تأكيد</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Employee Profile Dialog ────────────────────────── */}
+      <Dialog open={!!profileEmp} onOpenChange={(open) => { if (!open) { setProfileEmp(null); setProfileData(null); } }}>
+        <DialogContent className="font-cairo sm:max-w-[550px] max-h-[85vh] overflow-y-auto" dir="rtl">
+          {profileLoading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : profileData ? (() => {
+            const emp = profileData.employee;
+            const acc = profileData.account;
+            const dept = emp?.department || acc?.department;
+            const deptColor = { gates:'#1d4ed8', plazas:'#0d9488', planning:'#7c3aed', crowd_services:'#d97706', mataf:'#dc2626', haram_map:'#059669' }[dept] || '#666';
+            const statusCfg = { active:{l:'نشط',c:'#22c55e'}, frozen:{l:'مجمّد',c:'#ef4444'}, pending:{l:'معلّق',c:'#f59e0b'}, terminated:{l:'منتهي',c:'#6b7280'} }[acc?.account_status] || {l:'—',c:'#999'};
+            const grpName = acc?.permission_group_name_ar || acc?.permission_group_name;
+            const name = emp?.name || acc?.name || '—';
+            return (<>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-cairo font-bold shadow" style={{background:deptColor}}>{name.charAt(0)}</div>
+                <div className="flex-1">
+                  <h3 className="font-cairo font-bold text-lg">{name}</h3>
+                  {emp?.job_title && <p className="text-xs text-muted-foreground">{emp.job_title}</p>}
+                  <div className="flex gap-1.5 mt-2 flex-wrap">
+                    {dept && <Badge className="text-[9px]" style={{background:`${deptColor}15`,color:deptColor,border:`1px solid ${deptColor}30`}}>{DEPT_LABELS[dept]?.ar||dept}</Badge>}
+                    <Badge className="text-[9px]" style={{background:`${statusCfg.c}15`,color:statusCfg.c,border:`1px solid ${statusCfg.c}30`}}>{statusCfg.l}</Badge>
+                    <Badge variant="outline" className="text-[9px]"><Shield className="w-2.5 h-2.5 ml-1"/>{grpName || 'بدون مجموعة'}</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                {[
+                  {l:'رقم الموظف', v:emp?.employee_number||'—'},
+                  {l:'رقم الهوية', v:emp?.national_id?`${emp.national_id.slice(0,3)}****${emp.national_id.slice(-3)}`:'—'},
+                  {l:'الجوال', v:emp?.contact_phone||'—'},
+                  {l:'نوع التوظيف', v:{permanent:'دائم',seasonal:'موسمي',temporary:'مؤقت'}[emp?.employment_type]||'—'},
+                  {l:'الوردية', v:emp?.shift||'—'},
+                  {l:'مجموعة الصلاحيات', v:grpName||'بدون مجموعة'},
+                ].map((item,i)=>(
+                  <div key={i} className="flex justify-between items-center py-1.5 border-b border-dashed text-xs">
+                    <span>{item.v}</span>
+                    <span className="text-muted-foreground text-[10px]">{item.l}</span>
+                  </div>
+                ))}
+              </div>
+              {profileData.activities?.length > 0 && (
+                <div className="mt-4">
+                  <p className="font-cairo font-bold text-xs mb-2">آخر الأحداث</p>
+                  <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
+                    {profileData.activities.slice(0,8).map((a,i)=>(
+                      <div key={i} className="flex items-center gap-2 text-[10px] py-1 px-2 rounded hover:bg-muted/50">
+                        <Clock className="w-3 h-3 text-primary flex-shrink-0"/>
+                        <span className="flex-1 truncate">{a.action}: {a.details||''}</span>
+                        <span className="text-muted-foreground whitespace-nowrap">{a.timestamp?new Date(a.timestamp).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}):''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>);
+          })() : <p className="text-center text-muted-foreground py-8">فشل جلب البيانات</p>}
         </DialogContent>
       </Dialog>
 
