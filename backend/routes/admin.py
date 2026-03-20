@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 
 from database import db
-from auth import require_admin, log_activity
+from auth import require_admin, log_activity, hash_password
 from models import (
     GateCreate, GateUpdate, PlazaCreate, PlazaUpdate,
     MatafLevelCreate, MatafLevelUpdate, AlertCreate, AlertUpdate,
@@ -12,6 +12,93 @@ from models import (
 )
 
 router = APIRouter()
+
+
+# ============= Security Monitoring Dashboard =============
+@router.get("/admin/security-stats")
+async def get_security_stats(admin: dict = Depends(require_admin)):
+    """Security monitoring dashboard data"""
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    yesterday_start = (now - timedelta(days=1)).isoformat()
+    week_ago = (now - timedelta(days=7)).isoformat()
+
+    # Failed login attempts (today)
+    failed_today = await db.activity_logs.count_documents({
+        "action": "login",
+        "details": {"$regex": "خاطئة|failed|فاشل"},
+        "timestamp": {"$gte": today_start}
+    })
+
+    # All failed login logs (last 7 days) for the table
+    failed_logs = await db.activity_logs.find(
+        {"action": "login", "details": {"$regex": "خاطئة|failed|فاشل"}, "timestamp": {"$gte": week_ago}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(50)
+
+    # Frozen accounts
+    frozen_users = await db.users.find(
+        {"account_status": "frozen"},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "national_id": 1, "failed_attempts": 1, "last_login": 1, "department": 1}
+    ).to_list(50)
+
+    # Pending accounts
+    pending_users = await db.users.find(
+        {"account_status": "pending"},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "national_id": 1, "department": 1, "created_at": 1}
+    ).to_list(50)
+
+    # Permission changes (last 24h)
+    perm_actions = ["تغيير مجموعة صلاحيات", "تخصيص صلاحيات فردية", "نسخ صلاحيات",
+                     "إنشاء مجموعة صلاحيات", "تحديث مجموعة صلاحيات", "حذف مجموعة صلاحيات",
+                     "role_changed"]
+    perm_changes = await db.activity_logs.find(
+        {"action": {"$in": perm_actions}, "timestamp": {"$gte": yesterday_start}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(50)
+
+    # Account status changes (last 7 days)
+    account_actions = ["account_activated", "account_frozen", "account_terminated",
+                        "reset_pin", "account_active"]
+    account_changes = await db.activity_logs.find(
+        {"action": {"$in": account_actions}, "timestamp": {"$gte": week_ago}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(50)
+
+    # Terminated accounts
+    terminated_count = await db.users.count_documents({"account_status": "terminated"})
+
+    return {
+        "failed_logins_today": failed_today,
+        "frozen_count": len(frozen_users),
+        "pending_count": len(pending_users),
+        "perm_changes_24h": len(perm_changes),
+        "terminated_count": terminated_count,
+        "frozen_users": frozen_users,
+        "pending_users": pending_users,
+        "failed_login_logs": failed_logs,
+        "permission_change_logs": perm_changes,
+        "account_change_logs": account_changes,
+    }
+
+
+@router.post("/admin/security/unfreeze/{user_id}")
+async def unfreeze_user(user_id: str, admin: dict = Depends(require_admin)):
+    """Quick unfreeze a frozen account from security dashboard"""
+    target = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if target.get("account_status") != "frozen":
+        raise HTTPException(status_code=400, detail="الحساب ليس مجمّداً")
+
+    # Reset to active with 0 failed attempts
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"account_status": "active", "is_active": True, "failed_attempts": 0}}
+    )
+    await log_activity("account_active", admin, target.get("name", user_id),
+        f"فك تجميد حساب {target.get('name')} بواسطة {admin.get('name')}")
+    return {"message": f"تم فك تجميد حساب {target.get('name')} بنجاح"}
 
 
 # ============= Admin Routes - Gates =============
