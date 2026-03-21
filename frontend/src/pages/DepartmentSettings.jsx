@@ -270,16 +270,27 @@ export default function DepartmentSettings({ department }) {
     }
   };
 
-  // Build tabs list — order: الموظفون → الورديات → الخرائط → (dept-specific)
+  // Build tabs list — only show tabs the user has permission to see
   const tabs = [];
-  tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون'       : 'Staff',    icon: Users,       count: counts.employees });
-  tabs.push({ id: 'shifts',         label: language === 'ar' ? 'الورديات'       : 'Shifts',   icon: Clock,       count: counts.shifts   });
-  tabs.push({ id: 'maps',           label: language === 'ar' ? 'الخرائط'        : 'Maps',     icon: Layers,      count: counts.maps     });
-  if (department === 'gates') {
+  if (canRead('page_employees') || canRead('add_employees') || canRead('edit_employees')) {
+    tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون' : 'Staff', icon: Users, count: counts.employees });
+  }
+  if (canRead('manage_shifts') || canRead('page_shifts')) {
+    tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
+  }
+  if (canRead('manage_maps') || canRead('page_maps')) {
+    tabs.push({ id: 'maps', label: language === 'ar' ? 'الخرائط' : 'Maps', icon: Layers, count: counts.maps });
+  }
+  if (department === 'gates' && (canRead('manage_gates') || canRead('page_gates_data'))) {
     tabs.push({ id: 'gates_data', label: language === 'ar' ? 'الأبواب' : 'Gates', icon: DoorOpen, count: counts.gates });
   }
-  if (department === 'plazas' || department === 'haram_map') {
+  if ((department === 'plazas' || department === 'haram_map') && (canRead('manage_categories') || canRead('page_categories'))) {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
+  }
+
+  // Auto-select first available tab if current tab is hidden
+  if (tabs.length > 0 && !tabs.find(t => t.id === activeTab)) {
+    setActiveTab(tabs[0].id);
   }
 
   if (loading) {
