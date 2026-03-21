@@ -157,13 +157,6 @@ function StatsStrip({ summary }) {
       </div>
 
       {/* Days count */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10">
-          <Calendar className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-          <span className="text-[10px] font-cairo text-muted-foreground">الأيام المسجلة:</span>
-          <span className="text-[11px] font-bold font-cairo text-amber-700 dark:text-amber-400">{summary.count}</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -773,8 +766,9 @@ export default function DailyStatsPage() {
           </SelectContent>
         </Select>
 
-        <Badge variant="secondary" className="text-[10px] px-2 py-1" data-testid="record-count">
-          {loading ? "..." : `${items.length} سجل`}
+        <Badge variant="secondary" className="text-[10px] px-2.5 py-1 gap-1.5 flex items-center" data-testid="record-count">
+          <Calendar className="w-3 h-3" />
+          {loading ? "..." : `${summary?.count ?? 0} يوم مسجل`}
         </Badge>
       </div>
 
