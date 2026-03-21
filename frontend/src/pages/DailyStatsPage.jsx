@@ -428,99 +428,74 @@ function HighLowPill({ highVal, highDate, lowVal, lowDate, label }) {
 // ─── Daily Entry Card (Mosque-specific) ─────────────────────────
 function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, saving, canEdit, items, selectedDateHijri }) {
   const isHaram = mosqueType === "haram";
-  const title = isHaram ? "المسجد الحرام" : "المسجد النبوي";
-  const bgGradient = isHaram
-    ? "from-blue-500/5 to-blue-600/5 border-blue-500/15"
-    : "from-emerald-500/5 to-emerald-600/5 border-emerald-500/15";
+  const accentBorder = isHaram ? "border-blue-500/15" : "border-emerald-500/15";
+  const accentBg = isHaram ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
 
-  // Group fields for Nabawi rawdah
-  const groupedFields = useMemo(() => {
-    if (isHaram) return [{ group: null, fields }];
+  // For Nabawi: detect grouped fields (rawdah)
+  const isGrouped = (f) => f.group;
+  const rawdahMen = fields.filter((f) => f.group === "rawdah_men");
+  const rawdahWomen = fields.filter((f) => f.group === "rawdah_women");
+  const standaloneFields = fields.filter((f) => !f.group);
 
-    const groups = [];
-    let currentGroup = null;
-    let currentFields = [];
-
-    fields.forEach((f) => {
-      if (f.group && f.group !== currentGroup) {
-        if (currentFields.length > 0) {
-          groups.push({ group: currentGroup, fields: currentFields });
-        }
-        currentGroup = f.group;
-        currentFields = [f];
-      } else if (f.group === currentGroup && currentGroup) {
-        currentFields.push(f);
-      } else {
-        if (currentFields.length > 0) {
-          groups.push({ group: currentGroup, fields: currentFields });
-        }
-        currentGroup = null;
-        currentFields = [f];
-      }
-    });
-    if (currentFields.length > 0) {
-      groups.push({ group: currentGroup, fields: currentFields });
-    }
-    return groups;
-  }, [fields, isHaram]);
+  const renderInput = (field, shortLabel) => (
+    <div key={field.key} className="relative">
+      <Label className="text-[10px] text-muted-foreground mb-0.5 block font-cairo truncate">{shortLabel || field.label}</Label>
+      <Input
+        type="number"
+        placeholder="0"
+        value={formData[field.key] ?? ""}
+        onChange={(e) => setFormData((prev) => ({ ...prev, [field.key]: e.target.value }))}
+        disabled={!canEdit}
+        className="text-center h-8 font-mono text-sm"
+        dir="ltr"
+        data-testid={`input-${field.key}`}
+      />
+    </div>
+  );
 
   return (
-    <Card className={`bg-gradient-to-br ${bgGradient} border`} data-testid={`entry-card-${mosqueType}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base font-cairo">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isHaram ? 'bg-blue-500/10' : 'bg-emerald-500/10'}`}>
-            <Building2 className={`w-4 h-4 ${isHaram ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
+    <Card className={`${accentBorder} border`} data-testid={`entry-card-${mosqueType}`}>
+      <CardContent className="p-4 space-y-3">
+        {isHaram ? (
+          /* ── Haram: 4 inputs in one row ── */
+          <div className="grid grid-cols-4 gap-3">
+            {fields.map((f) => renderInput(f))}
           </div>
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {groupedFields.map((gf, gi) => (
-          <div key={gi}>
-            {gf.group && (
-              <p className="text-xs font-semibold text-muted-foreground mb-2 font-cairo">
-                {gf.group === "rawdah_men" ? "الروضة الشريفة - رجال" : "الروضة الشريفة - نساء"}
-              </p>
-            )}
-            <div className={`grid ${gf.group ? "grid-cols-3" : "grid-cols-2"} gap-3`}>
-              {gf.fields.map((field) => (
-                <div key={field.key}>
-                  <Label className="text-[11px] text-muted-foreground mb-1 block font-cairo">
-                    {gf.group ? field.label.split(" - ")[1] : field.label}
-                  </Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={formData[field.key] ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, [field.key]: e.target.value }))
-                    }
-                    disabled={!canEdit}
-                    className="text-center h-9 font-mono text-sm"
-                    dir="ltr"
-                    data-testid={`input-${field.key}`}
-                  />
-                </div>
-              ))}
+        ) : (
+          /* ── Nabawi: compact grouped layout ── */
+          <div className="space-y-3">
+            {/* Row 1: المصلين + ممر السلام */}
+            <div className="grid grid-cols-2 gap-3">
+              {standaloneFields.map((f) => renderInput(f))}
             </div>
+            {/* Row 2: الروضة رجال */}
+            {rawdahMen.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo">الروضة الشريفة - رجال</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {rawdahMen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
+                </div>
+              </div>
+            )}
+            {/* Row 3: الروضة نساء */}
+            {rawdahWomen.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo">الروضة الشريفة - نساء</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {rawdahWomen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+        )}
 
+        {/* Action buttons */}
         {canEdit && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 pt-1">
             <CopyPrevButton selectedDateHijri={selectedDateHijri} items={items} setFormData={setFormData} fields={fields} />
-            <Button
-              onClick={onSave}
-              disabled={saving}
-              className={`flex-1 text-white ${isHaram ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-              data-testid={`save-${mosqueType}`}
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin ml-2" />
-              ) : (
-                <Save className="w-4 h-4 ml-2" />
-              )}
-              حفظ بيانات {title}
+            <Button onClick={onSave} disabled={saving} className={`flex-1 h-9 text-white ${accentBg}`} data-testid={`save-${mosqueType}`}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin ml-1.5" /> : <Save className="w-4 h-4 ml-1.5" />}
+              <span className="text-xs font-cairo">حفظ البيانات</span>
             </Button>
           </div>
         )}
