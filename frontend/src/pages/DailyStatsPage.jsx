@@ -98,6 +98,101 @@ function hijriToGregorian(hijriDate) {
   return "";
 }
 
+// ─── Month Day Bar (clickable day indicators) ───────────────────
+function MonthDayBar({ filterYear, filterMonth, daysInMonth, items, selectedDateHijri, onDayClick }) {
+  const recordedDays = useMemo(() => {
+    const set = new Set();
+    items.forEach((item) => {
+      const parts = item.date_hijri?.split("-");
+      if (parts && parts.length === 3) set.add(parseInt(parts[2]));
+    });
+    return set;
+  }, [items]);
+
+  const selectedDay = useMemo(() => {
+    const parts = selectedDateHijri?.split("-");
+    return parts?.length === 3 ? parseInt(parts[2]) : 0;
+  }, [selectedDateHijri]);
+
+  const recorded = recordedDays.size;
+
+  return (
+    <div className="space-y-1.5" data-testid="month-day-bar">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-cairo text-muted-foreground">تقدم الشهر:</span>
+          <span className="text-[10px] font-cairo font-bold text-primary">{recorded} / {daysInMonth} يوم</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-sm bg-emerald-500" />
+            <span className="text-[8px] text-muted-foreground font-cairo">مسجل</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-sm bg-red-400" />
+            <span className="text-[8px] text-muted-foreground font-cairo">غير مسجل</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-[3px] flex-wrap">
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1;
+          const isRecorded = recordedDays.has(day);
+          const isSelected = day === selectedDay;
+          const dateStr = `${filterYear}-${filterMonth}-${String(day).padStart(2, "0")}`;
+          return (
+            <button
+              key={day}
+              onClick={() => onDayClick(dateStr)}
+              title={`يوم ${day}`}
+              data-testid={`day-${day}`}
+              className={`
+                relative h-6 rounded-sm text-[8px] font-bold transition-all cursor-pointer
+                ${daysInMonth <= 29 ? 'flex-1 min-w-[22px]' : 'flex-1 min-w-[20px]'}
+                ${isSelected ? 'ring-2 ring-primary ring-offset-1 scale-110 z-10' : 'hover:scale-105'}
+                ${isRecorded
+                  ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                  : 'bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                }
+              `}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Copy Previous Day Button ───────────────────────────────────
+function CopyPrevButton({ selectedDateHijri, items, setFormData, fields }) {
+  const handleCopy = () => {
+    const m = momentHijri(selectedDateHijri, "iYYYY-iMM-iDD");
+    if (!m.isValid()) return;
+    const prevDate = m.clone().subtract(1, "day").format("iYYYY-iMM-iDD");
+    const prevData = items.find((i) => i.date_hijri === prevDate);
+    if (!prevData) {
+      toast.error("لا توجد بيانات لليوم السابق");
+      return;
+    }
+    const data = {};
+    fields.forEach((f) => {
+      data[f.key] = prevData[f.key] ?? "";
+    });
+    setFormData((prev) => ({ ...prev, ...data }));
+    toast.success("تم نسخ بيانات اليوم السابق");
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 text-[10px] h-7" data-testid="copy-prev-btn">
+      <ChevronLeft className="w-3 h-3" />
+      نسخ من أمس
+    </Button>
+  );
+}
+
+
 // ─── Stats Strip (like GatesTab density toolbar) ────────────────
 function StatsStrip({ summary, onImport, onExport, onTemplate }) {
   const s = summary?.count ? summary : {};
@@ -313,7 +408,7 @@ function HighLowPill({ highVal, highDate, lowVal, lowDate, label }) {
 }
 
 // ─── Daily Entry Card (Mosque-specific) ─────────────────────────
-function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, saving, canEdit }) {
+function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, saving, canEdit, items, selectedDateHijri }) {
   const isHaram = mosqueType === "haram";
   const title = isHaram ? "المسجد الحرام" : "المسجد النبوي";
   const bgGradient = isHaram
@@ -394,19 +489,22 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
         ))}
 
         {canEdit && (
-          <Button
-            onClick={onSave}
-            disabled={saving}
-            className={`w-full mt-2 text-white ${isHaram ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-            data-testid={`save-${mosqueType}`}
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin ml-2" />
-            ) : (
-              <Save className="w-4 h-4 ml-2" />
-            )}
-            حفظ بيانات {title}
-          </Button>
+          <div className="flex items-center gap-2 mt-2">
+            <CopyPrevButton selectedDateHijri={selectedDateHijri} items={items} setFormData={setFormData} fields={fields} />
+            <Button
+              onClick={onSave}
+              disabled={saving}
+              className={`flex-1 text-white ${isHaram ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+              data-testid={`save-${mosqueType}`}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+              ) : (
+                <Save className="w-4 h-4 ml-2" />
+              )}
+              حفظ بيانات {title}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -920,6 +1018,14 @@ export default function DailyStatsPage() {
         <TabsContent value="haram" className="space-y-4 mt-4">
           {/* Haram Stats Strip */}
           <HaramStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
+
+          {/* Month Progress */}
+          <MonthDayBar
+            filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth}
+            items={items} selectedDateHijri={selectedDateHijri}
+            onDayClick={(d) => setSelectedDateHijri(d)}
+          />
+
           {/* Date Selector */}
           <Card className="border-blue-500/15">
             <CardContent className="p-3">
@@ -961,6 +1067,8 @@ export default function DailyStatsPage() {
             onSave={() => handleSave("haram")}
             saving={saving}
             canEdit={canEdit}
+            items={items}
+            selectedDateHijri={selectedDateHijri}
           />
 
           <Separator />
@@ -988,6 +1096,13 @@ export default function DailyStatsPage() {
         <TabsContent value="nabawi" className="space-y-4 mt-4">
           {/* Nabawi Stats Strip */}
           <NabawiStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
+
+          {/* Month Progress */}
+          <MonthDayBar
+            filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth}
+            items={items} selectedDateHijri={selectedDateHijri}
+            onDayClick={(d) => setSelectedDateHijri(d)}
+          />
 
           <Card className="border-emerald-500/15">
             <CardContent className="p-3">
@@ -1029,6 +1144,8 @@ export default function DailyStatsPage() {
             onSave={() => handleSave("nabawi")}
             saving={saving}
             canEdit={canEdit}
+            items={items}
+            selectedDateHijri={selectedDateHijri}
           />
 
           <Separator />
