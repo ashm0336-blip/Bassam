@@ -93,72 +93,64 @@ function hijriToGregorian(hijriDate) {
   return "";
 }
 
-// ─── Summary Cards ──────────────────────────────────────────────
-function SummaryCards({ summary, filterMonth }) {
-  const monthLabel = filterMonth
-    ? HIJRI_MONTHS.find((m) => m.value === filterMonth)?.label || filterMonth
-    : "الكل";
-
-  const cards = [
-    {
-      title: "إجمالي المصلين - الحرام",
-      value: summary?.sum_haram_worshippers,
-      icon: Building2,
-      color: "from-blue-500/10 to-blue-600/5 border-blue-500/20",
-      textColor: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      title: "إجمالي المعتمرين",
-      value: summary?.sum_haram_umrah,
-      icon: Users2,
-      color: "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20",
-      textColor: "text-emerald-600 dark:text-emerald-400",
-    },
-    {
-      title: "إجمالي المصلين - النبوي",
-      value: summary?.sum_nabawi_worshippers,
-      icon: Building2,
-      color: "from-teal-500/10 to-teal-600/5 border-teal-500/20",
-      textColor: "text-teal-600 dark:text-teal-400",
-    },
-    {
-      title: "عدد الأيام المسجلة",
-      value: summary?.count,
-      icon: Calendar,
-      color: "from-amber-500/10 to-amber-600/5 border-amber-500/20",
-      textColor: "text-amber-600 dark:text-amber-400",
-      noFormat: true,
-    },
-  ];
-
+// ─── Mini Stat Card ─────────────────────────────────────────────
+function MiniStat({ label, value, accent, noFormat }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="summary-cards">
-      {cards.map((card, i) => {
-        const Icon = card.icon;
-        return (
-          <Card
-            key={i}
-            className={`bg-gradient-to-br ${card.color} border`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className={`p-2 rounded-lg bg-background/80 ${card.textColor}`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                <Badge variant="outline" className="text-[10px] px-1.5">
-                  {monthLabel}
-                </Badge>
-              </div>
-              <p className={`text-xl lg:text-2xl font-bold font-cairo ${card.textColor}`}>
-                {card.noFormat
-                  ? card.value ?? 0
-                  : formatNumber(card.value)}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{card.title}</p>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className={`rounded-lg border px-3 py-2.5 bg-gradient-to-br from-background to-muted/30 ${accent}`}>
+      <p className="text-[10px] text-muted-foreground font-cairo truncate leading-tight">{label}</p>
+      <p className="text-sm lg:text-base font-bold font-cairo mt-0.5 tabular-nums" dir="ltr">
+        {noFormat ? (value ?? 0) : formatNumber(value)}
+      </p>
+    </div>
+  );
+}
+
+// ─── Summary Cards ──────────────────────────────────────────────
+function SummaryCards({ summary }) {
+  return (
+    <div className="space-y-3" data-testid="summary-cards">
+      {/* المسجد الحرام */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="text-xs font-cairo font-semibold text-blue-700 dark:text-blue-400">المسجد الحرام</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <MiniStat label="المصلين" value={summary?.sum_haram_worshippers} accent="border-blue-500/15" />
+          <MiniStat label="المعتمرين" value={summary?.sum_haram_umrah} accent="border-blue-500/15" />
+          <MiniStat label="حجر إسماعيل" value={summary?.sum_haram_hijr_ismail} accent="border-blue-500/15" />
+          <MiniStat label="العربات" value={summary?.sum_haram_carts} accent="border-blue-500/15" />
+        </div>
+      </div>
+
+      {/* المسجد النبوي */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="text-xs font-cairo font-semibold text-emerald-700 dark:text-emerald-400">المسجد النبوي</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <MiniStat label="المصلين" value={summary?.sum_nabawi_worshippers} accent="border-emerald-500/15" />
+          <MiniStat label="ممر السلام" value={summary?.sum_nabawi_salam_corridor} accent="border-emerald-500/15" />
+          <MiniStat label="الروضة رجال - منشور" value={summary?.sum_nabawi_rawdah_men_published} accent="border-emerald-500/15" />
+          <MiniStat label="الروضة رجال - محجوز" value={summary?.sum_nabawi_rawdah_men_reserved} accent="border-emerald-500/15" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+          <MiniStat label="الروضة رجال - فعلي" value={summary?.sum_nabawi_rawdah_men_actual} accent="border-emerald-500/15" />
+          <MiniStat label="الروضة نساء - منشور" value={summary?.sum_nabawi_rawdah_women_published} accent="border-emerald-500/15" />
+          <MiniStat label="الروضة نساء - محجوز" value={summary?.sum_nabawi_rawdah_women_reserved} accent="border-emerald-500/15" />
+          <MiniStat label="الروضة نساء - فعلي" value={summary?.sum_nabawi_rawdah_women_actual} accent="border-emerald-500/15" />
+        </div>
+      </div>
+
+      {/* عدد الأيام */}
+      <div className="flex items-center gap-2">
+        <div className="rounded-lg border border-amber-500/20 bg-amber-50/50 dark:bg-amber-900/10 px-3 py-1.5 flex items-center gap-2">
+          <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs font-cairo text-muted-foreground">الأيام المسجلة:</span>
+          <span className="text-sm font-bold font-cairo text-amber-700 dark:text-amber-400">{summary?.count ?? 0}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -715,10 +707,7 @@ export default function DailyStatsPage() {
       </div>
 
       {/* Summary */}
-      <SummaryCards
-        summary={summary}
-        filterMonth={filterMonth}
-      />
+      <SummaryCards summary={summary} />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
