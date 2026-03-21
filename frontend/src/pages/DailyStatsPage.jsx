@@ -99,60 +99,78 @@ function hijriToGregorian(hijriDate) {
 }
 
 // ─── Month Day Bar (clickable day indicators) ───────────────────
-function MonthDayBar({ filterYear, filterMonth, daysInMonth, items, selectedDateHijri, onDayClick }) {
-  const recordedDays = useMemo(() => {
-    const set = new Set();
+function MonthDayBar({ filterYear, filterMonth, daysInMonth, items, selectedDateHijri, onDayClick, checkFields }) {
+  const dayStatus = useMemo(() => {
+    const map = {};
     items.forEach((item) => {
       const parts = item.date_hijri?.split("-");
-      if (parts && parts.length === 3) set.add(parseInt(parts[2]));
+      if (!parts || parts.length !== 3) return;
+      const day = parseInt(parts[2]);
+      const total = checkFields.length;
+      let filled = 0;
+      checkFields.forEach((f) => {
+        const val = item[f.key];
+        if (val !== null && val !== undefined && val !== "" && val !== "null") filled++;
+      });
+      if (filled === 0) map[day] = "empty";
+      else if (filled < total) map[day] = "partial";
+      else map[day] = "complete";
     });
-    return set;
-  }, [items]);
+    return map;
+  }, [items, checkFields]);
 
   const selectedDay = useMemo(() => {
     const parts = selectedDateHijri?.split("-");
     return parts?.length === 3 ? parseInt(parts[2]) : 0;
   }, [selectedDateHijri]);
 
-  const recorded = recordedDays.size;
+  const complete = Object.values(dayStatus).filter((s) => s === "complete").length;
+  const partial = Object.values(dayStatus).filter((s) => s === "partial").length;
 
   return (
     <div className="space-y-1.5" data-testid="month-day-bar">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-cairo text-muted-foreground">تقدم الشهر:</span>
-          <span className="text-[10px] font-cairo font-bold text-primary">{recorded} / {daysInMonth} يوم</span>
+          <span className="text-[10px] font-cairo font-bold text-emerald-600">{complete} مكتمل</span>
+          {partial > 0 && <span className="text-[10px] font-cairo font-bold text-amber-500">{partial} جزئي</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-sm bg-emerald-500" />
-            <span className="text-[8px] text-muted-foreground font-cairo">مسجل</span>
+            <span className="text-[8px] text-muted-foreground font-cairo">مكتمل</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-sm bg-amber-400" />
+            <span className="text-[8px] text-muted-foreground font-cairo">جزئي</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-sm bg-red-400" />
-            <span className="text-[8px] text-muted-foreground font-cairo">غير مسجل</span>
+            <span className="text-[8px] text-muted-foreground font-cairo">فارغ</span>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-[3px] flex-wrap">
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = i + 1;
-          const isRecorded = recordedDays.has(day);
+          const status = dayStatus[day] || "empty";
           const isSelected = day === selectedDay;
           const dateStr = `${filterYear}-${filterMonth}-${String(day).padStart(2, "0")}`;
           return (
             <button
               key={day}
               onClick={() => onDayClick(dateStr)}
-              title={`يوم ${day}`}
+              title={`يوم ${day} — ${status === "complete" ? "مكتمل" : status === "partial" ? "جزئي" : "فارغ"}`}
               data-testid={`day-${day}`}
               className={`
                 relative h-6 rounded-sm text-[8px] font-bold transition-all cursor-pointer
                 ${daysInMonth <= 29 ? 'flex-1 min-w-[22px]' : 'flex-1 min-w-[20px]'}
                 ${isSelected ? 'ring-2 ring-primary ring-offset-1 scale-110 z-10' : 'hover:scale-105'}
-                ${isRecorded
+                ${status === "complete"
                   ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                  : 'bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                  : status === "partial"
+                    ? 'bg-amber-400 text-white hover:bg-amber-500'
+                    : 'bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
                 }
               `}
             >
@@ -1024,6 +1042,7 @@ export default function DailyStatsPage() {
             filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth}
             items={items} selectedDateHijri={selectedDateHijri}
             onDayClick={(d) => setSelectedDateHijri(d)}
+            checkFields={HARAM_FIELDS}
           />
 
           {/* Date Selector */}
@@ -1102,6 +1121,7 @@ export default function DailyStatsPage() {
             filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth}
             items={items} selectedDateHijri={selectedDateHijri}
             onDayClick={(d) => setSelectedDateHijri(d)}
+            checkFields={NABAWI_FIELDS}
           />
 
           <Card className="border-emerald-500/15">
