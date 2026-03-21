@@ -285,30 +285,64 @@ async def get_user_sidebar_menu(user: dict = Depends(get_current_user)):
             return dept in user_depts
         return False
 
-    # فلترة العناصر الرئيسية (الجذور)
-    accessible_parent_ids = set()
+    # ═══ بناء القائمة: الابن يظهر حتى لو الأب مخفي ═══
+    # 1. أولاً: اجمع كل العناصر الظاهرة (أب أو ابن)
+    visible_ids = set()
+    for item in items:
+        if _is_visible(item):
+            visible_ids.add(item["id"])
+
+    # 2. اجمع الآباء اللي لازم يظهرون كـ "عنوان" لأن عندهم أبناء ظاهرين
+    parent_ids_needed = set()
+    for item in items:
+        if item["id"] in visible_ids and item.get("parent_id"):
+            # هذا ابن ظاهر — تأكد إن أبوه يظهر (كعنوان على الأقل)
+            pid = item["parent_id"]
+            parent_ids_needed.add(pid)
+            # وأبو الأب أيضاً (لدعم 3 مستويات)
+            parent_item = next((i for i in items if i["id"] == pid), None)
+            if parent_item and parent_item.get("parent_id"):
+                parent_ids_needed.add(parent_item["parent_id"])
+
+    # 3. بناء القائمة النهائية
     filtered = []
+    seen_ids = set()
+
+    # الجذور أولاً
     for item in items:
         if item.get("parent_id"):
             continue
-        if _is_visible(item):
+        if item["id"] in visible_ids:
+            # ظاهر بشكل طبيعي
             filtered.append(item)
-            accessible_parent_ids.add(item["id"])
+            seen_ids.add(item["id"])
+        elif item["id"] in parent_ids_needed:
+            # مخفي لكن عنده أبناء ظاهرين — يظهر كعنوان بدون رابط
+            header_item = {**item, "_header_only": True}
+            filtered.append(header_item)
+            seen_ids.add(item["id"])
 
-    # فلترة الأبناء — تكرار حتى ما يضاف شي جديد (يدعم 3+ مستويات)
-    added = True
-    seen_ids = {item["id"] for item in filtered}
-    while added:
-        added = False
-        for item in items:
-            pid = item.get("parent_id")
-            if not pid or item["id"] in seen_ids:
-                continue
-            if pid in accessible_parent_ids and _is_visible(item):
-                filtered.append(item)
-                accessible_parent_ids.add(item["id"])
-                seen_ids.add(item["id"])
-                added = True
+    # الأبناء (مستوى 1)
+    for item in items:
+        pid = item.get("parent_id")
+        if not pid or pid not in seen_ids:
+            continue
+        if item["id"] in visible_ids:
+            filtered.append(item)
+            seen_ids.add(item["id"])
+        elif item["id"] in parent_ids_needed:
+            header_item = {**item, "_header_only": True}
+            filtered.append(header_item)
+            seen_ids.add(item["id"])
+
+    # الأحفاد (مستوى 2)
+    for item in items:
+        pid = item.get("parent_id")
+        if not pid or pid not in seen_ids:
+            continue
+        if item["id"] in visible_ids and item["id"] not in seen_ids:
+            filtered.append(item)
+            seen_ids.add(item["id"])
 
     return filtered
 

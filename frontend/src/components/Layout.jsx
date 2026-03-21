@@ -128,6 +128,14 @@ export const Layout = () => {
     }
   }, [parentItems.length, user?.department, autoExpanded]);
 
+  // Auto-expand header-only parents (they have no link, just show children)
+  useEffect(() => {
+    const headerParent = parentItems.find(item => item._header_only && childrenMap[item.id]?.length > 0);
+    if (headerParent && expandedMenuId !== headerParent.id) {
+      setExpandedMenuId(headerParent.id);
+    }
+  }, [parentItems]);
+
   const toggleMenu = (menuId) => {
     // Close if same menu clicked, otherwise open new one (close others automatically)
     setExpandedMenuId(prev => prev === menuId ? null : menuId);
@@ -143,7 +151,8 @@ export const Layout = () => {
                      (item.href.includes('?') && location.pathname + location.search === item.href);
     const Icon = item.icon;
     const hasChildren = children.length > 0;
-    const isExpanded = expandedMenuId === item.id; // Check if THIS menu is the expanded one
+    const isExpanded = expandedMenuId === item.id;
+    const isHeaderOnly = item._header_only; // Parent shown as header only (no link)
     
     return (
       <div>
@@ -152,23 +161,27 @@ export const Layout = () => {
             <div
               onClick={() => {
                 toggleMenu(item.id);
-                navigate(item.href);
-                if (mobile) setMobileMenuOpen(false);
+                if (!isHeaderOnly) {
+                  navigate(item.href);
+                  if (mobile) setMobileMenuOpen(false);
+                }
               }}
               className={`
                 flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
                 transition-colors duration-200 relative cursor-pointer
-                ${isActive 
-                  ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
-                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+                ${isHeaderOnly
+                  ? "text-muted-foreground/60"
+                  : isActive 
+                    ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
+                    : "text-muted-foreground hover:bg-muted hover:text-primary"
                 }
                 ${language === 'ar' ? 'flex-row-reverse' : ''}
               `}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isHeaderOnly ? 'opacity-40' : ''}`} />
               {(sidebarOpen || mobile) && (
                 <>
-                  <span className="flex-1 text-right whitespace-nowrap truncate text-[13px]">{item.name}</span>
+                  <span className={`flex-1 text-right whitespace-nowrap truncate text-[13px] ${isHeaderOnly ? 'opacity-50' : ''}`}>{item.name}</span>
                   <ChevronDown 
                     className={`w-4 h-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                   />
