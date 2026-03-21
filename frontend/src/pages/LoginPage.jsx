@@ -129,14 +129,14 @@ export default function LoginPage() {
         {/* Form */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-8 bg-white">
           <div className="w-full max-w-[380px]">
-            <div className="mb-8">
+            <div className="mb-8 text-center">
               <h1 className="font-cairo font-black text-3xl text-gray-900 mb-2">تسجيل الدخول</h1>
               <p className="text-gray-500 text-sm">{pageSettings.welcome_text_ar} {pageSettings.site_name_ar}</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">رقم الهوية أو البريد الإلكتروني</label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2 text-center">رقم الهوية أو البريد الإلكتروني</label>
                 <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'id' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
                   <input type="text" inputMode={isNationalId ? "numeric" : "text"} dir="ltr" placeholder="1xxxxxxxxx"
                     className="w-full px-4 pr-12 bg-transparent text-left font-mono text-base outline-none rounded-xl placeholder:text-gray-300"
@@ -158,7 +158,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">{isNationalId ? 'الرقم الوظيفي / PIN' : 'كلمة المرور'}</label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2 text-center">{isNationalId ? 'الرقم الوظيفي / PIN' : 'كلمة المرور'}</label>
                 <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'pw' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
                   <input type={showPin ? "text" : "password"} inputMode={isNationalId ? "numeric" : "text"} dir="ltr"
                     placeholder={isNationalId ? "الرقم الوظيفي" : "••••••••"}
@@ -197,19 +197,19 @@ export default function LoginPage() {
         <div className="absolute top-12 right-12 w-32 h-32 rounded-full border border-white/10" />
         <div className="absolute bottom-20 left-16 w-48 h-48 rounded-full border border-white/5" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div>
+          <div className="flex justify-center">
             {pageSettings.logo_url
               ? <img src={pageSettings.logo_url} alt="" className="w-16 h-16 object-contain" />
               : <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20"><span className="text-white font-cairo font-bold text-2xl">ح</span></div>
             }
           </div>
-          <div className="text-right">
+          <div className="text-center">
             <h1 className="font-cairo font-black text-5xl text-white leading-tight mb-4">{pageSettings.site_name_ar}</h1>
-            <p className="text-lg text-white/70 max-w-md leading-relaxed">{pageSettings.subtitle_ar}</p>
-            <div className="flex items-center gap-3 mt-8">
+            <p className="text-lg text-white/70 max-w-md leading-relaxed mx-auto">{pageSettings.subtitle_ar}</p>
+            <div className="flex items-center gap-3 mt-8 max-w-xs mx-auto">
               <div className="h-px flex-1 bg-white/15" />
               <span className="text-white/30 text-xs font-cairo">Al-Haram OS</span>
-              <div className="h-px w-12 bg-white/15" />
+              <div className="h-px flex-1 bg-white/15" />
             </div>
           </div>
           <div className="flex items-center justify-between text-white/30 text-xs">
