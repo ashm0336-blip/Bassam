@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         {/* Form */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-8 bg-white">
-          <div className="w-full max-w-[380px]">
+          <div className="w-full max-w-[380px] mx-auto text-center">
             <div className="mb-8 text-center">
               <h1 className="font-cairo font-black text-3xl text-gray-900 mb-2">تسجيل الدخول</h1>
               <p className="text-gray-500 text-sm">{pageSettings.welcome_text_ar} {pageSettings.site_name_ar}</p>
