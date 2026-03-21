@@ -7,7 +7,8 @@ import momentHijri from "moment-hijri";
 import {
   BarChart3, Calendar, Upload, Download, Plus, Save, Trash2, Edit3,
   ChevronRight, ChevronLeft, FileSpreadsheet, TrendingUp, Users2,
-  Building2, X, Search, Filter, Loader2, CheckCircle, AlertCircle
+  Building2, X, Search, Filter, Loader2, CheckCircle, AlertCircle,
+  ChevronDown, FileText
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -94,7 +99,7 @@ function hijriToGregorian(hijriDate) {
 }
 
 // ─── Stats Strip (like GatesTab density toolbar) ────────────────
-function StatsStrip({ summary }) {
+function StatsStrip({ summary, onImport, onExport, onTemplate }) {
   if (!summary || !summary.count) {
     return (
       <div className="flex items-center justify-center py-6 text-muted-foreground" data-testid="summary-cards">
@@ -156,82 +161,102 @@ function StatsStrip({ summary }) {
         />
       </div>
 
-      {/* Days count */}
+      {/* Files menu for combined view */}
+      <div className="flex items-center gap-2">
+        <FilesMenu onImport={onImport} onExport={onExport} onTemplate={onTemplate} color="default" />
+      </div>
     </div>
   );
 }
 
 // ─── Haram-only Strip ───────────────────────────────────────────
-function HaramStrip({ summary }) {
-  if (!summary || !summary.count) {
-    return (
-      <div className="flex items-center justify-center py-4 text-muted-foreground">
-        <BarChart3 className="w-4 h-4 ml-2 opacity-30" />
-        <span className="text-xs font-cairo">لا توجد بيانات للفترة المحددة</span>
-      </div>
-    );
-  }
+function HaramStrip({ summary, onImport, onExport, onTemplate }) {
   return (
     <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-blue-200/60 dark:border-blue-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto" data-testid="haram-strip">
       <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-blue-200/50 dark:border-blue-700/30">
         <div className="w-2 h-2 rounded-full bg-blue-500" />
         <span className="text-[10px] font-cairo font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">الحرام</span>
       </div>
-      <StatPill icon={Users2} label="المصلين" value={summary.sum_haram_worshippers} color="#2563eb" />
-      <StatPill icon={Users2} label="المعتمرين" value={summary.sum_haram_umrah} color="#7c3aed" />
-      <StatPill icon={Building2} label="حجر إسماعيل" value={summary.sum_haram_hijr_ismail} color="#0891b2" />
-      <StatPill icon={TrendingUp} label="العربات" value={summary.sum_haram_carts} color="#ca8a04" />
+      <StatPill icon={Users2} label="المصلين" value={summary?.sum_haram_worshippers} color="#2563eb" />
+      <StatPill icon={Users2} label="المعتمرين" value={summary?.sum_haram_umrah} color="#7c3aed" />
+      <StatPill icon={Building2} label="حجر إسماعيل" value={summary?.sum_haram_hijr_ismail} color="#0891b2" />
+      <StatPill icon={TrendingUp} label="العربات" value={summary?.sum_haram_carts} color="#ca8a04" />
       <div className="w-px h-5 bg-blue-200/50 dark:bg-blue-700/30 shrink-0" />
       <HighLowPill
-        highVal={summary.max_haram_worshippers}
-        highDate={summary.max_haram_worshippers_date}
-        lowVal={summary.min_haram_worshippers}
-        lowDate={summary.min_haram_worshippers_date}
+        highVal={summary?.max_haram_worshippers}
+        highDate={summary?.max_haram_worshippers_date}
+        lowVal={summary?.min_haram_worshippers}
+        lowDate={summary?.min_haram_worshippers_date}
       />
+      <div className="w-px h-5 bg-blue-200/50 dark:bg-blue-700/30 shrink-0" />
+      <FilesMenu onImport={onImport} onExport={onExport} onTemplate={onTemplate} color="blue" />
     </div>
   );
 }
 
 // ─── Nabawi-only Strip ──────────────────────────────────────────
-function NabawiStrip({ summary }) {
-  if (!summary || !summary.count) {
-    return (
-      <div className="flex items-center justify-center py-4 text-muted-foreground">
-        <BarChart3 className="w-4 h-4 ml-2 opacity-30" />
-        <span className="text-xs font-cairo">لا توجد بيانات للفترة المحددة</span>
-      </div>
-    );
-  }
+function NabawiStrip({ summary, onImport, onExport, onTemplate }) {
   return (
     <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto" data-testid="nabawi-strip">
       <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-emerald-200/50 dark:border-emerald-700/30">
         <div className="w-2 h-2 rounded-full bg-emerald-500" />
         <span className="text-[10px] font-cairo font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">النبوي</span>
       </div>
-      <StatPill icon={Users2} label="المصلين" value={summary.sum_nabawi_worshippers} color="#059669" />
-      <StatPill icon={Building2} label="ممر السلام" value={summary.sum_nabawi_salam_corridor} color="#0d9488" />
+      <StatPill icon={Users2} label="المصلين" value={summary?.sum_nabawi_worshippers} color="#059669" />
+      <StatPill icon={Building2} label="ممر السلام" value={summary?.sum_nabawi_salam_corridor} color="#0d9488" />
       <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
       <GroupPill label="الروضة رجال" items={[
-        { sub: "منشور", val: summary.sum_nabawi_rawdah_men_published, color: "#16a34a" },
-        { sub: "محجوز", val: summary.sum_nabawi_rawdah_men_reserved, color: "#ca8a04" },
-        { sub: "فعلي", val: summary.sum_nabawi_rawdah_men_actual, color: "#2563eb" },
+        { sub: "منشور", val: summary?.sum_nabawi_rawdah_men_published, color: "#16a34a" },
+        { sub: "محجوز", val: summary?.sum_nabawi_rawdah_men_reserved, color: "#ca8a04" },
+        { sub: "فعلي", val: summary?.sum_nabawi_rawdah_men_actual, color: "#2563eb" },
       ]} />
       <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
       <GroupPill label="الروضة نساء" items={[
-        { sub: "منشور", val: summary.sum_nabawi_rawdah_women_published, color: "#ec4899" },
-        { sub: "محجوز", val: summary.sum_nabawi_rawdah_women_reserved, color: "#f59e0b" },
-        { sub: "فعلي", val: summary.sum_nabawi_rawdah_women_actual, color: "#8b5cf6" },
+        { sub: "منشور", val: summary?.sum_nabawi_rawdah_women_published, color: "#ec4899" },
+        { sub: "محجوز", val: summary?.sum_nabawi_rawdah_women_reserved, color: "#f59e0b" },
+        { sub: "فعلي", val: summary?.sum_nabawi_rawdah_women_actual, color: "#8b5cf6" },
       ]} />
       <div className="w-px h-5 bg-emerald-200/50 dark:bg-emerald-700/30 shrink-0" />
       <HighLowPill
-        highVal={summary.max_nabawi_worshippers}
-        highDate={summary.max_nabawi_worshippers_date}
-        lowVal={summary.min_nabawi_worshippers}
-        lowDate={summary.min_nabawi_worshippers_date}
+        highVal={summary?.max_nabawi_worshippers}
+        highDate={summary?.max_nabawi_worshippers_date}
+        lowVal={summary?.min_nabawi_worshippers}
+        lowDate={summary?.min_nabawi_worshippers_date}
       />
+      <div className="w-px h-5 bg-emerald-200/50 dark:bg-emerald-700/30 shrink-0" />
+      <FilesMenu onImport={onImport} onExport={onExport} onTemplate={onTemplate} color="emerald" />
     </div>
   );
 }
+
+// ─── Files Menu (DropdownMenu like employees page) ─────────────
+function FilesMenu({ onImport, onExport, onTemplate, color }) {
+  const borderColor = color === "blue" ? "border-blue-200 dark:border-blue-700" : color === "emerald" ? "border-emerald-200 dark:border-emerald-700" : "border-border";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-semibold shrink-0 transition-all hover:bg-muted/50 text-muted-foreground ${borderColor}`} data-testid="files-menu">
+          <FileText className="w-3 h-3" />
+          <span className="font-cairo">ملفات</span>
+          <ChevronDown className="w-2.5 h-2.5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" dir="rtl" className="min-w-[160px]">
+        <DropdownMenuItem onClick={onExport} className="text-xs font-cairo gap-2">
+          <Download className="w-3.5 h-3.5" />تصدير Excel
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onTemplate} className="text-xs font-cairo gap-2">
+          <FileSpreadsheet className="w-3.5 h-3.5" />قالب الاستيراد
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onImport} className="text-xs font-cairo gap-2">
+          <Upload className="w-3.5 h-3.5" />استيراد Excel
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 
 // ─── Stat Pill (single stat in toolbar) ─────────────────────────
 function StatPill({ icon: Icon, label, value, color }) {
@@ -784,6 +809,27 @@ export default function DailyStatsPage() {
     }
   };
 
+  // ─── Download Template ────────────────────────────────────
+  const handleTemplate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/daily-stats/export/template`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "daily_stats_template.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("تم تحميل القالب");
+    } catch {
+      toast.error("فشل تحميل القالب");
+    }
+  };
+
   // ─── Check if date has existing data ──────────────────────
   const dateHasData = useMemo(() => {
     return items.some((i) => i.date_hijri === selectedDateHijri);
@@ -803,14 +849,6 @@ export default function DailyStatsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportOpen(true)} data-testid="import-btn">
-            <Upload className="w-3.5 h-3.5" />
-            استيراد
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport} data-testid="export-btn">
-            <Download className="w-3.5 h-3.5" />
-            تصدير
-          </Button>
         </div>
       </div>
 
@@ -864,7 +902,7 @@ export default function DailyStatsPage() {
         {/* ─── Haram Tab ──────────────────────────────────────── */}
         <TabsContent value="haram" className="space-y-4 mt-4">
           {/* Haram Stats Strip */}
-          <HaramStrip summary={summary} />
+          <HaramStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
           {/* Date Selector */}
           <Card className="border-blue-500/15">
             <CardContent className="p-4">
@@ -939,7 +977,7 @@ export default function DailyStatsPage() {
         {/* ─── Nabawi Tab ─────────────────────────────────────── */}
         <TabsContent value="nabawi" className="space-y-4 mt-4">
           {/* Nabawi Stats Strip */}
-          <NabawiStrip summary={summary} />
+          <NabawiStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
 
           <Card className="border-emerald-500/15">
             <CardContent className="p-4">
@@ -1013,7 +1051,7 @@ export default function DailyStatsPage() {
         {/* ─── Combined View Tab ──────────────────────────────── */}
         <TabsContent value="all" className="space-y-4 mt-4">
           {/* Full Stats Strip */}
-          <StatsStrip summary={summary} />
+          <StatsStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
 
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
