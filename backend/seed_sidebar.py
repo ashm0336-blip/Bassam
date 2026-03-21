@@ -167,6 +167,34 @@ async def run_all_seeds(db):
     await _seed_dropdown_options(db)
     await _seed_zone_categories(db)
     await _seed_default_permission_groups(db)
+    await _sync_login_settings(db)
+
+
+async def _sync_login_settings(db):
+    """Ensure login settings exist with correct defaults."""
+    existing = await db.login_settings.find_one({"id": "login_settings"}, {"_id": 0})
+    if not existing:
+        await db.login_settings.insert_one({
+            "id": "login_settings",
+            "primary_color": "#303D48",
+            "background_url": "",
+            "logo_url": "", "logo_size": 150, "logo_link": "/",
+            "site_name_ar": "منصة خدمات الحشود",
+            "site_name_en": "Crowd Services Platform",
+            "subtitle_ar": "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
+            "welcome_text_ar": "مرحباً بك في",
+        })
+        logger.info("  login_settings: created with defaults")
+    else:
+        # Always enforce the correct color
+        if existing.get("primary_color") != "#303D48":
+            await db.login_settings.update_one(
+                {"id": "login_settings"},
+                {"$set": {"primary_color": "#303D48", "background_url": ""}}
+            )
+            logger.info("  login_settings: updated color to #303D48")
+        else:
+            logger.info("  login_settings: OK")
 
 
 async def _sync_sidebar_menu(db):

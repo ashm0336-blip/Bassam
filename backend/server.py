@@ -85,8 +85,8 @@ async def serve_frontend_with_settings(request: Request):
         settings = None
     if not settings:
         settings = {
-            "primary_color": "#047857",
-            "background_url": "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
+            "primary_color": "#303D48",
+            "background_url": "",
             "logo_url": "", "logo_size": 150, "logo_link": "/",
             "site_name_ar": "منصة خدمات الحشود", "site_name_en": "Crowd Services Platform",
             "subtitle_ar": "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
