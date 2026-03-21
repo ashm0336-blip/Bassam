@@ -93,64 +93,136 @@ function hijriToGregorian(hijriDate) {
   return "";
 }
 
-// ─── Mini Stat Card ─────────────────────────────────────────────
-function MiniStat({ label, value, accent, noFormat }) {
+// ─── Stats Strip (like GatesTab density toolbar) ────────────────
+function StatsStrip({ summary }) {
+  if (!summary || !summary.count) {
+    return (
+      <div className="flex items-center justify-center py-6 text-muted-foreground" data-testid="summary-cards">
+        <BarChart3 className="w-5 h-5 ml-2 opacity-30" />
+        <span className="text-xs font-cairo">لا توجد بيانات للفترة المحددة</span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`rounded-lg border px-3 py-2.5 bg-gradient-to-br from-background to-muted/30 ${accent}`}>
-      <p className="text-[10px] text-muted-foreground font-cairo truncate leading-tight">{label}</p>
-      <p className="text-sm lg:text-base font-bold font-cairo mt-0.5 tabular-nums" dir="ltr">
-        {noFormat ? (value ?? 0) : formatNumber(value)}
-      </p>
+    <div className="space-y-2.5" data-testid="summary-cards">
+      {/* المسجد الحرام Strip */}
+      <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-blue-200/60 dark:border-blue-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto">
+        <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-blue-200/50 dark:border-blue-700/30">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="text-[10px] font-cairo font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">الحرام</span>
+        </div>
+        <StatPill icon={Users2} label="المصلين" value={summary.sum_haram_worshippers} color="#2563eb" />
+        <StatPill icon={Users2} label="المعتمرين" value={summary.sum_haram_umrah} color="#7c3aed" />
+        <StatPill icon={Building2} label="حجر إسماعيل" value={summary.sum_haram_hijr_ismail} color="#0891b2" />
+        <StatPill icon={TrendingUp} label="العربات" value={summary.sum_haram_carts} color="#ca8a04" />
+        <div className="w-px h-5 bg-blue-200/50 dark:bg-blue-700/30 shrink-0" />
+        <HighLowPill
+          highVal={summary.max_haram_worshippers}
+          highDate={summary.max_haram_worshippers_date}
+          lowVal={summary.min_haram_worshippers}
+          lowDate={summary.min_haram_worshippers_date}
+          label="المصلين"
+        />
+      </div>
+
+      {/* المسجد النبوي Strip */}
+      <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto">
+        <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-emerald-200/50 dark:border-emerald-700/30">
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="text-[10px] font-cairo font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">النبوي</span>
+        </div>
+        <StatPill icon={Users2} label="المصلين" value={summary.sum_nabawi_worshippers} color="#059669" />
+        <StatPill icon={Building2} label="ممر السلام" value={summary.sum_nabawi_salam_corridor} color="#0d9488" />
+        <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
+        <GroupPill label="الروضة رجال" items={[
+          { sub: "منشور", val: summary.sum_nabawi_rawdah_men_published, color: "#16a34a" },
+          { sub: "محجوز", val: summary.sum_nabawi_rawdah_men_reserved, color: "#ca8a04" },
+          { sub: "فعلي", val: summary.sum_nabawi_rawdah_men_actual, color: "#2563eb" },
+        ]} />
+        <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
+        <GroupPill label="الروضة نساء" items={[
+          { sub: "منشور", val: summary.sum_nabawi_rawdah_women_published, color: "#ec4899" },
+          { sub: "محجوز", val: summary.sum_nabawi_rawdah_women_reserved, color: "#f59e0b" },
+          { sub: "فعلي", val: summary.sum_nabawi_rawdah_women_actual, color: "#8b5cf6" },
+        ]} />
+        <div className="w-px h-5 bg-emerald-200/50 dark:bg-emerald-700/30 shrink-0" />
+        <HighLowPill
+          highVal={summary.max_nabawi_worshippers}
+          highDate={summary.max_nabawi_worshippers_date}
+          lowVal={summary.min_nabawi_worshippers}
+          lowDate={summary.min_nabawi_worshippers_date}
+          label="المصلين"
+        />
+      </div>
+
+      {/* Days count */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10">
+          <Calendar className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+          <span className="text-[10px] font-cairo text-muted-foreground">الأيام المسجلة:</span>
+          <span className="text-[11px] font-bold font-cairo text-amber-700 dark:text-amber-400">{summary.count}</span>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Summary Cards ──────────────────────────────────────────────
-function SummaryCards({ summary }) {
+// ─── Stat Pill (single stat in toolbar) ─────────────────────────
+function StatPill({ icon: Icon, label, value, color }) {
   return (
-    <div className="space-y-3" data-testid="summary-cards">
-      {/* المسجد الحرام */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-xs font-cairo font-semibold text-blue-700 dark:text-blue-400">المسجد الحرام</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <MiniStat label="المصلين" value={summary?.sum_haram_worshippers} accent="border-blue-500/15" />
-          <MiniStat label="المعتمرين" value={summary?.sum_haram_umrah} accent="border-blue-500/15" />
-          <MiniStat label="حجر إسماعيل" value={summary?.sum_haram_hijr_ismail} accent="border-blue-500/15" />
-          <MiniStat label="العربات" value={summary?.sum_haram_carts} accent="border-blue-500/15" />
-        </div>
-      </div>
+    <div
+      className="flex items-center gap-1 px-2 py-1 rounded-lg border shrink-0 transition-all hover:scale-[1.02]"
+      style={{ borderColor: color + "25", backgroundColor: color + "06" }}
+    >
+      <Icon className="w-3 h-3 shrink-0" style={{ color }} />
+      <span className="text-[9px] font-bold tabular-nums" style={{ color }} dir="ltr">
+        {formatNumber(value)}
+      </span>
+      <span className="text-[8px] font-cairo text-muted-foreground whitespace-nowrap">{label}</span>
+    </div>
+  );
+}
 
-      {/* المسجد النبوي */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-xs font-cairo font-semibold text-emerald-700 dark:text-emerald-400">المسجد النبوي</span>
+// ─── Group Pill (Rawdah sub-stats) ──────────────────────────────
+function GroupPill({ label, items }) {
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      <span className="text-[8px] font-cairo font-semibold text-muted-foreground whitespace-nowrap">{label}:</span>
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border"
+          style={{ borderColor: item.color + "30", backgroundColor: item.color + "08" }}
+        >
+          <span className="text-[8px] font-bold tabular-nums" style={{ color: item.color }} dir="ltr">
+            {formatNumber(item.val)}
+          </span>
+          <span className="text-[7px] font-cairo" style={{ color: item.color + "bb" }}>{item.sub}</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <MiniStat label="المصلين" value={summary?.sum_nabawi_worshippers} accent="border-emerald-500/15" />
-          <MiniStat label="ممر السلام" value={summary?.sum_nabawi_salam_corridor} accent="border-emerald-500/15" />
-          <MiniStat label="الروضة رجال - منشور" value={summary?.sum_nabawi_rawdah_men_published} accent="border-emerald-500/15" />
-          <MiniStat label="الروضة رجال - محجوز" value={summary?.sum_nabawi_rawdah_men_reserved} accent="border-emerald-500/15" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-          <MiniStat label="الروضة رجال - فعلي" value={summary?.sum_nabawi_rawdah_men_actual} accent="border-emerald-500/15" />
-          <MiniStat label="الروضة نساء - منشور" value={summary?.sum_nabawi_rawdah_women_published} accent="border-emerald-500/15" />
-          <MiniStat label="الروضة نساء - محجوز" value={summary?.sum_nabawi_rawdah_women_reserved} accent="border-emerald-500/15" />
-          <MiniStat label="الروضة نساء - فعلي" value={summary?.sum_nabawi_rawdah_women_actual} accent="border-emerald-500/15" />
-        </div>
-      </div>
+      ))}
+    </div>
+  );
+}
 
-      {/* عدد الأيام */}
-      <div className="flex items-center gap-2">
-        <div className="rounded-lg border border-amber-500/20 bg-amber-50/50 dark:bg-amber-900/10 px-3 py-1.5 flex items-center gap-2">
-          <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          <span className="text-xs font-cairo text-muted-foreground">الأيام المسجلة:</span>
-          <span className="text-sm font-bold font-cairo text-amber-700 dark:text-amber-400">{summary?.count ?? 0}</span>
+// ─── High/Low Pill ──────────────────────────────────────────────
+function HighLowPill({ highVal, highDate, lowVal, lowDate, label }) {
+  return (
+    <div className="flex items-center gap-1.5 shrink-0">
+      {highVal != null && (
+        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-700/30">
+          <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+          <span className="text-[8px] font-bold text-emerald-700 dark:text-emerald-400 tabular-nums" dir="ltr">{formatNumber(highVal)}</span>
+          {highDate && <span className="text-[7px] text-emerald-500 font-mono">{highDate.split("-").pop()}</span>}
         </div>
-      </div>
+      )}
+      {lowVal != null && lowVal > 0 && (
+        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-700/30">
+          <TrendingUp className="w-2.5 h-2.5 text-red-500 rotate-180" />
+          <span className="text-[8px] font-bold text-red-600 dark:text-red-400 tabular-nums" dir="ltr">{formatNumber(lowVal)}</span>
+          {lowDate && <span className="text-[7px] text-red-400 font-mono">{lowDate.split("-").pop()}</span>}
+        </div>
+      )}
     </div>
   );
 }
@@ -707,7 +779,7 @@ export default function DailyStatsPage() {
       </div>
 
       {/* Summary */}
-      <SummaryCards summary={summary} />
+      <StatsStrip summary={summary} />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">

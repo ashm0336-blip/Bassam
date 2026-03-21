@@ -135,7 +135,7 @@ async def get_stats_summary(
     year: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    """Get summary stats for a period."""
+    """Get summary stats for a period including min/max with dates."""
     match = {}
     if month and year:
         prefix = f"{year}-{month.zfill(2)}"
@@ -150,6 +150,7 @@ async def get_stats_summary(
     for f in ALL_NUMERIC_FIELDS:
         group_stage[f"sum_{f}"] = {"$sum": {"$ifNull": [f"${f}", 0]}}
         group_stage[f"max_{f}"] = {"$max": f"${f}"}
+        group_stage[f"min_{f}"] = {"$min": f"${f}"}
         group_stage[f"avg_{f}"] = {"$avg": f"${f}"}
 
     pipeline.append({"$group": group_stage})
@@ -164,6 +165,20 @@ async def get_stats_summary(
     for key in list(summary.keys()):
         if key.startswith("avg_") and summary[key] is not None:
             summary[key] = round(summary[key], 1)
+
+    # Find dates for max/min of key fields
+    key_fields = ["haram_worshippers", "nabawi_worshippers"]
+    query = match if match else {}
+    for kf in key_fields:
+        max_val = summary.get(f"max_{kf}")
+        min_val = summary.get(f"min_{kf}")
+        if max_val is not None:
+            doc = await db.daily_stats.find_one({**query, kf: max_val}, {"_id": 0, "date_hijri": 1})
+            summary[f"max_{kf}_date"] = doc["date_hijri"] if doc else None
+        if min_val is not None and min_val > 0:
+            doc = await db.daily_stats.find_one({**query, kf: min_val}, {"_id": 0, "date_hijri": 1})
+            summary[f"min_{kf}_date"] = doc["date_hijri"] if doc else None
+
     return summary
 
 
