@@ -139,7 +139,7 @@ export default function LoginPage() {
                 <label className="text-sm font-semibold text-gray-700 block mb-2 text-center">رقم الهوية أو البريد الإلكتروني</label>
                 <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'id' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
                   <input type="text" inputMode={isNationalId ? "numeric" : "text"} dir="ltr" placeholder="1xxxxxxxxx"
-                    className="w-full px-4 pr-12 bg-transparent text-left font-mono text-base outline-none rounded-xl placeholder:text-gray-300"
+                    className="w-full px-12 bg-transparent text-center font-mono text-base outline-none rounded-xl placeholder:text-gray-300"
                     style={{ height: '52px' }}
                     value={formData.identifier} onChange={e => setFormData({ ...formData, identifier: e.target.value })}
                     onFocus={() => setFocused('id')} onBlur={() => setFocused(null)} required
@@ -162,7 +162,7 @@ export default function LoginPage() {
                 <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'pw' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
                   <input type={showPin ? "text" : "password"} inputMode={isNationalId ? "numeric" : "text"} dir="ltr"
                     placeholder={isNationalId ? "الرقم الوظيفي" : "••••••••"}
-                    className={`w-full px-4 pr-12 bg-transparent outline-none rounded-xl placeholder:text-gray-300 ${isNationalId ? 'text-center text-xl tracking-[0.4em] font-mono' : 'text-left text-base'}`}
+                    className={`w-full px-12 bg-transparent outline-none rounded-xl placeholder:text-gray-300 text-center ${isNationalId ? 'text-xl tracking-[0.4em] font-mono' : 'text-base'}`}
                     style={{ height: '52px' }}
                     value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
                     onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)} required data-testid="login-password" />
