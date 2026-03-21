@@ -470,8 +470,12 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
             </div>
             {/* Row 2: الروضة رجال */}
             {rawdahMen.length > 0 && (
-              <div>
-                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo text-center">الروضة الشريفة - رجال</p>
+              <div className="rounded-lg border border-blue-200/40 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-950/10 p-3">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-blue-200/50 dark:bg-blue-700/30" />
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 font-cairo px-2">الروضة الشريفة - رجال</span>
+                  <div className="h-px flex-1 bg-blue-200/50 dark:bg-blue-700/30" />
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {rawdahMen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
                 </div>
@@ -479,8 +483,12 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
             )}
             {/* Row 3: الروضة نساء */}
             {rawdahWomen.length > 0 && (
-              <div>
-                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo text-center">الروضة الشريفة - نساء</p>
+              <div className="rounded-lg border border-pink-200/40 dark:border-pink-800/30 bg-pink-50/30 dark:bg-pink-950/10 p-3">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-pink-200/50 dark:bg-pink-700/30" />
+                  <span className="text-[10px] font-bold text-pink-700 dark:text-pink-400 font-cairo px-2">الروضة الشريفة - نساء</span>
+                  <div className="h-px flex-1 bg-pink-200/50 dark:bg-pink-700/30" />
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {rawdahWomen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
                 </div>
