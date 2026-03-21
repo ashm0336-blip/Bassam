@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://prayer-hall-fix.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://employee-dash-19.preview.emergentagent.com')
 API = f"{BASE_URL}/api"
 
 # Test credentials

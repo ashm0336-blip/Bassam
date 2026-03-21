@@ -47,6 +47,7 @@ from routes.smart_alerts import router as smart_alerts_router
 from routes.employee_io import router as employee_io_router
 from routes.gate_io import router as gate_io_router
 from routes.tasks import router as tasks_router
+from routes.daily_stats import router as daily_stats_router
 
 api_router.include_router(auth_router)
 api_router.include_router(admin_router)
@@ -66,6 +67,7 @@ api_router.include_router(smart_alerts_router)
 api_router.include_router(employee_io_router)
 api_router.include_router(gate_io_router)
 api_router.include_router(tasks_router)
+api_router.include_router(daily_stats_router)
 
 
 # ============= Frontend Serving with Injected Settings =============
@@ -263,6 +265,11 @@ async def _ensure_indexes():
 
         # Department settings
         await db.department_settings.create_index([("department", 1), ("setting_type", 1)])
+
+        # Daily statistics
+        await db.daily_stats.create_index("id", unique=True)
+        await db.daily_stats.create_index("date_hijri", unique=True)
+        await db.daily_stats.create_index([("date_hijri", -1)])
 
         logger.info("Database indexes ensured successfully")
     except Exception as e:

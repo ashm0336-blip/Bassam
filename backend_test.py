@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class CrowdServicesTester:
-    def __init__(self, base_url="https://prayer-hall-fix.preview.emergentagent.com"):
+    def __init__(self, base_url="https://employee-dash-19.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api"
         self.access_token = None

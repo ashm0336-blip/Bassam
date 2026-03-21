@@ -1,0 +1,966 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import axios from "axios";
+import { toast } from "sonner";
+import momentHijri from "moment-hijri";
+import {
+  BarChart3, Calendar, Upload, Download, Plus, Save, Trash2, Edit3,
+  ChevronRight, ChevronLeft, FileSpreadsheet, TrendingUp, Users2,
+  Building2, X, Search, Filter, Loader2, CheckCircle, AlertCircle
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// ─── Field Definitions ──────────────────────────────────────────
+const HARAM_FIELDS = [
+  { key: "haram_worshippers", label: "المصلين", icon: "users" },
+  { key: "haram_umrah", label: "المعتمرين", icon: "users" },
+  { key: "haram_hijr_ismail", label: "حجر إسماعيل", icon: "building" },
+  { key: "haram_carts", label: "العربات", icon: "cart" },
+];
+
+const NABAWI_FIELDS = [
+  { key: "nabawi_worshippers", label: "المصلين", icon: "users" },
+  { key: "nabawi_rawdah_men_published", label: "الروضة رجال - منشور", group: "rawdah_men" },
+  { key: "nabawi_rawdah_men_reserved", label: "الروضة رجال - محجوز", group: "rawdah_men" },
+  { key: "nabawi_rawdah_men_actual", label: "الروضة رجال - فعلي", group: "rawdah_men" },
+  { key: "nabawi_rawdah_women_published", label: "الروضة نساء - منشور", group: "rawdah_women" },
+  { key: "nabawi_rawdah_women_reserved", label: "الروضة نساء - محجوز", group: "rawdah_women" },
+  { key: "nabawi_rawdah_women_actual", label: "الروضة نساء - فعلي", group: "rawdah_women" },
+  { key: "nabawi_salam_corridor", label: "ممر السلام", icon: "door" },
+];
+
+// Hijri month names
+const HIJRI_MONTHS = [
+  { value: "01", label: "محرم" },
+  { value: "02", label: "صفر" },
+  { value: "03", label: "ربيع الأول" },
+  { value: "04", label: "ربيع الثاني" },
+  { value: "05", label: "جمادى الأولى" },
+  { value: "06", label: "جمادى الآخرة" },
+  { value: "07", label: "رجب" },
+  { value: "08", label: "شعبان" },
+  { value: "09", label: "رمضان" },
+  { value: "10", label: "شوال" },
+  { value: "11", label: "ذو القعدة" },
+  { value: "12", label: "ذو الحجة" },
+];
+
+function formatNumber(num) {
+  if (num === null || num === undefined || num === "") return "-";
+  return Number(num).toLocaleString("ar-SA");
+}
+
+function getCurrentHijriDate() {
+  const m = momentHijri();
+  return {
+    year: m.iYear().toString(),
+    month: m.iMonth() + 1,
+    day: m.iDate(),
+    formatted: m.format("iYYYY-iMM-iDD"),
+    monthPadded: String(m.iMonth() + 1).padStart(2, "0"),
+  };
+}
+
+function hijriToGregorian(hijriDate) {
+  try {
+    const m = momentHijri(hijriDate, "iYYYY-iMM-iDD");
+    if (m.isValid()) {
+      return m.format("YYYY-MM-DD");
+    }
+  } catch {}
+  return "";
+}
+
+// ─── Summary Cards ──────────────────────────────────────────────
+function SummaryCards({ summary, filterMonth }) {
+  const monthLabel = filterMonth
+    ? HIJRI_MONTHS.find((m) => m.value === filterMonth)?.label || filterMonth
+    : "الكل";
+
+  const cards = [
+    {
+      title: "إجمالي المصلين - الحرام",
+      value: summary?.sum_haram_worshippers,
+      icon: Building2,
+      color: "from-blue-500/10 to-blue-600/5 border-blue-500/20",
+      textColor: "text-blue-600 dark:text-blue-400",
+    },
+    {
+      title: "إجمالي المعتمرين",
+      value: summary?.sum_haram_umrah,
+      icon: Users2,
+      color: "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20",
+      textColor: "text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      title: "إجمالي المصلين - النبوي",
+      value: summary?.sum_nabawi_worshippers,
+      icon: Building2,
+      color: "from-teal-500/10 to-teal-600/5 border-teal-500/20",
+      textColor: "text-teal-600 dark:text-teal-400",
+    },
+    {
+      title: "عدد الأيام المسجلة",
+      value: summary?.count,
+      icon: Calendar,
+      color: "from-amber-500/10 to-amber-600/5 border-amber-500/20",
+      textColor: "text-amber-600 dark:text-amber-400",
+      noFormat: true,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="summary-cards">
+      {cards.map((card, i) => {
+        const Icon = card.icon;
+        return (
+          <Card
+            key={i}
+            className={`bg-gradient-to-br ${card.color} border`}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className={`p-2 rounded-lg bg-background/80 ${card.textColor}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <Badge variant="outline" className="text-[10px] px-1.5">
+                  {monthLabel}
+                </Badge>
+              </div>
+              <p className={`text-xl lg:text-2xl font-bold font-cairo ${card.textColor}`}>
+                {card.noFormat
+                  ? card.value ?? 0
+                  : formatNumber(card.value)}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">{card.title}</p>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Daily Entry Card (Mosque-specific) ─────────────────────────
+function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, saving, canEdit }) {
+  const isHaram = mosqueType === "haram";
+  const title = isHaram ? "المسجد الحرام" : "المسجد النبوي";
+  const bgGradient = isHaram
+    ? "from-blue-500/5 to-blue-600/5 border-blue-500/15"
+    : "from-emerald-500/5 to-emerald-600/5 border-emerald-500/15";
+
+  // Group fields for Nabawi rawdah
+  const groupedFields = useMemo(() => {
+    if (isHaram) return [{ group: null, fields }];
+
+    const groups = [];
+    let currentGroup = null;
+    let currentFields = [];
+
+    fields.forEach((f) => {
+      if (f.group && f.group !== currentGroup) {
+        if (currentFields.length > 0) {
+          groups.push({ group: currentGroup, fields: currentFields });
+        }
+        currentGroup = f.group;
+        currentFields = [f];
+      } else if (f.group === currentGroup && currentGroup) {
+        currentFields.push(f);
+      } else {
+        if (currentFields.length > 0) {
+          groups.push({ group: currentGroup, fields: currentFields });
+        }
+        currentGroup = null;
+        currentFields = [f];
+      }
+    });
+    if (currentFields.length > 0) {
+      groups.push({ group: currentGroup, fields: currentFields });
+    }
+    return groups;
+  }, [fields, isHaram]);
+
+  return (
+    <Card className={`bg-gradient-to-br ${bgGradient} border`} data-testid={`entry-card-${mosqueType}`}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base font-cairo">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isHaram ? 'bg-blue-500/10' : 'bg-emerald-500/10'}`}>
+            <Building2 className={`w-4 h-4 ${isHaram ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
+          </div>
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {groupedFields.map((gf, gi) => (
+          <div key={gi}>
+            {gf.group && (
+              <p className="text-xs font-semibold text-muted-foreground mb-2 font-cairo">
+                {gf.group === "rawdah_men" ? "الروضة الشريفة - رجال" : "الروضة الشريفة - نساء"}
+              </p>
+            )}
+            <div className={`grid ${gf.group ? "grid-cols-3" : "grid-cols-2"} gap-3`}>
+              {gf.fields.map((field) => (
+                <div key={field.key}>
+                  <Label className="text-[11px] text-muted-foreground mb-1 block font-cairo">
+                    {gf.group ? field.label.split(" - ")[1] : field.label}
+                  </Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={formData[field.key] ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, [field.key]: e.target.value }))
+                    }
+                    disabled={!canEdit}
+                    className="text-center h-9 font-mono text-sm"
+                    dir="ltr"
+                    data-testid={`input-${field.key}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {canEdit && (
+          <Button
+            onClick={onSave}
+            disabled={saving}
+            className={`w-full mt-2 text-white ${isHaram ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+            data-testid={`save-${mosqueType}`}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+            ) : (
+              <Save className="w-4 h-4 ml-2" />
+            )}
+            حفظ بيانات {title}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Data Table ─────────────────────────────────────────────────
+function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground" data-testid="empty-table">
+        <BarChart3 className="w-12 h-12 mb-3 opacity-30" />
+        <p className="font-cairo text-sm">لا توجد بيانات مسجلة</p>
+        <p className="text-xs mt-1">ابدأ بإدخال إحصائيات يومية جديدة</p>
+      </div>
+    );
+  }
+
+  const showHaram = !mosqueFilter || mosqueFilter === "haram" || mosqueFilter === "all";
+  const showNabawi = !mosqueFilter || mosqueFilter === "nabawi" || mosqueFilter === "all";
+
+  return (
+    <div className="overflow-x-auto rounded-lg border" data-testid="data-table">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="text-center font-cairo text-xs sticky right-0 bg-muted/50 z-10 min-w-[100px]">
+              التاريخ الهجري
+            </TableHead>
+            <TableHead className="text-center font-cairo text-xs min-w-[100px]">
+              التاريخ الميلادي
+            </TableHead>
+            {showHaram && HARAM_FIELDS.map((f) => (
+              <TableHead key={f.key} className="text-center font-cairo text-xs min-w-[90px] bg-blue-500/5">
+                {f.label}
+              </TableHead>
+            ))}
+            {showNabawi && NABAWI_FIELDS.map((f) => (
+              <TableHead key={f.key} className="text-center font-cairo text-xs min-w-[90px] bg-emerald-500/5">
+                {f.label}
+              </TableHead>
+            ))}
+            {canEdit && (
+              <TableHead className="text-center font-cairo text-xs w-[80px]">
+                إجراءات
+              </TableHead>
+            )}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
+              <TableCell className="text-center font-mono text-xs sticky right-0 bg-background z-10 font-semibold">
+                {item.date_hijri}
+              </TableCell>
+              <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                {item.date_gregorian || "-"}
+              </TableCell>
+              {showHaram && HARAM_FIELDS.map((f) => (
+                <TableCell key={f.key} className="text-center text-xs font-mono bg-blue-500/[0.02]">
+                  {formatNumber(item[f.key])}
+                </TableCell>
+              ))}
+              {showNabawi && NABAWI_FIELDS.map((f) => (
+                <TableCell key={f.key} className="text-center text-xs font-mono bg-emerald-500/[0.02]">
+                  {formatNumber(item[f.key])}
+                </TableCell>
+              ))}
+              {canEdit && (
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-blue-600"
+                      onClick={() => onEdit(item)}
+                      data-testid={`edit-${item.id}`}
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => onDelete(item)}
+                      data-testid={`delete-${item.id}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ─── Import Dialog ──────────────────────────────────────────────
+function ImportDialog({ open, onClose, onSuccess }) {
+  const [file, setFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleImport = async () => {
+    if (!file) return;
+    setImporting(true);
+    setResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API}/daily-stats/import`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+      });
+      setResult(res.data);
+      if (res.data.created > 0 || res.data.updated > 0) {
+        toast.success(`تم استيراد ${res.data.created} سجل جديد وتحديث ${res.data.updated} سجل`);
+        onSuccess();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "فشل الاستيراد");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/daily-stats/export/template`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "daily_stats_template.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("تم تحميل القالب");
+    } catch {
+      toast.error("فشل تحميل القالب");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="font-cairo flex items-center gap-2">
+            <Upload className="w-5 h-5" />
+            استيراد من Excel
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            ارفع ملف Excel يحتوي على الإحصائيات اليومية
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => document.getElementById("stats-import-file").click()}
+            data-testid="import-drop-zone"
+          >
+            <FileSpreadsheet className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm font-cairo">
+              {file ? file.name : "اضغط لاختيار ملف Excel"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">.xlsx</p>
+            <input
+              id="stats-import-file"
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                setFile(e.target.files[0]);
+                setResult(null);
+              }}
+            />
+          </div>
+
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={downloadTemplate} data-testid="download-template">
+            <Download className="w-4 h-4" />
+            تحميل قالب Excel
+          </Button>
+
+          {result && (
+            <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1" data-testid="import-result">
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle className="w-4 h-4" />
+                <span>جديد: {result.created} | محدث: {result.updated} | تخطي: {result.skipped}</span>
+              </div>
+              {result.errors?.length > 0 && (
+                <div className="text-destructive mt-1">
+                  <p className="font-semibold">أخطاء:</p>
+                  {result.errors.map((e, i) => (
+                    <p key={i}>{e}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>
+            إغلاق
+          </Button>
+          <Button onClick={handleImport} disabled={!file || importing} data-testid="import-submit">
+            {importing ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Upload className="w-4 h-4 ml-2" />}
+            استيراد
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main Page Component ────────────────────────────────────────
+export default function DailyStatsPage() {
+  const { user } = useAuth();
+  const { language } = useLanguage();
+
+  // State
+  const [activeTab, setActiveTab] = useState("haram");
+  const [items, setItems] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Filters
+  const currentHijri = getCurrentHijriDate();
+  const [filterYear, setFilterYear] = useState(currentHijri.year);
+  const [filterMonth, setFilterMonth] = useState(currentHijri.monthPadded);
+
+  // Entry form
+  const [selectedDateHijri, setSelectedDateHijri] = useState(currentHijri.formatted);
+  const [formData, setFormData] = useState({});
+  const [editingItem, setEditingItem] = useState(null);
+
+  // Dialogs
+  const [importOpen, setImportOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Determine if user can edit
+  const canEdit = true; // Controlled by permissions system at sidebar level
+
+  // Available Hijri years
+  const hijriYears = useMemo(() => {
+    const current = parseInt(currentHijri.year);
+    const years = [];
+    for (let y = current - 5; y <= current + 1; y++) {
+      years.push(y.toString());
+    }
+    return years;
+  }, [currentHijri.year]);
+
+  // ─── Data Fetching ──────────────────────────────────────────
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const params = { month: filterMonth, year: filterYear, page, limit: 50 };
+      const [dataRes, summaryRes] = await Promise.all([
+        axios.get(`${API}/daily-stats`, { headers: { Authorization: `Bearer ${token}` }, params }),
+        axios.get(`${API}/daily-stats/summary`, { headers: { Authorization: `Bearer ${token}` }, params: { month: filterMonth, year: filterYear } }),
+      ]);
+      setItems(dataRes.data.items || []);
+      setTotalPages(dataRes.data.pages || 1);
+      setSummary(summaryRes.data);
+    } catch (err) {
+      console.error("Failed to fetch daily stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterMonth, filterYear, page]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ─── Load existing data for selected date ──────────────────
+  useEffect(() => {
+    if (!selectedDateHijri) return;
+    const existing = items.find((i) => i.date_hijri === selectedDateHijri);
+    if (existing) {
+      const data = {};
+      [...HARAM_FIELDS, ...NABAWI_FIELDS].forEach((f) => {
+        data[f.key] = existing[f.key] ?? "";
+      });
+      setFormData(data);
+    } else {
+      setFormData({});
+    }
+  }, [selectedDateHijri, items]);
+
+  // ─── Date Navigation ──────────────────────────────────────
+  const navigateDate = (direction) => {
+    const m = momentHijri(selectedDateHijri, "iYYYY-iMM-iDD");
+    if (!m.isValid()) return;
+    const newDate = direction === "next" ? m.add(1, "iDay") : m.subtract(1, "iDay");
+    setSelectedDateHijri(newDate.format("iYYYY-iMM-iDD"));
+  };
+
+  const gregDate = useMemo(() => hijriToGregorian(selectedDateHijri), [selectedDateHijri]);
+
+  // ─── Save Handler ─────────────────────────────────────────
+  const handleSave = async (mosqueType) => {
+    if (!selectedDateHijri) {
+      toast.error("يرجى اختيار التاريخ");
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        date_hijri: selectedDateHijri,
+        date_gregorian: gregDate,
+      };
+
+      const fields = mosqueType === "haram" ? HARAM_FIELDS : NABAWI_FIELDS;
+      fields.forEach((f) => {
+        if (formData[f.key] !== undefined && formData[f.key] !== "") {
+          payload[f.key] = formData[f.key];
+        }
+      });
+
+      await axios.post(`${API}/daily-stats`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("تم حفظ البيانات بنجاح");
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "فشل الحفظ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ─── Edit Handler ─────────────────────────────────────────
+  const handleEdit = (item) => {
+    setSelectedDateHijri(item.date_hijri);
+    setActiveTab("haram"); // Switch to entry view
+    const data = {};
+    [...HARAM_FIELDS, ...NABAWI_FIELDS].forEach((f) => {
+      data[f.key] = item[f.key] ?? "";
+    });
+    setFormData(data);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.info(`تم تحميل بيانات ${item.date_hijri} للتعديل`);
+  };
+
+  // ─── Delete Handler ───────────────────────────────────────
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/daily-stats/${deleteTarget.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("تم الحذف بنجاح");
+      setDeleteTarget(null);
+      fetchData();
+    } catch {
+      toast.error("فشل الحذف");
+    }
+  };
+
+  // ─── Export ───────────────────────────────────────────────
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/daily-stats/export/data`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { month: filterMonth, year: filterYear },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `daily_stats_${filterYear}_${filterMonth}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("تم تصدير البيانات");
+    } catch {
+      toast.error("فشل التصدير");
+    }
+  };
+
+  // ─── Check if date has existing data ──────────────────────
+  const dateHasData = useMemo(() => {
+    return items.some((i) => i.date_hijri === selectedDateHijri);
+  }, [items, selectedDateHijri]);
+
+  return (
+    <div className="space-y-5" dir="rtl" data-testid="daily-stats-page">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold font-cairo flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-primary" />
+            الإحصائيات اليومية
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1 font-cairo">
+            إحصائيات الحشود اليومية للمسجد الحرام والمسجد النبوي
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportOpen(true)} data-testid="import-btn">
+            <Upload className="w-3.5 h-3.5" />
+            استيراد
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport} data-testid="export-btn">
+            <Download className="w-3.5 h-3.5" />
+            تصدير
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterYear} onValueChange={(v) => { setFilterYear(v); setPage(1); }}>
+          <SelectTrigger className="w-[120px] h-9 text-xs" data-testid="filter-year">
+            <SelectValue placeholder="السنة" />
+          </SelectTrigger>
+          <SelectContent>
+            {hijriYears.map((y) => (
+              <SelectItem key={y} value={y}>{y} هـ</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterMonth} onValueChange={(v) => { setFilterMonth(v); setPage(1); }}>
+          <SelectTrigger className="w-[140px] h-9 text-xs" data-testid="filter-month">
+            <SelectValue placeholder="الشهر" />
+          </SelectTrigger>
+          <SelectContent>
+            {HIJRI_MONTHS.map((m) => (
+              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Badge variant="secondary" className="text-[10px] px-2 py-1" data-testid="record-count">
+          {loading ? "..." : `${items.length} سجل`}
+        </Badge>
+      </div>
+
+      {/* Summary */}
+      <SummaryCards
+        summary={summary}
+        filterMonth={filterMonth}
+      />
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+        <TabsList className="w-full grid grid-cols-3 h-10">
+          <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
+            <Building2 className="w-3.5 h-3.5" />
+            المسجد الحرام
+          </TabsTrigger>
+          <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
+            <Building2 className="w-3.5 h-3.5" />
+            المسجد النبوي
+          </TabsTrigger>
+          <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
+            <BarChart3 className="w-3.5 h-3.5" />
+            العرض الشامل
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ─── Haram Tab ──────────────────────────────────────── */}
+        <TabsContent value="haram" className="space-y-4 mt-4">
+          {/* Date Selector */}
+          <Card className="border-blue-500/15">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8" data-testid="date-next">
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+
+                <div className="flex-1 text-center">
+                  <div className="flex items-center justify-center gap-3">
+                    <Input
+                      type="text"
+                      value={selectedDateHijri}
+                      onChange={(e) => setSelectedDateHijri(e.target.value)}
+                      placeholder="1446-09-01"
+                      className="w-[160px] text-center text-sm h-9 font-mono"
+                      dir="ltr"
+                      data-testid="date-input"
+                    />
+                    {gregDate && (
+                      <span className="text-xs text-muted-foreground font-mono">
+                        ({gregDate})
+                      </span>
+                    )}
+                  </div>
+                  {dateHasData && (
+                    <Badge variant="outline" className="mt-1 text-[10px] text-emerald-600 border-emerald-300">
+                      <CheckCircle className="w-3 h-3 ml-1" />
+                      بيانات مسجلة
+                    </Badge>
+                  )}
+                </div>
+
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8" data-testid="date-prev">
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <DailyEntryCard
+            mosqueType="haram"
+            fields={HARAM_FIELDS}
+            formData={formData}
+            setFormData={setFormData}
+            onSave={() => handleSave("haram")}
+            saving={saving}
+            canEdit={canEdit}
+          />
+
+          <Separator />
+
+          <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            سجل الشهر - المسجد الحرام
+          </h3>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <DataTable
+              items={items}
+              onEdit={handleEdit}
+              onDelete={(item) => setDeleteTarget(item)}
+              canEdit={canEdit}
+              mosqueFilter="haram"
+            />
+          )}
+        </TabsContent>
+
+        {/* ─── Nabawi Tab ─────────────────────────────────────── */}
+        <TabsContent value="nabawi" className="space-y-4 mt-4">
+          <Card className="border-emerald-500/15">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8">
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+
+                <div className="flex-1 text-center">
+                  <div className="flex items-center justify-center gap-3">
+                    <Input
+                      type="text"
+                      value={selectedDateHijri}
+                      onChange={(e) => setSelectedDateHijri(e.target.value)}
+                      placeholder="1446-09-01"
+                      className="w-[160px] text-center text-sm h-9 font-mono"
+                      dir="ltr"
+                    />
+                    {gregDate && (
+                      <span className="text-xs text-muted-foreground font-mono">
+                        ({gregDate})
+                      </span>
+                    )}
+                  </div>
+                  {dateHasData && (
+                    <Badge variant="outline" className="mt-1 text-[10px] text-emerald-600 border-emerald-300">
+                      <CheckCircle className="w-3 h-3 ml-1" />
+                      بيانات مسجلة
+                    </Badge>
+                  )}
+                </div>
+
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8">
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <DailyEntryCard
+            mosqueType="nabawi"
+            fields={NABAWI_FIELDS}
+            formData={formData}
+            setFormData={setFormData}
+            onSave={() => handleSave("nabawi")}
+            saving={saving}
+            canEdit={canEdit}
+          />
+
+          <Separator />
+
+          <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            سجل الشهر - المسجد النبوي
+          </h3>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <DataTable
+              items={items}
+              onEdit={handleEdit}
+              onDelete={(item) => setDeleteTarget(item)}
+              canEdit={canEdit}
+              mosqueFilter="nabawi"
+            />
+          )}
+        </TabsContent>
+
+        {/* ─── Combined View Tab ──────────────────────────────── */}
+        <TabsContent value="all" className="space-y-4 mt-4">
+          <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            العرض الشامل - جميع البيانات
+          </h3>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <DataTable
+              items={items}
+              onEdit={handleEdit}
+              onDelete={(item) => setDeleteTarget(item)}
+              canEdit={canEdit}
+              mosqueFilter="all"
+            />
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                data-testid="prev-page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground font-mono">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                data-testid="next-page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Import Dialog */}
+      <ImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={() => {
+          fetchData();
+          setImportOpen(false);
+        }}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-cairo">تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription className="font-cairo">
+              هل أنت متأكد من حذف بيانات يوم {deleteTarget?.date_hijri}؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="font-cairo">إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-cairo"
+              data-testid="confirm-delete"
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

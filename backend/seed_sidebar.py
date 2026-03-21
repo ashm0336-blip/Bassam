@@ -80,6 +80,10 @@ def _sidebar_items():
 
     add("/field", name_ar="الواجهة الميدانية", name_en="Field Worker",
         icon="MapPin", order=8, department="all", is_secondary=True)
+    add("/daily-stats", name_ar="الإحصائيات اليومية", name_en="Daily Statistics",
+        icon="BarChart3", order=8, department="all",
+        subtitle_ar="إحصائيات الحشود اليومية للمسجد الحرام والمسجد النبوي",
+        subtitle_en="Daily crowd statistics for the two Holy Mosques")
     add("/notifications", name_ar="الإشعارات", name_en="Notifications",
         icon="Bell", order=9, department="all", is_secondary=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
@@ -303,6 +307,7 @@ def _build_dept_pages(dept_key):
         f"{bh}?tab=settings&sub=Staff": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Shifts": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Maps": {"visible": True, "editable": True},
+        "/daily-stats": {"visible": True, "editable": True},
         "/notifications": {"visible": True, "editable": False},
         "/field": {"visible": True, "editable": True},
     }
