@@ -84,7 +84,7 @@ export default function LoginPage() {
   }, [user?.must_change_pin]);
 
   const [pageSettings] = useState(window.__LOGIN_SETTINGS__ || {
-    primary_color: "#047857",
+    primary_color: "#303D48",
     background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
     logo_url: "", logo_size: 150, logo_link: "/",
     site_name_ar: "منصة خدمات الحشود",
@@ -128,7 +128,7 @@ export default function LoginPage() {
         }} />
       )}
 
-      {/* ── Right Panel: Image + Branding ── */}
+      {/* ── Left Panel: Image + Branding ── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden"
         style={{ backgroundColor: pageSettings.primary_color }}>
         {/* Background Image */}
@@ -180,7 +180,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Left Panel: Login Form ── */}
+      {/* ── Right Panel: Login Form ── */}
       <div className="w-full lg:w-[45%] flex flex-col" dir="rtl">
         {/* Mobile header with background */}
         <div className="lg:hidden relative h-48 overflow-hidden" style={{ backgroundColor: pageSettings.primary_color }}>
