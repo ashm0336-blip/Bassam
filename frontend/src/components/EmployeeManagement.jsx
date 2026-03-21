@@ -619,21 +619,23 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
   }, [statsEmployees, shifts, schedule]);
 
   // canEdit: يمنع التعديل عندما الجدول معتمد (active) أو مؤرشف
-  const canEdit = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canEditSchedule = canWrite('create_schedule') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canEditEmp = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canEdit = canEditSchedule || canEditEmp;
   // canUnlock: صلاحية فتح الجدول
   const canUnlock = canWrite('unlock_schedule');
   const canCreateSched = canWrite('create_schedule');
   const canApproveSched = canWrite('approve_schedule');
   const canDeleteSched = canWrite('delete_schedule');
-  const canViewEmp = canRead('edit_employees') || canRead('add_employees');
+  const canViewEmp = canRead('edit_employees') || canRead('add_employees') || canRead('create_schedule') || canRead('page_schedule');
   const canAddEmp = canWrite('add_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
   const canDeleteEmp = canWrite('delete_employees');
   const canManageAccounts = canWrite('manage_accounts');
   const canResetPins = canWrite('reset_pins');
   const canChangeRoles = canWrite('change_roles');
 
-  // If can't even read employees, hide the whole section
-  if (!canViewEmp && user?.role !== 'system_admin' && !canRead('page_employees')) return (
+  // If can't view anything related to schedule or employees, hide
+  if (!canViewEmp && user?.role !== 'system_admin') return (
     <div className="flex items-center justify-center min-h-[300px] text-muted-foreground text-sm">
       {language === 'ar' ? 'ليس لديك صلاحية لعرض بيانات الموظفين' : 'No permission to view employees'}
     </div>
