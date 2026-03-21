@@ -714,7 +714,7 @@ export default function DailyStatsPage() {
   const navigateDate = (direction) => {
     const m = momentHijri(selectedDateHijri, "iYYYY-iMM-iDD");
     if (!m.isValid()) return;
-    const newDate = direction === "next" ? m.add(1, "iDay") : m.subtract(1, "iDay");
+    const newDate = direction === "next" ? m.add(1, "day") : m.subtract(1, "day");
     setSelectedDateHijri(newDate.format("iYYYY-iMM-iDD"));
   };
 
