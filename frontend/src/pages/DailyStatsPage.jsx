@@ -439,7 +439,7 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
 
   const renderInput = (field, shortLabel) => (
     <div key={field.key} className="relative">
-      <Label className="text-[10px] text-muted-foreground mb-0.5 block font-cairo truncate">{shortLabel || field.label}</Label>
+      <Label className="text-[10px] text-muted-foreground mb-0.5 block font-cairo text-center truncate">{shortLabel || field.label}</Label>
       <Input
         type="number"
         placeholder="0"
@@ -471,7 +471,7 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
             {/* Row 2: الروضة رجال */}
             {rawdahMen.length > 0 && (
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo">الروضة الشريفة - رجال</p>
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo text-center">الروضة الشريفة - رجال</p>
                 <div className="grid grid-cols-3 gap-2">
                   {rawdahMen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
                 </div>
@@ -480,7 +480,7 @@ function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSave, sav
             {/* Row 3: الروضة نساء */}
             {rawdahWomen.length > 0 && (
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo">الروضة الشريفة - نساء</p>
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1 font-cairo text-center">الروضة الشريفة - نساء</p>
                 <div className="grid grid-cols-3 gap-2">
                   {rawdahWomen.map((f) => renderInput(f, f.label.split(" - ")[1]))}
                 </div>
