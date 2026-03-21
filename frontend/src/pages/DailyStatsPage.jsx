@@ -161,6 +161,78 @@ function StatsStrip({ summary }) {
   );
 }
 
+// ─── Haram-only Strip ───────────────────────────────────────────
+function HaramStrip({ summary }) {
+  if (!summary || !summary.count) {
+    return (
+      <div className="flex items-center justify-center py-4 text-muted-foreground">
+        <BarChart3 className="w-4 h-4 ml-2 opacity-30" />
+        <span className="text-xs font-cairo">لا توجد بيانات للفترة المحددة</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-blue-200/60 dark:border-blue-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto" data-testid="haram-strip">
+      <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-blue-200/50 dark:border-blue-700/30">
+        <div className="w-2 h-2 rounded-full bg-blue-500" />
+        <span className="text-[10px] font-cairo font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">الحرام</span>
+      </div>
+      <StatPill icon={Users2} label="المصلين" value={summary.sum_haram_worshippers} color="#2563eb" />
+      <StatPill icon={Users2} label="المعتمرين" value={summary.sum_haram_umrah} color="#7c3aed" />
+      <StatPill icon={Building2} label="حجر إسماعيل" value={summary.sum_haram_hijr_ismail} color="#0891b2" />
+      <StatPill icon={TrendingUp} label="العربات" value={summary.sum_haram_carts} color="#ca8a04" />
+      <div className="w-px h-5 bg-blue-200/50 dark:bg-blue-700/30 shrink-0" />
+      <HighLowPill
+        highVal={summary.max_haram_worshippers}
+        highDate={summary.max_haram_worshippers_date}
+        lowVal={summary.min_haram_worshippers}
+        lowDate={summary.min_haram_worshippers_date}
+      />
+    </div>
+  );
+}
+
+// ─── Nabawi-only Strip ──────────────────────────────────────────
+function NabawiStrip({ summary }) {
+  if (!summary || !summary.count) {
+    return (
+      <div className="flex items-center justify-center py-4 text-muted-foreground">
+        <BarChart3 className="w-4 h-4 ml-2 opacity-30" />
+        <span className="text-xs font-cairo">لا توجد بيانات للفترة المحددة</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl px-3 py-2 shadow-sm overflow-x-auto" data-testid="nabawi-strip">
+      <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-emerald-200/50 dark:border-emerald-700/30">
+        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+        <span className="text-[10px] font-cairo font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">النبوي</span>
+      </div>
+      <StatPill icon={Users2} label="المصلين" value={summary.sum_nabawi_worshippers} color="#059669" />
+      <StatPill icon={Building2} label="ممر السلام" value={summary.sum_nabawi_salam_corridor} color="#0d9488" />
+      <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
+      <GroupPill label="الروضة رجال" items={[
+        { sub: "منشور", val: summary.sum_nabawi_rawdah_men_published, color: "#16a34a" },
+        { sub: "محجوز", val: summary.sum_nabawi_rawdah_men_reserved, color: "#ca8a04" },
+        { sub: "فعلي", val: summary.sum_nabawi_rawdah_men_actual, color: "#2563eb" },
+      ]} />
+      <div className="w-px h-5 bg-emerald-200/40 shrink-0 hidden sm:block" />
+      <GroupPill label="الروضة نساء" items={[
+        { sub: "منشور", val: summary.sum_nabawi_rawdah_women_published, color: "#ec4899" },
+        { sub: "محجوز", val: summary.sum_nabawi_rawdah_women_reserved, color: "#f59e0b" },
+        { sub: "فعلي", val: summary.sum_nabawi_rawdah_women_actual, color: "#8b5cf6" },
+      ]} />
+      <div className="w-px h-5 bg-emerald-200/50 dark:bg-emerald-700/30 shrink-0" />
+      <HighLowPill
+        highVal={summary.max_nabawi_worshippers}
+        highDate={summary.max_nabawi_worshippers_date}
+        lowVal={summary.min_nabawi_worshippers}
+        lowDate={summary.min_nabawi_worshippers_date}
+      />
+    </div>
+  );
+}
+
 // ─── Stat Pill (single stat in toolbar) ─────────────────────────
 function StatPill({ icon: Icon, label, value, color }) {
   return (
@@ -772,9 +844,6 @@ export default function DailyStatsPage() {
         </Badge>
       </div>
 
-      {/* Summary */}
-      <StatsStrip summary={summary} />
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="w-full grid grid-cols-3 h-10">
@@ -794,6 +863,8 @@ export default function DailyStatsPage() {
 
         {/* ─── Haram Tab ──────────────────────────────────────── */}
         <TabsContent value="haram" className="space-y-4 mt-4">
+          {/* Haram Stats Strip */}
+          <HaramStrip summary={summary} />
           {/* Date Selector */}
           <Card className="border-blue-500/15">
             <CardContent className="p-4">
@@ -867,6 +938,9 @@ export default function DailyStatsPage() {
 
         {/* ─── Nabawi Tab ─────────────────────────────────────── */}
         <TabsContent value="nabawi" className="space-y-4 mt-4">
+          {/* Nabawi Stats Strip */}
+          <NabawiStrip summary={summary} />
+
           <Card className="border-emerald-500/15">
             <CardContent className="p-4">
               <div className="flex items-center justify-between gap-3">
@@ -938,6 +1012,9 @@ export default function DailyStatsPage() {
 
         {/* ─── Combined View Tab ──────────────────────────────── */}
         <TabsContent value="all" className="space-y-4 mt-4">
+          {/* Full Stats Strip */}
+          <StatsStrip summary={summary} />
+
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             العرض الشامل - جميع البيانات
