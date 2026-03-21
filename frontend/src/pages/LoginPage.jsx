@@ -9,33 +9,23 @@ import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// ── PIN Change Modal ──
 function PinChangeModal({ onSuccess }) {
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleChange = async (e) => {
     e.preventDefault();
-    if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-      toast.error('PIN يجب أن يكون 4–6 أرقام فقط');
-      return;
-    }
-    if (pin !== confirm) {
-      toast.error('كلمة المرور وتأكيدها غير متطابقين');
-      return;
-    }
+    if (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) { toast.error('PIN يجب أن يكون 4–6 أرقام فقط'); return; }
+    if (pin !== confirm) { toast.error('كلمة المرور وتأكيدها غير متطابقين'); return; }
     setLoading(true);
     try {
       await axios.post(`${API}/auth/change-pin`, { new_pin: pin });
       localStorage.removeItem('must_change_pin');
       toast.success('تم تغيير PIN بنجاح');
       onSuccess();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || 'فشل تغيير PIN');
-    } finally { setLoading(false); }
+    } catch (e) { toast.error(e.response?.data?.detail || 'فشل تغيير PIN'); }
+    finally { setLoading(false); }
   };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md" dir="rtl">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm mx-4">
@@ -69,7 +59,6 @@ function PinChangeModal({ onSuccess }) {
   );
 }
 
-// ── Main Login Page ──
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, setUser, user } = useAuth();
@@ -79,9 +68,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [focused, setFocused] = useState(null);
 
-  useEffect(() => {
-    if (user?.must_change_pin) setShowPinChange(true);
-  }, [user?.must_change_pin]);
+  useEffect(() => { if (user?.must_change_pin) setShowPinChange(true); }, [user?.must_change_pin]);
 
   const [pageSettings] = useState(window.__LOGIN_SETTINGS__ || {
     primary_color: "#303D48",
@@ -96,29 +83,25 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!formData.identifier || !formData.password) {
-      toast.error('أدخل رقم الهوية أو البريد الإلكتروني وكلمة المرور');
-      return;
-    }
+    if (!formData.identifier || !formData.password) { toast.error('أدخل رقم الهوية أو البريد الإلكتروني وكلمة المرور'); return; }
     setLoading(true);
     const result = await login(formData.identifier, formData.password);
     if (result.success) {
-      if (result.must_change_pin) {
-        setShowPinChange(true);
-      } else {
+      if (result.must_change_pin) { setShowPinChange(true); }
+      else {
         const u = result.user;
         const roleName = u?.permission_group_name || ROLE_LABELS[u?.role]?.ar || u?.role;
         toast.success(`مرحباً ${u?.name} — ${roleName}`);
         navigate('/');
       }
-    } else {
-      toast.error(result.error);
-    }
+    } else { toast.error(result.error); }
     setLoading(false);
   };
 
+  const clr = pageSettings.primary_color;
+
   return (
-    <div className="min-h-screen flex" data-testid="login-page">
+    <div className="min-h-screen flex" dir="rtl" data-testid="login-page">
       {showPinChange && (
         <PinChangeModal onSuccess={() => {
           setShowPinChange(false);
@@ -128,197 +111,110 @@ export default function LoginPage() {
         }} />
       )}
 
-      {/* ── Left Panel: Image + Branding ── */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden"
-        style={{ backgroundColor: pageSettings.primary_color }}>
-        {/* Background Image */}
-        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] hover:scale-105"
-          style={{ backgroundImage: `url(${pageSettings.background_url})` }} />
-        {/* Overlay */}
-        <div className="absolute inset-0" style={{
-          background: `linear-gradient(160deg, ${pageSettings.primary_color}ee 0%, ${pageSettings.primary_color}99 40%, transparent 70%, ${pageSettings.primary_color}cc 100%)`
-        }} />
-        {/* Decorative elements */}
+      {/* ── Right: Login Form ── */}
+      <div className="w-full lg:w-[45%] flex flex-col">
+        {/* Mobile header */}
+        <div className="lg:hidden relative h-44 overflow-hidden" style={{ backgroundColor: clr }}>
+          <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${pageSettings.background_url})` }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-white">
+            {pageSettings.logo_url
+              ? <img src={pageSettings.logo_url} alt="" className="w-14 h-14 object-contain mb-2" />
+              : <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2 border border-white/20"><span className="text-white font-cairo font-bold text-xl">ح</span></div>
+            }
+            <h2 className="font-cairo font-bold text-base">{pageSettings.site_name_ar}</h2>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-8 bg-white">
+          <div className="w-full max-w-[380px]">
+            <div className="mb-8">
+              <h1 className="font-cairo font-black text-3xl text-gray-900 mb-2">تسجيل الدخول</h1>
+              <p className="text-gray-500 text-sm">{pageSettings.welcome_text_ar} {pageSettings.site_name_ar}</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">رقم الهوية أو البريد الإلكتروني</label>
+                <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'id' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
+                  <input type="text" inputMode={isNationalId ? "numeric" : "text"} dir="ltr" placeholder="1xxxxxxxxx"
+                    className="w-full px-4 pr-12 bg-transparent text-left font-mono text-base outline-none rounded-xl placeholder:text-gray-300"
+                    style={{ height: '52px' }}
+                    value={formData.identifier} onChange={e => setFormData({ ...formData, identifier: e.target.value })}
+                    onFocus={() => setFocused('id')} onBlur={() => setFocused(null)} required
+                    maxLength={isNationalId ? 10 : undefined} data-testid="login-identifier" />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                    {isNationalId ? <Shield className="w-5 h-5 text-emerald-500" /> : <span className="text-gray-300 text-lg">@</span>}
+                  </div>
+                </div>
+                {formData.identifier && (
+                  <p className="text-[11px] mt-1.5 mr-1">
+                    {isNationalId && formData.identifier.length === 10 ? <span className="text-emerald-600 font-medium">رقم هوية صحيح ✓</span>
+                      : isNationalId ? <span className="text-gray-400">{10 - formData.identifier.length} أرقام متبقية</span>
+                      : <span className="text-blue-500">بريد إلكتروني</span>}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">{isNationalId ? 'الرقم الوظيفي / PIN' : 'كلمة المرور'}</label>
+                <div className={`relative rounded-xl border-2 transition-all duration-300 ${focused === 'pw' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'}`}>
+                  <input type={showPin ? "text" : "password"} inputMode={isNationalId ? "numeric" : "text"} dir="ltr"
+                    placeholder={isNationalId ? "الرقم الوظيفي" : "••••••••"}
+                    className={`w-full px-4 pr-12 bg-transparent outline-none rounded-xl placeholder:text-gray-300 ${isNationalId ? 'text-center text-xl tracking-[0.4em] font-mono' : 'text-left text-base'}`}
+                    style={{ height: '52px' }}
+                    value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)} required data-testid="login-password" />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2"><Lock className="w-5 h-5 text-gray-300" /></div>
+                  <button type="button" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" onClick={() => setShowPin(!showPin)}>
+                    {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {isNationalId && <p className="text-[11px] text-amber-600 flex items-center gap-1 mt-1.5 mr-1"><KeyRound className="w-3 h-3" />أول دخول: استخدم رقمك الوظيفي</p>}
+              </div>
+
+              <Button type="submit" disabled={loading}
+                className="w-full text-base font-bold rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01]"
+                style={{ height: '52px', backgroundColor: clr }}
+                data-testid="login-submit">
+                {loading ? <><Loader2 className="w-5 h-5 ml-2 animate-spin" />جاري الدخول...</> : <><ArrowLeft className="w-5 h-5 ml-2" />تسجيل الدخول</>}
+              </Button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <p className="text-xs text-gray-400">نسيت كلمة المرور؟ تواصل مع مديرك لإعادة التعيين</p>
+              <p className="text-xs text-gray-300 mt-6 lg:hidden">© {new Date().getFullYear()} {pageSettings.site_name_ar}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Left: Branding ── */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden" style={{ backgroundColor: clr }}>
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pageSettings.background_url})` }} />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${clr}ee 0%, ${clr}99 40%, transparent 70%, ${clr}cc 100%)` }} />
         <div className="absolute top-12 right-12 w-32 h-32 rounded-full border border-white/10" />
         <div className="absolute bottom-20 left-16 w-48 h-48 rounded-full border border-white/5" />
-        <div className="absolute top-1/3 left-1/4 w-2 h-2 rounded-full bg-white/20" />
-        <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 rounded-full bg-white/15" />
-
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Top: Logo */}
           <div>
-            {pageSettings.logo_url ? (
-              <img src={pageSettings.logo_url} alt="Logo" className="w-16 h-16 object-contain" />
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                <span className="text-white font-cairo font-bold text-2xl">ح</span>
-              </div>
-            )}
+            {pageSettings.logo_url
+              ? <img src={pageSettings.logo_url} alt="" className="w-16 h-16 object-contain" />
+              : <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20"><span className="text-white font-cairo font-bold text-2xl">ح</span></div>
+            }
           </div>
-
-          {/* Center: Title */}
-          <div className="text-right" dir="rtl">
-            <h1 className="font-cairo font-black text-5xl text-white leading-tight mb-4">
-              {pageSettings.site_name_ar}
-            </h1>
-            <p className="text-lg text-white/70 max-w-md leading-relaxed">
-              {pageSettings.subtitle_ar}
-            </p>
+          <div className="text-right">
+            <h1 className="font-cairo font-black text-5xl text-white leading-tight mb-4">{pageSettings.site_name_ar}</h1>
+            <p className="text-lg text-white/70 max-w-md leading-relaxed">{pageSettings.subtitle_ar}</p>
             <div className="flex items-center gap-3 mt-8">
               <div className="h-px flex-1 bg-white/15" />
               <span className="text-white/30 text-xs font-cairo">Al-Haram OS</span>
               <div className="h-px w-12 bg-white/15" />
             </div>
           </div>
-
-          {/* Bottom: Footer */}
           <div className="flex items-center justify-between text-white/30 text-xs">
             <span>© {new Date().getFullYear()}</span>
             <span className="font-cairo">{pageSettings.site_name_ar}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Right Panel: Login Form ── */}
-      <div className="w-full lg:w-[45%] flex flex-col" dir="rtl">
-        {/* Mobile header with background */}
-        <div className="lg:hidden relative h-48 overflow-hidden" style={{ backgroundColor: pageSettings.primary_color }}>
-          <div className="absolute inset-0 bg-cover bg-center opacity-40"
-            style={{ backgroundImage: `url(${pageSettings.background_url})` }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
-          <div className="relative z-10 flex flex-col items-center justify-center h-full text-white">
-            {pageSettings.logo_url ? (
-              <img src={pageSettings.logo_url} alt="Logo" className="w-16 h-16 object-contain mb-2" />
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2 border border-white/20">
-                <span className="text-white font-cairo font-bold text-2xl">ح</span>
-              </div>
-            )}
-            <h2 className="font-cairo font-bold text-lg">{pageSettings.site_name_ar}</h2>
-          </div>
-        </div>
-
-        {/* Form area */}
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-8 bg-white">
-          <div className="w-full max-w-[380px]">
-            {/* Welcome text */}
-            <div className="mb-8">
-              <h1 className="font-cairo font-black text-3xl text-gray-900 mb-2">
-                تسجيل الدخول
-              </h1>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                {pageSettings.welcome_text_ar} {pageSettings.site_name_ar}
-              </p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
-              {/* Identifier Field */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  رقم الهوية أو البريد الإلكتروني
-                </label>
-                <div className={`relative rounded-xl border-2 transition-all duration-300 ${
-                  focused === 'id' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'
-                }`}>
-                  <input
-                    type="text"
-                    inputMode={isNationalId ? "numeric" : "text"}
-                    dir="ltr"
-                    placeholder="1xxxxxxxxx"
-                    className="w-full h-13 px-4 pr-12 bg-transparent text-left font-mono text-base outline-none rounded-xl placeholder:text-gray-300"
-                    style={{ height: '52px' }}
-                    value={formData.identifier}
-                    onChange={e => setFormData({ ...formData, identifier: e.target.value })}
-                    onFocus={() => setFocused('id')}
-                    onBlur={() => setFocused(null)}
-                    required
-                    maxLength={isNationalId ? 10 : undefined}
-                    data-testid="login-identifier"
-                  />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                    {isNationalId
-                      ? <Shield className="w-5 h-5 text-emerald-500" />
-                      : <span className="text-gray-300 text-lg">@</span>
-                    }
-                  </div>
-                </div>
-                {/* Smart indicator */}
-                {formData.identifier && (
-                  <p className="text-[11px] mt-1.5 mr-1">
-                    {isNationalId && formData.identifier.length === 10
-                      ? <span className="text-emerald-600 font-medium">رقم هوية صحيح ✓</span>
-                      : isNationalId
-                      ? <span className="text-gray-400">{10 - formData.identifier.length} أرقام متبقية</span>
-                      : <span className="text-blue-500">بريد إلكتروني</span>
-                    }
-                  </p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  {isNationalId ? 'الرقم الوظيفي / PIN' : 'كلمة المرور'}
-                </label>
-                <div className={`relative rounded-xl border-2 transition-all duration-300 ${
-                  focused === 'pw' ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-gray-200'
-                }`}>
-                  <input
-                    type={showPin ? "text" : "password"}
-                    inputMode={isNationalId ? "numeric" : "text"}
-                    dir="ltr"
-                    placeholder={isNationalId ? "الرقم الوظيفي" : "••••••••"}
-                    className={`w-full px-4 pr-12 bg-transparent outline-none rounded-xl placeholder:text-gray-300 ${
-                      isNationalId ? 'text-center text-xl tracking-[0.4em] font-mono' : 'text-left text-base'
-                    }`}
-                    style={{ height: '52px' }}
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    onFocus={() => setFocused('pw')}
-                    onBlur={() => setFocused(null)}
-                    required
-                    data-testid="login-password"
-                  />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                    <Lock className="w-5 h-5 text-gray-300" />
-                  </div>
-                  <button type="button"
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    onClick={() => setShowPin(!showPin)}>
-                    {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {isNationalId && (
-                  <p className="text-[11px] text-amber-600 flex items-center gap-1 mt-1.5 mr-1">
-                    <KeyRound className="w-3 h-3" />
-                    أول دخول: استخدم رقمك الوظيفي
-                  </p>
-                )}
-              </div>
-
-              {/* Submit */}
-              <Button type="submit" disabled={loading}
-                className="w-full h-13 text-base font-bold rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01]"
-                style={{ height: '52px', backgroundColor: pageSettings.primary_color }}
-                data-testid="login-submit">
-                {loading
-                  ? <><Loader2 className="w-5 h-5 ml-2 animate-spin" />جاري الدخول...</>
-                  : <><ArrowLeft className="w-5 h-5 ml-2" />تسجيل الدخول</>
-                }
-              </Button>
-            </form>
-
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-xs text-gray-400">
-                نسيت كلمة المرور؟ تواصل مع مديرك لإعادة التعيين
-              </p>
-              <p className="text-xs text-gray-300 mt-6 lg:hidden">
-                © {new Date().getFullYear()} {pageSettings.site_name_ar}
-              </p>
-            </div>
           </div>
         </div>
       </div>
