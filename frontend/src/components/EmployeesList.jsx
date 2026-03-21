@@ -237,7 +237,8 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-52">
-              {canEdit && <DropdownMenuItem onClick={()=>onEdit(emp)}><Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات</DropdownMenuItem>}
+              <DropdownMenuItem onClick={()=>onOpenProfile(emp)}><User className="w-4 h-4 ml-2 text-primary"/>عرض البروفايل</DropdownMenuItem>
+              {canEdit && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onEdit(emp)}><Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات</DropdownMenuItem></>}
               {canResetPins && hasNatId && (emp.account_status==="active"||emp.account_status==="frozen") && (
                 <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"reset-pin",emp.name)}><KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN</DropdownMenuItem>
               )}

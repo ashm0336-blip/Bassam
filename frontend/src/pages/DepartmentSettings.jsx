@@ -293,6 +293,18 @@ export default function DepartmentSettings({ department }) {
     setActiveTab(tabs[0].id);
   }
 
+  // If no tabs available at all, show empty state
+  if (tabs.length === 0 && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="text-center">
+          <Settings className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
+          <p className="text-sm text-muted-foreground">لا توجد إعدادات متاحة لصلاحياتك</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
