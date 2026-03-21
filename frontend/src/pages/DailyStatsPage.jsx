@@ -710,13 +710,35 @@ export default function DailyStatsPage() {
     }
   }, [selectedDateHijri, items]);
 
-  // ─── Date Navigation ──────────────────────────────────────
+  // ─── Sync date with filter ──────────────────────────────────
+  useEffect(() => {
+    // When filter changes, reset date to 1st of selected month
+    setSelectedDateHijri(`${filterYear}-${filterMonth}-01`);
+  }, [filterYear, filterMonth]);
+
+  // ─── Date Navigation (clamped to selected month) ───────────
   const navigateDate = (direction) => {
     const m = momentHijri(selectedDateHijri, "iYYYY-iMM-iDD");
     if (!m.isValid()) return;
-    const newDate = direction === "next" ? m.add(1, "day") : m.subtract(1, "day");
+    const newDate = direction === "next" ? m.clone().add(1, "day") : m.clone().subtract(1, "day");
+    // Clamp to current filter month
+    const newMonth = String(newDate.iMonth() + 1).padStart(2, "0");
+    const newYear = String(newDate.iYear());
+    if (newMonth !== filterMonth || newYear !== filterYear) return; // Don't go beyond month
     setSelectedDateHijri(newDate.format("iYYYY-iMM-iDD"));
   };
+
+  // Current day number for display
+  const currentDay = useMemo(() => {
+    const m = momentHijri(selectedDateHijri, "iYYYY-iMM-iDD");
+    return m.isValid() ? m.iDate() : 1;
+  }, [selectedDateHijri]);
+
+  // Days in current hijri month
+  const daysInMonth = useMemo(() => {
+    const m = momentHijri(`${filterYear}-${filterMonth}-01`, "iYYYY-iMM-iDD");
+    return m.isValid() ? m.iDaysInMonth() : 30;
+  }, [filterYear, filterMonth]);
 
   const gregDate = useMemo(() => hijriToGregorian(selectedDateHijri), [selectedDateHijri]);
 
@@ -900,38 +922,31 @@ export default function DailyStatsPage() {
           <HaramStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
           {/* Date Selector */}
           <Card className="border-blue-500/15">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between gap-3">
-                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8" data-testid="date-next">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8" disabled={currentDay >= daysInMonth} data-testid="date-next">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
 
                 <div className="flex-1 text-center">
-                  <div className="flex items-center justify-center gap-3">
-                    <Input
-                      type="text"
-                      value={selectedDateHijri}
-                      onChange={(e) => setSelectedDateHijri(e.target.value)}
-                      placeholder="1446-09-01"
-                      className="w-[160px] text-center text-sm h-9 font-mono"
-                      dir="ltr"
-                      data-testid="date-input"
-                    />
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-lg font-bold font-mono text-primary" data-testid="date-input">{selectedDateHijri}</span>
                     {gregDate && (
-                      <span className="text-xs text-muted-foreground font-mono">
-                        ({gregDate})
-                      </span>
+                      <span className="text-[11px] text-muted-foreground font-mono">({gregDate})</span>
                     )}
                   </div>
-                  {dateHasData && (
-                    <Badge variant="outline" className="mt-1 text-[10px] text-emerald-600 border-emerald-300">
-                      <CheckCircle className="w-3 h-3 ml-1" />
-                      بيانات مسجلة
-                    </Badge>
-                  )}
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className="text-[10px] text-muted-foreground font-cairo">يوم {currentDay} من {daysInMonth}</span>
+                    {dateHasData && (
+                      <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-300 py-0 px-1.5">
+                        <CheckCircle className="w-2.5 h-2.5 ml-0.5" />
+                        مسجل
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8" data-testid="date-prev">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8" disabled={currentDay <= 1} data-testid="date-prev">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
               </div>
@@ -975,37 +990,31 @@ export default function DailyStatsPage() {
           <NabawiStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
 
           <Card className="border-emerald-500/15">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between gap-3">
-                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-8 w-8" disabled={currentDay >= daysInMonth}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
 
                 <div className="flex-1 text-center">
-                  <div className="flex items-center justify-center gap-3">
-                    <Input
-                      type="text"
-                      value={selectedDateHijri}
-                      onChange={(e) => setSelectedDateHijri(e.target.value)}
-                      placeholder="1446-09-01"
-                      className="w-[160px] text-center text-sm h-9 font-mono"
-                      dir="ltr"
-                    />
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-lg font-bold font-mono text-primary">{selectedDateHijri}</span>
                     {gregDate && (
-                      <span className="text-xs text-muted-foreground font-mono">
-                        ({gregDate})
-                      </span>
+                      <span className="text-[11px] text-muted-foreground font-mono">({gregDate})</span>
                     )}
                   </div>
-                  {dateHasData && (
-                    <Badge variant="outline" className="mt-1 text-[10px] text-emerald-600 border-emerald-300">
-                      <CheckCircle className="w-3 h-3 ml-1" />
-                      بيانات مسجلة
-                    </Badge>
-                  )}
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className="text-[10px] text-muted-foreground font-cairo">يوم {currentDay} من {daysInMonth}</span>
+                    {dateHasData && (
+                      <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-300 py-0 px-1.5">
+                        <CheckCircle className="w-2.5 h-2.5 ml-0.5" />
+                        مسجل
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-8 w-8" disabled={currentDay <= 1}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
               </div>
