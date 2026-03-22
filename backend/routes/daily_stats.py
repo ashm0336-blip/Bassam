@@ -396,43 +396,56 @@ async def import_daily_stats(
         is_nabawi = "النبوي" in parent
 
         if is_haram:
-            if "المصلين" in sub or "المصلين" in parent:
-                if "المصلين" == sub:
-                    col_mapping[ci] = "haram_worshippers"
             if "المعتمرين" in sub:
                 col_mapping[ci] = "haram_umrah"
-            if "حجر" in sub or "إسماعيل" in sub:
+            elif "حجر" in sub or "إسماعيل" in sub:
                 col_mapping[ci] = "haram_hijr_ismail"
-            if "العربات" in sub:
+            elif "العربات" in sub:
                 col_mapping[ci] = "haram_carts"
-            if "المصلين" in sub and ci not in col_mapping:
+            elif "المصلين" in sub:
                 col_mapping[ci] = "haram_worshippers"
 
         elif is_nabawi:
-            if "المصلين" in sub:
-                col_mapping[ci] = "nabawi_worshippers"
-            elif "ممر" in sub or "السلام" in sub:
+            if "ممر" in sub or "السلام" in sub:
                 col_mapping[ci] = "nabawi_salam_corridor"
             elif "الروضة" in sub and "رجال" in sub:
-                key = NABAWI_RAWDAH_HEADERS.get(ss, "")
-                if key == "published":
+                # Check sub header text first (e.g., "الروضة رجال - منشور")
+                if "منشور" in sub:
                     col_mapping[ci] = "nabawi_rawdah_men_published"
-                elif key == "reserved":
+                elif "محجوز" in sub:
                     col_mapping[ci] = "nabawi_rawdah_men_reserved"
-                elif key == "actual":
+                elif "فعلي" in sub:
                     col_mapping[ci] = "nabawi_rawdah_men_actual"
-                elif not ss:
-                    col_mapping[ci] = "nabawi_rawdah_men_published"
+                else:
+                    # Fallback to sub_sub row
+                    key = NABAWI_RAWDAH_HEADERS.get(ss, "")
+                    if key == "published":
+                        col_mapping[ci] = "nabawi_rawdah_men_published"
+                    elif key == "reserved":
+                        col_mapping[ci] = "nabawi_rawdah_men_reserved"
+                    elif key == "actual":
+                        col_mapping[ci] = "nabawi_rawdah_men_actual"
+                    else:
+                        col_mapping[ci] = "nabawi_rawdah_men_published"
             elif "الروضة" in sub and "نساء" in sub:
-                key = NABAWI_RAWDAH_HEADERS.get(ss, "")
-                if key == "published":
+                if "منشور" in sub:
                     col_mapping[ci] = "nabawi_rawdah_women_published"
-                elif key == "reserved":
+                elif "محجوز" in sub:
                     col_mapping[ci] = "nabawi_rawdah_women_reserved"
-                elif key == "actual":
+                elif "فعلي" in sub:
                     col_mapping[ci] = "nabawi_rawdah_women_actual"
-                elif not ss:
-                    col_mapping[ci] = "nabawi_rawdah_women_published"
+                else:
+                    key = NABAWI_RAWDAH_HEADERS.get(ss, "")
+                    if key == "published":
+                        col_mapping[ci] = "nabawi_rawdah_women_published"
+                    elif key == "reserved":
+                        col_mapping[ci] = "nabawi_rawdah_women_reserved"
+                    elif key == "actual":
+                        col_mapping[ci] = "nabawi_rawdah_women_actual"
+                    else:
+                        col_mapping[ci] = "nabawi_rawdah_women_published"
+            elif "المصلين" in sub:
+                col_mapping[ci] = "nabawi_worshippers"
 
     # Fallback: try simple single-row header mapping
     if not col_mapping:
