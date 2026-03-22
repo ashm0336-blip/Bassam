@@ -50,16 +50,22 @@ The system manages crowd statistics, employee scheduling, gate management, praye
   - `page_stats_haram` / `edit_stats_haram` — المسجد الحرام tab
   - `page_stats_nabawi` / `edit_stats_nabawi` — المسجد النبوي tab
   - `page_stats_all` / `edit_daily_stats` / `import_daily_stats` — العرض الشامل tab
-- **Data Schema**:
-  - المسجد الحرام: المصلين, المعتمرين, حجر إسماعيل, العربات
-  - المسجد النبوي: المصلين, الروضة رجال (منشور/محجوز/فعلي), الروضة نساء (منشور/محجوز/فعلي), ممر السلام
 - **Tested**: iteration_8 (15/15 backend) + iteration_9 (5/5 frontend permissions)
 
 ## Statistics Analytics Dashboard — Complete (March 2026)
 - **Page**: `/stats-analytics` — "تحليلات الإحصائيات"
 - **Frontend**: `/app/frontend/src/pages/StatsAnalyticsPage.jsx`
-- KPI cards, Line/Bar/Pie/Heatmap charts using recharts
-- USER VERIFICATION PENDING
+- **Features**:
+  - **4 Time Modes**: Daily, Weekly, Monthly, Yearly — with smart data grouping
+  - **Smart Comparison Engine**: Compare any two periods side-by-side with dashed overlay lines + full comparison table
+  - **8 KPI Cards**: With sparklines, change percentages, formatted values (م/ألف)
+  - **Auto-generated Text Insights**: Trend analysis, Rawdah occupancy, peak days, weekday patterns, distribution analysis
+  - **Charts**: Line (time series), Bar (detailed metrics), Pie/Donut (distribution), Weekday distribution (horizontal bars with Friday highlight)
+  - **4 Heatmap Calendars**: Worshippers (Haram/Nabawi), Umrah, Rawdah — with color intensity and Friday rings
+  - **Rawdah Analysis Chart**: Published vs Reserved vs Actual comparison
+  - **Comparison Table**: 10 metrics with percentage change indicators
+  - **Day Classification**: Auto-classifies days (Friday, Ramadan, Hajj season) from Hijri date
+- **Tested**: iteration_10 (12/12 frontend tests passed — 100%)
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
@@ -69,23 +75,24 @@ The system manages crowd statistics, employee scheduling, gate management, praye
 - P1: Deployment data consistency verification (user needs to re-deploy)
 
 ## Upcoming Tasks:
-- P0: Iterate on Statistics Analytics page based on user feedback
 - P1: Comparative Density Report
 - P1: Gates Audit Log
 
 ## Future Tasks:
 - P1: Advanced Features for Tasks Module (Recurring Tasks, Templates, Comments)
 - P1: Full Attendance System (Check-in/out)
+- P1: PDF Export for Analytics Reports
 - P2: Native Mobile Push Notifications (Firebase)
 - P2: "Recycle Bin" for deleted data
+- P2: "Preview permissions as user" in admin panel
 
 ## Key Files
 - `/app/backend/server.py` — Main FastAPI app
 - `/app/backend/seed_sidebar.py` — Sidebar + permissions seeding (auto-patches existing groups)
-- `/app/backend/routes/daily_stats.py` — Daily statistics API
+- `/app/backend/routes/daily_stats.py` — Daily statistics API (CRUD + import/export + summary with date_from/date_to)
 - `/app/backend/routes/perm_groups.py` — Permission groups + MENU_TO_PERM_MAP
 - `/app/frontend/src/pages/DailyStatsPage.jsx` — Daily stats page with tab-level permissions
-- `/app/frontend/src/pages/StatsAnalyticsPage.jsx` — Analytics dashboard
+- `/app/frontend/src/pages/StatsAnalyticsPage.jsx` — Professional analytics dashboard
 - `/app/frontend/src/pages/admin/PermissionsManager.jsx` — Admin permissions manager
 - `/app/frontend/src/components/Layout.jsx` — Sidebar layout (filters sidebar_hidden items)
 - `/app/frontend/src/App.js` — Router
