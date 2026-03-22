@@ -752,25 +752,15 @@ function ImportDialog({ open, onClose, onSuccess }) {
 
 // ─── Main Page Component ────────────────────────────────────────
 export default function DailyStatsPage() {
-  const { user, canRead, canWrite } = useAuth();
+  const { user, canWrite } = useAuth();
   const { language } = useLanguage();
 
   // Permissions
-  const canViewHaram = user?.role === 'system_admin' || canRead('page_stats_haram');
-  const canEditHaram = user?.role === 'system_admin' || canWrite('edit_stats_haram');
-  const canViewNabawi = user?.role === 'system_admin' || canRead('page_stats_nabawi');
-  const canEditNabawi = user?.role === 'system_admin' || canWrite('edit_stats_nabawi');
-  const canViewAll = user?.role === 'system_admin' || canRead('page_stats_all');
+  const canEdit = user?.role === 'system_admin' || canWrite('edit_daily_stats');
   const canImport = user?.role === 'system_admin' || canWrite('import_daily_stats');
 
-  // Build visible tabs
-  const visibleTabs = [];
-  if (canViewHaram) visibleTabs.push("haram");
-  if (canViewNabawi) visibleTabs.push("nabawi");
-  if (canViewAll) visibleTabs.push("all");
-
   // State
-  const [activeTab, setActiveTab] = useState(visibleTabs[0] || "haram");
+  const [activeTab, setActiveTab] = useState("haram");
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -794,8 +784,8 @@ export default function DailyStatsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Determine edit rights per active tab
-  const canEdit = activeTab === "haram" ? canEditHaram : activeTab === "nabawi" ? canEditNabawi : (canEditHaram || canEditNabawi);
+  // Edit rights
+  // canEdit already defined above
 
   // Available Hijri years
   const hijriYears = useMemo(() => {
@@ -1037,29 +1027,22 @@ export default function DailyStatsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className={`w-full grid h-10`} style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
-          {canViewHaram && (
-            <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
-              <Building2 className="w-3.5 h-3.5" />
-              المسجد الحرام
-            </TabsTrigger>
-          )}
-          {canViewNabawi && (
-            <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
-              <Building2 className="w-3.5 h-3.5" />
-              المسجد النبوي
-            </TabsTrigger>
-          )}
-          {canViewAll && (
-            <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
-              <BarChart3 className="w-3.5 h-3.5" />
-              العرض الشامل
-            </TabsTrigger>
-          )}
+        <TabsList className="w-full grid grid-cols-3 h-10">
+          <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
+            <Building2 className="w-3.5 h-3.5" />
+            المسجد الحرام
+          </TabsTrigger>
+          <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
+            <Building2 className="w-3.5 h-3.5" />
+            المسجد النبوي
+          </TabsTrigger>
+          <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
+            <BarChart3 className="w-3.5 h-3.5" />
+            العرض الشامل
+          </TabsTrigger>
         </TabsList>
 
         {/* ─── Haram Tab ──────────────────────────────────────── */}
-        {canViewHaram && (
         <TabsContent value="haram" className="space-y-4 mt-4">
           {/* Haram Stats Strip */}
           <HaramStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
@@ -1137,10 +1120,8 @@ export default function DailyStatsPage() {
             />
           )}
         </TabsContent>
-        )}
 
         {/* ─── Nabawi Tab ─────────────────────────────────────── */}
-        {canViewNabawi && (
         <TabsContent value="nabawi" className="space-y-4 mt-4">
           {/* Nabawi Stats Strip */}
           <NabawiStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
@@ -1217,10 +1198,8 @@ export default function DailyStatsPage() {
             />
           )}
         </TabsContent>
-        )}
 
         {/* ─── Combined View Tab ──────────────────────────────── */}
-        {canViewAll && (
         <TabsContent value="all" className="space-y-4 mt-4">
           {/* Full Stats Strip */}
           <StatsStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
@@ -1270,7 +1249,6 @@ export default function DailyStatsPage() {
             </div>
           )}
         </TabsContent>
-        )}
       </Tabs>
 
       {/* Import Dialog */}
