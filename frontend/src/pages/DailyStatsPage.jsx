@@ -752,15 +752,25 @@ function ImportDialog({ open, onClose, onSuccess }) {
 
 // ─── Main Page Component ────────────────────────────────────────
 export default function DailyStatsPage() {
-  const { user, canWrite } = useAuth();
+  const { user, canRead, canWrite } = useAuth();
   const { language } = useLanguage();
 
-  // Permissions
-  const canEdit = user?.role === 'system_admin' || canWrite('edit_daily_stats');
-  const canImport = user?.role === 'system_admin' || canWrite('import_daily_stats');
+  // Tab-level permissions (like Settings page)
+  const isAdmin = user?.role === 'system_admin';
+  const canSeeHaram = isAdmin || canRead('page_stats_haram');
+  const canSeeNabawi = isAdmin || canRead('page_stats_nabawi');
+  const canSeeCombined = isAdmin || canRead('page_stats_all');
+
+  const canEditHaram = isAdmin || canWrite('edit_stats_haram');
+  const canEditNabawi = isAdmin || canWrite('edit_stats_nabawi');
+  const canEdit = isAdmin || canWrite('edit_daily_stats');
+  const canImport = isAdmin || canWrite('import_daily_stats');
+
+  // Determine first available tab
+  const defaultTab = canSeeHaram ? "haram" : canSeeNabawi ? "nabawi" : canSeeCombined ? "all" : "haram";
 
   // State
-  const [activeTab, setActiveTab] = useState("haram");
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1025,27 +1035,41 @@ export default function DailyStatsPage() {
         </Badge>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — only show tabs the user has permission for */}
+      {(() => {
+        const visibleTabs = [];
+        if (canSeeHaram) visibleTabs.push("haram");
+        if (canSeeNabawi) visibleTabs.push("nabawi");
+        if (canSeeCombined) visibleTabs.push("all");
+        const tabCount = visibleTabs.length || 1;
+        return (
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="w-full grid grid-cols-3 h-10">
+        <TabsList className={`w-full grid h-10`} style={{ gridTemplateColumns: `repeat(${tabCount}, 1fr)` }}>
+          {canSeeHaram && (
           <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
             <Building2 className="w-3.5 h-3.5" />
             المسجد الحرام
           </TabsTrigger>
+          )}
+          {canSeeNabawi && (
           <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
             <Building2 className="w-3.5 h-3.5" />
             المسجد النبوي
           </TabsTrigger>
+          )}
+          {canSeeCombined && (
           <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
             <BarChart3 className="w-3.5 h-3.5" />
             العرض الشامل
           </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ─── Haram Tab ──────────────────────────────────────── */}
+        {canSeeHaram && (
         <TabsContent value="haram" className="space-y-4 mt-4">
           {/* Haram Stats Strip */}
-          <HaramStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
+          <HaramStrip summary={summary} onImport={(canImport && canEditHaram) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           {/* Month Progress */}
           <MonthDayBar
@@ -1095,7 +1119,7 @@ export default function DailyStatsPage() {
             setFormData={setFormData}
             onSave={() => handleSave("haram")}
             saving={saving}
-            canEdit={canEdit}
+            canEdit={canEditHaram}
             items={items}
             selectedDateHijri={selectedDateHijri}
           />
@@ -1115,16 +1139,18 @@ export default function DailyStatsPage() {
               items={items}
               onEdit={handleEdit}
               onDelete={(item) => setDeleteTarget(item)}
-              canEdit={canEdit}
+              canEdit={canEditHaram}
               mosqueFilter="haram"
             />
           )}
         </TabsContent>
+        )}
 
         {/* ─── Nabawi Tab ─────────────────────────────────────── */}
+        {canSeeNabawi && (
         <TabsContent value="nabawi" className="space-y-4 mt-4">
           {/* Nabawi Stats Strip */}
-          <NabawiStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
+          <NabawiStrip summary={summary} onImport={(canImport && canEditNabawi) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           {/* Month Progress */}
           <MonthDayBar
@@ -1173,7 +1199,7 @@ export default function DailyStatsPage() {
             setFormData={setFormData}
             onSave={() => handleSave("nabawi")}
             saving={saving}
-            canEdit={canEdit}
+            canEdit={canEditNabawi}
             items={items}
             selectedDateHijri={selectedDateHijri}
           />
@@ -1193,16 +1219,18 @@ export default function DailyStatsPage() {
               items={items}
               onEdit={handleEdit}
               onDelete={(item) => setDeleteTarget(item)}
-              canEdit={canEdit}
+              canEdit={canEditNabawi}
               mosqueFilter="nabawi"
             />
           )}
         </TabsContent>
+        )}
 
         {/* ─── Combined View Tab ──────────────────────────────── */}
+        {canSeeCombined && (
         <TabsContent value="all" className="space-y-4 mt-4">
           {/* Full Stats Strip */}
-          <StatsStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
+          <StatsStrip summary={summary} onImport={(canImport && canEdit) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -1249,7 +1277,10 @@ export default function DailyStatsPage() {
             </div>
           )}
         </TabsContent>
+        )}
       </Tabs>
+        );
+      })()}
 
       {/* Import Dialog */}
       <ImportDialog

@@ -446,8 +446,50 @@ async def _seed_default_permission_groups(db):
         await db.permission_groups.insert_one({**doc})
         inserted += 1
 
+    # ── Patch existing system groups: add any NEW pages that are missing ──
+    patched = 0
+    for grp_def in DEFAULT_GROUPS:
+        if grp_def["name_en"] not in existing_names:
+            continue  # just inserted above
+        # Resolve what the default page_permissions should be
+        pp_template = grp_def["page_permissions"]
+        if pp_template == "_all_editable":
+            default_pp = _build_all_pages_visible(editable=True)
+        elif pp_template == "_field_only":
+            default_pp = {
+                "/": {"visible": True, "editable": False},
+                "/field": {"visible": True, "editable": True},
+                "/notifications": {"visible": True, "editable": False},
+            }
+        elif pp_template.startswith("_dept_"):
+            dept_key = pp_template.replace("_dept_", "")
+            default_pp = _build_dept_pages(dept_key)
+        else:
+            continue
+
+        # Read current stored permissions
+        stored = await db.permission_groups.find_one(
+            {"name_en": grp_def["name_en"]}, {"_id": 0, "page_permissions": 1}
+        )
+        current_pp = stored.get("page_permissions", {}) if stored else {}
+
+        # Add only MISSING pages (don't overwrite user-customized values)
+        additions = {}
+        for href, perm in default_pp.items():
+            if href not in current_pp:
+                additions[href] = perm
+
+        if additions:
+            new_pp = {**current_pp, **additions}
+            await db.permission_groups.update_one(
+                {"name_en": grp_def["name_en"]},
+                {"$set": {"page_permissions": new_pp, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            patched += 1
+            logger.info(f"  permission_groups: patched '{grp_def['name_en']}' (+{len(additions)} pages)")
+
     total = await db.permission_groups.count_documents({})
-    if inserted:
-        logger.info(f"  permission_groups: +{inserted} inserted (total: {total})")
+    if inserted or patched:
+        logger.info(f"  permission_groups: +{inserted} inserted, {patched} patched (total: {total})")
     else:
         logger.info(f"  permission_groups: {total} groups OK")
