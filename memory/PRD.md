@@ -36,6 +36,7 @@ The system manages crowd statistics, employee scheduling, gate management, praye
 - **Frontend**: `/app/frontend/src/pages/DailyStatsPage.jsx`
 - **Features**:
   - 3 tabs: المسجد الحرام | المسجد النبوي | العرض الشامل
+  - **Tab-level permissions**: Each tab has independent visibility & edit control via permissions manager (same pattern as Settings page)
   - Daily entry cards per mosque with all fields
   - Date navigation with Hijri dates (moment-hijri)
   - Monthly filtering (year + month dropdowns)
@@ -45,28 +46,46 @@ The system manages crowd statistics, employee scheduling, gate management, praye
   - Excel export + template download
   - Edit/Delete with confirmation
   - Integrated with sidebar + permissions system
+- **Permission Keys**:
+  - `page_stats_haram` / `edit_stats_haram` — المسجد الحرام tab
+  - `page_stats_nabawi` / `edit_stats_nabawi` — المسجد النبوي tab
+  - `page_stats_all` / `edit_daily_stats` / `import_daily_stats` — العرض الشامل tab
 - **Data Schema**:
   - المسجد الحرام: المصلين, المعتمرين, حجر إسماعيل, العربات
   - المسجد النبوي: المصلين, الروضة رجال (منشور/محجوز/فعلي), الروضة نساء (منشور/محجوز/فعلي), ممر السلام
-- **Tested**: 15/15 backend tests passed + 3 UI screenshots confirmed
+- **Tested**: iteration_8 (15/15 backend) + iteration_9 (5/5 frontend permissions)
+
+## Statistics Analytics Dashboard — Complete (March 2026)
+- **Page**: `/stats-analytics` — "تحليلات الإحصائيات"
+- **Frontend**: `/app/frontend/src/pages/StatsAnalyticsPage.jsx`
+- KPI cards, Line/Bar/Pie/Heatmap charts using recharts
+- USER VERIFICATION PENDING
 
 ## Credentials
 - Admin: admin@crowd.sa / admin123
 
-## Pending Tasks:
-- P0: Comparative Density Report
-- P0: Gates Audit Log
-- P1: Daily Statistics Analytics Dashboard (لوحة التحليلات - المرحلة 2)
-- P1: Task comments/replies
-- P1: Daily summary notification
-- P1: Full Attendance System
-- P2: Push Notifications - mobile (Firebase)
-- P2: Recycle Bin for deleted data
+## Pending Issues:
+- P1: Daily Prayer Hall Session auto-starts (recurring, user verification pending)
+- P1: Deployment data consistency verification (user needs to re-deploy)
+
+## Upcoming Tasks:
+- P0: Iterate on Statistics Analytics page based on user feedback
+- P1: Comparative Density Report
+- P1: Gates Audit Log
+
+## Future Tasks:
+- P1: Advanced Features for Tasks Module (Recurring Tasks, Templates, Comments)
+- P1: Full Attendance System (Check-in/out)
+- P2: Native Mobile Push Notifications (Firebase)
+- P2: "Recycle Bin" for deleted data
 
 ## Key Files
 - `/app/backend/server.py` — Main FastAPI app
-- `/app/backend/seed_sidebar.py` — Sidebar + permissions seeding
+- `/app/backend/seed_sidebar.py` — Sidebar + permissions seeding (auto-patches existing groups)
 - `/app/backend/routes/daily_stats.py` — Daily statistics API
-- `/app/frontend/src/pages/DailyStatsPage.jsx` — Daily stats page
+- `/app/backend/routes/perm_groups.py` — Permission groups + MENU_TO_PERM_MAP
+- `/app/frontend/src/pages/DailyStatsPage.jsx` — Daily stats page with tab-level permissions
+- `/app/frontend/src/pages/StatsAnalyticsPage.jsx` — Analytics dashboard
+- `/app/frontend/src/pages/admin/PermissionsManager.jsx` — Admin permissions manager
+- `/app/frontend/src/components/Layout.jsx` — Sidebar layout (filters sidebar_hidden items)
 - `/app/frontend/src/App.js` — Router
-- `/app/frontend/src/components/Layout.jsx` — Sidebar layout
