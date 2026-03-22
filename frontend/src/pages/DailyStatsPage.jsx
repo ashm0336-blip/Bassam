@@ -5,13 +5,12 @@ import axios from "axios";
 import { toast } from "sonner";
 import momentHijri from "moment-hijri";
 import {
-  BarChart3, Calendar, ChevronRight, ChevronLeft, Building2, Loader2, CheckCircle,
+  BarChart3, Calendar, ChevronRight, ChevronLeft, Building2, Loader2, CheckCircle, Layers,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -267,23 +266,57 @@ export default function DailyStatsPage() {
         </Badge>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — professional style like Settings page */}
       {(() => {
-        const visibleTabs = [];
-        if (canSeeHaram) visibleTabs.push("haram");
-        if (canSeeNabawi) visibleTabs.push("nabawi");
-        if (canSeeCombined) visibleTabs.push("all");
-        const tabCount = visibleTabs.length || 1;
-        return (
-      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="w-full grid h-10" style={{ gridTemplateColumns: `repeat(${tabCount}, 1fr)` }}>
-          {canSeeHaram && <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram"><Building2 className="w-3.5 h-3.5" />المسجد الحرام</TabsTrigger>}
-          {canSeeNabawi && <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi"><Building2 className="w-3.5 h-3.5" />المسجد النبوي</TabsTrigger>}
-          {canSeeCombined && <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all"><BarChart3 className="w-3.5 h-3.5" />العرض الشامل</TabsTrigger>}
-        </TabsList>
+        const tabs = [
+          { key: "haram", label: "المسجد الحرام", desc: "إحصائيات الحرم المكي", icon: Building2, color: "#2563eb", light: "#dbeafe", visible: canSeeHaram },
+          { key: "nabawi", label: "المسجد النبوي", desc: "إحصائيات المسجد النبوي", icon: Building2, color: "#059669", light: "#d1fae5", visible: canSeeNabawi },
+          { key: "all", label: "العرض الشامل", desc: "جميع البيانات", icon: Layers, color: "#6366f1", light: "#e0e7ff", visible: canSeeCombined },
+        ].filter(t => t.visible);
 
-        {canSeeHaram && (
-        <TabsContent value="haram" className="space-y-4 mt-4">
+        return (
+      <>
+        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-muted/40 border" data-testid="stats-tabs">
+          {tabs.map(tab => {
+            const isActive = activeTab === tab.key;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                data-testid={`tab-${tab.key}`}
+                className={`
+                  relative flex-1 flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl transition-all duration-300
+                  ${isActive
+                    ? 'bg-white dark:bg-card shadow-md border-2 scale-[1.02]'
+                    : 'bg-transparent border-2 border-transparent hover:bg-white/60 dark:hover:bg-card/60 hover:shadow-sm'
+                  }
+                `}
+                style={isActive ? { borderColor: tab.color } : {}}
+              >
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-sm' : ''}`}
+                  style={isActive ? { backgroundColor: tab.light, color: tab.color } : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span
+                  className={`text-xs font-cairo transition-colors duration-300 ${isActive ? 'font-bold' : 'font-medium text-muted-foreground'}`}
+                  style={isActive ? { color: tab.color } : {}}
+                >
+                  {tab.label}
+                </span>
+                <span className="text-[9px] text-muted-foreground font-cairo">{tab.desc}</span>
+                {isActive && (
+                  <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-8 h-1 rounded-full" style={{ backgroundColor: tab.color }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {canSeeHaram && activeTab === "haram" && (
+        <div className="space-y-4 mt-4">
           <HaramStrip summary={summary} onImport={(canImport && canEditHaram) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
           <MonthDayBar filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth} items={items} selectedDateHijri={selectedDateHijri} onDayClick={(d) => setSelectedDateHijri(d)} checkFields={HARAM_FIELDS} />
           <DateSelector borderColor="border-blue-500/15" />
@@ -292,11 +325,11 @@ export default function DailyStatsPage() {
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2"><Calendar className="w-4 h-4" />سجل الشهر - المسجد الحرام</h3>
           {loading ? <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             : <DataTable items={items} onEdit={handleEdit} onDelete={(item) => setDeleteTarget(item)} canEdit={canEditHaram} mosqueFilter="haram" />}
-        </TabsContent>
+        </div>
         )}
 
-        {canSeeNabawi && (
-        <TabsContent value="nabawi" className="space-y-4 mt-4">
+        {canSeeNabawi && activeTab === "nabawi" && (
+        <div className="space-y-4 mt-4">
           <NabawiStrip summary={summary} onImport={(canImport && canEditNabawi) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
           <MonthDayBar filterYear={filterYear} filterMonth={filterMonth} daysInMonth={daysInMonth} items={items} selectedDateHijri={selectedDateHijri} onDayClick={(d) => setSelectedDateHijri(d)} checkFields={NABAWI_FIELDS} />
           <DateSelector borderColor="border-emerald-500/15" />
@@ -305,11 +338,11 @@ export default function DailyStatsPage() {
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2"><Calendar className="w-4 h-4" />سجل الشهر - المسجد النبوي</h3>
           {loading ? <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             : <DataTable items={items} onEdit={handleEdit} onDelete={(item) => setDeleteTarget(item)} canEdit={canEditNabawi} mosqueFilter="nabawi" />}
-        </TabsContent>
+        </div>
         )}
 
-        {canSeeCombined && (
-        <TabsContent value="all" className="space-y-4 mt-4">
+        {canSeeCombined && activeTab === "all" && (
+        <div className="space-y-4 mt-4">
           <StatsStrip summary={summary} onImport={(canImport && canEdit) ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2"><BarChart3 className="w-4 h-4" />العرض الشامل - جميع البيانات</h3>
           {loading ? <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
@@ -321,9 +354,9 @@ export default function DailyStatsPage() {
               <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} data-testid="next-page"><ChevronLeft className="w-4 h-4" /></Button>
             </div>
           )}
-        </TabsContent>
+        </div>
         )}
-      </Tabs>
+      </>
         );
       })()}
 
