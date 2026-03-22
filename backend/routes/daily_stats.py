@@ -108,7 +108,7 @@ async def list_daily_stats(
     total = await db.daily_stats.count_documents(query)
     skip = (page - 1) * limit
 
-    cursor = db.daily_stats.find(query, {"_id": 0}).sort("date_hijri", -1).skip(skip).limit(limit)
+    cursor = db.daily_stats.find(query, {"_id": 0}).sort("date_hijri", 1).skip(skip).limit(limit)
     items = await cursor.to_list(limit)
 
     # If mosque filter, zero out irrelevant fields in response
