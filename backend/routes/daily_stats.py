@@ -86,7 +86,7 @@ async def list_daily_stats(
     date_to: Optional[str] = None,
     mosque: Optional[str] = None,
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=400),
     user: dict = Depends(get_current_user),
 ):
     """List daily stats with filters. month/year are Hijri."""
@@ -133,11 +133,20 @@ async def list_daily_stats(
 async def get_stats_summary(
     month: Optional[str] = None,
     year: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
     """Get summary stats for a period including min/max with dates."""
     match = {}
-    if month and year:
+    if date_from or date_to:
+        date_q = {}
+        if date_from:
+            date_q["$gte"] = date_from
+        if date_to:
+            date_q["$lte"] = date_to
+        match["date_hijri"] = date_q
+    elif month and year:
         prefix = f"{year}-{month.zfill(2)}"
         match["date_hijri"] = {"$regex": f"^{prefix}"}
     elif year:
