@@ -33,6 +33,7 @@ MENU_TO_PERM_MAP = {
     "Grand Mosque":      {"view": ["page_stats_haram"], "edit": ["page_stats_haram", "edit_stats_haram"]},
     "Prophet's Mosque":  {"view": ["page_stats_nabawi"], "edit": ["page_stats_nabawi", "edit_stats_nabawi"]},
     "Combined View":     {"view": ["page_stats_all"], "edit": ["page_stats_all", "edit_daily_stats", "import_daily_stats"]},
+    "Statistics Analytics": {"view": ["page_stats_analytics"], "edit": ["page_stats_analytics"]},
     "System Admin":      {"view": [], "edit": []},
 }
 
@@ -56,6 +57,7 @@ ALL_PERMISSIONS = {
     "page_stats_haram": {}, "edit_stats_haram": {},
     "page_stats_nabawi": {}, "edit_stats_nabawi": {},
     "page_stats_all": {},
+    "page_stats_analytics": {},
 }
 
 
