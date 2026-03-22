@@ -81,17 +81,17 @@ function formatDateAr(dateStr) {
   if (!dateStr) return "-";
   const parts = dateStr.replace("/", "-").split("-");
   if (parts.length !== 3) return dateStr;
-  return `${Number(parts[2]).toLocaleString("ar-SA", {useGrouping:false})}/${Number(parts[1]).toLocaleString("ar-SA", {useGrouping:false})}/${Number(parts[0]).toLocaleString("ar-SA", {useGrouping:false})}`;
+  const d = Number(parts[2]);
+  const m = Number(parts[1]);
+  const y = Number(parts[0]);
+  return `${d.toLocaleString("ar-SA",{useGrouping:false})}/${m.toLocaleString("ar-SA",{useGrouping:false})}/${y.toLocaleString("ar-SA",{useGrouping:false})}`;
 }
 
 function getGregorianFromHijri(hijriDate) {
   try {
     const m = momentHijri(hijriDate, "iYYYY-iMM-iDD");
     if (m.isValid()) {
-      const gd = m.format("DD");
-      const gm = m.format("MM");
-      const gy = m.format("YYYY");
-      return `${Number(gd).toLocaleString("ar-SA",{useGrouping:false})}/${Number(gm).toLocaleString("ar-SA",{useGrouping:false})}/${Number(gy).toLocaleString("ar-SA",{useGrouping:false})}`;
+      return `${m.date().toLocaleString("ar-SA",{useGrouping:false})}/${(m.month()+1).toLocaleString("ar-SA",{useGrouping:false})}/${m.year().toLocaleString("ar-SA",{useGrouping:false})}`;
     }
   } catch {}
   return "-";
@@ -549,54 +549,75 @@ function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
 
   return (
     <div className="overflow-x-auto rounded-xl border shadow-sm" data-testid="data-table">
-      <Table>
+      <Table className="min-w-[700px]">
         <TableHeader>
-          <TableRow className="bg-muted/60">
-            <TableHead className="text-center font-cairo text-[11px] font-bold sticky right-0 bg-muted/60 z-10 min-w-[120px] border-l">
-              التاريخ
+          <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
+            {/* التاريخ */}
+            <TableHead className="text-center py-3 min-w-[130px] sticky right-0 bg-gradient-to-r from-primary/5 to-primary/3 z-10">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shadow-sm">
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-[11px] font-bold font-cairo text-foreground">التاريخ</span>
+              </div>
             </TableHead>
             {showHaram && HARAM_FIELDS.map((f) => (
-              <TableHead key={f.key} className="text-center font-cairo text-[11px] font-bold min-w-[100px] bg-blue-50/60 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
-                {f.label}
+              <TableHead key={f.key} className="text-center py-3 min-w-[100px] bg-blue-50/40 dark:bg-blue-950/15">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shadow-sm">
+                    <Users2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-[11px] font-bold font-cairo text-blue-800 dark:text-blue-300">{f.label}</span>
+                </div>
               </TableHead>
             ))}
             {showNabawi && NABAWI_FIELDS.map((f) => (
-              <TableHead key={f.key} className="text-center font-cairo text-[11px] font-bold min-w-[100px] bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
-                {f.label}
+              <TableHead key={f.key} className="text-center py-3 min-w-[100px] bg-emerald-50/40 dark:bg-emerald-950/15">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shadow-sm">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-[11px] font-bold font-cairo text-emerald-800 dark:text-emerald-300">{f.label}</span>
+                </div>
               </TableHead>
             ))}
             {canEdit && (
-              <TableHead className="text-center font-cairo text-[11px] font-bold w-[80px]">
-                إجراءات
+              <TableHead className="text-center py-3 w-[80px]">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                    <Edit3 className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <span className="text-[11px] font-bold font-cairo text-slate-500">إجراءات</span>
+                </div>
               </TableHead>
             )}
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item, idx) => (
-            <TableRow key={item.id} className={`hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
-              <TableCell className="text-center sticky right-0 bg-background z-10 border-l px-3 py-2.5">
-                <div className="font-cairo font-bold text-[12px] text-primary">{formatDateAr(item.date_hijri)}</div>
-                <div className="font-cairo text-[10px] text-muted-foreground">{getGregorianFromHijri(item.date_hijri)}</div>
+            <TableRow key={item.id} className={`hover:bg-primary/5 transition-colors [&>td]:py-2.5 ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
+              <TableCell className="text-center sticky right-0 bg-background z-10 border-l border-primary/5 px-3">
+                <div className="font-cairo font-bold text-[13px] text-primary" dir="rtl">{formatDateAr(item.date_hijri)}</div>
+                <div className="font-cairo text-[10px] text-muted-foreground" dir="rtl">{getGregorianFromHijri(item.date_hijri)}</div>
               </TableCell>
               {showHaram && HARAM_FIELDS.map((f) => (
-                <TableCell key={f.key} className="text-center font-cairo text-[12px] font-semibold bg-blue-500/[0.02] py-2.5">
-                  {formatNumber(item[f.key])}
+                <TableCell key={f.key} className="text-center font-cairo text-[13px] font-semibold bg-blue-500/[0.015]">
+                  <span className={item[f.key] != null && item[f.key] !== '' ? 'text-foreground' : 'text-muted-foreground/40'}>{formatNumber(item[f.key])}</span>
                 </TableCell>
               ))}
               {showNabawi && NABAWI_FIELDS.map((f) => (
-                <TableCell key={f.key} className="text-center font-cairo text-[12px] font-semibold bg-emerald-500/[0.02] py-2.5">
-                  {formatNumber(item[f.key])}
+                <TableCell key={f.key} className="text-center font-cairo text-[13px] font-semibold bg-emerald-500/[0.015]">
+                  <span className={item[f.key] != null && item[f.key] !== '' ? 'text-foreground' : 'text-muted-foreground/40'}>{formatNumber(item[f.key])}</span>
                 </TableCell>
               ))}
               {canEdit && (
                 <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-blue-600" onClick={() => onEdit(item)} data-testid={`edit-${item.id}`}>
-                      <Edit3 className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-center gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50" onClick={() => onEdit(item)} data-testid={`edit-${item.id}`}>
+                      <Edit3 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(item)} data-testid={`delete-${item.id}`}>
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-red-50" onClick={() => onDelete(item)} data-testid={`delete-${item.id}`}>
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </TableCell>
