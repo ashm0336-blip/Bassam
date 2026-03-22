@@ -77,6 +77,26 @@ function formatNumber(num) {
   return Number(num).toLocaleString("ar-SA");
 }
 
+function formatDateAr(dateStr) {
+  if (!dateStr) return "-";
+  const parts = dateStr.replace("/", "-").split("-");
+  if (parts.length !== 3) return dateStr;
+  return `${Number(parts[2]).toLocaleString("ar-SA", {useGrouping:false})}/${Number(parts[1]).toLocaleString("ar-SA", {useGrouping:false})}/${Number(parts[0]).toLocaleString("ar-SA", {useGrouping:false})}`;
+}
+
+function getGregorianFromHijri(hijriDate) {
+  try {
+    const m = momentHijri(hijriDate, "iYYYY-iMM-iDD");
+    if (m.isValid()) {
+      const gd = m.format("DD");
+      const gm = m.format("MM");
+      const gy = m.format("YYYY");
+      return `${Number(gd).toLocaleString("ar-SA",{useGrouping:false})}/${Number(gm).toLocaleString("ar-SA",{useGrouping:false})}/${Number(gy).toLocaleString("ar-SA",{useGrouping:false})}`;
+    }
+  } catch {}
+  return "-";
+}
+
 function getCurrentHijriDate() {
   const m = momentHijri();
   return {
@@ -370,14 +390,14 @@ function FilesMenu({ onImport, onExport, onTemplate, color }) {
 function StatPill({ icon: Icon, label, value, color }) {
   return (
     <div
-      className="flex items-center gap-1 px-2 py-1 rounded-lg border shrink-0 transition-all hover:scale-[1.02]"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border shrink-0 transition-all hover:scale-[1.02]"
       style={{ borderColor: color + "25", backgroundColor: color + "06" }}
     >
-      <Icon className="w-3 h-3 shrink-0" style={{ color }} />
-      <span className="text-[9px] font-bold tabular-nums" style={{ color }} dir="ltr">
+      <Icon className="w-3.5 h-3.5 shrink-0" style={{ color }} />
+      <span className="text-[11px] font-bold font-cairo tabular-nums" style={{ color }}>
         {formatNumber(value)}
       </span>
-      <span className="text-[8px] font-cairo text-muted-foreground whitespace-nowrap">{label}</span>
+      <span className="text-[9px] font-cairo text-muted-foreground whitespace-nowrap">{label}</span>
     </div>
   );
 }
@@ -386,17 +406,17 @@ function StatPill({ icon: Icon, label, value, color }) {
 function GroupPill({ label, items }) {
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <span className="text-[8px] font-cairo font-semibold text-muted-foreground whitespace-nowrap">{label}:</span>
+      <span className="text-[9px] font-cairo font-semibold text-muted-foreground whitespace-nowrap">{label}:</span>
       {items.map((item, i) => (
         <div
           key={i}
           className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border"
           style={{ borderColor: item.color + "30", backgroundColor: item.color + "08" }}
         >
-          <span className="text-[8px] font-bold tabular-nums" style={{ color: item.color }} dir="ltr">
+          <span className="text-[10px] font-bold font-cairo tabular-nums" style={{ color: item.color }}>
             {formatNumber(item.val)}
           </span>
-          <span className="text-[7px] font-cairo" style={{ color: item.color + "bb" }}>{item.sub}</span>
+          <span className="text-[8px] font-cairo" style={{ color: item.color + "bb" }}>{item.sub}</span>
         </div>
       ))}
     </div>
@@ -408,17 +428,17 @@ function HighLowPill({ highVal, highDate, lowVal, lowDate, label }) {
   return (
     <div className="flex items-center gap-1.5 shrink-0">
       {highVal != null && (
-        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-700/30">
-          <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
-          <span className="text-[8px] font-bold text-emerald-700 dark:text-emerald-400 tabular-nums" dir="ltr">{formatNumber(highVal)}</span>
-          {highDate && <span className="text-[7px] text-emerald-500 font-mono">{highDate.split("-").pop()}</span>}
+        <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-700/30">
+          <TrendingUp className="w-3 h-3 text-emerald-600" />
+          <span className="text-[10px] font-bold font-cairo text-emerald-700 dark:text-emerald-400">{formatNumber(highVal)}</span>
+          {highDate && <span className="text-[8px] text-emerald-500 font-cairo">{highDate.split("-").pop()}</span>}
         </div>
       )}
       {lowVal != null && lowVal > 0 && (
-        <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-700/30">
-          <TrendingUp className="w-2.5 h-2.5 text-red-500 rotate-180" />
-          <span className="text-[8px] font-bold text-red-600 dark:text-red-400 tabular-nums" dir="ltr">{formatNumber(lowVal)}</span>
-          {lowDate && <span className="text-[7px] text-red-400 font-mono">{lowDate.split("-").pop()}</span>}
+        <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-700/30">
+          <TrendingUp className="w-3 h-3 text-red-500 rotate-180" />
+          <span className="text-[10px] font-bold font-cairo text-red-600 dark:text-red-400">{formatNumber(lowVal)}</span>
+          {lowDate && <span className="text-[8px] text-red-400 font-cairo">{lowDate.split("-").pop()}</span>}
         </div>
       )}
     </div>
@@ -528,71 +548,54 @@ function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
   const showNabawi = !mosqueFilter || mosqueFilter === "nabawi" || mosqueFilter === "all";
 
   return (
-    <div className="overflow-x-auto rounded-lg border" data-testid="data-table">
+    <div className="overflow-x-auto rounded-xl border shadow-sm" data-testid="data-table">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead className="text-center font-cairo text-xs sticky right-0 bg-muted/50 z-10 min-w-[100px]">
-              التاريخ الهجري
-            </TableHead>
-            <TableHead className="text-center font-cairo text-xs min-w-[100px]">
-              التاريخ الميلادي
+          <TableRow className="bg-muted/60">
+            <TableHead className="text-center font-cairo text-[11px] font-bold sticky right-0 bg-muted/60 z-10 min-w-[120px] border-l">
+              التاريخ
             </TableHead>
             {showHaram && HARAM_FIELDS.map((f) => (
-              <TableHead key={f.key} className="text-center font-cairo text-xs min-w-[90px] bg-blue-500/5">
+              <TableHead key={f.key} className="text-center font-cairo text-[11px] font-bold min-w-[100px] bg-blue-50/60 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300">
                 {f.label}
               </TableHead>
             ))}
             {showNabawi && NABAWI_FIELDS.map((f) => (
-              <TableHead key={f.key} className="text-center font-cairo text-xs min-w-[90px] bg-emerald-500/5">
+              <TableHead key={f.key} className="text-center font-cairo text-[11px] font-bold min-w-[100px] bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
                 {f.label}
               </TableHead>
             ))}
             {canEdit && (
-              <TableHead className="text-center font-cairo text-xs w-[80px]">
+              <TableHead className="text-center font-cairo text-[11px] font-bold w-[80px]">
                 إجراءات
               </TableHead>
             )}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
-              <TableCell className="text-center font-mono text-xs sticky right-0 bg-background z-10 font-semibold">
-                {item.date_hijri}
-              </TableCell>
-              <TableCell className="text-center font-mono text-xs text-muted-foreground">
-                {item.date_gregorian || "-"}
+          {items.map((item, idx) => (
+            <TableRow key={item.id} className={`hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
+              <TableCell className="text-center sticky right-0 bg-background z-10 border-l px-3 py-2.5">
+                <div className="font-cairo font-bold text-[12px] text-primary">{formatDateAr(item.date_hijri)}</div>
+                <div className="font-cairo text-[10px] text-muted-foreground">{getGregorianFromHijri(item.date_hijri)}</div>
               </TableCell>
               {showHaram && HARAM_FIELDS.map((f) => (
-                <TableCell key={f.key} className="text-center text-xs font-mono bg-blue-500/[0.02]">
+                <TableCell key={f.key} className="text-center font-cairo text-[12px] font-semibold bg-blue-500/[0.02] py-2.5">
                   {formatNumber(item[f.key])}
                 </TableCell>
               ))}
               {showNabawi && NABAWI_FIELDS.map((f) => (
-                <TableCell key={f.key} className="text-center text-xs font-mono bg-emerald-500/[0.02]">
+                <TableCell key={f.key} className="text-center font-cairo text-[12px] font-semibold bg-emerald-500/[0.02] py-2.5">
                   {formatNumber(item[f.key])}
                 </TableCell>
               ))}
               {canEdit && (
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-blue-600"
-                      onClick={() => onEdit(item)}
-                      data-testid={`edit-${item.id}`}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-blue-600" onClick={() => onEdit(item)} data-testid={`edit-${item.id}`}>
                       <Edit3 className="w-3.5 h-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => onDelete(item)}
-                      data-testid={`delete-${item.id}`}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(item)} data-testid={`delete-${item.id}`}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
