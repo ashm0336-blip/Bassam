@@ -88,6 +88,8 @@ def _sidebar_items():
         name_ar="المسجد الحرام", name_en="Grand Mosque", icon="Building2", order=1, department="all")
     add("/daily-stats?tab=nabawi", parent_href="/daily-stats",
         name_ar="المسجد النبوي", name_en="Prophet's Mosque", icon="Building2", order=2, department="all")
+    add("/daily-stats?tab=all", parent_href="/daily-stats",
+        name_ar="العرض الشامل", name_en="Combined View", icon="BarChart3", order=3, department="all")
     add("/notifications", name_ar="الإشعارات", name_en="Notifications",
         icon="Bell", order=9, department="all", is_secondary=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
@@ -314,6 +316,7 @@ def _build_dept_pages(dept_key):
         "/daily-stats": {"visible": True, "editable": True},
         "/daily-stats?tab=haram": {"visible": True, "editable": True},
         "/daily-stats?tab=nabawi": {"visible": True, "editable": True},
+        "/daily-stats?tab=all": {"visible": True, "editable": True},
         "/notifications": {"visible": True, "editable": False},
         "/field": {"visible": True, "editable": True},
     }

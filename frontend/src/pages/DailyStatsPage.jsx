@@ -765,13 +765,14 @@ export default function DailyStatsPage() {
   const canEditHaram = user?.role === 'system_admin' || canWrite('edit_stats_haram');
   const canViewNabawi = user?.role === 'system_admin' || canRead('page_stats_nabawi');
   const canEditNabawi = user?.role === 'system_admin' || canWrite('edit_stats_nabawi');
+  const canViewAll = user?.role === 'system_admin' || canRead('page_stats_all');
   const canImport = user?.role === 'system_admin' || canWrite('import_daily_stats');
 
   // Build visible tabs
   const visibleTabs = [];
   if (canViewHaram) visibleTabs.push("haram");
   if (canViewNabawi) visibleTabs.push("nabawi");
-  if (canViewHaram || canViewNabawi) visibleTabs.push("all");
+  if (canViewAll) visibleTabs.push("all");
 
   // State
   const [activeTab, setActiveTab] = useState(visibleTabs[0] || "haram");
@@ -1054,7 +1055,7 @@ export default function DailyStatsPage() {
               المسجد النبوي
             </TabsTrigger>
           )}
-          {(canViewHaram || canViewNabawi) && (
+          {canViewAll && (
             <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
               <BarChart3 className="w-3.5 h-3.5" />
               العرض الشامل
@@ -1224,7 +1225,7 @@ export default function DailyStatsPage() {
         )}
 
         {/* ─── Combined View Tab ──────────────────────────────── */}
-        {(canViewHaram || canViewNabawi) && (
+        {canViewAll && (
         <TabsContent value="all" className="space-y-4 mt-4">
           {/* Full Stats Strip */}
           <StatsStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
