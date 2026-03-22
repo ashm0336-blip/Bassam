@@ -373,13 +373,17 @@ function FilesMenu({ onImport, onExport, onTemplate, color }) {
         <DropdownMenuItem onClick={onExport} className="text-xs font-cairo gap-2">
           <Download className="w-3.5 h-3.5" />تصدير Excel
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onTemplate} className="text-xs font-cairo gap-2">
-          <FileSpreadsheet className="w-3.5 h-3.5" />قالب الاستيراد
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onImport} className="text-xs font-cairo gap-2">
-          <Upload className="w-3.5 h-3.5" />استيراد Excel
-        </DropdownMenuItem>
+        {onImport && (
+          <>
+            <DropdownMenuItem onClick={onTemplate} className="text-xs font-cairo gap-2">
+              <FileSpreadsheet className="w-3.5 h-3.5" />قالب الاستيراد
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onImport} className="text-xs font-cairo gap-2">
+              <Upload className="w-3.5 h-3.5" />استيراد Excel
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -753,11 +757,24 @@ function ImportDialog({ open, onClose, onSuccess }) {
 
 // ─── Main Page Component ────────────────────────────────────────
 export default function DailyStatsPage() {
-  const { user } = useAuth();
+  const { user, canRead, canWrite } = useAuth();
   const { language } = useLanguage();
 
+  // Permissions
+  const canViewHaram = user?.role === 'system_admin' || canRead('page_stats_haram');
+  const canEditHaram = user?.role === 'system_admin' || canWrite('edit_stats_haram');
+  const canViewNabawi = user?.role === 'system_admin' || canRead('page_stats_nabawi');
+  const canEditNabawi = user?.role === 'system_admin' || canWrite('edit_stats_nabawi');
+  const canImport = user?.role === 'system_admin' || canWrite('import_daily_stats');
+
+  // Build visible tabs
+  const visibleTabs = [];
+  if (canViewHaram) visibleTabs.push("haram");
+  if (canViewNabawi) visibleTabs.push("nabawi");
+  if (canViewHaram || canViewNabawi) visibleTabs.push("all");
+
   // State
-  const [activeTab, setActiveTab] = useState("haram");
+  const [activeTab, setActiveTab] = useState(visibleTabs[0] || "haram");
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -781,8 +798,8 @@ export default function DailyStatsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Determine if user can edit
-  const canEdit = true; // Controlled by permissions system at sidebar level
+  // Determine edit rights per active tab
+  const canEdit = activeTab === "haram" ? canEditHaram : activeTab === "nabawi" ? canEditNabawi : (canEditHaram || canEditNabawi);
 
   // Available Hijri years
   const hijriYears = useMemo(() => {
@@ -1024,25 +1041,32 @@ export default function DailyStatsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="w-full grid grid-cols-3 h-10">
-          <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
-            <Building2 className="w-3.5 h-3.5" />
-            المسجد الحرام
-          </TabsTrigger>
-          <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
-            <Building2 className="w-3.5 h-3.5" />
-            المسجد النبوي
-          </TabsTrigger>
-          <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
-            <BarChart3 className="w-3.5 h-3.5" />
-            العرض الشامل
-          </TabsTrigger>
+        <TabsList className={`w-full grid h-10`} style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
+          {canViewHaram && (
+            <TabsTrigger value="haram" className="text-xs font-cairo gap-1.5" data-testid="tab-haram">
+              <Building2 className="w-3.5 h-3.5" />
+              المسجد الحرام
+            </TabsTrigger>
+          )}
+          {canViewNabawi && (
+            <TabsTrigger value="nabawi" className="text-xs font-cairo gap-1.5" data-testid="tab-nabawi">
+              <Building2 className="w-3.5 h-3.5" />
+              المسجد النبوي
+            </TabsTrigger>
+          )}
+          {(canViewHaram || canViewNabawi) && (
+            <TabsTrigger value="all" className="text-xs font-cairo gap-1.5" data-testid="tab-all">
+              <BarChart3 className="w-3.5 h-3.5" />
+              العرض الشامل
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ─── Haram Tab ──────────────────────────────────────── */}
+        {canViewHaram && (
         <TabsContent value="haram" className="space-y-4 mt-4">
           {/* Haram Stats Strip */}
-          <HaramStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
+          <HaramStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           {/* Month Progress */}
           <MonthDayBar
@@ -1117,11 +1141,13 @@ export default function DailyStatsPage() {
             />
           )}
         </TabsContent>
+        )}
 
         {/* ─── Nabawi Tab ─────────────────────────────────────── */}
+        {canViewNabawi && (
         <TabsContent value="nabawi" className="space-y-4 mt-4">
           {/* Nabawi Stats Strip */}
-          <NabawiStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
+          <NabawiStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           {/* Month Progress */}
           <MonthDayBar
@@ -1195,11 +1221,13 @@ export default function DailyStatsPage() {
             />
           )}
         </TabsContent>
+        )}
 
         {/* ─── Combined View Tab ──────────────────────────────── */}
+        {(canViewHaram || canViewNabawi) && (
         <TabsContent value="all" className="space-y-4 mt-4">
           {/* Full Stats Strip */}
-          <StatsStrip summary={summary} onImport={() => setImportOpen(true)} onExport={handleExport} onTemplate={handleTemplate} />
+          <StatsStrip summary={summary} onImport={canImport ? () => setImportOpen(true) : null} onExport={handleExport} onTemplate={handleTemplate} />
 
           <h3 className="font-cairo font-semibold text-sm flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -1246,6 +1274,7 @@ export default function DailyStatsPage() {
             </div>
           )}
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Import Dialog */}

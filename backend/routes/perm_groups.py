@@ -29,6 +29,9 @@ MENU_TO_PERM_MAP = {
     "Categories":        {"view": ["page_categories", "manage_categories"], "edit": ["manage_categories"]},
     "Field Worker":      {"view": ["page_field", "view_coverage_map"], "edit": ["distribute_employees", "auto_distribute", "enter_density", "view_density_reports"]},
     "Notifications":     {"view": ["page_alerts"], "edit": ["page_alerts"]},
+    "Daily Statistics":  {"view": ["page_daily_stats"], "edit": ["page_daily_stats", "edit_daily_stats", "import_daily_stats"]},
+    "Grand Mosque":      {"view": ["page_stats_haram"], "edit": ["page_stats_haram", "edit_stats_haram"]},
+    "Prophet's Mosque":  {"view": ["page_stats_nabawi"], "edit": ["page_stats_nabawi", "edit_stats_nabawi"]},
     "System Admin":      {"view": [], "edit": []},
 }
 
@@ -48,6 +51,9 @@ ALL_PERMISSIONS = {
     "enter_density": {}, "view_density_reports": {},
     "manage_settings": {}, "manage_maps": {}, "manage_shifts": {},
     "manage_gates": {}, "manage_categories": {},
+    "page_daily_stats": {}, "edit_daily_stats": {}, "import_daily_stats": {},
+    "page_stats_haram": {}, "edit_stats_haram": {},
+    "page_stats_nabawi": {}, "edit_stats_nabawi": {},
 }
 
 
