@@ -104,10 +104,10 @@ export const Layout = () => {
     icon: ICON_MAP[item.icon] || LayoutDashboard,
   })).filter(item => item.is_active);
 
-  // Organize into parent and children
+  // Organize into parent and children (exclude sidebar_hidden items from nav)
   const parentItems = allMenuItems.filter(item => !item.parent_id);
   const childrenMap = {};
-  allMenuItems.filter(item => item.parent_id).forEach(child => {
+  allMenuItems.filter(item => item.parent_id && !item.sidebar_hidden).forEach(child => {
     if (!childrenMap[child.parent_id]) {
       childrenMap[child.parent_id] = [];
     }

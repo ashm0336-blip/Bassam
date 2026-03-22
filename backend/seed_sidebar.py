@@ -30,6 +30,7 @@ def _sidebar_items():
         kw.setdefault("is_secondary", False)
         kw.setdefault("admin_only", False)
         kw.setdefault("is_active", True)
+        kw.setdefault("sidebar_hidden", False)
         items.append(kw)
 
     add("/", name_ar="لوحة التحكم", name_en="Dashboard", icon="LayoutDashboard", order=1,
@@ -85,11 +86,11 @@ def _sidebar_items():
         subtitle_ar="إحصائيات الحشود اليومية للمسجد الحرام والمسجد النبوي",
         subtitle_en="Daily crowd statistics for the two Holy Mosques")
     add("/daily-stats?tab=haram", parent_href="/daily-stats",
-        name_ar="المسجد الحرام", name_en="Grand Mosque", icon="Building2", order=1, department="all")
+        name_ar="المسجد الحرام", name_en="Grand Mosque", icon="Building2", order=1, department="all", sidebar_hidden=True)
     add("/daily-stats?tab=nabawi", parent_href="/daily-stats",
-        name_ar="المسجد النبوي", name_en="Prophet's Mosque", icon="Building2", order=2, department="all")
+        name_ar="المسجد النبوي", name_en="Prophet's Mosque", icon="Building2", order=2, department="all", sidebar_hidden=True)
     add("/daily-stats?tab=all", parent_href="/daily-stats",
-        name_ar="العرض الشامل", name_en="Combined View", icon="BarChart3", order=3, department="all")
+        name_ar="العرض الشامل", name_en="Combined View", icon="BarChart3", order=3, department="all", sidebar_hidden=True)
     add("/stats-analytics", name_ar="تحليلات الإحصائيات", name_en="Statistics Analytics",
         icon="TrendingUp", order=9, department="all",
         subtitle_ar="تحليل ومقارنة بيانات الحشود",
