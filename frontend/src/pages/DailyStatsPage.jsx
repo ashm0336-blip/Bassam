@@ -586,12 +586,12 @@ function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
               </TableHead>
             ))}
             {canEdit && (
-              <TableHead className="text-center py-3 w-[80px]">
+              <TableHead className="text-center py-3 w-[60px]">
                 <div className="flex flex-col items-center gap-1.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-sm">
-                    <Edit3 className="w-4 h-4 text-slate-500" />
+                  <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shadow-sm">
+                    <Trash2 className="w-4 h-4 text-red-500" />
                   </div>
-                  <span className="text-[11px] font-bold font-cairo text-slate-500">إجراءات</span>
+                  <span className="text-[11px] font-bold font-cairo text-red-500">حذف</span>
                 </div>
               </TableHead>
             )}
@@ -616,14 +616,9 @@ function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
               ))}
               {canEdit && (
                 <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50" onClick={() => onEdit(item)} data-testid={`edit-${item.id}`}>
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-red-50" onClick={() => onDelete(item)} data-testid={`delete-${item.id}`}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-red-50" onClick={() => onDelete(item)} data-testid={`delete-${item.id}`}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </TableCell>
               )}
             </TableRow>
