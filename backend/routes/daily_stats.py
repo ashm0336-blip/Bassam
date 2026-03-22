@@ -193,11 +193,16 @@ async def get_daily_stat(stat_id: str, user: dict = Depends(get_current_user)):
 @router.post("/daily-stats")
 async def create_daily_stat(data: dict, user: dict = Depends(get_current_user)):
     """Create or update daily stat for a date."""
-    date_hijri = data.get("date_hijri", "").strip()
+    date_hijri = data.get("date_hijri", "").strip().replace("/", "-")
     date_gregorian = data.get("date_gregorian", "").strip()
 
     if not date_hijri:
         raise HTTPException(status_code=400, detail="التاريخ الهجري مطلوب")
+
+    # Normalize: 1446-9-1 → 1446-09-01
+    parts = date_hijri.split("-")
+    if len(parts) == 3:
+        date_hijri = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
 
     # Check if record exists for this date
     existing = await db.daily_stats.find_one({"date_hijri": date_hijri}, {"_id": 0})
@@ -241,6 +246,39 @@ async def create_daily_stat(data: dict, user: dict = Depends(get_current_user)):
     doc.pop("_id", None)
     await log_activity("إنشاء إحصائية يومية", user, date_hijri)
     return _safe_doc(doc)
+
+
+@router.post("/daily-stats/fix-dates")
+async def fix_date_formats(user: dict = Depends(get_current_user)):
+    """Fix dates that were stored without zero-padding (e.g., 1446-9-1 → 1446-09-01)."""
+    all_docs = await db.daily_stats.find({}, {"_id": 0, "date_hijri": 1}).to_list(10000)
+    fixed = 0
+    for doc in all_docs:
+        old_date = doc.get("date_hijri", "")
+        parts = old_date.replace("/", "-").split("-")
+        if len(parts) == 3:
+            new_date = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
+            if new_date != old_date:
+                # Check if normalized date already exists
+                existing = await db.daily_stats.find_one({"date_hijri": new_date})
+                if existing:
+                    # Merge into existing record
+                    old_doc = await db.daily_stats.find_one({"date_hijri": old_date}, {"_id": 0})
+                    merge = {}
+                    for f in ALL_NUMERIC_FIELDS:
+                        old_val = old_doc.get(f)
+                        ex_val = existing.get(f)
+                        if old_val is not None and (ex_val is None):
+                            merge[f] = old_val
+                    if merge:
+                        await db.daily_stats.update_one({"date_hijri": new_date}, {"$set": merge})
+                    await db.daily_stats.delete_one({"date_hijri": old_date})
+                else:
+                    await db.daily_stats.update_one({"date_hijri": old_date}, {"$set": {"date_hijri": new_date}})
+                fixed += 1
+    await log_activity("إصلاح تواريخ الإحصائيات", user, details=f"تم إصلاح {fixed} سجل")
+    return {"message": f"تم إصلاح {fixed} تاريخ", "fixed": fixed}
+
 
 
 @router.put("/daily-stats/{stat_id}")
@@ -442,8 +480,11 @@ async def import_daily_stats(
                 skipped += 1
                 continue
 
-            # Normalize date format
+            # Normalize date format: 1446/9/1 → 1446-09-01
             date_hijri = date_val.replace("/", "-")
+            parts = date_hijri.split("-")
+            if len(parts) == 3:
+                date_hijri = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
 
             # Check existing
             existing = await db.daily_stats.find_one({"date_hijri": date_hijri})

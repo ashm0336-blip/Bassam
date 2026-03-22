@@ -202,6 +202,10 @@ async def startup_db_client():
             # Seed ALL system config data (idempotent — safe on every start)
             logger.info("Running system data seeds...")
             await run_all_seeds(db)
+
+            # Fix any daily_stats dates without zero-padding
+            await _fix_daily_stats_dates()
+
             break
         except Exception as e:
             logger.warning(f"Startup DB attempt {attempt + 1}/5 failed: {e}")
@@ -209,6 +213,32 @@ async def startup_db_client():
                 await asyncio.sleep(3)
             else:
                 logger.error("Database unavailable at startup — app will still serve requests")
+
+
+async def _fix_daily_stats_dates():
+    """Fix dates stored without zero-padding on startup."""
+    try:
+        all_docs = await db.daily_stats.find({}, {"_id": 0, "date_hijri": 1}).to_list(10000)
+        fixed = 0
+        for doc in all_docs:
+            old = doc.get("date_hijri", "")
+            parts = old.replace("/", "-").split("-")
+            if len(parts) == 3:
+                normalized = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
+                if normalized != old:
+                    existing = await db.daily_stats.find_one({"date_hijri": normalized})
+                    if existing:
+                        await db.daily_stats.delete_one({"date_hijri": old})
+                    else:
+                        await db.daily_stats.update_one({"date_hijri": old}, {"$set": {"date_hijri": normalized}})
+                    fixed += 1
+        if fixed:
+            logger.info(f"  daily_stats dates: fixed {fixed} records")
+        else:
+            logger.info(f"  daily_stats dates: all OK")
+    except Exception as e:
+        logger.warning(f"  daily_stats date fix warning: {e}")
+
 
 
 async def _ensure_indexes():
