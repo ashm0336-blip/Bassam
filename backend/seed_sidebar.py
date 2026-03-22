@@ -91,10 +91,9 @@ def _sidebar_items():
         name_ar="المسجد النبوي", name_en="Prophet's Mosque", icon="Building2", order=2, department="all", sidebar_hidden=True)
     add("/daily-stats?tab=all", parent_href="/daily-stats",
         name_ar="العرض الشامل", name_en="Combined View", icon="BarChart3", order=3, department="all", sidebar_hidden=True)
-    add("/stats-analytics", name_ar="تحليلات الإحصائيات", name_en="Statistics Analytics",
-        icon="TrendingUp", order=9, department="all",
-        subtitle_ar="تحليل ومقارنة بيانات الحشود",
-        subtitle_en="Crowd data analysis and comparison")
+    add("/stats-analytics", parent_href="/daily-stats",
+        name_ar="تحليلات الإحصائيات", name_en="Statistics Analytics",
+        icon="TrendingUp", order=4, department="all")
     add("/notifications", name_ar="الإشعارات", name_en="Notifications",
         icon="Bell", order=10, department="all", is_secondary=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
