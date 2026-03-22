@@ -597,8 +597,8 @@ function DataTable({ items, onEdit, onDelete, canEdit, mosqueFilter }) {
           {items.map((item, idx) => (
             <TableRow key={item.id} className={`hover:bg-primary/5 transition-colors [&>td]:py-2.5 ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
               <TableCell className="text-center sticky right-0 bg-background z-10 border-l border-primary/5 px-3">
-                <div className="font-cairo font-bold text-[13px] text-primary" dir="ltr">{formatDateAr(item.date_hijri)}</div>
-                <div className="font-cairo text-[10px] text-muted-foreground" dir="ltr">{getGregorianFromHijri(item.date_hijri)}</div>
+                <div className="font-bold text-[13px] text-primary font-mono">{item.date_hijri}</div>
+                <div className="text-[10px] text-muted-foreground font-mono">({hijriToGregorian(item.date_hijri)})</div>
               </TableCell>
               {showHaram && HARAM_FIELDS.map((f) => (
                 <TableCell key={f.key} className="text-center font-cairo text-[13px] font-semibold bg-blue-500/[0.015]">
