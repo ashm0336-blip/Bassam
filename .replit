@@ -45,3 +45,10 @@ packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimageq
 [deployment]
 deploymentTarget = "gce"
 run = ["sh", "-c", "bash start.sh"]
+
+[userenv]
+
+[userenv.shared]
+MONGO_URL = "mongodb+srv://bghazzawi1980_db_user:Bassamghazzawi@cluster0.nobsero.mongodb.net/"
+DB_NAME = "crowd_services"
+JWT_SECRET = "al-haram-os-secure-jwt-secret-key-production-2024"
