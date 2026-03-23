@@ -29,7 +29,8 @@ const DEPT_LABELS = { gates: 'الأبواب', plazas: 'الساحات', plannin
 const DEPT_COLORS = { gates: '#1d4ed8', plazas: '#0d9488', planning: '#7c3aed', crowd_services: '#d97706', mataf: '#dc2626', haram_map: '#059669' };
 const DEPT_ICONS = { gates: Lock, plazas: Building, planning: Briefcase, crowd_services: Users, mataf: TrendingUp, haram_map: Shield };
 
-function AnimNum({ value, duration = 600, language = 'ar' }) {
+function AnimNum({ value: rawValue, duration = 600, language = 'ar' }) {
+  const value = Number(rawValue) || 0;
   const [d, setD] = useState(0);
   useEffect(() => {
     let s = 0, step = value / (duration / 16);
@@ -77,7 +78,7 @@ export default function AdminDashboard() {
   const isAr = language === 'ar';
   const [users, setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [stats, setStats] = useState({ total: 0, active: 0, frozen: 0, byRole: {}, byDept: {} });
+  const [stats, setStats] = useState({ total: 0, active: 0, frozen: 0, byRole: {}, byDept: {}, totalEmployees: 0 });
   const [securityData, setSecurityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [securityTab, setSecurityTab] = useState("frozen");
