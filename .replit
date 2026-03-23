@@ -28,6 +28,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 5001
+externalPort = 3000
+
+[[ports]]
 localPort = 8000
 externalPort = 8000
 
@@ -37,3 +41,6 @@ expertMode = true
 [nix]
 channel = "stable-25_05"
 packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "rustc", "tcl", "tk", "zlib", "mongodb"]
+
+[deployment]
+deploymentTarget = "gce"
