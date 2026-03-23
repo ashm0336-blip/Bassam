@@ -408,11 +408,9 @@ async def get_haramain_density():
     try:
         import requests
         from bs4 import BeautifulSoup
-        import urllib3
-        urllib3.disable_warnings()
         url = "https://alharamain.gov.sa/public/?module=module_794625"
         headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=10, verify=False)
+        response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
         text = soup.get_text()
         mataf = [
