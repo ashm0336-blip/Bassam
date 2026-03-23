@@ -78,6 +78,19 @@ if (config.enableVisualEdits && babelMetadataPlugin) {
 }
 
 webpackConfig.devServer = (devServerConfig) => {
+  // Allow all hosts for Replit's proxied preview iframe
+  devServerConfig.allowedHosts = "all";
+  devServerConfig.host = "0.0.0.0";
+
+  // Proxy API and uploads requests to the FastAPI backend
+  devServerConfig.proxy = [
+    {
+      context: ["/api", "/uploads"],
+      target: "http://localhost:8000",
+      changeOrigin: true,
+    },
+  ];
+
   // Apply visual edits dev server setup only if enabled
   if (config.enableVisualEdits && setupDevServer) {
     devServerConfig = setupDevServer(devServerConfig);
