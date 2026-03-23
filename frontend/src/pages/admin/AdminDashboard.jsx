@@ -82,7 +82,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [securityTab, setSecurityTab] = useState("frozen");
   const [unfreezing, setUnfreezing] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -112,7 +111,6 @@ export default function AdminDashboard() {
         byRole, byDept,
         totalEmployees: empsData.length,
       });
-      setLastUpdate(new Date());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, []);
@@ -159,12 +157,13 @@ export default function AdminDashboard() {
           <h2 className="font-cairo font-bold text-xl">{isAr ? 'نظرة عامة على النظام' : 'System Overview'}</h2>
           <p className="text-sm text-muted-foreground mt-1">{isAr ? 'المستخدمون والمراقبة الأمنية' : 'Users & security monitoring'}</p>
         </div>
-        <button onClick={() => { setLoading(true); fetchData(); }}
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted px-3 py-1.5 rounded-full border transition-colors cursor-pointer"
-          title={isAr ? 'تحديث البيانات' : 'Refresh data'}>
-          <RefreshCw className="w-3.5 h-3.5" />
-          {lastUpdate ? lastUpdate.toLocaleTimeString(isAr ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
-        </button>
+        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          {isAr ? 'مباشر' : 'Live'}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
