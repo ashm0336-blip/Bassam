@@ -85,17 +85,22 @@ export default function LoginPage() {
     e.preventDefault();
     if (!formData.identifier || !formData.password) { toast.error('أدخل رقم الهوية أو البريد الإلكتروني وكلمة المرور'); return; }
     setLoading(true);
-    const result = await login(formData.identifier, formData.password);
-    if (result.success) {
-      if (result.must_change_pin) { setShowPinChange(true); }
-      else {
-        const u = result.user;
-        const roleName = u?.permission_group_name || ROLE_LABELS[u?.role]?.ar || u?.role;
-        toast.success(`مرحباً ${u?.name} — ${roleName}`);
-        navigate('/');
-      }
-    } else { toast.error(result.error); }
-    setLoading(false);
+    try {
+      const result = await login(formData.identifier, formData.password);
+      if (result.success) {
+        if (result.must_change_pin) { setShowPinChange(true); }
+        else {
+          const u = result.user;
+          const roleName = u?.permission_group_name || ROLE_LABELS[u?.role]?.ar || u?.role;
+          toast.success(`مرحباً ${u?.name} — ${roleName}`);
+          navigate('/');
+        }
+      } else { toast.error(result.error); }
+    } catch (err) {
+      toast.error('حدث خطأ غير متوقع، يرجى المحاولة مجدداً');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clr = pageSettings.primary_color;

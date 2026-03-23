@@ -89,6 +89,12 @@ webpackConfig.devServer = (devServerConfig) => {
       target: "http://localhost:8000",
       changeOrigin: true,
     },
+    {
+      context: ["/ws"],
+      target: "http://localhost:8000",
+      changeOrigin: true,
+      ws: true,
+    },
   ];
 
   // Apply visual edits dev server setup only if enabled

@@ -11,7 +11,7 @@ echo "MongoDB started"
 
 # Start FastAPI backend in background on port 8000
 cd /home/runner/workspace/backend
-MONGO_URL="mongodb://localhost:27017" DB_NAME="crowd_services" JWT_SECRET="al-haram-os-secure-jwt-secret-key-production-2024" CORS_ORIGINS="*" python3 -m uvicorn server:app --host localhost --port 8000 --reload &
+MONGO_URL="mongodb://localhost:27017" DB_NAME="crowd_services" JWT_SECRET="al-haram-os-secure-jwt-secret-key-production-2024" CORS_ORIGINS="*" python3 -m uvicorn server:app --host 0.0.0.0 --port 8000 --reload &
 BACKEND_PID=$!
 echo "Backend started with PID $BACKEND_PID"
 

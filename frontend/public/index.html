@@ -65,9 +65,9 @@
         };
         
         try {
-          // Use SYNCHRONOUS XMLHttpRequest to fetch settings BEFORE React loads
           var xhr = new XMLHttpRequest();
           xhr.open('GET', window.location.origin + '/api/settings/login-page', false);
+          xhr.timeout = 3000;
           xhr.send(null);
           
           if (xhr.status === 200) {
@@ -76,7 +76,6 @@
             window.__LOGIN_SETTINGS__ = defaultSettings;
           }
         } catch (e) {
-          console.warn('Failed to load login settings, using defaults:', e);
           window.__LOGIN_SETTINGS__ = defaultSettings;
         }
       })();
