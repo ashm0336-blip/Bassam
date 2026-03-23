@@ -407,15 +407,16 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     const assignmentMap = {};
     if (schedule?.assignments) schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
     const isCurrentOrActive = schedule && (selectedMonth===currentMonthKey || schedule.status==='active');
-    return employees.map(emp => {
+    return (employees || []).map(emp => {
       const a = assignmentMap[emp.id];
-      const restDays = a ? a.rest_days : (emp.rest_days || []);
+      const restDays = Array.isArray(a?.rest_days) ? a.rest_days : (Array.isArray(emp.rest_days) ? emp.rest_days : []);
       const location  = a ? a.location : (emp.location || "");
       const shift     = a ? a.shift    : (emp.shift || "");
       const isTasked  = a ? a.is_tasked : false;
       const isOnRest  = isCurrentOrActive && restDays.includes(todayAr);
       const contractOk = isContractActive(emp);
-      return { ...emp, rest_days: restDays, location, shift, is_tasked: isTasked,
+      const empType = emp.employment_type || 'permanent';
+      return { ...emp, employment_type: empType, rest_days: restDays, location, shift, is_tasked: isTasked,
                is_active: !isOnRest && contractOk, on_rest: isOnRest,
                contract_expired: !contractOk, has_assignment: !!a };
     });
@@ -428,15 +429,15 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
     if (isApproved && schedule?.assignments) {
       schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
     }
-    return employees.map(emp => {
+    return (employees || []).map(emp => {
       const a = isApproved ? assignmentMap[emp.id] : null;
-      // إذا لم يكن الجدول معتمداً → rest_days وshift وis_tasked كلها صفر/فارغ
-      const restDays  = a ? (a.rest_days || []) : [];
+      const restDays  = a ? (Array.isArray(a.rest_days) ? a.rest_days : []) : [];
       const shift     = a ? (a.shift || "")     : "";
       const isTasked  = a ? (a.is_tasked === true) : false;
       const isOnRest  = isApproved && restDays.includes(todayAr);
       const contractOk = isContractActive(emp);
-      return { ...emp, rest_days: restDays, shift, is_tasked: isTasked,
+      const empType = emp.employment_type || 'permanent';
+      return { ...emp, employment_type: empType, rest_days: restDays, shift, is_tasked: isTasked,
                is_active: !isOnRest && contractOk, on_rest: isOnRest,
                contract_expired: !contractOk };
     });
