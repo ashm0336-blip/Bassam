@@ -446,8 +446,17 @@ async def update_user_role(user_id: str, data: dict, current_user: dict = Depend
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-    if current_user.get("role") != "system_admin":
-        raise HTTPException(status_code=403, detail="فقط مسؤول النظام يمكنه تغيير الأدوار")
+    caller_role = current_user.get("role")
+    if caller_role not in ("system_admin", "general_manager"):
+        if caller_role == "department_manager":
+            if target.get("department") != current_user.get("department"):
+                raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
+            if new_role in ("system_admin", "general_manager"):
+                raise HTTPException(status_code=403, detail="لا يمكنك تعيين هذا الدور")
+        else:
+            raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    if caller_role == "general_manager" and new_role == "system_admin":
+        raise HTTPException(status_code=403, detail="فقط مسؤول النظام يمكنه تعيين مسؤول نظام آخر")
     old_role = target.get("role")
     await db.users.update_one({"id": user_id}, {"$set": {"role": new_role}})
     await log_activity("role_changed", current_user, target.get("name", user_id),

@@ -157,8 +157,7 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
     query = {}
     if department:
         query["department"] = department
-    elif user["role"] not in ["system_admin"] and not user.get("permission_group_id"):
-        # No department filter and no group — show only user's department
+    elif user["role"] not in ["system_admin", "general_manager"] and not user.get("permission_group_id"):
         if user.get("department"):
             query["department"] = user.get("department")
     employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
