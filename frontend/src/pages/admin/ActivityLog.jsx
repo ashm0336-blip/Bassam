@@ -84,17 +84,17 @@ export default function ActivityLog() {
     return logDate === new Date().toDateString();
   });
 
-  const actionCounts = {};
-  logs.forEach(log => { actionCounts[log.action] = (actionCounts[log.action] || 0) + 1; });
-  const topAction = Object.entries(actionCounts).sort((a, b) => b[1] - a[1])[0];
-
   const uniqueUsersToday = new Set(todayLogs.map(l => l.user_name)).size;
+
+  const userActivityCounts = {};
+  logs.forEach(log => { if (log.user_name) userActivityCounts[log.user_name] = (userActivityCounts[log.user_name] || 0) + 1; });
+  const mostActiveUser = Object.entries(userActivityCounts).sort((a, b) => b[1] - a[1])[0];
 
   if (loading) {
     return (
       <div className="space-y-5 animate-pulse">
         <div className="h-8 rounded-xl bg-muted w-1/3" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1,2,3,4].map(i => <Card key={i}><CardContent className="p-5 h-24" /></Card>)}
         </div>
         <Card><CardContent className="p-5 h-64" /></Card>
@@ -106,7 +106,7 @@ export default function ActivityLog() {
     { label: isAr ? 'إجمالي الأنشطة' : 'Total Activities', value: logs.length, icon: Activity, color: '#6366f1', sub: isAr ? 'كل السجلات' : 'All records' },
     { label: isAr ? 'أنشطة اليوم' : 'Today\'s Activities', value: todayLogs.length, icon: Calendar, color: '#22c55e', sub: isAr ? 'اليوم' : 'Today' },
     { label: isAr ? 'مستخدمون نشطون اليوم' : 'Active Users Today', value: uniqueUsersToday, icon: TrendingUp, color: '#3b82f6', sub: isAr ? 'مستخدم فريد' : 'Unique users' },
-    { label: isAr ? 'أكثر نشاط' : 'Top Activity', value: topAction ? topAction[1] : 0, icon: Clock, color: '#f59e0b', sub: topAction ? (ACTION_CONFIG[topAction[0]]?.label[language] || topAction[0]) : '—' },
+    { label: isAr ? 'الأكثر نشاطاً' : 'Most Active User', value: mostActiveUser ? mostActiveUser[1] : 0, icon: Clock, color: '#f59e0b', sub: mostActiveUser ? mostActiveUser[0] : '—' },
   ];
 
   return (
@@ -122,7 +122,7 @@ export default function ActivityLog() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card, i) => {
           const Icon = card.icon;
           return (

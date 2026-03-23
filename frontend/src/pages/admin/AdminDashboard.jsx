@@ -133,7 +133,7 @@ export default function AdminDashboard() {
   if (loading) return (
     <div className="space-y-5 animate-pulse">
       <div className="h-8 rounded-xl bg-muted w-1/3" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1,2,3,4].map(i => <Card key={i}><CardContent className="p-6 h-32" /></Card>)}
       </div>
       <Card><CardContent className="p-6 h-64" /></Card>
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
