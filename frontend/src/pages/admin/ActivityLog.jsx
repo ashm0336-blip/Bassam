@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { 
@@ -35,7 +35,6 @@ export default function ActivityLog() {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const [logs, setLogs] = useState([]);
-  const [filteredLogs, setFilteredLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState("all");
   const [filterUser, setFilterUser] = useState("");
@@ -43,7 +42,6 @@ export default function ActivityLog() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => { fetchLogs(); }, []);
-  useEffect(() => { applyFilters(); setCurrentPage(1); }, [logs, filterAction, filterUser, filterDate]);
 
   const fetchLogs = async () => {
     try {
@@ -59,10 +57,10 @@ export default function ActivityLog() {
     } finally { setLoading(false); }
   };
 
-  const applyFilters = () => {
+  const computedFiltered = useMemo(() => {
     let filtered = [...logs];
     if (filterAction !== "all") filtered = filtered.filter(log => log.action === filterAction);
-    if (filterUser) filtered = filtered.filter(log => 
+    if (filterUser) filtered = filtered.filter(log =>
       (log.user_name || '').toLowerCase().includes(filterUser.toLowerCase()) ||
       (log.user_email || '').toLowerCase().includes(filterUser.toLowerCase())
     );
@@ -70,14 +68,16 @@ export default function ActivityLog() {
       const logDate = new Date(log.timestamp).toISOString().split('T')[0];
       return logDate === filterDate;
     });
-    setFilteredLogs(filtered);
-  };
+    return filtered;
+  }, [logs, filterAction, filterUser, filterDate]);
+
+  useEffect(() => { setCurrentPage(1); }, [computedFiltered]);
 
   const clearFilters = () => { setFilterAction("all"); setFilterUser(""); setFilterDate(""); };
   const hasFilters = filterAction !== "all" || filterUser || filterDate;
 
-  const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.ceil(computedFiltered.length / PAGE_SIZE);
+  const paginatedLogs = computedFiltered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const todayLogs = logs.filter(log => {
     const logDate = new Date(log.timestamp).toDateString();
@@ -185,12 +185,12 @@ export default function ActivityLog() {
             {hasFilters && (
               <Button variant="ghost" size="sm" className="h-9 gap-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={clearFilters}>
                 <X className="w-3.5 h-3.5" />
-                {isAr ? 'مسح' : 'Clear'} ({filteredLogs.length})
+                {isAr ? 'مسح' : 'Clear'} ({computedFiltered.length})
               </Button>
             )}
 
             <div className="mr-auto text-[11px] text-muted-foreground">
-              {isAr ? `عرض ${filteredLogs.length} من ${logs.length} نشاط` : `Showing ${filteredLogs.length} of ${logs.length}`}
+              {isAr ? `عرض ${computedFiltered.length} من ${logs.length} نشاط` : `Showing ${computedFiltered.length} of ${logs.length}`}
             </div>
           </div>
         </div>
