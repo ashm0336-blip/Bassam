@@ -11,6 +11,17 @@ from auth import get_current_user, require_admin, log_activity, hash_password, c
 router = APIRouter()
 
 
+EMPLOYMENT_TYPE_MAP = {
+    "دائم": "permanent", "permanent": "permanent",
+    "موسمي": "seasonal", "seasonal": "seasonal",
+    "مؤقت": "temporary", "temporary": "temporary",
+}
+WORK_TYPE_MAP = {
+    "ميداني": "field", "field": "field",
+    "إداري": "admin", "admin": "admin",
+    "إداري/ميداني": "both", "both": "both",
+}
+
 COLUMN_MAP = {
     "الاسم": "name", "Name": "name", "name": "name",
     "المسمى الوظيفي": "job_title", "Job Title": "job_title", "job_title": "job_title",
@@ -104,6 +115,11 @@ async def import_employees(
 
             nid = data.get("national_id", "").strip()
             emp_num = data.get("employee_number", "").strip()
+
+            raw_emp_type = data.get("employment_type", "")
+            data["employment_type"] = EMPLOYMENT_TYPE_MAP.get(raw_emp_type, "") if raw_emp_type else ""
+            raw_work_type = data.get("work_type", "")
+            data["work_type"] = WORK_TYPE_MAP.get(raw_work_type, "") if raw_work_type else ""
 
             rest_str = data.get("weekly_rest", "")
             rest_days = [d.strip() for d in rest_str.replace("،", ",").split(",") if d.strip()] if rest_str else []

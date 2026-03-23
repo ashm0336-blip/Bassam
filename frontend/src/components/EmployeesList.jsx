@@ -162,7 +162,7 @@ function AccountBadge({ status }) {
 }
 
 function EmpTypeBadge({ type }) {
-  const cfg = EMP_TYPE_CFG[type || "permanent"];
+  const cfg = EMP_TYPE_CFG[type] || EMP_TYPE_CFG["permanent"];
   return (
     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
       style={{ color: cfg.color, backgroundColor: cfg.bg }}>
