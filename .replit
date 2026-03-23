@@ -44,3 +44,4 @@ packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimageq
 
 [deployment]
 deploymentTarget = "gce"
+run = ["sh", "-c", "bash start.sh"]
