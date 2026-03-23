@@ -137,14 +137,49 @@ const ALL_ASSIGNABLE_ROLES = [
   { value: 'admin_staff',        ar: 'موظف إداري',   level: 1 },
 ];
 
-function RoleSelector({ emp, permGroups = [] }) {
+function RoleSelector({ emp, permGroups = [], canChange = false, onChangeRole }) {
   if (!emp.user_id) return <span className="text-[9px] text-slate-400">—</span>;
   const currentGroup = permGroups.find(g => g.id === emp.permission_group_id);
   const name = currentGroup?.name_ar || 'بدون مجموعة';
+
+  if (!canChange || !onChangeRole) {
+    return (
+      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${currentGroup ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>
+        <Shield className="w-3 h-3" />{name}
+      </span>
+    );
+  }
+
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${currentGroup ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>
-      <Shield className="w-3 h-3" />{name}
-    </span>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full cursor-pointer transition-all hover:shadow-sm ${currentGroup ? 'bg-violet-50 text-violet-700 hover:bg-violet-100' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+          <Shield className="w-3 h-3" />{name}<ChevronDown className="w-2.5 h-2.5 opacity-50" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[180px]" dir="rtl">
+        <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground">تغيير المجموعة</div>
+        <DropdownMenuSeparator />
+        {permGroups.map(g => (
+          <DropdownMenuItem key={g.id}
+            className={`text-[11px] font-cairo gap-2 ${g.id === emp.permission_group_id ? 'bg-violet-50 text-violet-700 font-bold' : ''}`}
+            onClick={() => { if (g.id !== emp.permission_group_id) onChangeRole(emp, g.id); }}>
+            <Shield className="w-3.5 h-3.5" />
+            {g.name_ar}
+            {g.id === emp.permission_group_id && <Check className="w-3 h-3 mr-auto" />}
+          </DropdownMenuItem>
+        ))}
+        {emp.permission_group_id && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-[11px] font-cairo gap-2 text-red-500"
+              onClick={() => onChangeRole(emp, null)}>
+              <X className="w-3.5 h-3.5" />إزالة المجموعة
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -269,10 +304,10 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
             <AccountStatusIcon emp={emp} canManageAccounts={canManageAccounts}
               canResetPins={canResetPins} onAccountAction={onAccountAction} isAr={isAr}/>
           </div>
-          {canChangeRoles && (
+          {(
             <div className="flex items-center gap-1">
               <Shield className="w-3 h-3 text-violet-400" />
-              <RoleSelector emp={emp} permGroups={permGroups}/>
+              <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles} onChangeRole={onChangeRole}/>
             </div>
           )}
         </div>
@@ -897,7 +932,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                     </div>
                   </TableHead>
                   {/* الصلاحيات */}
-                  {canChangeRoles && (
                     <TableHead className="text-center py-2.5 w-32">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
@@ -906,7 +940,6 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                         <span className="text-[11px] font-semibold text-slate-600">الصلاحيات</span>
                       </div>
                     </TableHead>
-                  )}
                   {/* إجراءات */}
                   <TableHead className="text-center py-2.5 w-16">
                     <div className="flex flex-col items-center gap-1.5">
@@ -953,11 +986,9 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
                         canResetPins={canResetPins} onAccountAction={handleAccountAction} isAr={isAr}/>
                     </TableCell>
                     {/* الصلاحيات */}
-                    {canChangeRoles && (
-                      <TableCell className="text-center">
-                        <RoleSelector emp={emp} permGroups={permGroups}/>
-                      </TableCell>
-                    )}
+                    <TableCell className="text-center">
+                      <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles} onChangeRole={handleChangeRole}/>
+                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
