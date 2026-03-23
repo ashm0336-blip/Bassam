@@ -79,12 +79,14 @@ export default function LoginPage() {
 
   useEffect(() => { if (user?.must_change_pin) setShowPinChange(true); }, [user?.must_change_pin]);
 
-  const [pageSettings, setPageSettings] = useState(window.__LOGIN_SETTINGS__ || DEFAULT_LOGIN_SETTINGS);
+  const [pageSettings, setPageSettings] = useState(null);
+  const [settingsReady, setSettingsReady] = useState(false);
 
   useEffect(() => {
     axios.get(`${API}/settings/login-page`)
-      .then(res => { if (res.data) setPageSettings(res.data); })
-      .catch(() => {});
+      .then(res => { if (res.data) setPageSettings(res.data); else setPageSettings(DEFAULT_LOGIN_SETTINGS); })
+      .catch(() => { setPageSettings(window.__LOGIN_SETTINGS__ || DEFAULT_LOGIN_SETTINGS); })
+      .finally(() => setSettingsReady(true));
   }, []);
 
   const isNationalId = /^[12]\d{0,9}$/.test(formData.identifier.trim()) && !formData.identifier.includes('@');
@@ -110,6 +112,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (!settingsReady || !pageSettings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" dir="rtl">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+      </div>
+    );
+  }
 
   const clr = pageSettings.primary_color;
 
