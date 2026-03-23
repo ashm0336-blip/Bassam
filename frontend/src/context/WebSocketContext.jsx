@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 
 const WebSocketContext = createContext(null);
+const WsStatusContext = createContext(false);
 
 export function WebSocketProvider({ children }) {
   const [lastEvent, setLastEvent] = useState(null);
+  const [connected, setConnected] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
 
@@ -16,6 +18,7 @@ export function WebSocketProvider({ children }) {
 
       ws.onopen = () => {
         console.log("[WS] Connected");
+        setConnected(true);
       };
 
       ws.onmessage = (event) => {
@@ -27,6 +30,7 @@ export function WebSocketProvider({ children }) {
 
       ws.onclose = () => {
         console.log("[WS] Disconnected — reconnecting in 3s");
+        setConnected(false);
         reconnectTimer.current = setTimeout(connect, 3000);
       };
 
@@ -49,9 +53,11 @@ export function WebSocketProvider({ children }) {
   }, [connect]);
 
   return (
-    <WebSocketContext.Provider value={lastEvent}>
-      {children}
-    </WebSocketContext.Provider>
+    <WsStatusContext.Provider value={connected}>
+      <WebSocketContext.Provider value={lastEvent}>
+        {children}
+      </WebSocketContext.Provider>
+    </WsStatusContext.Provider>
   );
 }
 
@@ -77,4 +83,8 @@ export function useRealtimeRefresh(channels, onRefresh) {
 
 export function useLastEvent() {
   return useContext(WebSocketContext);
+}
+
+export function useWsConnected() {
+  return useContext(WsStatusContext);
 }

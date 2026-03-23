@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useRealtimeRefresh } from "@/context/WebSocketContext";
+import { useRealtimeRefresh, useWsConnected } from "@/context/WebSocketContext";
 import {
   Bell, AlertTriangle, Info, AlertCircle, CheckCircle2, Trash2,
   Plus, ClipboardList, Megaphone, Send, Clock, Eye, Loader2,
@@ -122,14 +122,24 @@ function AnimatedCounter({ value, color }) {
   return <span className="text-2xl font-black tabular-nums" style={{ color }}>{display}</span>;
 }
 
-function LivePulse() {
-  return (
-    <span className="relative flex items-center gap-1.5 text-[10px] text-emerald-600 font-medium">
-      <span className="relative flex h-2.5 w-2.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+function LivePulse({ connected }) {
+  if (connected) {
+    return (
+      <span className="relative flex items-center gap-1.5 text-[10px] text-emerald-600 font-medium" role="status" aria-label="متصل مباشرة">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+        </span>
+        مباشر
       </span>
-      مباشر
+    );
+  }
+  return (
+    <span className="relative flex items-center gap-1.5 text-[10px] text-amber-600 font-medium" role="status" aria-label="جاري إعادة الاتصال">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
+      </span>
+      جاري الاتصال...
     </span>
   );
 }
@@ -138,6 +148,7 @@ function LivePulse() {
 export default function NotificationsPage() {
   const { canAddAlerts, user, hasPermission } = useAuth();
   const { language } = useLanguage();
+  const wsConnected = useWsConnected();
   const [activeTab, setActiveTab] = useState("all");
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +160,7 @@ export default function NotificationsPage() {
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [markingAll, setMarkingAll] = useState(false);
   const [newAlertIds, setNewAlertIds] = useState(new Set());
+  const prevAlertIdsRef = useRef(new Set());
 
   const [alertForm, setAlertForm] = useState({
     type: "warning", title: "", message: "", department: user?.department || "all", priority: "medium",
@@ -168,22 +180,21 @@ export default function NotificationsPage() {
       const res = await axios.get(url);
       const incoming = res.data;
 
-      if (wsEvent && alerts.length > 0) {
-        const existingIds = new Set(alerts.map(a => a.id));
-        const brandNew = incoming.filter(a => !existingIds.has(a.id)).map(a => a.id);
+      if (wsEvent && prevAlertIdsRef.current.size > 0) {
+        const brandNew = incoming.filter(a => !prevAlertIdsRef.current.has(a.id)).map(a => a.id);
         if (brandNew.length > 0) {
-          setNewAlertIds(prev => new Set([...prev, ...brandNew]));
+          setNewAlertIds(new Set(brandNew));
           setTimeout(() => setNewAlertIds(new Set()), 3000);
         }
       }
 
+      prevAlertIdsRef.current = new Set(incoming.map(a => a.id));
       setAlerts(incoming);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [activeTab, alerts]);
+  }, [activeTab]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLoading(true); fetchAlerts(); }, [activeTab]);
+  useEffect(() => { setLoading(true); fetchAlerts(); }, [fetchAlerts]);
   useRealtimeRefresh(["alerts"], fetchAlerts);
 
   const allAlerts = alerts;
@@ -286,7 +297,7 @@ export default function NotificationsPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-cairo font-bold text-xl">الإشعارات والتنبيهات</h1>
-              <LivePulse />
+              <LivePulse connected={wsConnected} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {unreadCount > 0
@@ -301,6 +312,7 @@ export default function NotificationsPage() {
             variant="ghost" size="icon"
             className="h-9 w-9 rounded-xl"
             onClick={() => setShowSearch(!showSearch)}
+            aria-label={showSearch ? "إغلاق البحث" : "بحث في الإشعارات"}
           >
             {showSearch ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
           </Button>
@@ -393,7 +405,7 @@ export default function NotificationsPage() {
         style={{ backgroundColor: activeTabConfig.light, border: `1px solid ${activeTabConfig.border}` }}
         data-testid="notif-tabs-bar"
       >
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="tablist" aria-label="تصنيفات الإشعارات">
           {TAB_CONFIG.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -402,6 +414,9 @@ export default function NotificationsPage() {
               <button
                 key={tab.id}
                 type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 data-testid={`tab-${tab.id}`}
                 className={`
@@ -615,6 +630,7 @@ export default function NotificationsPage() {
                                       )}
                                       {canAddAlerts() && (
                                         <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 rounded-lg hover:bg-red-50 text-destructive"
+                                          aria-label="حذف الإشعار"
                                           onClick={(e) => { e.stopPropagation(); handleDelete(alert.id); }}>
                                           <Trash2 className="w-3 h-3" />
                                         </Button>
