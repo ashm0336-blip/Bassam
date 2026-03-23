@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
-  Users, DoorOpen, AlertTriangle, TrendingUp, Clock, Activity,
-  ShieldAlert, Calendar, Building, MapPin, RefreshCw,
-  ChevronLeft, Eye, Zap, BarChart3, Bell, ArrowUp, ArrowDown,
-  Volume2, VolumeX, ClipboardList, Map, Layers, CheckCircle2,
-  XCircle, AlertCircle, Timer, ChevronRight, Wifi
+  Users, DoorOpen, AlertTriangle, TrendingUp, Activity,
+  ShieldAlert, Calendar, Building, BarChart3, Bell,
+  ClipboardList, Map, Layers, CheckCircle2,
+  XCircle, Timer, ChevronLeft
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -266,9 +265,6 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <CrowdAlertMonitor />
-          <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8" onClick={fetchData}>
-            <RefreshCw className="w-3.5 h-3.5" /> تحديث
-          </Button>
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800" data-testid="live-indicator">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
