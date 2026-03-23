@@ -965,7 +965,11 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
             try {
               const token = localStorage.getItem('token');
               const res = await axios.post(`${API}/employees/import`, formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
-              toast.success(`${isAr?'تم استيراد':'Imported'} ${res.data.created} ${isAr?'موظف':'employees'}${res.data.skipped > 0 ? ` (${isAr?'تخطي':'skipped'} ${res.data.skipped})` : ''}`);
+              const parts = [];
+              if (res.data.created > 0) parts.push(`${res.data.created} ${isAr?'جديد':'new'}`);
+              if (res.data.updated > 0) parts.push(`${res.data.updated} ${isAr?'محدّث':'updated'}`);
+              if (res.data.skipped > 0) parts.push(`${res.data.skipped} ${isAr?'تخطي':'skipped'}`);
+              toast.success(`${isAr?'تم الاستيراد:':'Imported:'} ${parts.join(' | ')}`);
               if (res.data.errors?.length > 0) toast.warning(`${res.data.errors.length} ${isAr?'أخطاء':'errors'}`);
               fetchEmployees();
             } catch (err) {

@@ -85,6 +85,7 @@ async def import_employees(
         raise HTTPException(status_code=400, detail="الملف لا يحتوي على عمود 'الاسم' أو 'Name'")
 
     created = 0
+    updated = 0
     skipped = 0
     errors = []
 
@@ -101,80 +102,103 @@ async def import_employees(
                 skipped += 1
                 continue
 
-            # Check duplicate by national_id or employee_number
             nid = data.get("national_id", "").strip()
             emp_num = data.get("employee_number", "").strip()
-            if nid:
-                existing = await db.employees.find_one({"national_id": nid, "department": department})
-                if existing:
-                    skipped += 1
-                    continue
-            if emp_num:
-                existing = await db.employees.find_one({"employee_number": emp_num, "department": department})
-                if existing:
-                    skipped += 1
-                    continue
 
-            # Parse rest days
             rest_str = data.get("weekly_rest", "")
             rest_days = [d.strip() for d in rest_str.replace("،", ",").split(",") if d.strip()] if rest_str else []
 
-            emp_id = str(uuid.uuid4())
-            if not emp_num:
-                emp_num = str(1000 + created + row_idx)
-
-            emp_doc = {
-                "id": emp_id,
-                "name": name,
-                "job_title": data.get("job_title", "موظف"),
-                "department": department,
-                "employee_number": emp_num,
-                "national_id": nid or None,
-                "contact_phone": data.get("contact_phone", ""),
-                "shift": data.get("shift", ""),
-                "location": data.get("location", ""),
-                "employment_type": data.get("employment_type", "permanent"),
-                "work_type": data.get("work_type", "field"),
-                "weekly_rest": rest_str,
-                "rest_days": rest_days,
-                "contract_end": data.get("contract_end", "") or None,
-                "work_tasks": "",
-                "is_tasked": False,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
-            await db.employees.insert_one(emp_doc)
-
-            # Auto-create user account if national_id exists
+            existing = None
             if nid:
-                existing_user = await db.users.find_one({"national_id": nid})
-                if not existing_user:
-                    user_doc = {
-                        "id": str(uuid.uuid4()),
-                        "email": None,
-                        "national_id": nid,
-                        "password": hash_password(emp_num),
-                        "name": name,
-                        "role": "field_staff",
-                        "department": department,
-                        "account_status": "pending",
-                        "must_change_pin": True,
-                        "failed_attempts": 0,
-                        "employee_id": emp_id,
-                        "is_active": False,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                    }
-                    await db.users.insert_one(user_doc)
+                existing = await db.employees.find_one({"national_id": nid, "department": department})
+            if not existing and emp_num:
+                existing = await db.employees.find_one({"employee_number": emp_num, "department": department})
 
-            created += 1
+            if existing:
+                update_fields = {
+                    "name": name,
+                    "job_title": data.get("job_title", existing.get("job_title", "موظف")),
+                    "contact_phone": data.get("contact_phone", existing.get("contact_phone", "")),
+                    "shift": data.get("shift", existing.get("shift", "")),
+                    "location": data.get("location", existing.get("location", "")),
+                    "employment_type": data.get("employment_type", existing.get("employment_type", "permanent")),
+                    "work_type": data.get("work_type", existing.get("work_type", "field")),
+                    "weekly_rest": rest_str or existing.get("weekly_rest", ""),
+                    "rest_days": rest_days or existing.get("rest_days", []),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+                if data.get("contract_end"):
+                    update_fields["contract_end"] = data["contract_end"]
+                if nid:
+                    update_fields["national_id"] = nid
+                if emp_num:
+                    update_fields["employee_number"] = emp_num
+
+                await db.employees.update_one({"id": existing["id"]}, {"$set": update_fields})
+
+                if nid:
+                    existing_user = await db.users.find_one({"national_id": nid})
+                    if existing_user:
+                        await db.users.update_one({"national_id": nid}, {"$set": {"name": name}})
+
+                updated += 1
+            else:
+                emp_id = str(uuid.uuid4())
+                if not emp_num:
+                    emp_num = str(1000 + created + row_idx)
+
+                emp_doc = {
+                    "id": emp_id,
+                    "name": name,
+                    "job_title": data.get("job_title", "موظف"),
+                    "department": department,
+                    "employee_number": emp_num,
+                    "national_id": nid or None,
+                    "contact_phone": data.get("contact_phone", ""),
+                    "shift": data.get("shift", ""),
+                    "location": data.get("location", ""),
+                    "employment_type": data.get("employment_type", "permanent"),
+                    "work_type": data.get("work_type", "field"),
+                    "weekly_rest": rest_str,
+                    "rest_days": rest_days,
+                    "contract_end": data.get("contract_end", "") or None,
+                    "work_tasks": "",
+                    "is_tasked": False,
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }
+                await db.employees.insert_one(emp_doc)
+
+                if nid:
+                    existing_user = await db.users.find_one({"national_id": nid})
+                    if not existing_user:
+                        user_doc = {
+                            "id": str(uuid.uuid4()),
+                            "email": None,
+                            "national_id": nid,
+                            "password": hash_password(emp_num),
+                            "name": name,
+                            "role": "field_staff",
+                            "department": department,
+                            "account_status": "pending",
+                            "must_change_pin": True,
+                            "failed_attempts": 0,
+                            "employee_id": emp_id,
+                            "is_active": False,
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                        }
+                        await db.users.insert_one(user_doc)
+
+                created += 1
         except Exception as e:
             errors.append(f"سطر {row_idx}: {str(e)[:80]}")
 
-    await log_activity("استيراد موظفين", user, department, f"تم استيراد {created} موظف، تخطي {skipped}")
+    await log_activity("استيراد موظفين", user, department, f"تم استيراد {created} جديد، تحديث {updated}، تخطي {skipped}")
 
     return {
-        "message": f"تم استيراد {created} موظف بنجاح",
+        "message": f"تم استيراد {created} موظف جديد وتحديث {updated} موظف",
         "created": created,
+        "updated": updated,
         "skipped": skipped,
         "errors": errors[:10],
         "total_rows": len(rows) - 1,
