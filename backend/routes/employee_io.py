@@ -194,7 +194,7 @@ async def import_employees(
                             "national_id": nid,
                             "password": hash_password(emp_num),
                             "name": name,
-                            "role": "field_staff",
+                            "role": None,
                             "department": department,
                             "account_status": "pending",
                             "must_change_pin": True,

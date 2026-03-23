@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
     national_id: Optional[str] = None   # للموظفين الميدانيين (10 أرقام)
     password: str
     name: str
-    role: str = "field_staff"
+    role: Optional[str] = None
     department: Optional[str] = None
     employee_id: Optional[str] = None   # ربط بالموظف
 
@@ -33,7 +33,7 @@ class UserResponse(BaseModel):
     email: Optional[str] = None
     national_id: Optional[str] = None
     name: str
-    role: str
+    role: Optional[str] = None
     department: Optional[str] = None
     allowed_departments: List[str] = []
     account_status: str = "active"

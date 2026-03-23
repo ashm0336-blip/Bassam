@@ -78,7 +78,7 @@ async def _auto_create_user_account(employee_id: str, employee_doc: dict):
         "national_id": national_id,
         "password": hash_password(default_pin),
         "name": employee_doc.get("name", ""),
-        "role": "field_staff",
+        "role": None,
         "department": employee_doc.get("department"),
         "allowed_departments": [employee_doc.get("department")] if employee_doc.get("department") else [],
         "permission_group_id": employee_doc.get("permission_group_id"),
@@ -166,7 +166,7 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
         if emp.get("user_id"):
             u = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "account_status": 1, "role": 1, "allowed_departments": 1, "permission_group_id": 1})
             emp["account_status"] = u.get("account_status", "no_account") if u else "no_account"
-            emp["user_role"] = u.get("role", "field_staff") if u else "field_staff"
+            emp["user_role"] = u.get("role") if u else None
             emp["permission_group_id"] = u.get("permission_group_id") if u else None
             emp["allowed_departments"] = u.get("allowed_departments", [emp.get("department")] if emp.get("department") else []) if u else []
         else:

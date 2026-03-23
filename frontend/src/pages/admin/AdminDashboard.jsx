@@ -18,13 +18,13 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ROLE_COLORS = {
   system_admin: "#dc2626", general_manager: "#9333ea", department_manager: "#3b82f6",
-  shift_supervisor: "#7c3aed", field_staff: "#22c55e", admin_staff: "#0ea5e9"
+  shift_supervisor: "#7c3aed", field_staff: "#22c55e", admin_staff: "#0ea5e9", unassigned: "#9ca3af"
 };
 const ROLE_LABELS = {
-  ar: { system_admin: "مسؤول النظام", general_manager: "المدير العام", department_manager: "مدير الإدارة", shift_supervisor: "مشرف الوردية", field_staff: "موظف ميداني", admin_staff: "موظف إداري" },
-  en: { system_admin: "System Admin", general_manager: "General Manager", department_manager: "Dept Manager", shift_supervisor: "Shift Supervisor", field_staff: "Field Staff", admin_staff: "Admin Staff" }
+  ar: { system_admin: "مسؤول النظام", general_manager: "المدير العام", department_manager: "مدير الإدارة", shift_supervisor: "مشرف الوردية", field_staff: "موظف ميداني", admin_staff: "موظف إداري", unassigned: "بدون دور" },
+  en: { system_admin: "System Admin", general_manager: "General Manager", department_manager: "Dept Manager", shift_supervisor: "Shift Supervisor", field_staff: "Field Staff", admin_staff: "Admin Staff", unassigned: "Unassigned" }
 };
-const ROLE_ICONS = { system_admin: Shield, general_manager: Briefcase, department_manager: Building, shift_supervisor: UserCheck, field_staff: UserCheck, admin_staff: Briefcase };
+const ROLE_ICONS = { system_admin: Shield, general_manager: Briefcase, department_manager: Building, shift_supervisor: UserCheck, field_staff: UserCheck, admin_staff: Briefcase, unassigned: Users };
 const DEPT_LABELS = { gates: 'الأبواب', plazas: 'الساحات', planning: 'التخطيط', crowd_services: 'الحشود', mataf: 'المطاف', haram_map: 'المصليات' };
 const DEPT_COLORS = { gates: '#1d4ed8', plazas: '#0d9488', planning: '#7c3aed', crowd_services: '#d97706', mataf: '#dc2626', haram_map: '#059669' };
 const DEPT_ICONS = { gates: Lock, plazas: Building, planning: Briefcase, crowd_services: Users, mataf: TrendingUp, haram_map: Shield };
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
       setSecurityData(secRes.data);
 
       const byRole = {}, byDept = {};
-      usersData.forEach(u => { byRole[u.role] = (byRole[u.role] || 0) + 1; });
+      usersData.forEach(u => { if (u.role) byRole[u.role] = (byRole[u.role] || 0) + 1; else byRole['unassigned'] = (byRole['unassigned'] || 0) + 1; });
       empsData.forEach(e => { const d = e.department || 'other'; byDept[d] = (byDept[d] || 0) + 1; });
 
       const frozen = usersData.filter(u => u.account_status === 'frozen').length;
@@ -506,8 +506,9 @@ export default function AdminDashboard() {
         <CardContent className="p-0">
           <div className="divide-y">
             {[...users].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6).map((user, i) => {
-              const Icon = ROLE_ICONS[user.role] || Users;
-              const color = ROLE_COLORS[user.role] || '#666';
+              const roleKey = user.role || 'unassigned';
+              const Icon = ROLE_ICONS[roleKey] || Users;
+              const color = ROLE_COLORS[roleKey] || '#666';
               return (
                 <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-muted/30 transition-colors">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-cairo font-bold text-white" style={{ background: color }}>
@@ -516,7 +517,7 @@ export default function AdminDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{user.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: `${color}15`, color }}>{ROLE_LABELS[language][user.role] || user.role}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: `${color}15`, color }}>{ROLE_LABELS[language][roleKey]}</span>
                       {user.department && <span className="text-[10px] text-muted-foreground">{DEPT_LABELS[user.department] || user.department}</span>}
                     </div>
                   </div>
