@@ -9,6 +9,15 @@ import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const DEFAULT_LOGIN_SETTINGS = {
+  primary_color: "#303D48",
+  background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
+  logo_url: "", logo_size: 150, logo_link: "/",
+  site_name_ar: "منصة خدمات الحشود",
+  subtitle_ar: "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
+  welcome_text_ar: "مرحباً بك في",
+};
+
 function PinChangeModal({ onSuccess }) {
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -70,14 +79,13 @@ export default function LoginPage() {
 
   useEffect(() => { if (user?.must_change_pin) setShowPinChange(true); }, [user?.must_change_pin]);
 
-  const [pageSettings] = useState(window.__LOGIN_SETTINGS__ || {
-    primary_color: "#303D48",
-    background_url: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
-    logo_url: "", logo_size: 150, logo_link: "/",
-    site_name_ar: "منصة خدمات الحشود",
-    subtitle_ar: "الإدارة العامة للتخطيط وخدمات الحشود في الحرم المكي الشريف",
-    welcome_text_ar: "مرحباً بك في",
-  });
+  const [pageSettings, setPageSettings] = useState(window.__LOGIN_SETTINGS__ || DEFAULT_LOGIN_SETTINGS);
+
+  useEffect(() => {
+    axios.get(`${API}/settings/login-page`)
+      .then(res => { if (res.data) setPageSettings(res.data); })
+      .catch(() => {});
+  }, []);
 
   const isNationalId = /^[12]\d{0,9}$/.test(formData.identifier.trim()) && !formData.identifier.includes('@');
 

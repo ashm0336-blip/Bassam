@@ -82,6 +82,9 @@ webpackConfig.devServer = (devServerConfig) => {
   devServerConfig.allowedHosts = "all";
   devServerConfig.host = "0.0.0.0";
 
+  // Move webpack HMR WebSocket to a different path so /ws is free for our backend proxy
+  devServerConfig.webSocketServer = { options: { path: "/webpack-ws" } };
+
   // Proxy API and uploads requests to the FastAPI backend
   devServerConfig.proxy = [
     {
