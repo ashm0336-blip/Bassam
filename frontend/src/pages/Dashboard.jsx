@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Users, DoorOpen, AlertTriangle, TrendingUp, Activity,
-  ShieldAlert, Calendar, Building, BarChart3, Bell,
+  ShieldAlert, Calendar, Building, Bell,
   ClipboardList, Map, Layers, CheckCircle2,
   XCircle, Timer, ChevronLeft
 } from "lucide-react";
@@ -462,14 +462,9 @@ export default function Dashboard() {
 
       {/* ── ملخص الإدارات ── */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-cairo font-bold text-base">ملخص الإدارات</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
-          </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8" onClick={() => navigate('/reports')}>
-            <BarChart3 className="w-3.5 h-3.5" /> تقرير مفصل
-          </Button>
+        <div className="mb-4">
+          <h2 className="font-cairo font-bold text-base">ملخص الإدارات</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
         </div>
         <div className="sm:hidden overflow-x-auto pb-2 -mx-3 px-3">
           <div className="flex gap-3 min-w-max">
