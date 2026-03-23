@@ -115,15 +115,22 @@ async def get_ops_dashboard():
 
     # ── Smart Alerts ──
     smart_alerts = []
-    # Gates without employees — بناءً على الجداول المعتمدة
-    gates_no_emp = [g for g in open_gates if not any(e.get("location", "").find(g["name"]) >= 0 for e in active_employees)]
-    if len(gates_no_emp) > 3:
-        smart_alerts.append({"type": "warning", "icon": "DoorOpen", "message": f"{len(gates_no_emp)} بوابة مفتوحة بدون موظف معيّن", "count": len(gates_no_emp), "action": "عرض البوابات", "href": "/gates?tab=dashboard"})
+    # Gates without employees — based on employee count vs open gates ratio
+    if len(open_gates) > 0 and total_on_duty == 0:
+        smart_alerts.append({"type": "warning", "icon": "DoorOpen", "message": f"{len(open_gates)} بوابة مفتوحة ولا يوجد موظفون مداومون حالياً", "count": len(open_gates), "action": "عرض البوابات", "href": "/gates?tab=dashboard"})
+    elif len(open_gates) > total_on_duty * 2 and total_on_duty > 0:
+        smart_alerts.append({"type": "warning", "icon": "DoorOpen", "message": f"عدد البوابات المفتوحة ({len(open_gates)}) يفوق طاقة الموظفين المداومين ({total_on_duty})", "count": len(open_gates), "action": "عرض البوابات", "href": "/gates?tab=dashboard"})
 
-    # High density plazas
-    high_density = [p for p in plazas if p.get("percentage", 0) > 80]
+    # High density plazas — compute percentage on the fly
+    high_density = []
+    for p in plazas:
+        cap = p.get("max_capacity", 0)
+        crowd = p.get("current_crowd", 0)
+        pct = round(crowd / cap * 100, 1) if cap else 0
+        if pct > 80:
+            high_density.append({**p, "percentage": pct})
     if high_density:
-        smart_alerts.append({"type": "danger", "icon": "AlertTriangle", "message": f"{len(high_density)} ساحة تتجاوز 80% من الطاقة", "count": len(high_density), "action": "عرض الساحات", "href": "/plazas"})
+        smart_alerts.append({"type": "danger", "icon": "AlertTriangle", "message": f"{len(high_density)} ساحة تتجاوز 80% من طاقتها الاستيعابية", "count": len(high_density), "action": "عرض الساحات", "href": "/plazas"})
 
     # Expiring contracts
     soon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()[:10]
