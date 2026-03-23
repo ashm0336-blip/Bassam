@@ -96,8 +96,18 @@ export default function PermissionsManager() {
   const [pageToDelete, setPageToDelete] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Group member count
-  const [groupUserCounts, setGroupUserCounts] = useState({});
+  const [members, setMembers] = useState([]);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState([]);
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  const fetchMembers = useCallback(async (groupId) => {
+    if (!groupId) { setMembers([]); return; }
+    try {
+      const res = await axios.get(`${API}/admin/permission-groups/${groupId}/members`, headers());
+      setMembers(res.data);
+    } catch { setMembers([]); }
+  }, []);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -110,7 +120,6 @@ export default function PermissionsManager() {
       if (!activeGroupId && groupsRes.data.length > 0) {
         setActiveGroupId(groupsRes.data[0].id);
       }
-      // Auto-expand all top-level items with children
       const autoExpand = {};
       menuRes.data.forEach(item => {
         if (!item.parent_id && menuRes.data.some(c => c.parent_id === item.id)) {
@@ -123,6 +132,39 @@ export default function PermissionsManager() {
   }, [activeGroupId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { fetchMembers(activeGroupId); }, [activeGroupId, fetchMembers]);
+
+  const openAssignDialog = async () => {
+    setAssignLoading(true);
+    setAssignDialogOpen(true);
+    try {
+      const res = await axios.get(`${API}/admin/assignable-users`, headers());
+      setAssignableUsers(res.data);
+    } catch { toast.error("فشل جلب الموظفين"); }
+    finally { setAssignLoading(false); }
+  };
+
+  const assignUserToGroup = async (userId) => {
+    try {
+      await axios.put(`${API}/admin/users/${userId}/permission-group`,
+        { permission_group_id: activeGroupId }, headers());
+      toast.success("تم تعيين الموظف");
+      fetchMembers(activeGroupId);
+      fetchAll();
+      const res = await axios.get(`${API}/admin/assignable-users`, headers());
+      setAssignableUsers(res.data);
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل التعيين"); }
+  };
+
+  const removeUserFromGroup = async (userId) => {
+    try {
+      await axios.put(`${API}/admin/users/${userId}/permission-group`,
+        { permission_group_id: null }, headers());
+      toast.success("تم إزالة الموظف من المجموعة");
+      fetchMembers(activeGroupId);
+      fetchAll();
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل الإزالة"); }
+  };
 
   // ── Active group ──
   const activeGroup = groups.find(g => g.id === activeGroupId);
@@ -605,12 +647,39 @@ export default function PermissionsManager() {
                   );
                 })()}
 
-                {activeGroup.user_count > 0 && (
-                  <div className="bg-violet-50 rounded-lg p-2.5 text-center">
-                    <p className="text-xl font-bold text-violet-600">{activeGroup.user_count}</p>
-                    <p className="text-[9px] text-violet-600/70 flex items-center justify-center gap-1"><UsersIcon className="w-3 h-3" />موظف في هذه المجموعة</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                      <UsersIcon className="w-3.5 h-3.5" /> الموظفون ({members.length})
+                    </p>
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 px-2" onClick={openAssignDialog}>
+                      <Plus className="w-3 h-3" /> تعيين
+                    </Button>
                   </div>
-                )}
+                  {members.length === 0 ? (
+                    <div className="bg-muted/30 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground">لا يوجد موظفون في هذه المجموعة</p>
+                      <Button size="sm" variant="link" className="text-[10px] h-auto p-0 mt-1" onClick={openAssignDialog}>
+                        تعيين موظف
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {members.map(m => (
+                        <div key={m.id} className="flex items-center justify-between bg-muted/20 rounded-lg px-2.5 py-1.5 group">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-bold truncate">{m.employee_name}</p>
+                            {m.job_title && <p className="text-[9px] text-muted-foreground truncate">{m.job_title}</p>}
+                          </div>
+                          <button onClick={() => removeUserFromGroup(m.id)}
+                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-1">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => openGroupDialog(activeGroup)}>
@@ -626,13 +695,6 @@ export default function PermissionsManager() {
                     <Trash2 className="w-3 h-3" /> حذف المجموعة
                   </Button>
                 )}
-
-                <div className="text-[10px] text-muted-foreground bg-muted/30 rounded-lg p-3 space-y-1">
-                  <p className="font-bold text-slate-600 mb-1">كيف تستخدم:</p>
-                  <p>1. أنشئ مجموعة بأي اسم</p>
-                  <p>2. حدد الصفحات الظاهرة والقابلة للتعديل</p>
-                  <p>3. عيّن الموظفين لهذه المجموعة من صفحة الموظفين</p>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -752,6 +814,57 @@ export default function PermissionsManager() {
               {submitting ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Trash2 className="w-4 h-4 ml-1" />}حذف
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Employee Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="font-cairo flex items-center gap-2">
+              <UsersIcon className="w-5 h-5" /> تعيين موظف لمجموعة {activeGroup?.name_ar}
+            </DialogTitle>
+            <DialogDescription>اختر الموظفين لإضافتهم لهذه المجموعة</DialogDescription>
+          </DialogHeader>
+          {assignLoading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : (
+            <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+              {assignableUsers.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6 text-sm">لا يوجد موظفون بحسابات مفعلة</p>
+              ) : (
+                assignableUsers.map(u => {
+                  const isInThisGroup = u.permission_group_id === activeGroupId;
+                  const isInOtherGroup = u.permission_group_id && u.permission_group_id !== activeGroupId;
+                  return (
+                    <div key={u.id} className={`flex items-center justify-between rounded-lg px-3 py-2.5 border transition-colors
+                      ${isInThisGroup ? 'bg-emerald-50 border-emerald-200' : 'hover:bg-muted/30 border-transparent'}`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-cairo font-bold text-[12px] truncate">{u.employee_name}</p>
+                        <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                          {u.job_title && <span>{u.job_title}</span>}
+                          {isInOtherGroup && (
+                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 text-amber-600 border-amber-200">
+                              {u.group_name}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {isInThisGroup ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 text-[10px] border-0">معيّن</Badge>
+                      ) : (
+                        <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1"
+                          onClick={() => assignUserToGroup(u.id)}>
+                          <Plus className="w-3 h-3" />
+                          {isInOtherGroup ? 'نقل' : 'تعيين'}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

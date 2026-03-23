@@ -77,6 +77,56 @@ async def list_groups(user: dict = Depends(get_current_user)):
     return groups
 
 
+@router.get("/admin/permission-groups/{group_id}/members")
+async def list_group_members(group_id: str, user: dict = Depends(get_current_user)):
+    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    query = {"permission_group_id": group_id}
+    if user["role"] == "department_manager":
+        query["department"] = user.get("department")
+    users_in_group = await db.users.find(
+        query,
+        {"_id": 0, "id": 1, "name": 1, "name_ar": 1, "role": 1, "department": 1, "employee_id": 1}
+    ).to_list(200)
+    for u in users_in_group:
+        if u.get("employee_id"):
+            emp = await db.employees.find_one({"id": u["employee_id"]}, {"_id": 0, "name": 1, "job_title": 1})
+            if emp:
+                u["employee_name"] = emp.get("name", "")
+                u["job_title"] = emp.get("job_title", "")
+        if not u.get("employee_name"):
+            u["employee_name"] = u.get("name_ar") or u.get("name") or ""
+    return users_in_group
+
+
+@router.get("/admin/assignable-users")
+async def list_assignable_users(user: dict = Depends(get_current_user)):
+    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    query = {"role": {"$ne": "system_admin"}, "is_active": True}
+    if user["role"] == "department_manager":
+        query["department"] = user.get("department")
+    all_users = await db.users.find(
+        query,
+        {"_id": 0, "id": 1, "name": 1, "name_ar": 1, "role": 1, "department": 1,
+         "permission_group_id": 1, "employee_id": 1, "is_active": 1}
+    ).to_list(500)
+    for u in all_users:
+        if u.get("employee_id"):
+            emp = await db.employees.find_one({"id": u["employee_id"]}, {"_id": 0, "name": 1, "job_title": 1})
+            if emp:
+                u["employee_name"] = emp.get("name", "")
+                u["job_title"] = emp.get("job_title", "")
+        if not u.get("employee_name"):
+            u["employee_name"] = u.get("name_ar") or u.get("name") or ""
+        if u.get("permission_group_id"):
+            grp = await db.permission_groups.find_one({"id": u["permission_group_id"]}, {"_id": 0, "name_ar": 1})
+            u["group_name"] = grp.get("name_ar", "") if grp else ""
+        else:
+            u["group_name"] = ""
+    return all_users
+
+
 @router.get("/admin/permission-groups/{group_id}")
 async def get_group(group_id: str, user: dict = Depends(get_current_user)):
     if user["role"] not in ("system_admin", "general_manager", "department_manager"):
