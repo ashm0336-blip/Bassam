@@ -367,22 +367,14 @@ export default function GatesDataManagement() {
               ))}
             </div>
 
-            {/* الصف ٢: chips المنطقة + الحالة + المؤشر */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {/* الصف ٢: chips المنطقة + المؤشر */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
               {/* المناطق — كل الأبواب */}
               <Section icon={MapPin} title="توزيع المناطق" iconBg="#e0f2fe" iconColor="#0284c7">
                 {uniquePlazas.map((name, i) => (
                   <Chip key={name} label={name} cnt={countAll('plaza', name)} color={PLAZA_COLORS[name] || DYNAMIC_PLAZA_COLORS[i % DYNAMIC_PLAZA_COLORS.length]} ofTotal={total}/>
                 ))}
-              </Section>
-
-              {/* الحالة */}
-              <Section icon={Activity} title="حالة الأبواب" iconBg="#ecfdf5" iconColor="#059669"
-                warning={noStaff > 0 ? `${noStaff} مفتوح بلا غطاء` : undefined}>
-                <Chip label="مفتوح" cnt={openCount} color={STATUS_COLORS["مفتوح"]} warn={noStaff > 0} ofTotal={total}/>
-                <Chip label="مغلق" cnt={closedCount} color={STATUS_COLORS["مغلق"]} ofTotal={total}/>
-                {undefinedCount > 0 && <Chip label="غير محدد" cnt={undefinedCount} color={STATUS_COLORS["غير محدد"]} ofTotal={total}/>}
               </Section>
 
               {/* المؤشر — كل الأبواب */}
