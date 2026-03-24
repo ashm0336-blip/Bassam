@@ -211,7 +211,7 @@ code {
 
 @media all and (display-mode: standalone) {
   html {
-    padding-top: env(safe-area-inset-top, 0px);
+    background-color: hsl(var(--background));
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, ROLE_LABELS, DEPT_LABELS } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -68,6 +68,10 @@ export const Layout = () => {
   const [expandedMenuId, setExpandedMenuId] = useState(null);
   const [autoExpanded, setAutoExpanded] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const mainRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin, roleChangeAlert, dismissRoleChange } = useAuth();
@@ -96,6 +100,32 @@ export const Layout = () => {
     axios.get(`${API}/alerts/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setUnreadAlerts(res.data.count || 0)).catch(() => {});
   }, []));
+
+  const PULL_THRESHOLD = 80;
+  const handleTouchStart = useCallback((e) => {
+    if (mainRef.current && mainRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }, []);
+  const handleTouchMove = useCallback((e) => {
+    if (!touchStartY.current || isRefreshing) return;
+    if (mainRef.current && mainRef.current.scrollTop > 0) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    if (diff > 0) {
+      const dampened = Math.min(diff * 0.4, 120);
+      setPullDistance(dampened);
+    }
+  }, [isRefreshing]);
+  const handleTouchEnd = useCallback(() => {
+    if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullDistance(PULL_THRESHOLD);
+      window.location.reload();
+    } else {
+      setPullDistance(0);
+    }
+    touchStartY.current = 0;
+  }, [pullDistance, isRefreshing]);
 
   // Convert menu items from API — backend already filters by role/department/permissions
   const allMenuItems = menuItems.map(item => ({
@@ -607,8 +637,33 @@ export const Layout = () => {
           </div>
         )}
 
+        {/* Pull-to-refresh indicator (mobile only) */}
+        {pullDistance > 0 && (
+          <div className="lg:hidden flex justify-center items-center overflow-hidden transition-all" style={{ height: `${pullDistance}px` }}>
+            <div
+              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                pullDistance >= PULL_THRESHOLD
+                  ? 'border-primary bg-primary/10 scale-110'
+                  : 'border-muted-foreground/30 bg-muted/50'
+              }`}
+              style={{ transform: `rotate(${pullDistance * 3}deg)` }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12l7-7 7 7" className={pullDistance >= PULL_THRESHOLD ? 'text-primary' : 'text-muted-foreground/50'} />
+              </svg>
+            </div>
+          </div>
+        )}
+
         {/* Page content */}
-        <main className="flex-1 p-2 sm:p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-20 lg:pb-6">
+        <main
+          ref={mainRef}
+          className="flex-1 p-2 sm:p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-20 lg:pb-6"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ overscrollBehavior: 'none' }}
+        >
           <Outlet />
         </main>
       </div>
