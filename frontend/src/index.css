@@ -201,9 +201,18 @@ code {
   display: none;
 }
 
-/* ── Safe area padding for mobile bottom nav ── */
+/* ── Safe area padding for PWA standalone mode ── */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media all and (display-mode: standalone) {
+  html {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 /* ── Glass effect ── */

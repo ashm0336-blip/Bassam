@@ -371,7 +371,7 @@ export const Layout = () => {
           transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
         }}
       >
-        <div className="flex items-center justify-between px-4 pt-5 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0" style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top, 1.25rem))' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
               <span className="text-white font-cairo font-bold text-base">ح</span>
@@ -455,7 +455,8 @@ export const Layout = () => {
         <header 
           className={`flex items-center justify-between px-3 lg:px-6 sticky top-0 z-30 transition-all duration-200`}
           style={{
-            height: `${headerSettings.header_height || 64}px`,
+            minHeight: `${headerSettings.header_height || 64}px`,
+            paddingTop: 'env(safe-area-inset-top, 0px)',
             backgroundColor: isDark ? 'hsl(var(--card))' : (headerSettings.background_color || '#FFFFFF'),
             color: isDark ? 'hsl(var(--foreground))' : (headerSettings.text_color || '#000000'),
             opacity: (headerSettings.transparency || 100) / 100,
