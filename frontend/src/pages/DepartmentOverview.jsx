@@ -35,7 +35,16 @@ const DEPT_CONFIG = {
 
 const SHIFT_COLORS = { "الأولى":"#3b82f6","الثانية":"#22c55e","الثالثة":"#f97316","الرابعة":"#8b5cf6","الأولى صبح":"#06b6d4" };
 
-// ── Animated Number ──────────────────────────────────────────
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function AnimatedNumber({ value, duration = 800 }) {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
@@ -50,63 +59,61 @@ function AnimatedNumber({ value, duration = 800 }) {
   return <span>{display}</span>;
 }
 
-// ── Big KPI Card ─────────────────────────────────────────────
-function KpiCard({ icon: Icon, label, value, sub, color, badge, trend }) {
+function KpiCard({ icon: Icon, label, value, sub, color, badge }) {
   return (
     <div className="relative overflow-hidden rounded-2xl p-3 sm:p-5 border-0 shadow-lg bg-card"
       style={{ boxShadow: `0 4px 24px ${color}22` }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 rounded-l-2xl" style={{ background: color }}/>
       <div className="absolute -left-8 -top-8 w-24 h-24 rounded-full opacity-[0.06]" style={{ background: color }}/>
       <div className="flex items-start justify-between">
-        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm sm:shadow-md"
-          style={{ background: `${color}20`, color }}>
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5"/>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm"
+            style={{ background: `${color}15` }}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }}/>
+          </div>
+          <div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">{label}</p>
+            <p className="text-lg sm:text-3xl font-black leading-none mt-0.5" style={{ color }}>
+              <AnimatedNumber value={value}/>
+            </p>
+          </div>
         </div>
         {badge && (
-          <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full"
+          <span className="text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full"
             style={{ background: `${color}15`, color }}>{badge}</span>
         )}
       </div>
-      <div className="mt-2 sm:mt-3">
-        <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mb-0.5">{label}</p>
-        <p className="text-2xl sm:text-4xl font-black leading-none" style={{ color }}>
-          <AnimatedNumber value={value}/>
-        </p>
-        {sub && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{sub}</p>}
-        {trend !== undefined && (
-          <div className="flex items-center gap-1 mt-1">
-            {trend >= 0
-              ? <TrendingUp className="w-3 h-3 text-emerald-500"/>
-              : <TrendingDown className="w-3 h-3 text-red-500"/>}
-            <span className={`text-[10px] font-semibold ${trend >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-              {Math.abs(trend)}%
-            </span>
-          </div>
-        )}
-      </div>
+      <p className="text-[9px] sm:text-[11px] text-muted-foreground mt-1.5 sm:mt-2 mr-10 sm:mr-14 truncate">{sub}</p>
     </div>
   );
 }
 
-// ── Section Title ────────────────────────────────────────────
 function SectionTitle({ icon: Icon, label, color }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
-        style={{ background: `${color}20`, color }}>
-        <Icon className="w-3.5 h-3.5"/>
+    <div className="flex items-center gap-2 mb-3 sm:mb-4">
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+        <Icon className="w-4 h-4" style={{ color }}/>
       </div>
-      <h3 className="font-cairo font-bold text-sm text-foreground">{label}</h3>
-      <div className="flex-1 h-px bg-border/60 mr-1"/>
+      <h3 className="font-cairo font-bold text-sm">{label}</h3>
     </div>
   );
 }
 
-// ── Main Component ───────────────────────────────────────────
+const TAB_CONFIG = [
+  { id: "summary",  label: "الملخص",     icon: Users,        color: "#004D38" },
+  { id: "tasks",     label: "المهام",      icon: Tag,          color: "#7c3aed" },
+  { id: "shifts",    label: "الورديات",    icon: Clock,        color: "#3b82f6" },
+  { id: "accounts",  label: "الحسابات",    icon: ShieldCheck,  color: "#047857" },
+  { id: "coverage",  label: "التغطية",     icon: CalendarDays, color: "#0284c7" },
+  { id: "roles",     label: "الأدوار",     icon: Award,        color: "#7c3aed" },
+  { id: "contracts", label: "العقود",      icon: AlertTriangle,color: "#d97706" },
+];
+
 export default function DepartmentOverview({ department = "planning" }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const cfg = DEPT_CONFIG[department] || DEPT_CONFIG.planning;
 
   const [employees, setEmployees] = useState([]);
@@ -116,6 +123,7 @@ export default function DepartmentOverview({ department = "planning" }) {
   const [refreshing, setRefreshing] = useState(false);
   const [availSummary, setAvailSummary] = useState(null);
   const [taskStats, setTaskStats] = useState(null);
+  const [activeTab, setActiveTab] = useState("summary");
 
   const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
   const monthLabel = `${MONTH_AR[new Date().getMonth()]} ${new Date().getFullYear()}`;
@@ -139,35 +147,22 @@ export default function DepartmentOverview({ department = "planning" }) {
   }, [department, monthKey]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
   useRealtimeRefresh(["employees", "schedules", "tasks", "gate_sessions"], useCallback(() => fetchData(true), [fetchData]));
 
-  // ── Derived Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
-    // ⚠️ القاعدة الأساسية:
-    // الإحصائيات المرتبطة بالجدول (مداومون، راحة، تغطية، ورديات، مكلفون)
-    // تُعرض فقط من الجدول المعتمد (active). إذا الجدول مسودة أو غير موجود → صفر.
     const isApproved = schedule?.status === 'active';
     const assignmentMap = {};
     if (isApproved && schedule?.assignments) {
       schedule.assignments.forEach(a => { assignmentMap[a.employee_id] = a; });
     }
-
-    // البيانات الأساسية للموظف (غير مرتبطة بالجدول)
     const total = employees.length;
     const permanent = employees.filter(e => (e.employment_type||"permanent") === "permanent").length;
     const seasonal  = employees.filter(e => e.employment_type === "seasonal").length;
     const temporary = employees.filter(e => e.employment_type === "temporary").length;
-
-    // حالة الحسابات — مستقلة عن الجدول
     const acStatus = { active: 0, pending: 0, frozen: 0, no_account: 0, terminated: 0 };
     employees.forEach(e => { const s = e.account_status || "no_account"; acStatus[s] = (acStatus[s] || 0) + 1; });
-
-    // Roles — مستقلة عن الجدول
     const roleMap = {};
     employees.forEach(e => { const r = e.user_role || "field_staff"; roleMap[r] = (roleMap[r] || 0) + 1; });
-
-    // العقود المنتهية — مستقلة عن الجدول
     const today = new Date();
     const in30 = new Date(today); in30.setDate(today.getDate() + 30);
     const expiring = employees.filter(e => {
@@ -175,15 +170,12 @@ export default function DepartmentOverview({ department = "planning" }) {
       const d = new Date(e.contract_end);
       return d >= today && d <= in30;
     }).sort((a,b) => new Date(a.contract_end) - new Date(b.contract_end)).slice(0, 5);
-
-    // ── إحصائيات الجدول: صفر إذا لم يكن معتمداً ──
     let onRest = 0, working = 0, tasked = 0, availabilityPct = 0;
     let shiftStats = [];
     let coverage = WEEK_DAYS_ORDER.map(day => ({
       day, letter: DAY_LETTERS[day], avail: 0, resting: 0, pct: 0, isToday: day === TODAY_AR
     }));
     let merged = employees.map(emp => ({ ...emp, restDays: [], shift: "", isTasked: false, onRest: false }));
-
     if (isApproved) {
       merged = employees.map(emp => {
         const a = assignmentMap[emp.id];
@@ -193,13 +185,10 @@ export default function DepartmentOverview({ department = "planning" }) {
         const empOnRest = restDays.includes(TODAY_AR);
         return { ...emp, restDays, shift, isTasked, onRest: empOnRest };
       });
-
       onRest = merged.filter(e => e.onRest).length;
       working = total - onRest;
       tasked = merged.filter(e => e.isTasked).length;
       availabilityPct = total > 0 ? Math.round((working / total) * 100) : 0;
-
-      // Shifts — من الجدول المعتمد فقط
       const shiftMap = {};
       merged.forEach(e => { if (e.shift) shiftMap[e.shift] = (shiftMap[e.shift] || 0) + 1; });
       shiftStats = Object.entries(shiftMap).map(([k, v]) => ({
@@ -207,8 +196,6 @@ export default function DepartmentOverview({ department = "planning" }) {
         pct: total > 0 ? Math.round(v/total*100) : 0,
         color: SHIFT_COLORS[k] || "#94a3b8"
       })).sort((a,b) => b.count - a.count);
-
-      // التغطية الأسبوعية — من الجدول المعتمد فقط
       coverage = WEEK_DAYS_ORDER.map(day => {
         const resting = merged.filter(e => e.restDays.includes(day)).length;
         const avail = total - resting;
@@ -216,7 +203,6 @@ export default function DepartmentOverview({ department = "planning" }) {
         return { day, letter: DAY_LETTERS[day], avail, resting, pct, isToday: day === TODAY_AR };
       });
     }
-
     return { total, onRest, working, tasked, availabilityPct, acStatus, permanent, seasonal, temporary, shiftStats, coverage, expiring, roleMap, merged, isApproved };
   }, [employees, schedule]);
 
@@ -232,34 +218,233 @@ export default function DepartmentOverview({ department = "planning" }) {
     </div>
   );
 
+  const shiftDistributionContent = (
+    <>
+      {stats.shiftStats.length > 0 ? (
+        <div className="space-y-3">
+          {stats.shiftStats.map(s => (
+            <div key={s.name} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }}/>
+                  <span className="text-[11px] font-semibold text-foreground">{s.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black" style={{ color: s.color }}>{s.count}</span>
+                  <span className="text-[9px] text-muted-foreground">{s.pct}%</span>
+                </div>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width:`${s.pct}%`, background: s.color, boxShadow:`0 0 8px ${s.color}60` }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-4">لا يوجد جدول شهري</p>
+      )}
+    </>
+  );
+
+  const accountStatusContent = (
+    <>
+      <div className={isMobile ? "flex gap-2 overflow-x-auto no-scrollbar pb-1" : "grid grid-cols-2 gap-2.5"}>
+        {[
+          { key:"active",     label:"نشط",         icon:ShieldCheck, color:"#047857", bg:"#ecfdf5" },
+          { key:"pending",    label:"معلق",         icon:ShieldOff,   color:"#d97706", bg:"#fffbeb" },
+          { key:"frozen",     label:"مجمَّد",        icon:ShieldX,     color:"#2563eb", bg:"#eff6ff" },
+          { key:"no_account", label:"بدون حساب",   icon:UserPlus,    color:"#64748b", bg:"#f8fafc" },
+        ].map(item => {
+          const count = stats.acStatus[item.key] || 0;
+          const Icon = item.icon;
+          return (
+            <div key={item.key} className={`rounded-xl p-3 flex items-center gap-2.5 border ${isMobile ? "flex-shrink-0 w-[110px]" : ""}`}
+              style={{ background: item.bg, borderColor: `${item.color}30` }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: `${item.color}20`, color: item.color }}>
+                <Icon className="w-4 h-4"/>
+              </div>
+              <div>
+                <p className="text-xl font-black leading-none" style={{ color: item.color }}>{count}</p>
+                <p className="text-[9px] font-medium mt-0.5" style={{ color: item.color }}>{item.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {stats.acStatus.terminated > 0 && (
+        <div className="mt-2 rounded-xl p-2.5 flex items-center gap-2 bg-red-50 border border-red-200">
+          <ShieldX className="w-4 h-4 text-red-500 flex-shrink-0"/>
+          <span className="text-[11px] text-red-700 font-semibold">{stats.acStatus.terminated} منتهي الخدمة</span>
+        </div>
+      )}
+    </>
+  );
+
+  const weeklyCoverageContent = (
+    <div className="space-y-2">
+      {stats.coverage.map(day => {
+        const isLow = day.pct < 60;
+        const barColor = day.isToday ? "#004D38" : isLow ? "#ef4444" : "#22c55e";
+        return (
+          <div key={day.day} className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all
+            ${day.isToday ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/40"}`}>
+            <span className={`text-[11px] font-bold w-4 text-center flex-shrink-0 ${day.isToday ? "text-primary" : "text-muted-foreground"}`}>
+              {day.letter}
+            </span>
+            <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width:`${day.pct}%`, background: barColor, boxShadow: day.isToday ? `0 0 8px ${barColor}80` : "none" }}/>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="text-[10px] font-bold" style={{ color: barColor }}>{day.avail}</span>
+              <span className="text-[9px] text-muted-foreground">/{stats.total}</span>
+            </div>
+            {day.isToday && (
+              <span className="text-[8px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded-full">اليوم</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const expiringContractsContent = (
+    <>
+      {stats.expiring.length > 0 ? (
+        <div className="space-y-2">
+          {stats.expiring.map(emp => {
+            const days = Math.ceil((new Date(emp.contract_end) - new Date()) / (1000*60*60*24));
+            const isUrgent = days <= 7;
+            return (
+              <div key={emp.id} className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all
+                ${isUrgent ? "bg-red-50 border-red-200" : "bg-amber-50/60 border-amber-200"}`}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold text-white"
+                    style={{ background: isUrgent ? "#ef4444" : "#d97706" }}>
+                    {emp.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{emp.name}</p>
+                    <p className="text-[9px] text-muted-foreground">{emp.job_title}</p>
+                  </div>
+                </div>
+                <div className="text-left">
+                  <p className={`text-sm font-black ${isUrgent ? "text-red-600" : "text-amber-600"}`}>
+                    {days} يوم
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">{emp.contract_end}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center mb-2">
+            <ShieldCheck className="w-6 h-6 text-emerald-600"/>
+          </div>
+          <p className="text-sm font-semibold text-emerald-700">لا توجد عقود تنتهي خلال 30 يوماً</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">جميع العقود سارية المفعول</p>
+        </div>
+      )}
+    </>
+  );
+
+  const roleDistributionContent = (
+    <>
+      {Object.keys(stats.roleMap).length > 0 ? (
+        <div className="space-y-2.5">
+          {Object.entries({
+            general_manager:    { label:"مدير عام",      color:"#7c3aed", icon:"👑" },
+            department_manager: { label:"مدير إدارة",    color:"#1d4ed8", icon:"🏛️" },
+            shift_supervisor:   { label:"مشرف وردية",   color:"#0f766e", icon:"🎯" },
+            field_staff:        { label:"موظف ميداني",   color:"#047857", icon:"⛑️" },
+            admin_staff:        { label:"موظف إداري",    color:"#64748b", icon:"💼" },
+          }).filter(([k]) => stats.roleMap[k] > 0).map(([key, cfg2]) => {
+            const count = stats.roleMap[key] || 0;
+            const pct = stats.total > 0 ? Math.round(count/stats.total*100) : 0;
+            return (
+              <div key={key} className="flex items-center gap-3">
+                <span className="text-base w-6 text-center flex-shrink-0">{cfg2.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[11px] font-semibold text-foreground">{cfg2.label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-black" style={{ color: cfg2.color }}>{count}</span>
+                      <span className="text-[9px] text-muted-foreground">{pct}%</span>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full rounded-full"
+                      style={{ width:`${pct}%`, background: cfg2.color, boxShadow:`0 0 6px ${cfg2.color}50` }}/>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-6">
+          <UserX className="w-10 h-10 text-muted-foreground mb-2"/>
+          <p className="text-sm text-muted-foreground">لا يوجد موظفون مسجلون</p>
+        </div>
+      )}
+    </>
+  );
+
+  const taskStatsContent = taskStats && taskStats.total > 0 ? (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-cairo font-bold text-foreground">{taskStats.total} مهمة إجمالاً</span>
+        {taskStats.early > 0 && (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+            {taskStats.early} مبكر
+          </span>
+        )}
+      </div>
+      <div className={isMobile ? "flex gap-2 overflow-x-auto no-scrollbar pb-1" : "grid grid-cols-4 gap-2"}>
+        {[
+          { label:"انتظار",  value: taskStats.pending||0,    color:"#64748b", bg:"#f8fafc" },
+          { label:"جارية",   value: taskStats.in_progress||0, color:"#2563eb", bg:"#eff6ff" },
+          { label:"منجزة",   value: taskStats.done||0,        color:"#059669", bg:"#ecfdf5" },
+          { label:"متأخرة",  value: taskStats.overdue||0,     color:"#dc2626", bg:"#fef2f2" },
+        ].map((s,i) => (
+          <div key={i} className={`text-center py-3 rounded-xl border ${isMobile ? "flex-shrink-0 w-[90px]" : ""}`} style={{ backgroundColor: s.bg }}>
+            <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-[10px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  ) : null;
+
   return (
     <div className="space-y-6" dir="rtl" data-testid="department-overview">
 
       {/* ══ HERO HEADER ═══════════════════════════════════════ */}
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-l ${cfg.bg} p-6 text-white shadow-xl`}>
-        {/* Decorative circles */}
         <div className="absolute -left-12 -top-12 w-48 h-48 rounded-full opacity-10 bg-white"/>
         <div className="absolute -left-4 -bottom-16 w-32 h-32 rounded-full opacity-[0.07] bg-white"/>
         <div className="absolute left-1/3 -top-8 w-24 h-24 rounded-full opacity-[0.05] bg-white"/>
 
-        <div className="relative flex items-start justify-between flex-wrap gap-2 sm:gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-              <span className="text-xl sm:text-3xl">{cfg.icon}</span>
-              <div className="min-w-0">
+        <div className="relative flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="text-xl sm:text-3xl">{cfg.icon}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-cairo font-black text-base sm:text-2xl leading-tight truncate">{cfg.label_ar}</h1>
-                <p className="text-white/70 text-[10px] sm:text-xs mt-0.5 truncate">{dateStr}</p>
+                <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full ${schedule ? "bg-emerald-500/30 text-emerald-200" : "bg-white/10 text-white/70"}`}>
+                  <CalendarDays className="w-2.5 h-2.5 sm:w-3 sm:h-3"/>
+                  {schedule ? `${schedule.status === "active" ? "معتمد" : "مسودة"}` : "لا جدول"}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-emerald-500/20 text-emerald-200">
+                  <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-400"></span></span>
+                  {isAr?"مباشر":"Live"}
+                </span>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
-              <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${schedule ? "bg-emerald-500/30 text-emerald-200" : "bg-white/10 text-white/70"}`}>
-                <CalendarDays className="w-2.5 h-2.5 sm:w-3 sm:h-3"/>
-                {schedule ? `${schedule.status === "active" ? "معتمد" : "مسودة"}` : "لا جدول"}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-emerald-500/20 text-emerald-200">
-                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-400"></span></span>
-                {isAr?"مباشر":"Live"}
-              </span>
+              <p className="text-white/70 text-[10px] sm:text-xs mt-0.5 truncate">{dateStr}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -272,270 +457,202 @@ export default function DepartmentOverview({ department = "planning" }) {
             )}
           </div>
         </div>
-
-        {/* Quick summary bar */}
-        <div className="relative mt-3 sm:mt-5 grid grid-cols-4 gap-1.5 sm:gap-3">
-          {[
-            { label:"إجمالي", value:stats.total, icon:"👥" },
-            { label: availSummary ? "مداوم" : "مداومون",
-              value: availSummary ? (availSummary.on_duty_now || 0) : stats.working, icon:"✅" },
-            { label: availSummary ? "خارج" : "راحة",
-              value: availSummary ? (availSummary.off_shift || 0) : stats.onRest, icon: availSummary ? "⚠️" : "☕" },
-            { label:"راحة", value: availSummary ? (availSummary.on_rest || 0) : stats.onRest, icon:"☕" },
-          ].map((item,i) => (
-            <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-white/10">
-              <p className="text-sm sm:text-xl mb-0.5 leading-none">{item.icon}</p>
-              <p className="text-lg sm:text-2xl font-black leading-none">{item.value}</p>
-              <p className="text-[8px] sm:text-[10px] text-white/70 mt-0.5 font-medium truncate">{item.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* ══ KPI CARDS ════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <KpiCard icon={Users} label="إجمالي الموظفين" value={stats.total}
-          color="#004D38"
-          sub={`${stats.permanent} دائم • ${stats.seasonal} موسمي • ${stats.temporary} مؤقت`}
-          badge={stats.temporary > 0 ? `${stats.temporary} مؤقت` : undefined}/>
-        <KpiCard icon={UserCheck}
-          label={availSummary ? "مداوم الآن" : "مداومون اليوم"}
-          value={availSummary ? (availSummary.on_duty_now || 0) : stats.working}
-          color="#0f766e"
-          sub={availSummary ? `${availSummary.off_shift||0} خارج الوردية` : `من أصل ${stats.total} موظف`}/>
-        <KpiCard icon={Coffee} label="في راحة اليوم" value={availSummary ? (availSummary.on_rest||0) : stats.onRest}
-          color="#d97706"
-          sub={stats.onRest > 0 ? `${TODAY_AR} — يوم إجازتهم` : "لا إجازات اليوم"}/>
-        <KpiCard icon={Zap} label="مكلفون هذا الشهر" value={stats.tasked}
-          color="#7c3aed"
-          badge={stats.tasked > 0 ? `${monthLabel}` : undefined}
-          sub={stats.tasked > 0 ? "ساعات إضافية مكلفة" : "لا تكليفات هذا الشهر"}/>
-      </div>
+      {/* ══════════════════════════════════════════════════════
+           MOBILE: Tab-based layout (banking app style)
+         ══════════════════════════════════════════════════════ */}
+      {isMobile ? (
+        <>
+          {/* Pill Tabs */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 -mx-1 px-1" role="tablist">
+            {TAB_CONFIG.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              if (tab.id === "tasks" && (!taskStats || taskStats.total === 0)) return null;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all flex-shrink-0
+                    ${isActive
+                      ? "text-white shadow-lg scale-[1.02]"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted border border-transparent"
+                    }`}
+                  style={isActive ? { backgroundColor: tab.color, boxShadow: `0 4px 12px ${tab.color}40` } : undefined}
+                >
+                  <Icon className="w-3.5 h-3.5"/>
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* ══ مهام الإدارة ════════════════════════════════════ */}
-      {taskStats && taskStats.total > 0 && (
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7c3aed20" }}>
-                <Tag className="w-4 h-4" style={{ color: "#7c3aed" }} />
+          {/* Tab Content */}
+          <div className="min-h-[180px]">
+            {activeTab === "summary" && (
+              <div className="space-y-3">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+                  {[
+                    { icon: Users, label: "إجمالي", value: stats.total, color: "#004D38", sub: `${stats.permanent} دائم` },
+                    { icon: UserCheck, label: availSummary ? "مداوم الآن" : "مداومون", value: availSummary ? (availSummary.on_duty_now || 0) : stats.working, color: "#0f766e", sub: `من ${stats.total}` },
+                    { icon: Coffee, label: "في راحة", value: availSummary ? (availSummary.on_rest||0) : stats.onRest, color: "#d97706", sub: TODAY_AR || "اليوم" },
+                    { icon: Zap, label: "مكلفون", value: stats.tasked, color: "#7c3aed", sub: monthLabel },
+                  ].map((kpi, i) => {
+                    const Icon = kpi.icon;
+                    return (
+                      <div key={i} className="flex-shrink-0 w-[120px] bg-card rounded-xl p-2.5 border shadow-sm">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${kpi.color}15` }}>
+                            <Icon className="w-3 h-3" style={{ color: kpi.color }}/>
+                          </div>
+                          <span className="text-[9px] text-muted-foreground font-medium truncate">{kpi.label}</span>
+                        </div>
+                        <p className="text-xl font-black leading-none" style={{ color: kpi.color }}>
+                          <AnimatedNumber value={kpi.value}/>
+                        </p>
+                        <p className="text-[8px] text-muted-foreground mt-0.5 truncate">{kpi.sub}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {availSummary && (
+                  <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2 text-[10px]">
+                    <Activity className="w-3.5 h-3.5 text-primary flex-shrink-0"/>
+                    <span className="text-muted-foreground">
+                      {availSummary.off_shift||0} خارج الوردية
+                      {stats.seasonal > 0 && ` • ${stats.seasonal} موسمي`}
+                      {stats.temporary > 0 && ` • ${stats.temporary} مؤقت`}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div>
-                <h3 className="font-cairo font-bold text-sm">مهام الإدارة</h3>
-                <p className="text-[10px] text-muted-foreground">{taskStats.total} مهمة إجمالاً</p>
+            )}
+
+            {activeTab === "tasks" && taskStats && (
+              <div className="space-y-2.5">{taskStatsContent}</div>
+            )}
+
+            {activeTab === "shifts" && (
+              <div className="bg-card rounded-xl p-3 border shadow-sm">
+                {shiftDistributionContent}
               </div>
-            </div>
-            {taskStats.early > 0 && (
-              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-                ⭐ {taskStats.early} مبكر
-              </span>
+            )}
+
+            {activeTab === "accounts" && (
+              <div className="space-y-2">{accountStatusContent}</div>
+            )}
+
+            {activeTab === "coverage" && (
+              <div className="bg-card rounded-xl p-3 border shadow-sm">
+                {weeklyCoverageContent}
+              </div>
+            )}
+
+            {activeTab === "roles" && (
+              <div className="bg-card rounded-xl p-3 border shadow-sm">
+                {roleDistributionContent}
+              </div>
+            )}
+
+            {activeTab === "contracts" && (
+              <div className="bg-card rounded-xl p-3 border shadow-sm">
+                {expiringContractsContent}
+              </div>
             )}
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { label:"انتظار",  value: taskStats.pending||0,    color:"#64748b", bg:"#f8fafc" },
-              { label:"جارية",   value: taskStats.in_progress||0, color:"#2563eb", bg:"#eff6ff" },
-              { label:"منجزة",   value: taskStats.done||0,        color:"#059669", bg:"#ecfdf5" },
-              { label:"متأخرة",  value: taskStats.overdue||0,     color:"#dc2626", bg:"#fef2f2" },
-            ].map((s,i) => (
-              <div key={i} className="text-center py-3 rounded-xl border" style={{ backgroundColor: s.bg }}>
-                <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[10px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
-              </div>
-            ))}
+        </>
+      ) : (
+        /* ══════════════════════════════════════════════════════
+             DESKTOP / TABLET: Original stacked card layout
+           ══════════════════════════════════════════════════════ */
+        <>
+          {/* KPI CARDS */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard icon={Users} label="إجمالي الموظفين" value={stats.total}
+              color="#004D38"
+              sub={`${stats.permanent} دائم • ${stats.seasonal} موسمي • ${stats.temporary} مؤقت`}
+              badge={stats.temporary > 0 ? `${stats.temporary} مؤقت` : undefined}/>
+            <KpiCard icon={UserCheck}
+              label={availSummary ? "مداوم الآن" : "مداومون اليوم"}
+              value={availSummary ? (availSummary.on_duty_now || 0) : stats.working}
+              color="#0f766e"
+              sub={availSummary ? `${availSummary.off_shift||0} خارج الوردية` : `من أصل ${stats.total} موظف`}/>
+            <KpiCard icon={Coffee} label="في راحة اليوم" value={availSummary ? (availSummary.on_rest||0) : stats.onRest}
+              color="#d97706"
+              sub={stats.onRest > 0 ? `${TODAY_AR} — يوم إجازتهم` : "لا إجازات اليوم"}/>
+            <KpiCard icon={Zap} label="مكلفون هذا الشهر" value={stats.tasked}
+              color="#7c3aed"
+              badge={stats.tasked > 0 ? `${monthLabel}` : undefined}
+              sub={stats.tasked > 0 ? "ساعات إضافية مكلفة" : "لا تكليفات هذا الشهر"}/>
           </div>
-        </div>
-      )}
 
-      {/* ══ MIDDLE ROW ═══════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        {/* Shift Distribution */}
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <SectionTitle icon={Clock} label="توزيع الورديات" color="#7c3aed"/>
-          {stats.shiftStats.length > 0 ? (
-            <div className="space-y-3">
-              {stats.shiftStats.map(s => (
-                <div key={s.name} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }}/>
-                      <span className="text-[11px] font-semibold text-foreground">{s.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-black" style={{ color: s.color }}>{s.count}</span>
-                      <span className="text-[9px] text-muted-foreground">{s.pct}%</span>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width:`${s.pct}%`, background: s.color, boxShadow:`0 0 8px ${s.color}60` }}/>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">لا يوجد جدول شهري</p>
-          )}
-        </div>
-
-        {/* Account Status */}
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <SectionTitle icon={ShieldCheck} label="حالة حسابات الدخول" color="#047857"/>
-          <div className="grid grid-cols-2 gap-2.5">
-            {[
-              { key:"active",     label:"نشط",         icon:ShieldCheck, color:"#047857", bg:"#ecfdf5" },
-              { key:"pending",    label:"معلق",         icon:ShieldOff,   color:"#d97706", bg:"#fffbeb" },
-              { key:"frozen",     label:"مجمَّد",        icon:ShieldX,     color:"#2563eb", bg:"#eff6ff" },
-              { key:"no_account", label:"بدون حساب",   icon:UserPlus,    color:"#64748b", bg:"#f8fafc" },
-            ].map(item => {
-              const count = stats.acStatus[item.key] || 0;
-              const Icon = item.icon;
-              return (
-                <div key={item.key} className="rounded-xl p-3 flex items-center gap-2.5 border"
-                  style={{ background: item.bg, borderColor: `${item.color}30` }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${item.color}20`, color: item.color }}>
-                    <Icon className="w-4 h-4"/>
+          {/* Task Stats */}
+          {taskStats && taskStats.total > 0 && (
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7c3aed20" }}>
+                    <Tag className="w-4 h-4" style={{ color: "#7c3aed" }} />
                   </div>
                   <div>
-                    <p className="text-xl font-black leading-none" style={{ color: item.color }}>{count}</p>
-                    <p className="text-[9px] font-medium mt-0.5" style={{ color: item.color }}>{item.label}</p>
+                    <h3 className="font-cairo font-bold text-sm">مهام الإدارة</h3>
+                    <p className="text-[10px] text-muted-foreground">{taskStats.total} مهمة إجمالاً</p>
                   </div>
                 </div>
-              );
-            })}
-            {stats.acStatus.terminated > 0 && (
-              <div className="col-span-2 rounded-xl p-2.5 flex items-center gap-2 bg-red-50 border border-red-200">
-                <ShieldX className="w-4 h-4 text-red-500 flex-shrink-0"/>
-                <span className="text-[11px] text-red-700 font-semibold">{stats.acStatus.terminated} منتهي الخدمة</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Weekly Coverage Heatmap */}
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <SectionTitle icon={CalendarDays} label="التغطية الأسبوعية" color="#0284c7"/>
-          <div className="space-y-2">
-            {stats.coverage.map(day => {
-              const isLow = day.pct < 60;
-              const barColor = day.isToday ? "#004D38" : isLow ? "#ef4444" : "#22c55e";
-              return (
-                <div key={day.day} className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all
-                  ${day.isToday ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/40"}`}>
-                  <span className={`text-[11px] font-bold w-4 text-center flex-shrink-0 ${day.isToday ? "text-primary" : "text-muted-foreground"}`}>
-                    {day.letter}
+                {taskStats.early > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                    {taskStats.early} مبكر
                   </span>
-                  <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width:`${day.pct}%`, background: barColor, boxShadow: day.isToday ? `0 0 8px ${barColor}80` : "none" }}/>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-[10px] font-bold" style={{ color: barColor }}>{day.avail}</span>
-                    <span className="text-[9px] text-muted-foreground">/{stats.total}</span>
-                  </div>
-                  {day.isToday && (
-                    <span className="text-[8px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded-full">اليوم</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ══ BOTTOM ROW ════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Expiring Contracts Alert */}
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <SectionTitle icon={AlertTriangle} label="تنبيه — عقود تنتهي قريباً" color="#d97706"/>
-          {stats.expiring.length > 0 ? (
-            <div className="space-y-2">
-              {stats.expiring.map(emp => {
-                const days = Math.ceil((new Date(emp.contract_end) - new Date()) / (1000*60*60*24));
-                const isUrgent = days <= 7;
-                return (
-                  <div key={emp.id} className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all
-                    ${isUrgent ? "bg-red-50 border-red-200" : "bg-amber-50/60 border-amber-200"}`}>
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold text-white`}
-                        style={{ background: isUrgent ? "#ef4444" : "#d97706" }}>
-                        {emp.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-foreground">{emp.name}</p>
-                        <p className="text-[9px] text-muted-foreground">{emp.job_title}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-sm font-black ${isUrgent ? "text-red-600" : "text-amber-600"}`}>
-                        {days} {isAr?"يوم":"days"}
-                      </p>
-                      <p className="text-[9px] text-muted-foreground">{emp.contract_end}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center mb-2">
-                <ShieldCheck className="w-6 h-6 text-emerald-600"/>
+                )}
               </div>
-              <p className="text-sm font-semibold text-emerald-700">{isAr?"لا توجد عقود تنتهي خلال 30 يوماً":"No expiring contracts"}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{isAr?"جميع العقود سارية المفعول":"All contracts valid"}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Role Distribution */}
-        <div className="bg-card rounded-2xl p-5 shadow-sm border">
-          <SectionTitle icon={Award} label="توزيع الصلاحيات والأدوار" color="#7c3aed"/>
-          {Object.keys(stats.roleMap).length > 0 ? (
-            <div className="space-y-2.5">
-              {Object.entries({
-                general_manager:    { label:"مدير عام",      color:"#7c3aed", icon:"👑" },
-                department_manager: { label:"مدير إدارة",    color:"#1d4ed8", icon:"🏛️" },
-                shift_supervisor:   { label:"مشرف وردية",   color:"#0f766e", icon:"🎯" },
-                field_staff:        { label:"موظف ميداني",   color:"#047857", icon:"⛑️" },
-                admin_staff:        { label:"موظف إداري",    color:"#64748b", icon:"💼" },
-              }).filter(([k]) => stats.roleMap[k] > 0).map(([key, cfg2]) => {
-                const count = stats.roleMap[key] || 0;
-                const pct = stats.total > 0 ? Math.round(count/stats.total*100) : 0;
-                return (
-                  <div key={key} className="flex items-center gap-3">
-                    <span className="text-base w-6 text-center flex-shrink-0">{cfg2.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[11px] font-semibold text-foreground">{cfg2.label}</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-black" style={{ color: cfg2.color }}>{count}</span>
-                          <span className="text-[9px] text-muted-foreground">{pct}%</span>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full rounded-full"
-                          style={{ width:`${pct}%`, background: cfg2.color, boxShadow:`0 0 6px ${cfg2.color}50` }}/>
-                      </div>
-                    </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label:"انتظار",  value: taskStats.pending||0,    color:"#64748b", bg:"#f8fafc" },
+                  { label:"جارية",   value: taskStats.in_progress||0, color:"#2563eb", bg:"#eff6ff" },
+                  { label:"منجزة",   value: taskStats.done||0,        color:"#059669", bg:"#ecfdf5" },
+                  { label:"متأخرة",  value: taskStats.overdue||0,     color:"#dc2626", bg:"#fef2f2" },
+                ].map((s,i) => (
+                  <div key={i} className="text-center py-3 rounded-xl border" style={{ backgroundColor: s.bg }}>
+                    <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground mt-0.5">{s.label}</p>
                   </div>
-                );
-              })}
-              {Object.keys(stats.roleMap).length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">لا يوجد موظفون بحسابات نشطة</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6">
-              <UserX className="w-10 h-10 text-muted-foreground mb-2"/>
-              <p className="text-sm text-muted-foreground">لا يوجد موظفون مسجلون</p>
+                ))}
+              </div>
             </div>
           )}
-        </div>
 
-      </div>
+          {/* Middle Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <SectionTitle icon={Clock} label="توزيع الورديات" color="#7c3aed"/>
+              {shiftDistributionContent}
+            </div>
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <SectionTitle icon={ShieldCheck} label="حالة حسابات الدخول" color="#047857"/>
+              {accountStatusContent}
+            </div>
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <SectionTitle icon={CalendarDays} label="التغطية الأسبوعية" color="#0284c7"/>
+              {weeklyCoverageContent}
+            </div>
+          </div>
+
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <SectionTitle icon={AlertTriangle} label="تنبيه — عقود تنتهي قريباً" color="#d97706"/>
+              {expiringContractsContent}
+            </div>
+            <div className="bg-card rounded-2xl p-5 shadow-sm border">
+              <SectionTitle icon={Award} label="توزيع الصلاحيات والأدوار" color="#7c3aed"/>
+              {roleDistributionContent}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
