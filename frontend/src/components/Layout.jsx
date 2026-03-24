@@ -465,9 +465,17 @@ export const Layout = () => {
             <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </button>
           <div className="flex items-center gap-2">
-            <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground">
+            <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground relative">
               <Bell className="w-4 h-4" />
               <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
+              {unreadAlerts > 0 && (
+                <span className="absolute -top-1 left-2 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadAlerts > 9 ? "9+" : unreadAlerts}
+                </span>
+              )}
+            </button>
+            <button onClick={toggleLanguage} data-testid="mobile-lang-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center text-xs font-bold">
+              {language === 'ar' ? 'EN' : 'ع'}
             </button>
             <button onClick={toggleTheme} data-testid="mobile-theme-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center">
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
