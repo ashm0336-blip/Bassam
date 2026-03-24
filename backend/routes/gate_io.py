@@ -116,6 +116,57 @@ async def download_gates_template():
                              headers={"Content-Disposition": "attachment; filename=gates_template.xlsx"})
 
 
+import re
+import unicodedata
+
+def _normalize_header(text: str) -> str:
+    text = str(text or "").strip()
+    text = unicodedata.normalize("NFKC", text)
+    text = re.sub(r'\s+', ' ', text)
+    text = text.replace('\u200f', '').replace('\u200e', '')
+    text = text.replace('ة', 'ه').replace('ى', 'ي')
+    return text.strip()
+
+COLUMN_MAP_NORMALIZED = {}
+for k, v in COLUMN_MAP.items():
+    COLUMN_MAP_NORMALIZED[_normalize_header(k)] = v
+
+NAME_KEYWORDS = {"اسم", "الباب", "name", "باب", "اسم الباب", "gate"}
+
+def _find_header_row_and_map(ws):
+    for row_idx in range(1, min(ws.max_row + 1, 15)):
+        cells = []
+        for cell in ws[row_idx]:
+            cells.append(str(cell.value or "").strip())
+        col_map = {}
+        for idx, h in enumerate(cells):
+            norm = _normalize_header(h)
+            if norm in COLUMN_MAP_NORMALIZED:
+                col_map[COLUMN_MAP_NORMALIZED[norm]] = idx
+            elif norm in COLUMN_MAP:
+                col_map[COLUMN_MAP[norm]] = idx
+            elif h in COLUMN_MAP:
+                col_map[COLUMN_MAP[h]] = idx
+        if "name" in col_map:
+            return row_idx, col_map
+
+        for idx, h in enumerate(cells):
+            h_lower = h.lower().strip()
+            for kw in NAME_KEYWORDS:
+                if kw in h_lower or kw in _normalize_header(h):
+                    col_map["name"] = idx
+                    break
+            if "name" in col_map:
+                break
+        if "name" in col_map:
+            for idx2, h2 in enumerate(cells):
+                norm2 = _normalize_header(h2)
+                if norm2 in COLUMN_MAP_NORMALIZED and COLUMN_MAP_NORMALIZED[norm2] != "name":
+                    col_map[COLUMN_MAP_NORMALIZED[norm2]] = idx2
+            return row_idx, col_map
+    return None, {}
+
+
 @router.post("/gates/import")
 async def import_gates(
     file: UploadFile = File(...),
@@ -123,22 +174,32 @@ async def import_gates(
     user: dict = Depends(require_department_manager),
 ):
     import openpyxl
+    import logging
+    logger = logging.getLogger("gate_import")
 
     content = await file.read()
-    wb = openpyxl.load_workbook(io.BytesIO(content))
-    ws = wb.active
+    wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
 
-    headers = [str(cell.value or "").strip() for cell in ws[1]]
+    header_row = None
     col_map = {}
-    for idx, h in enumerate(headers):
-        if h in COLUMN_MAP:
-            col_map[COLUMN_MAP[h]] = idx
+    chosen_ws = None
 
-    if "name" not in col_map:
-        raise HTTPException(status_code=400, detail="عمود 'اسم الباب' مطلوب في الملف")
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        h_row, c_map = _find_header_row_and_map(ws)
+        if h_row and "name" in c_map:
+            header_row = h_row
+            col_map = c_map
+            chosen_ws = ws
+            logger.info(f"Found header in sheet '{sheet_name}' row {h_row}, columns: {c_map}")
+            break
 
-    if mode == "replace":
-        await db.gates.delete_many({})
+    if not chosen_ws or "name" not in col_map:
+        all_sheets = ", ".join(wb.sheetnames)
+        raise HTTPException(
+            status_code=400,
+            detail=f"لم يتم العثور على عمود 'اسم الباب' في أي شيت. الشيتات: {all_sheets}"
+        )
 
     def _raw(vals, field):
         idx = col_map.get(field, -1)
@@ -148,10 +209,21 @@ async def import_gates(
 
     all_rows = []
     empty_name_count = 0
-    for row in ws.iter_rows(min_row=2, values_only=False):
-        vals = [str(cell.value or "").strip() for cell in row]
+    empty_rows = 0
+    total_data_rows = 0
+
+    for row in chosen_ws.iter_rows(min_row=header_row + 1, values_only=False):
+        vals = []
+        for cell in row:
+            v = cell.value
+            if v is None:
+                vals.append("")
+            else:
+                vals.append(str(v).strip())
         if not any(vals):
+            empty_rows += 1
             continue
+        total_data_rows += 1
         name = _raw(vals, "name").strip()
         if not name:
             empty_name_count += 1
@@ -169,8 +241,13 @@ async def import_gates(
             "max_flow": int(raw_max) if raw_max.isdigit() else 0,
         })
 
+    logger.info(f"Import parse: total_data_rows={total_data_rows}, valid={len(all_rows)}, empty_name={empty_name_count}, empty_rows={empty_rows}")
+
     if not all_rows:
-        raise HTTPException(status_code=400, detail="الملف لا يحتوي على بيانات صالحة")
+        raise HTTPException(
+            status_code=400,
+            detail=f"الملف لا يحتوي على بيانات صالحة. صفوف بيانات: {total_data_rows}، بدون اسم: {empty_name_count}"
+        )
 
     added = 0
     updated = 0
@@ -223,4 +300,12 @@ async def import_gates(
     summary = "، ".join(parts) if parts else "لا توجد تغييرات"
 
     await log_activity("استيراد أبواب", user, f"{added+updated}", f"{summary}")
-    return {"message": f"تم: {summary}", "added": added, "updated": updated, "skipped": skipped}
+    return {
+        "message": f"تم: {summary}",
+        "added": added,
+        "updated": updated,
+        "skipped": skipped,
+        "total_rows_in_file": total_data_rows,
+        "empty_name_rows": empty_name_count,
+        "sheet_used": chosen_ws.title,
+    }

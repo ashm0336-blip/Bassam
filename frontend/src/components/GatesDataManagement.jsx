@@ -829,7 +829,9 @@ export default function GatesDataManagement() {
                 try {
                   const tk = localStorage.getItem("token");
                   const res = await axios.post(`${API}/gates/import?mode=skip`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
-                  toast.success(res.data.message);
+                  const d = res.data;
+                  const info = d.total_rows_in_file ? ` (من ${d.total_rows_in_file} صف${d.empty_name_rows ? `، ${d.empty_name_rows} بدون اسم` : ''})` : '';
+                  toast.success(d.message + info);
                   fetchGates();
                 } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
                 setPendingImportFile(null);
@@ -845,7 +847,9 @@ export default function GatesDataManagement() {
                 try {
                   const tk = localStorage.getItem("token");
                   const res = await axios.post(`${API}/gates/import?mode=update`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
-                  toast.success(res.data.message);
+                  const d = res.data;
+                  const info = d.total_rows_in_file ? ` (من ${d.total_rows_in_file} صف${d.empty_name_rows ? `، ${d.empty_name_rows} بدون اسم` : ''})` : '';
+                  toast.success(d.message + info);
                   fetchGates();
                 } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
                 setPendingImportFile(null);
@@ -865,7 +869,9 @@ export default function GatesDataManagement() {
                 try {
                   const tk = localStorage.getItem("token");
                   const res = await axios.post(`${API}/gates/import?mode=replace`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
-                  toast.success(res.data.message);
+                  const d = res.data;
+                  const info = d.total_rows_in_file ? ` (من ${d.total_rows_in_file} صف${d.empty_name_rows ? `، ${d.empty_name_rows} بدون اسم` : ''})` : '';
+                  toast.success(d.message + info);
                   fetchGates();
                 } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
                 setPendingImportFile(null);
