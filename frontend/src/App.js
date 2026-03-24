@@ -32,6 +32,7 @@ import FieldWorkerPage from "@/pages/FieldWorkerPage";
 import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 import DailyStatsPage from "@/pages/DailyStatsPage";
 import StatsAnalyticsPage from "@/pages/StatsAnalyticsPage";
+import ActivityLogPage from "@/pages/ActivityLogPage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
@@ -206,6 +207,11 @@ function AppRoutes() {
         } />
         <Route path="stats-analytics" element={
           <StatsAnalyticsPage />
+        } />
+        <Route path="activity-log" element={
+          <PermissionProtectedRoute permission="page_activity_log">
+            <ActivityLogPage />
+          </PermissionProtectedRoute>
         } />
         <Route path="employee/:id" element={
           <PermissionProtectedRoute permission="page_employees">

@@ -34,6 +34,7 @@ MENU_TO_PERM_MAP = {
     "Prophet's Mosque":  {"view": ["page_stats_nabawi"], "edit": ["page_stats_nabawi", "edit_stats_nabawi"]},
     "Combined View":     {"view": ["page_stats_all"], "edit": ["page_stats_all", "edit_daily_stats", "import_daily_stats"]},
     "Statistics Analytics": {"view": ["page_stats_analytics"], "edit": ["page_stats_analytics"]},
+    "Activity Log":      {"view": ["page_activity_log"], "edit": ["page_activity_log"]},
     "System Admin":      {"view": [], "edit": []},
 }
 
@@ -43,6 +44,7 @@ ALL_PERMISSIONS = {
     "page_alerts": {}, "page_reports": {}, "page_field": {},
     "page_schedule": {}, "page_shifts": {}, "page_maps": {},
     "page_gates_data": {}, "page_categories": {},
+    "page_activity_log": {},
     "add_employees": {}, "edit_employees": {}, "delete_employees": {},
     "manage_accounts": {}, "reset_pins": {}, "change_roles": {},
     "import_employees": {}, "export_employees": {},

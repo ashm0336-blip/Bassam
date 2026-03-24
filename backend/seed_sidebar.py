@@ -98,6 +98,10 @@ def _sidebar_items():
         icon="Bell", order=10, department="all", is_secondary=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
         icon="Shield", order=11, department="system_admin", is_secondary=True, admin_only=True)
+
+    add("/activity-log", name_ar="سجل العمليات", name_en="Activity Log",
+        icon="Activity", order=10, department=None, is_secondary=False)
+
     return items
 
 
@@ -324,6 +328,7 @@ def _build_dept_pages(dept_key):
         "/stats-analytics": {"visible": True, "editable": False},
         "/notifications": {"visible": True, "editable": False},
         "/field": {"visible": True, "editable": True},
+        "/activity-log": {"visible": True, "editable": False},
     }
     if dept_key == "haram_map":
         pages["/daily-sessions"] = {"visible": True, "editable": True}
