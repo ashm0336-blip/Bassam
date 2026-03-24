@@ -346,12 +346,11 @@ export default function GatesDataManagement() {
           <div className="space-y-3">
 
             {/* الصف ١: KPIs مدمجة */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { label:"إجمالي",        value:total,          color:"#2563eb", Icon:DoorOpen,      desc:"باب مسجل" },
                 { label:"مفتوحة",        value:openCount,      color:"#059669", Icon:DoorOpen,      desc:"الآن" },
                 { label:"مغلقة",         value:closedCount,    color:"#6b7280", Icon:DoorClosed,    desc:"موقوف" },
-                { label:"غير محدد",      value:undefinedCount, color:"#f59e0b", Icon:HelpCircle,    desc:"بدون حالة" },
                 { label:"بلا موظف",      value:noStaff,        color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
               ].map((s,i)=>(
                 <div key={i} className="rounded-2xl border p-2.5 flex items-center gap-2.5 transition-all hover:shadow-sm"
@@ -591,7 +590,7 @@ export default function GatesDataManagement() {
                     </div>
                     <div>
                       <p className="font-bold text-sm">{gate.name}</p>
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1 whitespace-nowrap">#{gate.number} · <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>{gate.plaza}</p>
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1 whitespace-nowrap">#{gate.number} · <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>{gate.plaza || 'غير محدد'}</p>
                     </div>
                   </div>
                   {canWrite("manage_gates") && (
@@ -603,23 +602,26 @@ export default function GatesDataManagement() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-700' : isUndefined ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{statusLabel}</span>
-                  <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">{gate.gate_type}</span>
-                  <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">{gate.direction}</span>
-                  {(Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).map(c => (
-                    <span key={c} className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">{c}</span>
-                  ))}
-                  {isOpen && gate.current_indicator && (
+                  <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${gate.gate_type ? 'bg-violet-50 text-violet-700' : 'bg-amber-50 text-amber-600'}`}>{gate.gate_type || 'غير محدد'}</span>
+                  <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${gate.direction ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-600'}`}>{gate.direction || 'غير محدد'}</span>
+                  {(Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).length > 0
+                    ? (Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).map(c => (
+                        <span key={c} className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">{c}</span>
+                      ))
+                    : <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">غير محدد</span>
+                  }
+                  {gate.current_indicator ? (
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: indicatorColor+'15', color: indicatorColor }}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: indicatorColor }}/>{gate.current_indicator}
                     </span>
-                  )}
+                  ) : <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">غير محدد</span>}
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t">
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-blue-500"/>
                     <span className="text-[11px] font-bold">{gateEmployees.length} موظف</span>
                   </div>
-                  <span className="text-[9px] text-muted-foreground">{gate.classification}</span>
+                  <span className="text-[9px] text-muted-foreground">{gate.classification || 'غير محدد'}</span>
                 </div>
               </div>
             );
@@ -687,24 +689,32 @@ export default function GatesDataManagement() {
                       {/* اسم الباب */}
                       <TableCell className="text-right">
                         <p className="font-bold text-sm">{gate.name}</p>
-                        {gate.classification && <p className="text-[10px] text-muted-foreground">{gate.classification}</p>}
+                        <p className="text-[10px] text-muted-foreground">{gate.classification || 'غير محدد'}</p>
                       </TableCell>
                       {/* المنطقة */}
                       <TableCell className="text-center">
-                        <div className="flex items-center gap-1.5 justify-center">
-                          <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>
-                          <span className="text-[11px] font-medium">{gate.plaza}</span>
-                        </div>
+                        {gate.plaza ? (
+                          <div className="flex items-center gap-1.5 justify-center">
+                            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: PLAZA_COLORS[gate.plaza] || '#94a3b8' }}/>
+                            <span className="text-[11px] font-medium">{gate.plaza}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-amber-500 font-medium">غير محدد</span>}
                       </TableCell>
                       {/* النوع */}
                       <TableCell className="text-center">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">{gate.gate_type}</span>
+                        {gate.gate_type ? (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">{gate.gate_type}</span>
+                        ) : <span className="text-[10px] text-amber-500 font-medium">غير محدد</span>}
                       </TableCell>
                       {/* المسار */}
-                      <TableCell className="text-center text-[11px] text-slate-500 font-medium">{gate.direction}</TableCell>
+                      <TableCell className="text-center text-[11px] font-medium">
+                        {gate.direction ? <span className="text-slate-500">{gate.direction}</span> : <span className="text-amber-500 text-[10px]">غير محدد</span>}
+                      </TableCell>
                       {/* الفئة */}
                       <TableCell className="text-center">
-                        <span className="text-[10px] font-medium">{Array.isArray(gate.category) ? gate.category.join(' + ') : gate.category}</span>
+                        {(Array.isArray(gate.category) ? gate.category.filter(Boolean) : [gate.category].filter(Boolean)).length > 0 ? (
+                          <span className="text-[10px] font-medium">{Array.isArray(gate.category) ? gate.category.filter(Boolean).join(' + ') : gate.category}</span>
+                        ) : <span className="text-[10px] text-amber-500 font-medium">غير محدد</span>}
                       </TableCell>
                       {/* الحالة */}
                       <TableCell className="text-center">
@@ -716,14 +726,12 @@ export default function GatesDataManagement() {
                       </TableCell>
                       {/* المؤشر */}
                       <TableCell className="text-center">
-                        {isOpen && gate.current_indicator ? (
+                        {gate.current_indicator ? (
                           <div className="flex items-center gap-1 justify-center">
                             <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: indicatorColor }}/>
                             <span className="text-[10px] font-semibold" style={{ color: indicatorColor }}>{gate.current_indicator}</span>
                           </div>
-                        ) : !isOpen ? (
-                          <span className="text-[9px] text-slate-300">—</span>
-                        ) : null}
+                        ) : <span className="text-[10px] text-amber-500 font-medium">غير محدد</span>}
                       </TableCell>
                       {/* الموظفين */}
                       <TableCell className="text-center">
