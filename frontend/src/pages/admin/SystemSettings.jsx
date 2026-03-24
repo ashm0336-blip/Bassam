@@ -10,7 +10,13 @@ import {
   Image as ImageIcon, Sun, Moon, Monitor, Globe, Smartphone,
   Bell, Languages, Palette, LogOut, UserCircle, RefreshCw, Wifi, WifiOff,
   Navigation as NavIcon, Minus, Plus, Eye, EyeOff, Layers,
+  GripVertical, Check, X as XIcon,
+  LayoutDashboard, ClipboardList, LayoutGrid, DoorOpen, Users, Circle,
+  FileText, MapPin, Navigation, Database, Archive, Folder,
+  Calendar, BarChart3, PieChart, TrendingUp, Activity, User, Menu,
+  Shield, ShieldAlert, Home, UserCheck, Building, List, Grid, Map,
 } from "lucide-react";
+import { useSidebar } from "@/context/SidebarContext";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,11 +56,240 @@ const SettingItem = ({ label, description, children }) => (
   </div>
 );
 
+const BOTTOM_NAV_ICON_MAP = {
+  LayoutDashboard, ClipboardList, LayoutGrid, DoorOpen, Users, Circle,
+  FileText, Bell, Settings, Map, Shield, ShieldAlert, Home, UserCheck, Building,
+  MapPin, Navigation, Layers, List, Grid, Database, Archive, Folder,
+  Calendar, BarChart3, PieChart, TrendingUp, Activity, User, Menu
+};
+
+function BottomNavConfigurator({ sidebarItems, selectedItems, onChange, isAr }) {
+  const [expandedParents, setExpandedParents] = useState({});
+
+  const allItems = (sidebarItems || [])
+    .filter(i => i.is_active)
+    .map(i => ({
+      id: i.id,
+      href: i.href,
+      name_ar: i.name_ar,
+      name_en: i.name_en,
+      icon: i.icon,
+      parent_id: i.parent_id,
+    }));
+
+  const parents = allItems.filter(i => !i.parent_id);
+  const childrenMap = {};
+  allItems.filter(i => i.parent_id).forEach(child => {
+    if (!childrenMap[child.parent_id]) childrenMap[child.parent_id] = [];
+    childrenMap[child.parent_id].push(child);
+  });
+
+  const allFlat = [];
+  parents.forEach(p => {
+    allFlat.push(p);
+    (childrenMap[p.id] || []).forEach(c => allFlat.push(c));
+  });
+
+  const selected = selectedItems || parents.slice(0, 4).map(i => i.href);
+
+  const selectedDetails = selected
+    .map(href => allFlat.find(i => i.href === href))
+    .filter(Boolean);
+
+  const isSelected = (href) => selected.includes(href);
+
+  const toggleItem = (href) => {
+    if (isSelected(href)) {
+      onChange(selected.filter(h => h !== href));
+    } else {
+      if (selected.length >= 6) return;
+      onChange([...selected, href]);
+    }
+  };
+
+  const moveUp = (index) => {
+    if (index === 0) return;
+    const next = [...selected];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    onChange(next);
+  };
+
+  const moveDown = (index) => {
+    if (index >= selected.length - 1) return;
+    const next = [...selected];
+    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    onChange(next);
+  };
+
+  const toggleExpand = (parentId) => {
+    setExpandedParents(prev => ({ ...prev, [parentId]: !prev[parentId] }));
+  };
+
+  return (
+    <div className="space-y-5">
+      {selected.length > 0 && (
+        <div>
+          <Label className="font-medium block mb-2">
+            {isAr ? `العناصر المختارة (${selected.length})` : `Selected Items (${selected.length})`}
+          </Label>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            {isAr ? 'غيّر الترتيب بأسهم الأعلى والأسفل — زر "المزيد" يُضاف تلقائياً' : 'Reorder with arrows — "More" button added automatically'}
+          </p>
+          <div className="space-y-1.5">
+            {selectedDetails.map((item, idx) => {
+              const Icon = BOTTOM_NAV_ICON_MAP[item.icon] || LayoutDashboard;
+              const isChild = !!item.parent_id;
+              return (
+                <div key={item.href} className={`flex items-center gap-2 p-2.5 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${isChild ? 'border-primary/20 bg-primary/5' : ''}`}>
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => moveUp(idx)} disabled={idx === 0}
+                      className="w-5 h-3 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">
+                      <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 5l4-4 4 4" stroke="currentColor" strokeWidth="1.5" fill="none"/></svg>
+                    </button>
+                    <button onClick={() => moveDown(idx)} disabled={idx === selectedDetails.length - 1}
+                      className="w-5 h-3 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">
+                      <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none"/></svg>
+                    </button>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium block truncate">{isAr ? item.name_ar : item.name_en}</span>
+                    {isChild && <span className="text-[10px] text-muted-foreground">{isAr ? 'صفحة فرعية' : 'Sub-page'}</span>}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">{idx + 1}</span>
+                  <button onClick={() => toggleItem(item.href)}
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors">
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+            <div className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed bg-muted/30">
+              <div className="w-5" />
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                <Menu className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span className="flex-1 text-sm text-muted-foreground">{isAr ? 'المزيد (تلقائي)' : 'More (auto)'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selected.length === 0 && (
+        <div className="text-center py-4 rounded-lg border-2 border-dashed">
+          <Menu className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">{isAr ? 'لم يتم اختيار أي عنصر — الشريط السفلي سيعرض زر "المزيد" فقط' : 'No items selected — bottom bar shows "More" only'}</p>
+        </div>
+      )}
+
+      <div>
+        <Label className="font-medium block mb-2">
+          {isAr ? 'اختر من الصفحات' : 'Choose from Pages'}
+        </Label>
+        <p className="text-[11px] text-muted-foreground mb-3">
+          {isAr ? 'اضغط على أي صفحة لإضافتها أو إزالتها — افتح القسم لرؤية الصفحات الفرعية' : 'Click any page to add/remove — expand sections to see sub-pages'}
+        </p>
+        <div className="space-y-0.5 rounded-lg border overflow-hidden">
+          {parents.map(parent => {
+            const Icon = BOTTOM_NAV_ICON_MAP[parent.icon] || LayoutDashboard;
+            const children = childrenMap[parent.id] || [];
+            const hasChildren = children.length > 0;
+            const isExpanded = expandedParents[parent.id];
+            const parentSelected = isSelected(parent.href);
+
+            return (
+              <div key={parent.id}>
+                <div className={`flex items-center gap-2 px-3 py-2.5 transition-colors cursor-pointer ${parentSelected ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                  {hasChildren ? (
+                    <button onClick={() => toggleExpand(parent.id)} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                      <svg width="10" height="6" viewBox="0 0 10 6" className={`transition-transform ${isExpanded ? '' : '-rotate-90'}`}>
+                        <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                      </svg>
+                    </button>
+                  ) : <div className="w-5" />}
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${parentSelected ? 'bg-primary text-white' : 'bg-muted'}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
+                  <span className={`flex-1 text-sm ${parentSelected ? 'font-semibold text-primary' : 'text-foreground'}`}>
+                    {isAr ? parent.name_ar : parent.name_en}
+                  </span>
+                  <button onClick={() => toggleItem(parent.href)} disabled={!parentSelected && selected.length >= 6}
+                    className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                      parentSelected
+                        ? 'bg-primary text-white hover:bg-primary/80'
+                        : 'border border-dashed hover:border-primary/50 hover:bg-primary/5 disabled:opacity-30'
+                    }`}>
+                    {parentSelected ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5 text-muted-foreground" />}
+                  </button>
+                </div>
+
+                {hasChildren && isExpanded && (
+                  <div className="bg-muted/20">
+                    {children.map(child => {
+                      const ChildIcon = BOTTOM_NAV_ICON_MAP[child.icon] || LayoutDashboard;
+                      const childSelected = isSelected(child.href);
+                      return (
+                        <div key={child.id} className={`flex items-center gap-2 px-3 py-2 pr-10 transition-colors cursor-pointer ${childSelected ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                          <div className="w-5 flex justify-center">
+                            <div className="w-px h-4 bg-border" />
+                          </div>
+                          <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${childSelected ? 'bg-primary text-white' : 'bg-muted/70'}`}>
+                            <ChildIcon className="w-3 h-3" />
+                          </div>
+                          <span className={`flex-1 text-xs ${childSelected ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+                            {isAr ? child.name_ar : child.name_en}
+                          </span>
+                          <button onClick={() => toggleItem(child.href)} disabled={!childSelected && selected.length >= 6}
+                            className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+                              childSelected
+                                ? 'bg-primary text-white hover:bg-primary/80'
+                                : 'border border-dashed hover:border-primary/50 disabled:opacity-30'
+                            }`}>
+                            {childSelected ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3 text-muted-foreground" />}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-xl border-2 border-dashed p-3">
+        <Label className="text-xs text-muted-foreground block mb-2 text-center">{isAr ? 'معاينة الشريط السفلي' : 'Bottom Bar Preview'}</Label>
+        <div className="flex items-center justify-around h-14 rounded-lg bg-muted/50 px-1">
+          {selectedDetails.map(item => {
+            const Icon = BOTTOM_NAV_ICON_MAP[item.icon] || LayoutDashboard;
+            return (
+              <div key={item.href} className="flex flex-col items-center gap-0.5 flex-1">
+                <Icon className="w-5 h-5 text-primary" />
+                <span className="text-[8px] font-cairo text-foreground truncate max-w-[50px] text-center">
+                  {isAr ? item.name_ar : item.name_en}
+                </span>
+              </div>
+            );
+          })}
+          <div className="flex flex-col items-center gap-0.5 flex-1">
+            <Menu className="w-5 h-5 text-muted-foreground" />
+            <span className="text-[8px] font-cairo text-muted-foreground">{isAr ? 'المزيد' : 'More'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SystemSettings() {
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { refreshHeader } = useHeader();
   const { refreshMobileSettings } = useMobileSettings();
+  const { menuItems: sidebarMenuItems } = useSidebar();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState("login");
 
@@ -502,24 +737,14 @@ export default function SystemSettings() {
 
             {/* 2. Bottom Navigation Bar */}
             <SettingSection icon={NavIcon} title={isAr ? 'شريط التنقل السفلي' : 'Bottom Navigation'}
-              description={isAr ? 'التحكم بعدد الأزرار في الشريط السفلي' : 'Control bottom bar button count'}>
+              description={isAr ? 'اختر العناصر التي تظهر في الشريط السفلي وحدد ترتيبها' : 'Choose and reorder bottom bar items'}>
               <div className="space-y-4" dir="rtl">
-                <div>
-                  <Label className="font-medium block mb-2">{isAr ? 'عدد الأزرار المعروضة' : 'Visible buttons'}</Label>
-                  <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" className="h-9 w-9"
-                      onClick={() => setPwaSettings({ ...pwaSettings, bottom_nav_count: Math.max(2, (pwaSettings.bottom_nav_count || 4) - 1) })}>
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <span className="text-2xl font-bold w-8 text-center">{pwaSettings.bottom_nav_count || 4}</span>
-                    <Button variant="outline" size="icon" className="h-9 w-9"
-                      onClick={() => setPwaSettings({ ...pwaSettings, bottom_nav_count: Math.min(6, (pwaSettings.bottom_nav_count || 4) + 1) })}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <span className="text-xs text-muted-foreground">+ {isAr ? 'زر المزيد' : 'More btn'}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">{isAr ? 'الأزرار تأخذ من القائمة الجانبية بالترتيب. الباقي يظهر في "المزيد"' : 'Buttons are taken from sidebar in order. Rest shows in "More"'}</p>
-                </div>
+                <BottomNavConfigurator
+                  sidebarItems={sidebarMenuItems}
+                  selectedItems={pwaSettings.bottom_nav_items}
+                  onChange={(items) => setPwaSettings({ ...pwaSettings, bottom_nav_items: items, bottom_nav_count: items.length })}
+                  isAr={isAr}
+                />
               </div>
             </SettingSection>
 

@@ -149,6 +149,9 @@ export const Layout = () => {
     childrenMap[child.parent_id].push(child);
   });
 
+  // All parent items (including hidden ones — needed for bottom nav custom items)
+  const allParentItems = allMenuItems.filter(item => !item.parent_id);
+
   // Split into primary and secondary navigation
   const navigation = parentItems.filter(item => !item.is_secondary);
   const secondaryNav = parentItems.filter(item => item.is_secondary);
@@ -711,7 +714,12 @@ export const Layout = () => {
         }}
       >
         <div className="flex h-[56px] items-stretch px-2">
-          {[...navigation.slice(0, mobileSettings.bottom_nav_count || 4)].map((item) => {
+          {(mobileSettings.bottom_nav_items
+            ? mobileSettings.bottom_nav_items
+                .map(href => allMenuItems.find(i => i.href === href))
+                .filter(Boolean)
+            : navigation.slice(0, mobileSettings.bottom_nav_count || 4)
+          ).map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
