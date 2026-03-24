@@ -160,6 +160,7 @@ async def import_gates(
             skipped += 1
             continue
 
+        raw_max = _raw(vals, "max_flow")
         gate_data = {
             "number": _raw(vals, "number"),
             "name": name,
@@ -168,8 +169,8 @@ async def import_gates(
             "direction": _raw(vals, "direction"),
             "category": [c.strip() for c in _raw(vals, "category").split("+") if c.strip()] if "category" in col_map and _raw(vals, "category") else [],
             "classification": _raw(vals, "classification"),
-            "status": _raw(vals, "status") or "مفتوح",
-            "max_flow": int(_raw(vals, "max_flow") or 5000) if _raw(vals, "max_flow").isdigit() or not _raw(vals, "max_flow") else 5000,
+            "status": _raw(vals, "status"),
+            "max_flow": int(raw_max) if raw_max.isdigit() else 0,
         }
 
         query = {"name": name}
@@ -179,7 +180,7 @@ async def import_gates(
 
         existing = await db.gates.find_one(query, {"_id": 1})
         if existing:
-            if mode == "update":
+            if mode in ("update", "replace"):
                 await db.gates.update_one({"_id": existing["_id"]}, {"$set": gate_data})
                 updated += 1
             else:
@@ -189,7 +190,7 @@ async def import_gates(
         gate_data.update({
             "id": str(uuid.uuid4()),
             "current_flow": 0,
-            "current_indicator": "خفيف",
+            "current_indicator": "",
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
         try:
