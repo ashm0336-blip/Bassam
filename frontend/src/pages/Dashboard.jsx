@@ -270,33 +270,13 @@ function PlazaBar({ data, navigate }) {
   );
 }
 
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-const DASH_TABS = [
-  { id: "summary",  label: "الملخص",    icon: Activity,      color: "#004D38" },
-  { id: "gates",    label: "البوابات",   icon: DoorOpen,      color: "#059669" },
-  { id: "charts",   label: "الرسوم",     icon: TrendingUp,    color: "#2563eb" },
-  { id: "alerts",   label: "التنبيهات",  icon: AlertTriangle, color: "#f59e0b" },
-  { id: "depts",    label: "الإدارات",   icon: Building,      color: "#7c3aed" },
-];
-
 export default function Dashboard() {
   const [ops, setOps] = useState(null);
   const [deptStats, setDeptStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [activeTab, setActiveTab] = useState("summary");
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const isMobile = useIsMobile();
 
   const fetchData = useCallback(async () => {
     try {
@@ -345,77 +325,6 @@ export default function Dashboard() {
     return { name: labels[dept] || dept, value: count, fill: DEPT_CONFIG[dept]?.bar || '#666' };
   });
 
-  const ACTION_LABELS = {
-    login: 'تسجيل دخول', logout: 'تسجيل خروج',
-    employee_created: 'إضافة موظف', employee_updated: 'تحديث بيانات', employee_deleted: 'حذف موظف',
-    account_activated: 'تفعيل حساب', account_frozen: 'تجميد حساب', account_terminated: 'إنهاء خدمة',
-    reset_pin: 'إعادة تعيين رمز', change_pin: 'تغيير رمز الدخول',
-    schedule_created: 'إنشاء جدول', schedule_status: 'حالة جدول', schedule_unlocked: 'فتح جدول', schedule_deleted: 'حذف جدول',
-    setting_created: 'إضافة إعداد', setting_updated: 'تحديث إعداد', setting_deleted: 'حذف إعداد',
-    task_created: 'إنشاء مهمة',
-    'استيراد موظفين': 'استيراد موظفين', 'إنشاء بلاغ': 'إنشاء بلاغ', 'تحديث بلاغ': 'تحديث بلاغ',
-    'إنشاء إحصائية يومية': 'إنشاء إحصائية', 'استيراد إحصائيات يومية': 'استيراد إحصائيات', 'حذف إحصائية يومية': 'حذف إحصائية',
-    'إنشاء مجموعة صلاحيات': 'إنشاء صلاحيات', 'تحديث مجموعة صلاحيات': 'تحديث صلاحيات',
-    'حذف مجموعة صلاحيات': 'حذف صلاحيات', 'تغيير مجموعة صلاحيات': 'تغيير صلاحيات',
-    'تحديث إعدادات Header': 'تحديث Header', 'تحديث إعدادات شاشة الدخول': 'تحديث شاشة الدخول',
-    'تحديث إعدادات الجوال': 'تحديث إعدادات الجوال', 'تغيير الموسم': 'تغيير الموسم',
-    'إضافة خيار قائمة': 'إضافة خيار', 'تعديل خيار قائمة': 'تعديل خيار', 'حذف خيار قائمة': 'حذف خيار',
-    'إضافة عنصر ممنوع': 'إضافة عنصر ممنوع', 'حذف عنصر ممنوع': 'حذف عنصر ممنوع', 'تعديل عنصر ممنوع': 'تعديل عنصر ممنوع',
-  };
-  const ACTION_COLORS = {
-    login: '#6366f1', logout: '#6b7280',
-    employee_created: '#22c55e', employee_updated: '#3b82f6', employee_deleted: '#ef4444',
-    account_activated: '#22c55e', account_frozen: '#f59e0b', account_terminated: '#ef4444',
-    reset_pin: '#8b5cf6', change_pin: '#8b5cf6', task_created: '#0ea5e9',
-  };
-
-  const alertsAndTimelineContent = (
-    <>
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground px-1">التنبيهات</p>
-        {recent_alerts.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-16 text-muted-foreground">
-            <CheckCircle2 className="w-6 h-6 mb-1 text-emerald-400" />
-            <p className="text-[10px]">لا توجد تنبيهات</p>
-          </div>
-        )}
-        {recent_alerts.map((a, i) => (
-          <div key={i} className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
-            <div className={`w-2 h-2 mt-1 rounded-full flex-shrink-0 ${a.priority === 'critical' ? 'bg-red-500' : a.priority === 'high' ? 'bg-amber-500' : 'bg-blue-400'}`} />
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold truncate">{a.title}</p>
-              <p className="text-[9px] text-muted-foreground truncate">{a.message}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <Separator className="my-2" />
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-bold text-muted-foreground px-1">آخر الأحداث</p>
-        {timeline.length === 0 && (
-          <p className="text-[10px] text-muted-foreground text-center py-3">لا توجد أحداث</p>
-        )}
-        {timeline.map((t, i) => {
-          const actionColor = ACTION_COLORS[t.action] || '#6366f1';
-          return (
-            <div key={i} className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${actionColor}15` }}>
-                <Activity className="w-2.5 h-2.5" style={{ color: actionColor }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold truncate">{t.user_name}</p>
-                <p className="text-[9px] text-muted-foreground truncate">
-                  <span className="font-semibold" style={{ color: actionColor }}>{ACTION_LABELS[t.action] || t.action}</span>
-                  {t.details ? ` — ${t.details}` : ''}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-
   return (
     <div className="space-y-3 sm:space-y-4 lg:space-y-5" data-testid="ops-dashboard">
 
@@ -439,7 +348,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── تنبيهات ذكية (always visible) ── */}
+      {/* ── تنبيهات ذكية ── */}
       {smart_alerts.length > 0 && (
         <div className="space-y-1.5 sm:space-y-2" data-testid="smart-alerts">
           {smart_alerts.map((alert, i) => {
@@ -463,315 +372,245 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════
-           MOBILE: Tab-based layout
-         ══════════════════════════════════════════════════════ */}
-      {isMobile ? (
+      {/* ── KPI Cards — Mobile: horizontal scroll strip ── */}
+      <div className="sm:hidden overflow-x-auto pb-1 -mx-2 px-2 no-scrollbar">
+        <div className="flex gap-2.5 min-w-max">
+          <KPICard mobileCompact icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
+          <KPICard mobileCompact icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
+            sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : ""} />
+          <KPICard mobileCompact icon={TrendingUp}    label="نسبة الإشغال"       value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={crowdColor}
+            sub={`${(kpis.total_crowd || 0).toLocaleString('ar-SA')} زائر`} />
+          <KPICard mobileCompact icon={AlertTriangle} label="التنبيهات النشطة"  value={kpis.active_alerts}           total={kpis.active_alerts + 5} unit=""   color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'}
+            sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرجة` : ''} />
+        </div>
+      </div>
+      {/* ── KPI Cards — Desktop: grid ── */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <KPICard icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
+        <KPICard icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
+          sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : "جميعهم في الخدمة"} />
+        <KPICard icon={TrendingUp}    label="نسبة الإشغال"       value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={crowdColor}
+          sub={`${(kpis.total_crowd || 0).toLocaleString('ar-SA')} زائر حالياً`} />
+        <KPICard icon={AlertTriangle} label="التنبيهات النشطة"  value={kpis.active_alerts}           total={kpis.active_alerts + 5} unit=""   color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'}
+          sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حالة حرجة` : 'لا توجد حالات حرجة'} />
+      </div>
+
+      {/* ── شريط حالة الموظفين ── */}
+      {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
         <>
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 -mx-1 px-1" role="tablist">
-            {DASH_TABS.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all flex-shrink-0
-                    ${isActive
-                      ? "text-white shadow-lg scale-[1.02]"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted border border-transparent"
-                    }`}
-                  style={isActive ? { backgroundColor: tab.color, boxShadow: `0 4px 12px ${tab.color}40` } : undefined}
-                >
-                  <Icon className="w-3.5 h-3.5"/>
-                  {tab.label}
-                </button>
-              );
-            })}
+          <div className="hidden sm:grid sm:grid-cols-3 gap-2 lg:gap-3">
+            {[
+              { label: "مداوم الآن",    value: kpis.active_employees, color: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800", desc: "داخل ساعات الوردية" },
+              { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "text-amber-600 dark:text-amber-400",   bar: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",       desc: "يوم عمل — خارج الوقت" },
+              { label: "في راحة",       value: kpis.on_rest || 0,     color: "text-slate-500 dark:text-slate-400",   bar: "bg-slate-400",   bg: "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700",       desc: "إجازة أسبوعية" },
+            ].map((s, i) => (
+              <div key={i} className={`flex items-center gap-3 lg:gap-4 px-3 lg:px-5 py-3 lg:py-4 rounded-xl border ${s.bg}`}>
+                <div className={`w-1 h-8 lg:h-10 rounded-full ${s.bar} flex-shrink-0`} />
+                <div className="min-w-0">
+                  <p className={`font-black text-xl lg:text-3xl leading-none ${s.color}`}>{s.value}</p>
+                  <p className="text-xs font-semibold text-foreground mt-1 truncate">{s.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="min-h-[180px]">
-            {activeTab === "summary" && (
-              <div className="space-y-2.5">
-                <div className="overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
-                  <div className="flex gap-2 min-w-max">
-                    <KPICard mobileCompact icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
-                    <KPICard mobileCompact icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
-                      sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : ""} />
-                    <KPICard mobileCompact icon={TrendingUp}    label="نسبة الإشغال"       value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={crowdColor}
-                      sub={`${(kpis.total_crowd || 0).toLocaleString('ar-SA')} زائر`} />
-                    <KPICard mobileCompact icon={AlertTriangle} label="التنبيهات النشطة"  value={kpis.active_alerts}           total={kpis.active_alerts + 5} unit=""   color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'}
-                      sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرجة` : ''} />
-                  </div>
-                </div>
-                {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
-                  <div className="flex items-center rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-                    {[
-                      { label: "مداوم",  value: kpis.active_employees, dot: "bg-emerald-500", color: "text-emerald-600 dark:text-emerald-400" },
-                      { label: "خارج",   value: kpis.off_shift || 0,   dot: "bg-amber-500",   color: "text-amber-600 dark:text-amber-400" },
-                      { label: "راحة",   value: kpis.on_rest || 0,     dot: "bg-slate-400",   color: "text-slate-500 dark:text-slate-400" },
-                    ].map((s, i) => (
-                      <div key={i} className={`flex-1 text-center py-2.5 ${i < 2 ? 'border-l border-border/50' : ''}`}>
-                        <p className={`text-lg font-black leading-none ${s.color}`}>{s.value}</p>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                          <span className="text-[10px] font-medium text-muted-foreground">{s.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "gates" && (
-              <div className="bg-card rounded-xl p-3 border shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-cairo font-bold">حالة البوابات حسب الساحة</span>
-                  <Badge variant="secondary" className="text-[9px]">{heatmap.length} ساحة</Badge>
-                </div>
-                <div className="max-h-[300px] overflow-y-auto">
-                  <PlazaBar data={heatmap} navigate={navigate} />
-                </div>
-              </div>
-            )}
-
-            {activeTab === "charts" && (
-              <div className="space-y-3">
-                <div className="bg-card rounded-xl p-3 border shadow-sm">
-                  <p className="text-xs font-cairo font-bold mb-2">توزيع الموظفين حسب الوردية</p>
-                  <ResponsiveContainer width="100%" height={120}>
-                    <BarChart data={shiftData} layout="vertical" margin={{ right: 10 }}>
-                      <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" width={42} tick={{ fontSize: 10, fill: 'currentColor' }} />
-                      <Tooltip formatter={(v) => [`${v} موظف`, '']} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                      <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                        {shiftData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="bg-card rounded-xl p-3 border shadow-sm">
-                  <p className="text-xs font-cairo font-bold mb-2">توزيع الموظفين حسب الإدارة</p>
-                  <ResponsiveContainer width="100%" height={120}>
-                    <PieChart>
-                      <Pie data={deptData} cx="50%" cy="50%" outerRadius={48} innerRadius={24} dataKey="value" paddingAngle={2}>
-                        {deptData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                      </Pie>
-                      <Tooltip formatter={(v, n) => [`${v} موظف`, n]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-1">
-                    {deptData.map((e, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: e.fill }} />
-                        <span className="text-[9px] text-muted-foreground">{e.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "alerts" && (
-              <div className="bg-card rounded-xl p-3 border shadow-sm max-h-[400px] overflow-y-auto">
-                {alertsAndTimelineContent}
-              </div>
-            )}
-
-            {activeTab === "depts" && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-cairo font-bold">ملخص الإدارات</span>
-                  <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                    <ChevronLeft className="w-3 h-3" /> اسحب
-                  </span>
-                </div>
-                <div className="overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
-                  <div className="flex gap-2.5 min-w-max">
-                    {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} compact />)}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        /* ══════════════════════════════════════════════════════
-             DESKTOP / TABLET: Original layout unchanged
-           ══════════════════════════════════════════════════════ */
-        <>
-          {/* KPI Cards — Desktop: grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-            <KPICard icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
-            <KPICard icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
-              sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : "جميعهم في الخدمة"} />
-            <KPICard icon={TrendingUp}    label="نسبة الإشغال"       value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={crowdColor}
-              sub={`${(kpis.total_crowd || 0).toLocaleString('ar-SA')} زائر حالياً`} />
-            <KPICard icon={AlertTriangle} label="التنبيهات النشطة"  value={kpis.active_alerts}           total={kpis.active_alerts + 5} unit=""   color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'}
-              sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حالة حرجة` : 'لا توجد حالات حرجة'} />
-          </div>
-
-          {/* شريط حالة الموظفين */}
-          {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
-            <div className="grid sm:grid-cols-3 gap-2 lg:gap-3">
+          <div className="sm:hidden">
+            <div className="flex items-center rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
               {[
-                { label: "مداوم الآن",    value: kpis.active_employees, color: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800", desc: "داخل ساعات الوردية" },
-                { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "text-amber-600 dark:text-amber-400",   bar: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",       desc: "يوم عمل — خارج الوقت" },
-                { label: "في راحة",       value: kpis.on_rest || 0,     color: "text-slate-500 dark:text-slate-400",   bar: "bg-slate-400",   bg: "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700",       desc: "إجازة أسبوعية" },
+                { label: "مداوم",  value: kpis.active_employees, dot: "bg-emerald-500", color: "text-emerald-600 dark:text-emerald-400" },
+                { label: "خارج",   value: kpis.off_shift || 0,   dot: "bg-amber-500",   color: "text-amber-600 dark:text-amber-400" },
+                { label: "راحة",   value: kpis.on_rest || 0,     dot: "bg-slate-400",   color: "text-slate-500 dark:text-slate-400" },
               ].map((s, i) => (
-                <div key={i} className={`flex items-center gap-3 lg:gap-4 px-3 lg:px-5 py-3 lg:py-4 rounded-xl border ${s.bg}`}>
-                  <div className={`w-1 h-8 lg:h-10 rounded-full ${s.bar} flex-shrink-0`} />
-                  <div className="min-w-0">
-                    <p className={`font-black text-xl lg:text-3xl leading-none ${s.color}`}>{s.value}</p>
-                    <p className="text-xs font-semibold text-foreground mt-1 truncate">{s.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                <div key={i} className={`flex-1 text-center py-2.5 ${i < 2 ? 'border-l border-border/50' : ''}`}>
+                  <p className={`text-lg font-black leading-none ${s.color}`}>{s.value}</p>
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                    <span className="text-[10px] font-medium text-muted-foreground">{s.label}</span>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* الشبكة الرئيسية */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
-            <Card className="border-0 shadow-md">
-              <CardHeader className="pb-2 pt-4 px-5">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-cairo font-bold">حالة البوابات حسب الساحة</CardTitle>
-                  <Badge variant="secondary" className="text-[10px]">{heatmap.length} ساحة</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="px-5 pb-4">
-                <ScrollArea className="h-[300px] pr-1">
-                  <PlazaBar data={heatmap} navigate={navigate} />
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-md">
-              <CardHeader className="pb-1 pt-4 px-5">
-                <CardTitle className="text-sm font-cairo font-bold">توزيع الموظفين حسب الوردية</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-2">
-                <ResponsiveContainer width="100%" height={130}>
-                  <BarChart data={shiftData} layout="vertical" margin={{ right: 10 }}>
-                    <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="name" width={45} tick={{ fontSize: 11, fill: 'currentColor' }} />
-                    <Tooltip formatter={(v) => [`${v} موظف`, '']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                      {shiftData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-              <Separator />
-              <CardHeader className="pb-1 pt-3 px-5">
-                <CardTitle className="text-sm font-cairo font-bold">توزيع الموظفين حسب الإدارة</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <ResponsiveContainer width="100%" height={130}>
-                  <PieChart>
-                    <Pie data={deptData} cx="50%" cy="50%" outerRadius={52} innerRadius={28} dataKey="value" paddingAngle={2}>
-                      {deptData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                    </Pie>
-                    <Tooltip formatter={(v, n) => [`${v} موظف`, n]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-1">
-                  {deptData.map((e, i) => (
-                    <div key={i} className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: e.fill }} />
-                      <span className="text-[10px] text-muted-foreground">{e.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-md">
-              <CardHeader className="pb-2 pt-4 px-5">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-cairo font-bold">آخر التنبيهات</CardTitle>
-                  <Button variant="ghost" size="sm" className="text-xs h-7 gap-1 text-primary" onClick={() => navigate('/notifications')}>
-                    عرض الكل <ChevronLeft className="w-3 h-3" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="px-4 pb-2">
-                <ScrollArea className="h-[130px]">
-                  <div className="space-y-1.5">
-                    {recent_alerts.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-20 text-muted-foreground">
-                        <CheckCircle2 className="w-8 h-8 mb-1 text-emerald-400" />
-                        <p className="text-xs">لا توجد تنبيهات</p>
-                      </div>
-                    )}
-                    {recent_alerts.map((a, i) => (
-                      <div key={i} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${a.priority === 'critical' ? 'bg-red-500' : a.priority === 'high' ? 'bg-amber-500' : 'bg-blue-400'}`} />
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold truncate">{a.title}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{a.message}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-              <Separator />
-              <CardHeader className="pb-2 pt-3 px-5">
-                <CardTitle className="text-sm font-cairo font-bold">آخر الأحداث</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <ScrollArea className="h-[130px]">
-                  <div className="space-y-1.5">
-                    {timeline.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">لا توجد أحداث</p>
-                    )}
-                    {timeline.map((t, i) => {
-                      const actionColor = ACTION_COLORS[t.action] || '#6366f1';
-                      return (
-                        <div key={i} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${actionColor}15` }}>
-                            <Activity className="w-3 h-3" style={{ color: actionColor }} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-[11px] font-semibold truncate">{t.user_name}</p>
-                              {t.department && (
-                                <span className="text-[9px] text-muted-foreground bg-muted px-1 py-px rounded">{t.department}</span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              <span className="font-semibold" style={{ color: actionColor }}>{ACTION_LABELS[t.action] || t.action}</span>
-                              {t.details ? ` — ${t.details}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* ملخص الإدارات */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-cairo font-bold text-base">ملخص الإدارات</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-              {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} />)}
-            </div>
           </div>
         </>
       )}
+
+      {/* ── الشبكة الرئيسية ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+
+        {/* عمود 1: حالة البوابات */}
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-2 pt-3 sm:pt-4 px-3 sm:px-5">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs sm:text-sm font-cairo font-bold">حالة البوابات حسب الساحة</CardTitle>
+              <Badge variant="secondary" className="text-[9px] sm:text-[10px]">{heatmap.length} ساحة</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 sm:px-5 pb-3 sm:pb-4">
+            <ScrollArea className="h-[200px] sm:h-[300px] pr-1">
+              <PlazaBar data={heatmap} navigate={navigate} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* عمود 2: توزيع الموظفين */}
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-1 pt-3 sm:pt-4 px-3 sm:px-5">
+            <CardTitle className="text-xs sm:text-sm font-cairo font-bold">توزيع الموظفين حسب الوردية</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-2">
+            <ResponsiveContainer width="100%" height={130}>
+              <BarChart data={shiftData} layout="vertical" margin={{ right: 10 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" width={45} tick={{ fontSize: 11, fill: 'currentColor' }} />
+                <Tooltip
+                  formatter={(v) => [`${v} موظف`, '']}
+                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                  {shiftData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+          <Separator />
+          <CardHeader className="pb-1 pt-3 px-5">
+            <CardTitle className="text-sm font-cairo font-bold">توزيع الموظفين حسب الإدارة</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <ResponsiveContainer width="100%" height={130}>
+              <PieChart>
+                <Pie data={deptData} cx="50%" cy="50%" outerRadius={52} innerRadius={28} dataKey="value" paddingAngle={2}>
+                  {deptData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Pie>
+                <Tooltip
+                  formatter={(v, n) => [`${v} موظف`, n]}
+                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-1">
+              {deptData.map((e, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: e.fill }} />
+                  <span className="text-[10px] text-muted-foreground">{e.name}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* عمود 3: آخر التنبيهات والأحداث */}
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-2 pt-3 sm:pt-4 px-3 sm:px-5">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs sm:text-sm font-cairo font-bold">آخر التنبيهات</CardTitle>
+              <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs h-6 sm:h-7 gap-1 text-primary" onClick={() => navigate('/notifications')}>
+                عرض الكل <ChevronLeft className="w-3 h-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-2">
+            <ScrollArea className="h-[130px]">
+              <div className="space-y-1.5">
+                {recent_alerts.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-20 text-muted-foreground">
+                    <CheckCircle2 className="w-8 h-8 mb-1 text-emerald-400" />
+                    <p className="text-xs">لا توجد تنبيهات</p>
+                  </div>
+                )}
+                {recent_alerts.map((a, i) => (
+                  <div key={i} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${a.priority === 'critical' ? 'bg-red-500' : a.priority === 'high' ? 'bg-amber-500' : 'bg-blue-400'}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold truncate">{a.title}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{a.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+          <Separator />
+          <CardHeader className="pb-2 pt-3 px-5">
+            <CardTitle className="text-sm font-cairo font-bold">آخر الأحداث</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <ScrollArea className="h-[130px]">
+              <div className="space-y-1.5">
+                {timeline.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">لا توجد أحداث</p>
+                )}
+                {timeline.map((t, i) => {
+                  const ACTION_LABELS = {
+                    login: 'تسجيل دخول', logout: 'تسجيل خروج',
+                    employee_created: 'إضافة موظف', employee_updated: 'تحديث بيانات', employee_deleted: 'حذف موظف',
+                    account_activated: 'تفعيل حساب', account_frozen: 'تجميد حساب', account_terminated: 'إنهاء خدمة',
+                    reset_pin: 'إعادة تعيين رمز', change_pin: 'تغيير رمز الدخول',
+                    schedule_created: 'إنشاء جدول', schedule_status: 'حالة جدول', schedule_unlocked: 'فتح جدول', schedule_deleted: 'حذف جدول',
+                    setting_created: 'إضافة إعداد', setting_updated: 'تحديث إعداد', setting_deleted: 'حذف إعداد',
+                    task_created: 'إنشاء مهمة',
+                    'استيراد موظفين': 'استيراد موظفين', 'إنشاء بلاغ': 'إنشاء بلاغ', 'تحديث بلاغ': 'تحديث بلاغ',
+                    'إنشاء إحصائية يومية': 'إنشاء إحصائية', 'استيراد إحصائيات يومية': 'استيراد إحصائيات', 'حذف إحصائية يومية': 'حذف إحصائية',
+                    'إنشاء مجموعة صلاحيات': 'إنشاء صلاحيات', 'تحديث مجموعة صلاحيات': 'تحديث صلاحيات',
+                    'حذف مجموعة صلاحيات': 'حذف صلاحيات', 'تغيير مجموعة صلاحيات': 'تغيير صلاحيات',
+                    'تحديث إعدادات Header': 'تحديث Header', 'تحديث إعدادات شاشة الدخول': 'تحديث شاشة الدخول',
+                    'تحديث إعدادات الجوال': 'تحديث إعدادات الجوال', 'تغيير الموسم': 'تغيير الموسم',
+                    'إضافة خيار قائمة': 'إضافة خيار', 'تعديل خيار قائمة': 'تعديل خيار', 'حذف خيار قائمة': 'حذف خيار',
+                    'إضافة عنصر ممنوع': 'إضافة عنصر ممنوع', 'حذف عنصر ممنوع': 'حذف عنصر ممنوع', 'تعديل عنصر ممنوع': 'تعديل عنصر ممنوع',
+                  };
+                  const ACTION_COLORS = {
+                    login: '#6366f1', logout: '#6b7280',
+                    employee_created: '#22c55e', employee_updated: '#3b82f6', employee_deleted: '#ef4444',
+                    account_activated: '#22c55e', account_frozen: '#f59e0b', account_terminated: '#ef4444',
+                    reset_pin: '#8b5cf6', change_pin: '#8b5cf6', task_created: '#0ea5e9',
+                  };
+                  const actionColor = ACTION_COLORS[t.action] || '#6366f1';
+                  return (
+                    <div key={i} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${actionColor}15` }}>
+                        <Activity className="w-3 h-3" style={{ color: actionColor }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[11px] font-semibold truncate">{t.user_name}</p>
+                          {t.department && (
+                            <span className="text-[9px] text-muted-foreground bg-muted px-1 py-px rounded hidden sm:inline">{t.department}</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          <span className="font-semibold" style={{ color: actionColor }}>{ACTION_LABELS[t.action] || t.action}</span>
+                          {t.details ? ` — ${t.details}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── ملخص الإدارات ── */}
+      <div>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div>
+            <h2 className="font-cairo font-bold text-sm sm:text-base">ملخص الإدارات</h2>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
+          </div>
+          <span className="text-[10px] sm:hidden text-muted-foreground flex items-center gap-1">
+            <ChevronLeft className="w-3 h-3" /> اسحب
+          </span>
+        </div>
+        <div className="sm:hidden overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
+          <div className="flex gap-3 min-w-max">
+            {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} compact />)}
+          </div>
+        </div>
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} />)}
+        </div>
+      </div>
     </div>
   );
 }
