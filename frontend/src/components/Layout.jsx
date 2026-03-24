@@ -5,6 +5,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useHeader } from "@/context/HeaderContext";
+import { useMobileSettings } from "@/context/MobileSettingsContext";
 import { useRealtimeRefresh, useLastEvent } from "@/context/WebSocketContext";
 import { NotificationManager } from "@/components/NotificationManager";
 import axios from "axios";
@@ -79,6 +80,7 @@ export const Layout = () => {
   const { t, language, toggleLanguage, isRTL } = useLanguage();
   const { menuItems, loading } = useSidebar();
   const { headerSettings } = useHeader();
+  const { mobileSettings } = useMobileSettings();
   const lastEvent = useLastEvent();
 
   // Fetch unread alerts count
@@ -103,11 +105,13 @@ export const Layout = () => {
 
   const PULL_THRESHOLD = 80;
   const handleTouchStart = useCallback((e) => {
+    if (!mobileSettings.pull_to_refresh) return;
     if (mainRef.current && mainRef.current.scrollTop <= 0) {
       touchStartY.current = e.touches[0].clientY;
     }
-  }, []);
+  }, [mobileSettings.pull_to_refresh]);
   const handleTouchMove = useCallback((e) => {
+    if (!mobileSettings.pull_to_refresh) return;
     if (!touchStartY.current || isRefreshing) return;
     if (mainRef.current && mainRef.current.scrollTop > 0) return;
     const diff = e.touches[0].clientY - touchStartY.current;
@@ -115,8 +119,9 @@ export const Layout = () => {
       const dampened = Math.min(diff * 0.4, 120);
       setPullDistance(dampened);
     }
-  }, [isRefreshing]);
+  }, [isRefreshing, mobileSettings.pull_to_refresh]);
   const handleTouchEnd = useCallback(() => {
+    if (!mobileSettings.pull_to_refresh) return;
     if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
       setIsRefreshing(true);
       setPullDistance(PULL_THRESHOLD);
@@ -125,7 +130,7 @@ export const Layout = () => {
       setPullDistance(0);
     }
     touchStartY.current = 0;
-  }, [pullDistance, isRefreshing]);
+  }, [pullDistance, isRefreshing, mobileSettings.pull_to_refresh]);
 
   // Convert menu items from API — backend already filters by role/department/permissions
   const allMenuItems = menuItems.map(item => ({
@@ -450,39 +455,49 @@ export const Layout = () => {
         </div>
 
         <div className="flex-shrink-0 px-4 pb-4 pt-2" style={{ borderTop: '1px solid hsl(var(--border) / 0.4)' }}>
-          <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors mb-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }}>
-              <span className="font-cairo font-bold text-white text-sm">
-                {user?.name?.charAt(0) || 'م'}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0 text-right">
-              <p className="text-sm font-semibold truncate">{user?.name}</p>
-              <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-md text-[9px] font-bold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
-                {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
-              </span>
-            </div>
-            <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          </button>
-          <div className="flex items-center gap-2">
-            <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground relative">
-              <Bell className="w-4 h-4" />
-              <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
-              {unreadAlerts > 0 && (
-                <span className="absolute -top-1 left-2 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
-                  {unreadAlerts > 9 ? "9+" : unreadAlerts}
+          {mobileSettings.show_sidebar_profile && (
+            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors mb-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }}>
+                <span className="font-cairo font-bold text-white text-sm">
+                  {user?.name?.charAt(0) || 'م'}
                 </span>
-              )}
+              </div>
+              <div className="flex-1 min-w-0 text-right">
+                <p className="text-sm font-semibold truncate">{user?.name}</p>
+                <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-md text-[9px] font-bold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
+                  {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
+                </span>
+              </div>
+              <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </button>
-            <button onClick={toggleLanguage} data-testid="mobile-lang-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center text-xs font-bold">
-              {language === 'ar' ? 'EN' : 'ع'}
-            </button>
-            <button onClick={toggleTheme} data-testid="mobile-theme-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center">
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button onClick={handleLogout} data-testid="mobile-logout-btn" className="w-10 h-10 rounded-xl bg-destructive/10 hover:bg-destructive/20 transition-colors flex items-center justify-center text-destructive">
-              <LogOut className="w-4 h-4" />
-            </button>
+          )}
+          <div className="flex items-center gap-2">
+            {mobileSettings.show_sidebar_notifications && (
+              <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground relative">
+                <Bell className="w-4 h-4" />
+                <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
+                {unreadAlerts > 0 && (
+                  <span className="absolute -top-1 left-2 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                    {unreadAlerts > 9 ? "9+" : unreadAlerts}
+                  </span>
+                )}
+              </button>
+            )}
+            {mobileSettings.show_sidebar_language && (
+              <button onClick={toggleLanguage} data-testid="mobile-lang-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center text-xs font-bold">
+                {language === 'ar' ? 'EN' : 'ع'}
+              </button>
+            )}
+            {mobileSettings.show_sidebar_theme && (
+              <button onClick={toggleTheme} data-testid="mobile-theme-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center">
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            )}
+            {mobileSettings.show_sidebar_logout && (
+              <button onClick={handleLogout} data-testid="mobile-logout-btn" className="w-10 h-10 rounded-xl bg-destructive/10 hover:bg-destructive/20 transition-colors flex items-center justify-center text-destructive">
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -689,7 +704,7 @@ export const Layout = () => {
         }}
       >
         <div className="flex h-[56px] items-stretch px-2">
-          {[...navigation.slice(0, 4)].map((item) => {
+          {[...navigation.slice(0, mobileSettings.bottom_nav_count || 4)].map((item) => {
             const Icon = item.icon;
             return (
               <NavLink

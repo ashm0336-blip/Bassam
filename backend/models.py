@@ -502,7 +502,27 @@ class PWASettings(BaseModel):
     app_name_en: str = "Crowd Services"
     theme_color: str = "#004D38"
     show_install_prompt: bool = True
-    icon_url: Optional[str] = None  # base64 or URL
+    icon_url: Optional[str] = None
+    bottom_nav_count: int = 4
+    bottom_nav_items: Optional[list] = None
+    show_sidebar_notifications: bool = True
+    show_sidebar_language: bool = True
+    show_sidebar_theme: bool = True
+    show_sidebar_logout: bool = True
+    show_sidebar_profile: bool = True
+    pull_to_refresh: bool = True
+    splash_enabled: bool = True
+    splash_bg_color: str = "#004D38"
+    splash_logo_url: Optional[str] = None
+    splash_title_ar: str = "خدمات الحشود"
+    splash_title_en: str = "Crowd Services"
+    splash_subtitle_ar: str = "الإدارة العامة لخدمات الحشود"
+    splash_subtitle_en: str = "General Administration of Crowd Services"
+    splash_text_color: str = "#FFFFFF"
+    splash_duration: int = 2000
+    offline_enabled: bool = False
+    offline_cache_pages: bool = True
+    offline_cache_images: bool = False
     updated_at: Optional[str] = None
 
 class PWASettingsUpdate(BaseModel):
@@ -512,6 +532,26 @@ class PWASettingsUpdate(BaseModel):
     theme_color: Optional[str] = None
     show_install_prompt: Optional[bool] = None
     icon_url: Optional[str] = None
+    bottom_nav_count: Optional[int] = None
+    bottom_nav_items: Optional[list] = None
+    show_sidebar_notifications: Optional[bool] = None
+    show_sidebar_language: Optional[bool] = None
+    show_sidebar_theme: Optional[bool] = None
+    show_sidebar_logout: Optional[bool] = None
+    show_sidebar_profile: Optional[bool] = None
+    pull_to_refresh: Optional[bool] = None
+    splash_enabled: Optional[bool] = None
+    splash_bg_color: Optional[str] = None
+    splash_logo_url: Optional[str] = None
+    splash_title_ar: Optional[str] = None
+    splash_title_en: Optional[str] = None
+    splash_subtitle_ar: Optional[str] = None
+    splash_subtitle_en: Optional[str] = None
+    splash_text_color: Optional[str] = None
+    splash_duration: Optional[int] = None
+    offline_enabled: Optional[bool] = None
+    offline_cache_pages: Optional[bool] = None
+    offline_cache_images: Optional[bool] = None
 
 # ============= Map Models =============
 class MapMarker(BaseModel):

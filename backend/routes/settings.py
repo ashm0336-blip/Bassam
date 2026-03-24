@@ -207,7 +207,9 @@ async def update_pwa_settings(settings: PWASettingsUpdate, admin: dict = Depends
         doc = PWASettings().model_dump()
 
     # Update manifest.json
-    manifest_path = "/app/frontend/public/manifest.json"
+    import pathlib
+    base_dir = pathlib.Path(__file__).resolve().parent.parent.parent
+    manifest_path = str(base_dir / "frontend" / "public" / "manifest.json")
     manifest = {
         "name": doc.get("app_name_ar", "منصة خدمات الحشود"),
         "short_name": doc.get("app_name_short_ar", "حشود"),
@@ -237,8 +239,9 @@ async def update_pwa_settings(settings: PWASettingsUpdate, admin: dict = Depends
             from PIL import Image
             import io
             img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
-            img.resize((512, 512), Image.LANCZOS).save("/app/frontend/public/icon-512.png")
-            img.resize((192, 192), Image.LANCZOS).save("/app/frontend/public/icon-192.png")
+            public_dir = base_dir / "frontend" / "public"
+            img.resize((512, 512), Image.LANCZOS).save(str(public_dir / "icon-512.png"))
+            img.resize((192, 192), Image.LANCZOS).save(str(public_dir / "icon-192.png"))
         except Exception:
             pass
 

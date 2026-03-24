@@ -1,5 +1,5 @@
 import "@/App.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,6 +9,8 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { WebSocketProvider } from "@/context/WebSocketContext";
 import { HeaderProvider } from "@/context/HeaderContext";
+import { MobileSettingsProvider } from "@/context/MobileSettingsContext";
+import SplashScreen from "@/components/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DepartmentProtectedRoute, AdminProtectedRoute, PermissionProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
@@ -263,23 +265,28 @@ function App() {
     };
   }, []);
 
+  const [splashDone, setSplashDone] = useState(false);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
-          <WebSocketProvider>
-            <AuthProvider>
-              <SidebarProvider>
-                <HeaderProvider>
-                  <BrowserRouter>
-                    <AppRoutes />
-                    <PWAInstallPrompt />
-                  </BrowserRouter>
-                  <Toaster position="top-left" />
-                </HeaderProvider>
-              </SidebarProvider>
-            </AuthProvider>
-          </WebSocketProvider>
+          <MobileSettingsProvider>
+            <WebSocketProvider>
+              <AuthProvider>
+                <SidebarProvider>
+                  <HeaderProvider>
+                    <BrowserRouter>
+                      {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
+                      <AppRoutes />
+                      <PWAInstallPrompt />
+                    </BrowserRouter>
+                    <Toaster position="top-left" />
+                  </HeaderProvider>
+                </SidebarProvider>
+              </AuthProvider>
+            </WebSocketProvider>
+          </MobileSettingsProvider>
         </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useHeader } from "@/context/HeaderContext";
+import { useMobileSettings } from "@/context/MobileSettingsContext";
 import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Settings, LogIn, Loader2, Upload, Save,
   Image as ImageIcon, Sun, Moon, Monitor, Globe, Smartphone,
+  Bell, Languages, Palette, LogOut, UserCircle, RefreshCw, Wifi, WifiOff,
+  Navigation as NavIcon, Minus, Plus, Eye, EyeOff, Layers,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +54,7 @@ export default function SystemSettings() {
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { refreshHeader } = useHeader();
+  const { refreshMobileSettings } = useMobileSettings();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState("login");
 
@@ -83,6 +88,26 @@ export default function SystemSettings() {
     theme_color: "#004D38",
     show_install_prompt: true,
     icon_url: null,
+    bottom_nav_count: 4,
+    bottom_nav_items: null,
+    show_sidebar_notifications: true,
+    show_sidebar_language: true,
+    show_sidebar_theme: true,
+    show_sidebar_logout: true,
+    show_sidebar_profile: true,
+    pull_to_refresh: true,
+    splash_enabled: true,
+    splash_bg_color: "#004D38",
+    splash_logo_url: null,
+    splash_title_ar: "خدمات الحشود",
+    splash_title_en: "Crowd Services",
+    splash_subtitle_ar: "الإدارة العامة لخدمات الحشود",
+    splash_subtitle_en: "General Administration of Crowd Services",
+    splash_text_color: "#FFFFFF",
+    splash_duration: 2000,
+    offline_enabled: false,
+    offline_cache_pages: true,
+    offline_cache_images: false,
   });
   const [pwaIconPreview, setPwaIconPreview] = useState(null);
 
@@ -157,7 +182,7 @@ export default function SystemSettings() {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       toast.success(isAr ? 'تم حفظ إعدادات الجوال ✅' : 'Mobile settings saved ✅');
-      toast.info(isAr ? 'احذف التطبيق وأعد تثبيته لرؤية التغييرات' : 'Reinstall the app to see changes');
+      refreshMobileSettings();
     } catch { toast.error(isAr ? 'فشل الحفظ' : 'Save failed'); }
     finally { setSaving(false); }
   };
@@ -418,116 +443,260 @@ export default function SystemSettings() {
         </TabsContent>
         {/* Mobile / PWA Settings */}
         <TabsContent value="mobile" className="mt-6">
-          <SettingSection icon={Smartphone} title={isAr ? 'إعدادات الجوال (PWA)' : 'Mobile App Settings (PWA)'}
-            description={isAr ? 'تخصيص التطبيق عند تثبيته على الجوال' : 'Customize the app when installed on mobile'}>
-            <div className="space-y-6" dir="rtl">
+          <div className="space-y-6">
 
-              {/* Icon */}
-              <div>
-                <Label className="font-medium mb-3 block">{isAr ? 'أيقونة التطبيق' : 'App Icon'}</Label>
+            {/* 1. App Identity */}
+            <SettingSection icon={Smartphone} title={isAr ? 'هوية التطبيق' : 'App Identity'}
+              description={isAr ? 'الأيقونة والاسم ولون السمة' : 'Icon, name, and theme color'}>
+              <div className="space-y-5" dir="rtl">
                 <div className="flex items-center gap-6">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-border flex items-center justify-center bg-muted shrink-0">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-border flex items-center justify-center bg-muted shrink-0">
                     {pwaIconPreview ? (
                       <img src={pwaIconPreview} alt="App Icon" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full rounded-2xl flex items-center justify-center" style={{ background: pwaSettings.theme_color }}>
-                        <span className="text-white font-cairo font-bold text-2xl">
-                          {pwaSettings.app_name_short_ar?.charAt(0) || 'ح'}
-                        </span>
+                        <span className="text-white font-cairo font-bold text-2xl">{pwaSettings.app_name_short_ar?.charAt(0) || 'ح'}</span>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById('pwa-icon-upload').click()} data-testid="pwa-icon-upload-btn">
-                      <Upload className="w-4 h-4 ml-2" />
-                      {isAr ? 'رفع أيقونة' : 'Upload Icon'}
-                    </Button>
-                    {pwaIconPreview && (
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
-                        onClick={() => { setPwaIconPreview(null); setPwaSettings({ ...pwaSettings, icon_url: null }); }}>
-                        {isAr ? 'إزالة' : 'Remove'}
+                  <div className="space-y-2 flex-1">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById('pwa-icon-upload').click()} data-testid="pwa-icon-upload-btn">
+                        <Upload className="w-4 h-4 ml-2" />{isAr ? 'رفع أيقونة' : 'Upload Icon'}
                       </Button>
-                    )}
-                    <p className="text-xs text-muted-foreground">{isAr ? 'PNG أو JPG — يُفضّل 512×512' : 'PNG or JPG — 512×512 preferred'}</p>
+                      {pwaIconPreview && (
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                          onClick={() => { setPwaIconPreview(null); setPwaSettings({ ...pwaSettings, icon_url: null }); }}>
+                          {isAr ? 'إزالة' : 'Remove'}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{isAr ? 'PNG أو JPG — يُفضّل 512×512' : 'PNG or JPG — 512×512 preferred'}</p>
                     <input id="pwa-icon-upload" type="file" accept="image/*" onChange={handlePwaIconUpload} className="hidden" />
                   </div>
                 </div>
-              </div>
-
-              <Separator />
-
-              {/* App Names */}
-              <div className="space-y-4">
-                <Label className="font-medium block">{isAr ? 'اسم التطبيق' : 'App Name'}</Label>
-                <div className="grid grid-cols-1 gap-3">
+                <Separator />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الاسم الكامل (عربي)' : 'Full Name (Arabic)'}</Label>
+                    <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الاسم الكامل' : 'Full Name'}</Label>
                     <Input value={pwaSettings.app_name_ar} onChange={(e) => setPwaSettings({ ...pwaSettings, app_name_ar: e.target.value })} className="text-right" data-testid="pwa-name-ar" />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الاسم المختصر (يظهر تحت الأيقونة)' : 'Short Name (shown under icon)'}</Label>
+                    <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الاسم المختصر' : 'Short Name'}</Label>
                     <Input value={pwaSettings.app_name_short_ar} onChange={(e) => setPwaSettings({ ...pwaSettings, app_name_short_ar: e.target.value })} className="text-right" maxLength={12} data-testid="pwa-short-name" />
-                    <p className="text-xs text-muted-foreground mt-1 text-right">{pwaSettings.app_name_short_ar?.length || 0}/12 {isAr ? 'حرف' : 'chars'}</p>
                   </div>
                 </div>
-              </div>
-
-              <Separator />
-
-              {/* Theme Color */}
-              <div>
-                <Label className="font-medium block mb-2">{isAr ? 'لون السمة (شريط الجوال)' : 'Theme Color (status bar)'}</Label>
-                <div className="flex gap-3 items-center flex-row-reverse">
-                  <Input value={pwaSettings.theme_color} onChange={(e) => setPwaSettings({ ...pwaSettings, theme_color: e.target.value })} className="flex-1 text-right" data-testid="pwa-theme-color" />
-                  <Input type="color" value={pwaSettings.theme_color} onChange={(e) => setPwaSettings({ ...pwaSettings, theme_color: e.target.value })} className="w-16 h-10 p-1 cursor-pointer" />
-                  <div className="w-10 h-10 rounded-lg border" style={{ background: pwaSettings.theme_color }} />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Install Prompt Toggle */}
-              <div className="flex items-center justify-between py-2">
                 <div>
-                  <Label className="font-medium block">{isAr ? 'إظهار بانر التثبيت' : 'Show Install Banner'}</Label>
-                  <p className="text-xs text-muted-foreground">{isAr ? 'يظهر للمستخدمين بانر "ثبّت التطبيق" عند فتح الموقع' : 'Shows install prompt when user opens the site'}</p>
-                </div>
-                <Switch
-                  checked={pwaSettings.show_install_prompt}
-                  onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, show_install_prompt: v })}
-                  data-testid="pwa-install-toggle"
-                />
-              </div>
-
-              {/* Preview */}
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <p className="text-xs text-muted-foreground mb-3 text-right">{isAr ? 'معاينة الأيقونة على الشاشة الرئيسية:' : 'Preview on home screen:'}</p>
-                <div className="flex flex-col items-center gap-1 w-20 mx-auto">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg">
-                    {pwaIconPreview ? (
-                      <img src={pwaIconPreview} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ background: pwaSettings.theme_color }}>
-                        <span className="text-white font-cairo font-bold text-xl">
-                          {pwaSettings.app_name_short_ar?.charAt(0) || 'ح'}
-                        </span>
-                      </div>
-                    )}
+                  <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'لون السمة (شريط الحالة)' : 'Theme Color'}</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input type="color" value={pwaSettings.theme_color} onChange={(e) => setPwaSettings({ ...pwaSettings, theme_color: e.target.value })} className="w-12 h-10 p-1 cursor-pointer" />
+                    <Input value={pwaSettings.theme_color} onChange={(e) => setPwaSettings({ ...pwaSettings, theme_color: e.target.value })} className="flex-1 text-right" data-testid="pwa-theme-color" />
                   </div>
-                  <span className="text-xs text-center font-cairo leading-tight max-w-[72px] truncate">
-                    {pwaSettings.app_name_short_ar || 'حشود'}
-                  </span>
+                </div>
+                <SettingItem label={isAr ? 'إظهار بانر التثبيت' : 'Show Install Banner'}
+                  description={isAr ? 'يظهر بانر "ثبّت التطبيق" للمستخدمين' : 'Shows install prompt to users'}>
+                  <Switch checked={pwaSettings.show_install_prompt} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, show_install_prompt: v })} data-testid="pwa-install-toggle" />
+                </SettingItem>
+              </div>
+            </SettingSection>
+
+            {/* 2. Bottom Navigation Bar */}
+            <SettingSection icon={NavIcon} title={isAr ? 'شريط التنقل السفلي' : 'Bottom Navigation'}
+              description={isAr ? 'التحكم بعدد الأزرار في الشريط السفلي' : 'Control bottom bar button count'}>
+              <div className="space-y-4" dir="rtl">
+                <div>
+                  <Label className="font-medium block mb-2">{isAr ? 'عدد الأزرار المعروضة' : 'Visible buttons'}</Label>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" size="icon" className="h-9 w-9"
+                      onClick={() => setPwaSettings({ ...pwaSettings, bottom_nav_count: Math.max(2, (pwaSettings.bottom_nav_count || 4) - 1) })}>
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-2xl font-bold w-8 text-center">{pwaSettings.bottom_nav_count || 4}</span>
+                    <Button variant="outline" size="icon" className="h-9 w-9"
+                      onClick={() => setPwaSettings({ ...pwaSettings, bottom_nav_count: Math.min(6, (pwaSettings.bottom_nav_count || 4) + 1) })}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground">+ {isAr ? 'زر المزيد' : 'More btn'}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">{isAr ? 'الأزرار تأخذ من القائمة الجانبية بالترتيب. الباقي يظهر في "المزيد"' : 'Buttons are taken from sidebar in order. Rest shows in "More"'}</p>
                 </div>
               </div>
+            </SettingSection>
 
-            </div>
-            <Separator className="my-6" />
+            {/* 3. Sidebar Controls */}
+            <SettingSection icon={Layers} title={isAr ? 'القائمة الجانبية (الجوال)' : 'Mobile Sidebar'}
+              description={isAr ? 'التحكم بإظهار/إخفاء عناصر القائمة' : 'Show/hide sidebar elements'}>
+              <div className="space-y-1" dir="rtl">
+                {[
+                  { key: 'show_sidebar_profile', icon: UserCircle, label: isAr ? 'بطاقة الملف الشخصي' : 'Profile Card' },
+                  { key: 'show_sidebar_notifications', icon: Bell, label: isAr ? 'زر التنبيهات' : 'Notifications Button' },
+                  { key: 'show_sidebar_language', icon: Languages, label: isAr ? 'زر تبديل اللغة' : 'Language Toggle' },
+                  { key: 'show_sidebar_theme', icon: Palette, label: isAr ? 'زر تبديل المظهر' : 'Theme Toggle' },
+                  { key: 'show_sidebar_logout', icon: LogOut, label: isAr ? 'زر تسجيل الخروج' : 'Logout Button' },
+                ].map(({ key, icon: Icon, label }) => (
+                  <div key={key}>
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <Label className="font-medium text-sm">{label}</Label>
+                      </div>
+                      <Switch checked={pwaSettings[key]} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, [key]: v })} />
+                    </div>
+                    <Separator />
+                  </div>
+                ))}
+                <SettingItem label={isAr ? 'السحب للتحديث' : 'Pull to Refresh'}
+                  description={isAr ? 'اسحب الصفحة لأسفل لتحديث البيانات' : 'Pull page down to refresh data'}>
+                  <Switch checked={pwaSettings.pull_to_refresh} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, pull_to_refresh: v })} />
+                </SettingItem>
+              </div>
+            </SettingSection>
+
+            {/* 4. Splash Screen */}
+            <SettingSection icon={Smartphone} title={isAr ? 'شاشة البداية (Splash)' : 'Splash Screen'}
+              description={isAr ? 'الشاشة التي تظهر عند فتح التطبيق' : 'Screen shown when opening the app'}>
+              <div className="space-y-5" dir="rtl">
+                <SettingItem label={isAr ? 'تفعيل شاشة البداية' : 'Enable Splash Screen'}
+                  description={isAr ? 'تظهر فقط في وضع التطبيق (PWA)' : 'Only shows in app mode (PWA)'}>
+                  <Switch checked={pwaSettings.splash_enabled} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, splash_enabled: v })} />
+                </SettingItem>
+
+                {pwaSettings.splash_enabled && (
+                  <>
+                    <Separator />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'العنوان (عربي)' : 'Title (Arabic)'}</Label>
+                        <Input value={pwaSettings.splash_title_ar} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_title_ar: e.target.value })} className="text-right" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'العنوان (إنجليزي)' : 'Title (English)'}</Label>
+                        <Input value={pwaSettings.splash_title_en} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_title_en: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الوصف (عربي)' : 'Subtitle (Arabic)'}</Label>
+                        <Input value={pwaSettings.splash_subtitle_ar} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_subtitle_ar: e.target.value })} className="text-right" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'الوصف (إنجليزي)' : 'Subtitle (English)'}</Label>
+                        <Input value={pwaSettings.splash_subtitle_en} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_subtitle_en: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'لون الخلفية' : 'Background Color'}</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input type="color" value={pwaSettings.splash_bg_color} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_bg_color: e.target.value })} className="w-12 h-10 p-1 cursor-pointer" />
+                          <Input value={pwaSettings.splash_bg_color} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_bg_color: e.target.value })} className="flex-1" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground block mb-1">{isAr ? 'لون النص' : 'Text Color'}</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input type="color" value={pwaSettings.splash_text_color} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_text_color: e.target.value })} className="w-12 h-10 p-1 cursor-pointer" />
+                          <Input value={pwaSettings.splash_text_color} onChange={(e) => setPwaSettings({ ...pwaSettings, splash_text_color: e.target.value })} className="flex-1" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground block mb-1">{isAr ? `مدة العرض: ${(pwaSettings.splash_duration / 1000).toFixed(1)} ثانية` : `Duration: ${(pwaSettings.splash_duration / 1000).toFixed(1)}s`}</Label>
+                      <Slider
+                        value={[pwaSettings.splash_duration]}
+                        onValueChange={([v]) => setPwaSettings({ ...pwaSettings, splash_duration: v })}
+                        min={1000} max={5000} step={500}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground block mb-2">{isAr ? 'شعار شاشة البداية' : 'Splash Logo'}</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-dashed border-border flex items-center justify-center shrink-0" style={{ background: pwaSettings.splash_bg_color }}>
+                          {pwaSettings.splash_logo_url ? (
+                            <img src={pwaSettings.splash_logo_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-cairo font-bold text-xl" style={{ color: pwaSettings.splash_text_color }}>{(pwaSettings.splash_title_ar || 'ح').charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <Button variant="outline" size="sm" onClick={() => document.getElementById('splash-logo-upload').click()}>
+                            <Upload className="w-4 h-4 ml-2" />{isAr ? 'رفع شعار' : 'Upload Logo'}
+                          </Button>
+                          {pwaSettings.splash_logo_url && (
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setPwaSettings({ ...pwaSettings, splash_logo_url: null })}>
+                              {isAr ? 'إزالة' : 'Remove'}
+                            </Button>
+                          )}
+                          <input id="splash-logo-upload" type="file" accept="image/*" onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (!file || !file.type.startsWith('image/')) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => setPwaSettings({ ...pwaSettings, splash_logo_url: reader.result });
+                            reader.readAsDataURL(file);
+                          }} className="hidden" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Splash Preview */}
+                    <div className="rounded-xl border border-border overflow-hidden">
+                      <p className="text-xs text-muted-foreground p-3 pb-0 text-right">{isAr ? 'معاينة:' : 'Preview:'}</p>
+                      <div className="flex flex-col items-center justify-center py-8 px-4" style={{ backgroundColor: pwaSettings.splash_bg_color, color: pwaSettings.splash_text_color }}>
+                        {pwaSettings.splash_logo_url ? (
+                          <img src={pwaSettings.splash_logo_url} alt="" className="w-16 h-16 rounded-2xl object-cover mb-4" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                            <span className="font-cairo font-bold text-2xl">{(pwaSettings.splash_title_ar || 'ح').charAt(0)}</span>
+                          </div>
+                        )}
+                        <h3 className="font-cairo font-bold text-lg mb-1">{isAr ? pwaSettings.splash_title_ar : pwaSettings.splash_title_en}</h3>
+                        <p className="text-xs opacity-70">{isAr ? pwaSettings.splash_subtitle_ar : pwaSettings.splash_subtitle_en}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </SettingSection>
+
+            {/* 5. Offline Mode */}
+            <SettingSection icon={pwaSettings.offline_enabled ? Wifi : WifiOff} title={isAr ? 'وضع عدم الاتصال' : 'Offline Mode'}
+              description={isAr ? 'تمكين التخزين المؤقت للعمل بدون إنترنت' : 'Enable caching to work without internet'}>
+              <div className="space-y-1" dir="rtl">
+                <SettingItem label={isAr ? 'تفعيل وضع عدم الاتصال' : 'Enable Offline Mode'}
+                  description={isAr ? 'حفظ البيانات محلياً للاستخدام بدون إنترنت' : 'Cache data locally for offline use'}>
+                  <Switch checked={pwaSettings.offline_enabled} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, offline_enabled: v })} />
+                </SettingItem>
+                {pwaSettings.offline_enabled && (
+                  <>
+                    <Separator />
+                    <SettingItem label={isAr ? 'تخزين الصفحات' : 'Cache Pages'}
+                      description={isAr ? 'حفظ الصفحات المزورة للعرض بدون إنترنت' : 'Save visited pages for offline viewing'}>
+                      <Switch checked={pwaSettings.offline_cache_pages} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, offline_cache_pages: v })} />
+                    </SettingItem>
+                    <Separator />
+                    <SettingItem label={isAr ? 'تخزين الصور' : 'Cache Images'}
+                      description={isAr ? 'حفظ الصور المحملة (يستهلك مساحة أكبر)' : 'Save loaded images (uses more storage)'}>
+                      <Switch checked={pwaSettings.offline_cache_images} onCheckedChange={(v) => setPwaSettings({ ...pwaSettings, offline_cache_images: v })} />
+                    </SettingItem>
+                  </>
+                )}
+              </div>
+            </SettingSection>
+
+            {/* Save Button */}
             <div className="flex justify-end">
               <Button onClick={handleSavePwaSettings} className="bg-primary hover:bg-primary/90" disabled={saving} data-testid="pwa-save-btn">
-                {saving ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{isAr ? 'جاري الحفظ...' : 'Saving...'}</> : <><Save className="w-4 h-4 ml-2" />{isAr ? 'حفظ التغييرات' : 'Save'}</>}
+                {saving ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />{isAr ? 'جاري الحفظ...' : 'Saving...'}</> : <><Save className="w-4 h-4 ml-2" />{isAr ? 'حفظ إعدادات الجوال' : 'Save Mobile Settings'}</>}
               </Button>
             </div>
-          </SettingSection>
+
+          </div>
         </TabsContent>
       </Tabs>
     </div>
