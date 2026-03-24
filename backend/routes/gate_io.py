@@ -146,22 +146,18 @@ async def import_gates(
             return ""
         return vals[idx]
 
-    added = 0
-    updated = 0
-    skipped = 0
-    errors = 0
+    all_rows = []
+    empty_name_count = 0
     for row in ws.iter_rows(min_row=2, values_only=False):
         vals = [str(cell.value or "").strip() for cell in row]
         if not any(vals):
             continue
-
         name = _raw(vals, "name").strip()
         if not name:
-            skipped += 1
+            empty_name_count += 1
             continue
-
         raw_max = _raw(vals, "max_flow")
-        gate_data = {
+        all_rows.append({
             "number": _raw(vals, "number"),
             "name": name,
             "plaza": _raw(vals, "plaza"),
@@ -171,33 +167,51 @@ async def import_gates(
             "classification": _raw(vals, "classification"),
             "status": _raw(vals, "status"),
             "max_flow": int(raw_max) if raw_max.isdigit() else 0,
-        }
-
-        query = {"name": name}
-        number_val = _raw(vals, "number")
-        if number_val:
-            query = {"$or": [{"name": name}, {"number": number_val}]}
-
-        existing = await db.gates.find_one(query, {"_id": 1})
-        if existing:
-            if mode in ("update", "replace"):
-                await db.gates.update_one({"_id": existing["_id"]}, {"$set": gate_data})
-                updated += 1
-            else:
-                skipped += 1
-            continue
-
-        gate_data.update({
-            "id": str(uuid.uuid4()),
-            "current_flow": 0,
-            "current_indicator": "",
-            "created_at": datetime.now(timezone.utc).isoformat(),
         })
-        try:
-            await db.gates.insert_one(gate_data)
-            added += 1
-        except Exception:
-            errors += 1
+
+    if not all_rows:
+        raise HTTPException(status_code=400, detail="الملف لا يحتوي على بيانات صالحة")
+
+    added = 0
+    updated = 0
+    skipped = 0
+
+    if mode == "replace":
+        docs = []
+        for gate_data in all_rows:
+            gate_data.update({
+                "id": str(uuid.uuid4()),
+                "current_flow": 0,
+                "current_indicator": "",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            docs.append(gate_data)
+        await db.gates.delete_many({})
+        await db.gates.insert_many(docs)
+        added = len(docs)
+    else:
+        for gate_data in all_rows:
+            name = gate_data["name"]
+            number_val = gate_data.get("number", "")
+            query = {"name": name}
+            if number_val:
+                query = {"$or": [{"name": name}, {"number": number_val}]}
+            existing = await db.gates.find_one(query, {"_id": 1})
+            if existing:
+                if mode == "update":
+                    await db.gates.update_one({"_id": existing["_id"]}, {"$set": gate_data})
+                    updated += 1
+                else:
+                    skipped += 1
+            else:
+                gate_data.update({
+                    "id": str(uuid.uuid4()),
+                    "current_flow": 0,
+                    "current_indicator": "",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+                await db.gates.insert_one(gate_data)
+                added += 1
 
     parts = []
     if added:
