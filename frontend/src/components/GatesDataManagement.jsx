@@ -856,6 +856,26 @@ export default function GatesDataManagement() {
               </span>
               <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تحديث بيانات الأبواب المكررة وإضافة الجديدة' : 'Update duplicates and add new ones'}</span>
             </Button>
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-start gap-1 text-right border-red-300 hover:bg-red-50"
+              onClick={async () => {
+                if (!window.confirm(language === 'ar' ? 'تأكيد: سيتم حذف جميع الأبواب الحالية واستبدالها بمحتوى الملف' : 'Confirm: All existing gates will be deleted and replaced')) return;
+                setImportMode(null);
+                if (!pendingImportFile) return;
+                const fd = new FormData(); fd.append("file", pendingImportFile);
+                try {
+                  const tk = localStorage.getItem("token");
+                  const res = await axios.post(`${API}/gates/import?mode=replace`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
+                  toast.success(res.data.message);
+                  fetchGates();
+                } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
+                setPendingImportFile(null);
+              }}>
+              <span className="font-bold text-sm flex items-center gap-2 text-red-600">
+                <Trash2 className="w-4 h-4" />
+                {language === 'ar' ? 'حذف الكل واستيراد من جديد' : 'Delete all & reimport'}
+              </span>
+              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'حذف جميع الأبواب الحالية واستبدالها بمحتوى الملف بالكامل' : 'Remove all current gates and import fresh from file'}</span>
+            </Button>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => { setImportMode(null); setPendingImportFile(null); }}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>

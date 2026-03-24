@@ -137,38 +137,47 @@ async def import_gates(
     if "name" not in col_map:
         raise HTTPException(status_code=400, detail="عمود 'اسم الباب' مطلوب في الملف")
 
-    def _val(vals, field, default=""):
+    if mode == "replace":
+        await db.gates.delete_many({})
+
+    def _raw(vals, field):
         idx = col_map.get(field, -1)
         if idx == -1 or idx >= len(vals):
-            return default
-        return vals[idx] or default
+            return ""
+        return vals[idx]
 
     added = 0
     updated = 0
     skipped = 0
+    errors = 0
     for row in ws.iter_rows(min_row=2, values_only=False):
         vals = [str(cell.value or "").strip() for cell in row]
         if not any(vals):
             continue
 
-        name = _val(vals, "name")
+        name = _raw(vals, "name").strip()
         if not name:
             skipped += 1
             continue
 
         gate_data = {
-            "number": _val(vals, "number"),
+            "number": _raw(vals, "number"),
             "name": name,
-            "plaza": _val(vals, "plaza"),
-            "gate_type": _val(vals, "gate_type", "رئيسي"),
-            "direction": _val(vals, "direction", "دخول"),
-            "category": [c.strip() for c in _val(vals, "category").split("+")] if "category" in col_map else [],
-            "classification": _val(vals, "classification", "عام"),
-            "status": _val(vals, "status", "مفتوح"),
-            "max_flow": int(_val(vals, "max_flow", "5000") or 5000),
+            "plaza": _raw(vals, "plaza"),
+            "gate_type": _raw(vals, "gate_type"),
+            "direction": _raw(vals, "direction"),
+            "category": [c.strip() for c in _raw(vals, "category").split("+") if c.strip()] if "category" in col_map and _raw(vals, "category") else [],
+            "classification": _raw(vals, "classification"),
+            "status": _raw(vals, "status") or "مفتوح",
+            "max_flow": int(_raw(vals, "max_flow") or 5000) if _raw(vals, "max_flow").isdigit() or not _raw(vals, "max_flow") else 5000,
         }
 
-        existing = await db.gates.find_one({"name": name}, {"_id": 1})
+        query = {"name": name}
+        number_val = _raw(vals, "number")
+        if number_val:
+            query = {"$or": [{"name": name}, {"number": number_val}]}
+
+        existing = await db.gates.find_one(query, {"_id": 1})
         if existing:
             if mode == "update":
                 await db.gates.update_one({"_id": existing["_id"]}, {"$set": gate_data})
@@ -183,8 +192,11 @@ async def import_gates(
             "current_indicator": "خفيف",
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
-        await db.gates.insert_one(gate_data)
-        added += 1
+        try:
+            await db.gates.insert_one(gate_data)
+            added += 1
+        except Exception:
+            errors += 1
 
     parts = []
     if added:
