@@ -662,7 +662,6 @@ export const Layout = () => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ overscrollBehavior: 'none' }}
         >
           <Outlet />
         </main>
