@@ -700,7 +700,7 @@ export const Layout = () => {
       {/* ── Mobile Bottom Navigation Bar ── */}
       <nav
         data-testid="mobile-bottom-nav"
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 pointer-events-none translate-y-full' : 'opacity-100 translate-y-0'}`}
         style={{
           background: isDark ? 'hsl(var(--card) / 0.92)' : 'rgba(255,255,255,0.92)',
           backdropFilter: 'saturate(180%) blur(20px)',
