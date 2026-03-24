@@ -5,7 +5,7 @@ import uuid
 import re
 
 from database import db
-from auth import get_current_user, require_admin, log_activity, hash_password, verify_password, create_token
+from auth import get_current_user, require_admin, require_manager_or_above, log_activity, hash_password, verify_password, create_token
 from models import (
     UserCreate, UserUpdate, UserLogin, UserResponse, TokenResponse,
     PinChangeRequest, AccountStatusUpdate,
@@ -59,6 +59,24 @@ async def get_activity_logs(
         start = datetime.fromisoformat(f"{date}T00:00:00")
         end   = datetime.fromisoformat(f"{date}T23:59:59")
         query["timestamp"] = {"$gte": start.isoformat(), "$lte": end.isoformat()}
+    logs = await db.activity_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
+
+@router.get("/manager/activity-logs")
+async def get_manager_activity_logs(
+    action: Optional[str] = None,
+    limit: int = 50,
+    user: dict = Depends(require_manager_or_above)
+):
+    query = {}
+    role = user.get("role")
+    if role == "department_manager":
+        dept = user.get("department")
+        if dept:
+            query["department"] = dept
+    if action and action != "all":
+        query["action"] = action
     logs = await db.activity_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
     return logs
 

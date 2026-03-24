@@ -160,6 +160,8 @@ async def get_ops_dashboard():
             "id": log.get("id"),
             "action": log.get("action"),
             "user_name": log.get("user_name"),
+            "user_role": log.get("user_role"),
+            "department": log.get("department"),
             "target": log.get("target"),
             "details": log.get("details"),
             "timestamp": log.get("timestamp"),

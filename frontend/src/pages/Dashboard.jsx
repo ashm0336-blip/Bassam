@@ -438,18 +438,45 @@ export default function Dashboard() {
                 )}
                 {timeline.map((t, i) => {
                   const ACTION_LABELS = {
-                    login: 'تسجيل دخول', employee_created: 'إضافة موظف', employee_updated: 'تحديث بيانات',
-                    account_activated: 'تفعيل حساب', account_frozen: 'تجميد حساب', role_changed: 'تغيير صلاحيات',
-                    pin_reset: 'إعادة تعيين PIN', schedule_created: 'إنشاء جدول', task_created: 'إنشاء مهمة',
+                    login: 'تسجيل دخول', logout: 'تسجيل خروج',
+                    employee_created: 'إضافة موظف', employee_updated: 'تحديث بيانات', employee_deleted: 'حذف موظف',
+                    account_activated: 'تفعيل حساب', account_frozen: 'تجميد حساب', account_terminated: 'إنهاء خدمة',
+                    reset_pin: 'إعادة تعيين رمز', change_pin: 'تغيير رمز الدخول',
+                    schedule_created: 'إنشاء جدول', schedule_status: 'حالة جدول', schedule_unlocked: 'فتح جدول', schedule_deleted: 'حذف جدول',
+                    setting_created: 'إضافة إعداد', setting_updated: 'تحديث إعداد', setting_deleted: 'حذف إعداد',
+                    task_created: 'إنشاء مهمة',
+                    'استيراد موظفين': 'استيراد موظفين', 'إنشاء بلاغ': 'إنشاء بلاغ', 'تحديث بلاغ': 'تحديث بلاغ',
+                    'إنشاء إحصائية يومية': 'إنشاء إحصائية', 'استيراد إحصائيات يومية': 'استيراد إحصائيات', 'حذف إحصائية يومية': 'حذف إحصائية',
+                    'إنشاء مجموعة صلاحيات': 'إنشاء صلاحيات', 'تحديث مجموعة صلاحيات': 'تحديث صلاحيات',
+                    'حذف مجموعة صلاحيات': 'حذف صلاحيات', 'تغيير مجموعة صلاحيات': 'تغيير صلاحيات',
+                    'تحديث إعدادات Header': 'تحديث Header', 'تحديث إعدادات شاشة الدخول': 'تحديث شاشة الدخول',
+                    'تحديث إعدادات الجوال': 'تحديث إعدادات الجوال', 'تغيير الموسم': 'تغيير الموسم',
+                    'إضافة خيار قائمة': 'إضافة خيار', 'تعديل خيار قائمة': 'تعديل خيار', 'حذف خيار قائمة': 'حذف خيار',
+                    'إضافة عنصر ممنوع': 'إضافة عنصر ممنوع', 'حذف عنصر ممنوع': 'حذف عنصر ممنوع', 'تعديل عنصر ممنوع': 'تعديل عنصر ممنوع',
                   };
+                  const ACTION_COLORS = {
+                    login: '#6366f1', logout: '#6b7280',
+                    employee_created: '#22c55e', employee_updated: '#3b82f6', employee_deleted: '#ef4444',
+                    account_activated: '#22c55e', account_frozen: '#f59e0b', account_terminated: '#ef4444',
+                    reset_pin: '#8b5cf6', change_pin: '#8b5cf6', task_created: '#0ea5e9',
+                  };
+                  const actionColor = ACTION_COLORS[t.action] || '#6366f1';
                   return (
                     <div key={i} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Activity className="w-3 h-3 text-primary" />
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${actionColor}15` }}>
+                        <Activity className="w-3 h-3" style={{ color: actionColor }} />
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-semibold truncate">{t.user_name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{ACTION_LABELS[t.action] || t.action}{t.details ? ` — ${t.details}` : ''}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[11px] font-semibold truncate">{t.user_name}</p>
+                          {t.department && (
+                            <span className="text-[9px] text-muted-foreground bg-muted px-1 py-px rounded hidden sm:inline">{t.department}</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          <span className="font-semibold" style={{ color: actionColor }}>{ACTION_LABELS[t.action] || t.action}</span>
+                          {t.details ? ` — ${t.details}` : ''}
+                        </p>
                       </div>
                     </div>
                   );
