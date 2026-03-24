@@ -242,58 +242,58 @@ export default function DepartmentOverview({ department = "planning" }) {
         <div className="absolute -left-4 -bottom-16 w-32 h-32 rounded-full opacity-[0.07] bg-white"/>
         <div className="absolute left-1/3 -top-8 w-24 h-24 rounded-full opacity-[0.05] bg-white"/>
 
-        <div className="relative flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">{cfg.icon}</span>
-              <div>
-                <h1 className="font-cairo font-black text-2xl leading-tight">{cfg.label_ar}</h1>
-                <p className="text-white/70 text-xs mt-0.5">{dateStr}</p>
+        <div className="relative flex items-start justify-between flex-wrap gap-2 sm:gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+              <span className="text-xl sm:text-3xl">{cfg.icon}</span>
+              <div className="min-w-0">
+                <h1 className="font-cairo font-black text-base sm:text-2xl leading-tight truncate">{cfg.label_ar}</h1>
+                <p className="text-white/70 text-[10px] sm:text-xs mt-0.5 truncate">{dateStr}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-3 flex-wrap">
-              <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full ${schedule ? "bg-emerald-500/30 text-emerald-200" : "bg-white/10 text-white/70"}`}>
-                <CalendarDays className="w-3 h-3"/>
-                {schedule ? `جدول ${monthLabel}: ${schedule.status === "active" ? "معتمد ✓" : "مسودة"}` : `جدول ${monthLabel}: غير موجود`}
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
+              <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${schedule ? "bg-emerald-500/30 text-emerald-200" : "bg-white/10 text-white/70"}`}>
+                <CalendarDays className="w-2.5 h-2.5 sm:w-3 sm:h-3"/>
+                {schedule ? `${schedule.status === "active" ? "معتمد" : "مسودة"}` : "لا جدول"}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-200">
-                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span></span>
+              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-emerald-500/20 text-emerald-200">
+                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-400"></span></span>
                 {isAr?"مباشر":"Live"}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {cfg.sessions_href && (
               <Button onClick={() => navigate(cfg.sessions_href)} size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-0 font-cairo font-semibold">
-                <ArrowLeft className="w-4 h-4 ml-1.5"/>
-                {isAr?"السجل اليومي":"Daily Log"}
+                className="bg-white/20 hover:bg-white/30 text-white border-0 font-cairo font-semibold text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 ml-1"/>
+                {isAr?"السجل":"Daily Log"}
               </Button>
             )}
           </div>
         </div>
 
         {/* Quick summary bar */}
-        <div className="relative mt-5 grid grid-cols-4 gap-3">
+        <div className="relative mt-3 sm:mt-5 grid grid-cols-4 gap-1.5 sm:gap-3">
           {[
             { label:"إجمالي", value:stats.total, icon:"👥" },
-            { label: availSummary ? "مداوم الآن" : (TODAY_AR ? `مداومون (${TODAY_AR})` : "مداومون اليوم"),
+            { label: availSummary ? "مداوم" : "مداومون",
               value: availSummary ? (availSummary.on_duty_now || 0) : stats.working, icon:"✅" },
-            { label: availSummary ? "خارج الوردية" : "في راحة",
+            { label: availSummary ? "خارج" : "راحة",
               value: availSummary ? (availSummary.off_shift || 0) : stats.onRest, icon: availSummary ? "⚠️" : "☕" },
-            { label:"في راحة", value: availSummary ? (availSummary.on_rest || 0) : stats.onRest, icon:"☕" },
+            { label:"راحة", value: availSummary ? (availSummary.on_rest || 0) : stats.onRest, icon:"☕" },
           ].map((item,i) => (
-            <div key={i} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
-              <p className="text-xl mb-0.5">{item.icon}</p>
-              <p className="text-2xl font-black leading-none">{item.value}</p>
-              <p className="text-[10px] text-white/70 mt-0.5 font-medium">{item.label}</p>
+            <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-white/10">
+              <p className="text-sm sm:text-xl mb-0.5 leading-none">{item.icon}</p>
+              <p className="text-lg sm:text-2xl font-black leading-none">{item.value}</p>
+              <p className="text-[8px] sm:text-[10px] text-white/70 mt-0.5 font-medium truncate">{item.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* ══ KPI CARDS ════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <KpiCard icon={Users} label="إجمالي الموظفين" value={stats.total}
           color="#004D38"
           sub={`${stats.permanent} دائم • ${stats.seasonal} موسمي • ${stats.temporary} مؤقت`}

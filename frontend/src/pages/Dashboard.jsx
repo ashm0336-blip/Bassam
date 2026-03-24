@@ -53,31 +53,57 @@ const DEPT_CONFIG = {
   mataf:          { icon: Layers,        accent: "#be123c", bg: "bg-rose-50 dark:bg-rose-950/20", ring: "ring-rose-200 dark:ring-rose-800", text: "text-rose-700 dark:text-rose-400", bar: "#be123c" },
 };
 
-function KPICard({ icon: Icon, label, value, total, unit, color, sub, gradient }) {
+function KPICard({ icon: Icon, label, value, total, unit, color, sub, gradient, mobileCompact }) {
   const pct = total ? Math.round((value / total) * 100) : 0;
   const safeColor = color || "#6b7280";
-  return (
-    <Card className="relative overflow-hidden border-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:shadow-md hover:shadow-lg transition-all duration-300 group">
-      <div className="absolute inset-0 opacity-[0.03] lg:opacity-[0.04]" style={{ background: `linear-gradient(135deg, ${safeColor}, transparent 70%)` }} />
-      <CardContent className="p-3 lg:p-5">
-        <div className="flex items-center gap-2.5 lg:items-start lg:flex-col lg:gap-0">
-          <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-[10px] lg:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105" style={{ background: `${safeColor}12`, boxShadow: `0 2px 8px ${safeColor}15` }}>
-            <Icon className="w-[18px] h-[18px] lg:w-5 lg:h-5" style={{ color: safeColor }} />
+
+  if (mobileCompact) {
+    return (
+      <div className="w-[140px] flex-shrink-0 rounded-2xl p-3 relative overflow-hidden" style={{ background: `linear-gradient(145deg, ${safeColor}14, ${safeColor}06)`, border: `1px solid ${safeColor}18` }}>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: `${safeColor}20` }}>
+          <Icon className="w-4 h-4" style={{ color: safeColor }} />
+        </div>
+        <p className="text-2xl font-black leading-none tracking-tight" style={{ color: safeColor }}>
+          <AnimNum value={value} />
+        </p>
+        <p className="text-[10px] font-semibold text-muted-foreground mt-1 leading-tight">{label}</p>
+        {total !== undefined && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[9px] font-bold" style={{ color: safeColor }}>{pct}%</span>
+            </div>
+            <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: `${safeColor}15` }}>
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: safeColor }} />
+            </div>
           </div>
-          <div className="flex-1 min-w-0 lg:mt-3">
-            <p className="text-[10px] lg:text-xs font-semibold text-muted-foreground truncate">{label}</p>
-            <div className="flex items-baseline gap-1.5 mt-0.5 lg:mt-1">
-              <p className="text-xl lg:text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
+        )}
+        {sub && <p className="text-[8px] text-muted-foreground mt-1 truncate">{sub}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 group">
+      <div className="absolute inset-0 opacity-[0.04]" style={{ background: `linear-gradient(135deg, ${safeColor}, transparent 70%)` }} />
+      <CardContent className="p-5">
+        <div className="flex items-start flex-col gap-0">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105" style={{ background: `${safeColor}12`, boxShadow: `0 2px 8px ${safeColor}15` }}>
+            <Icon className="w-5 h-5" style={{ color: safeColor }} />
+          </div>
+          <div className="flex-1 min-w-0 mt-3">
+            <p className="text-xs font-semibold text-muted-foreground truncate">{label}</p>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <p className="text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
                 <AnimNum value={value} />
               </p>
               {total !== undefined && (
-                <span className="text-[10px] lg:text-xs font-bold" style={{ color: safeColor, opacity: 0.6 }}>{pct}%</span>
+                <span className="text-xs font-bold" style={{ color: safeColor, opacity: 0.6 }}>{pct}%</span>
               )}
             </div>
-            {sub && <p className="text-[9px] lg:text-[10px] text-muted-foreground mt-0.5 truncate leading-tight">{sub}</p>}
+            {sub && <p className="text-[10px] text-muted-foreground mt-0.5 truncate leading-tight">{sub}</p>}
           </div>
           {total !== undefined && (
-            <div className="hidden lg:block w-full mt-2">
+            <div className="w-full mt-2">
               <div className="w-full h-1 rounded-full bg-muted/60 overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: safeColor }} />
               </div>
@@ -111,43 +137,45 @@ function DeptCard({ dept, navigate, compact = false }) {
   if (compact) {
     return (
       <div
-        className="w-[156px] flex-shrink-0 rounded-2xl border border-border/60 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.05)] active:scale-[0.97] transition-all duration-200 cursor-pointer overflow-hidden"
+        className="w-[160px] flex-shrink-0 rounded-2xl overflow-hidden active:scale-[0.97] transition-all duration-200 cursor-pointer"
+        style={{ boxShadow: `0 2px 12px ${cfg.accent}15, 0 1px 3px rgba(0,0,0,0.06)` }}
         onClick={() => navigate(dept.route)}
         data-testid={`dept-card-${dept.id}`}
       >
-        <div className="px-3 pt-3 pb-2" style={{ background: `linear-gradient(135deg, ${cfg.accent}08, ${cfg.accent}03)` }}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${cfg.accent}15` }}>
-              <Icon className="w-4 h-4" style={{ color: cfg.accent }} />
+        <div className="px-3 pt-3 pb-2.5 text-white relative" style={{ background: `linear-gradient(145deg, ${cfg.accent}, ${cfg.accent}cc)` }}>
+          <div className="absolute top-0 left-0 w-16 h-16 rounded-full opacity-20" style={{ background: 'white', filter: 'blur(20px)', transform: 'translate(-30%, -30%)' }} />
+          <div className="flex items-center justify-between mb-2 relative">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+              <Icon className="w-4 h-4 text-white" />
             </div>
-            <div className={`flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${schedBadge.cls}`}>
+            <div className="flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
               <StatusIcon className="w-2.5 h-2.5" />
               {schedBadge.label}
             </div>
           </div>
-          <h3 className="font-cairo font-bold text-[11px] leading-tight truncate" style={{ color: cfg.accent }}>{dept.name}</h3>
+          <h3 className="font-cairo font-bold text-[12px] leading-tight truncate relative">{dept.name}</h3>
+          <p className="text-[10px] text-white/70 mt-0.5">{dept.total} موظف</p>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-3 py-2.5 bg-card">
           {schedStatus === "active" ? (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-around">
               {[
-                { val: dept.on_duty_now || dept.working, dot: "bg-emerald-500" },
-                { val: dept.off_shift || 0,              dot: "bg-amber-500" },
-                { val: dept.on_rest,                     dot: "bg-slate-400" },
+                { val: dept.on_duty_now || dept.working, label: "مداوم", dot: "bg-emerald-500" },
+                { val: dept.off_shift || 0,              label: "خارج",  dot: "bg-amber-500" },
+                { val: dept.on_rest,                     label: "راحة",  dot: "bg-slate-400" },
               ].map((s, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                  <span className="text-xs font-black text-foreground">{s.val}</span>
+                <div key={i} className="text-center">
+                  <p className="text-sm font-black text-foreground">{s.val}</p>
+                  <div className="flex items-center gap-0.5 justify-center mt-0.5">
+                    <span className={`w-1 h-1 rounded-full ${s.dot}`} />
+                    <span className="text-[8px] text-muted-foreground">{s.label}</span>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[10px] text-muted-foreground text-center">{schedStatus === "draft" ? "مسودة" : "لا جدول"}</p>
+            <p className="text-[10px] text-muted-foreground text-center py-1">{schedStatus === "draft" ? "مسودة" : "لا جدول"}</p>
           )}
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[9px] text-muted-foreground">{dept.total} موظف</span>
-            <ChevronLeft className="w-3 h-3 text-muted-foreground/50" />
-          </div>
         </div>
       </div>
     );
@@ -344,8 +372,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+      {/* ── KPI Cards — Mobile: horizontal scroll strip ── */}
+      <div className="sm:hidden overflow-x-auto pb-1 -mx-2 px-2 no-scrollbar">
+        <div className="flex gap-2.5 min-w-max">
+          <KPICard mobileCompact icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
+          <KPICard mobileCompact icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
+            sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : ""} />
+          <KPICard mobileCompact icon={TrendingUp}    label="نسبة الإشغال"       value={Math.round(kpis.crowd_percentage)} total={100} unit="%" color={crowdColor}
+            sub={`${(kpis.total_crowd || 0).toLocaleString('ar-SA')} زائر`} />
+          <KPICard mobileCompact icon={AlertTriangle} label="التنبيهات النشطة"  value={kpis.active_alerts}           total={kpis.active_alerts + 5} unit=""   color={kpis.critical_alerts > 0 ? '#ef4444' : '#f59e0b'}
+            sub={kpis.critical_alerts > 0 ? `${kpis.critical_alerts} حرجة` : ''} />
+        </div>
+      </div>
+      {/* ── KPI Cards — Desktop: grid ── */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <KPICard icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
         <KPICard icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
           sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : "جميعهم في الخدمة"} />
@@ -398,24 +438,24 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
 
         {/* عمود 1: حالة البوابات */}
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2 pt-4 px-5">
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-2 pt-3 sm:pt-4 px-3 sm:px-5">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-cairo font-bold">حالة البوابات حسب الساحة</CardTitle>
-              <Badge variant="secondary" className="text-[10px]">{heatmap.length} ساحة</Badge>
+              <CardTitle className="text-xs sm:text-sm font-cairo font-bold">حالة البوابات حسب الساحة</CardTitle>
+              <Badge variant="secondary" className="text-[9px] sm:text-[10px]">{heatmap.length} ساحة</Badge>
             </div>
           </CardHeader>
-          <CardContent className="px-5 pb-4">
-            <ScrollArea className="h-[300px] pr-1">
+          <CardContent className="px-3 sm:px-5 pb-3 sm:pb-4">
+            <ScrollArea className="h-[200px] sm:h-[300px] pr-1">
               <PlazaBar data={heatmap} navigate={navigate} />
             </ScrollArea>
           </CardContent>
         </Card>
 
         {/* عمود 2: توزيع الموظفين */}
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-1 pt-4 px-5">
-            <CardTitle className="text-sm font-cairo font-bold">توزيع الموظفين حسب الوردية</CardTitle>
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-1 pt-3 sm:pt-4 px-3 sm:px-5">
+            <CardTitle className="text-xs sm:text-sm font-cairo font-bold">توزيع الموظفين حسب الوردية</CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-2">
             <ResponsiveContainer width="100%" height={130}>
@@ -460,11 +500,11 @@ export default function Dashboard() {
         </Card>
 
         {/* عمود 3: آخر التنبيهات والأحداث */}
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2 pt-4 px-5">
+        <Card className="border-0 shadow-sm sm:shadow-md">
+          <CardHeader className="pb-2 pt-3 sm:pt-4 px-3 sm:px-5">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-cairo font-bold">آخر التنبيهات</CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs h-7 gap-1 text-primary" onClick={() => navigate('/notifications')}>
+              <CardTitle className="text-xs sm:text-sm font-cairo font-bold">آخر التنبيهات</CardTitle>
+              <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs h-6 sm:h-7 gap-1 text-primary" onClick={() => navigate('/notifications')}>
                 عرض الكل <ChevronLeft className="w-3 h-3" />
               </Button>
             </div>
@@ -553,11 +593,16 @@ export default function Dashboard() {
 
       {/* ── ملخص الإدارات ── */}
       <div>
-        <div className="mb-4">
-          <h2 className="font-cairo font-bold text-base">ملخص الإدارات</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div>
+            <h2 className="font-cairo font-bold text-sm sm:text-base">ملخص الإدارات</h2>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">اضغط على أي إدارة للانتقال لصفحتها</p>
+          </div>
+          <span className="text-[10px] sm:hidden text-muted-foreground flex items-center gap-1">
+            <ChevronLeft className="w-3 h-3" /> اسحب
+          </span>
         </div>
-        <div className="sm:hidden overflow-x-auto pb-2 -mx-3 px-3">
+        <div className="sm:hidden overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
           <div className="flex gap-3 min-w-max">
             {deptStats.map((dept, i) => <DeptCard key={i} dept={dept} navigate={navigate} compact />)}
           </div>

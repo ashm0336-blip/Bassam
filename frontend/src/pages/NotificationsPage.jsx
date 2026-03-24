@@ -286,22 +286,22 @@ export default function NotificationsPage() {
   const activeTabConfig = TAB_CONFIG.find(t => t.id === activeTab) || TAB_CONFIG[0];
 
   return (
-    <div className="space-y-5" data-testid="notifications-page" dir="rtl">
+    <div className="space-y-3 sm:space-y-5" data-testid="notifications-page" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm"
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0"
             style={{ background: `linear-gradient(135deg, ${activeTabConfig.accent}15, ${activeTabConfig.accent}30)` }}>
-            <BellRing className="w-6 h-6" style={{ color: activeTabConfig.accent }} />
+            <BellRing className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: activeTabConfig.accent }} />
           </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="font-cairo font-bold text-xl">الإشعارات والتنبيهات</h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="font-cairo font-bold text-sm sm:text-xl truncate">الإشعارات والتنبيهات</h1>
               <LivePulse connected={wsConnected} />
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
               {unreadCount > 0
-                ? <span>{unreadCount} إشعار غير مقروء من أصل {allAlerts.length}</span>
+                ? <span>{unreadCount} غير مقروء من {allAlerts.length}</span>
                 : <span>لا توجد إشعارات جديدة</span>
               }
             </p>

@@ -83,14 +83,14 @@ export default function EmployeeProfilePage({ self = false }) {
 
       {/* Header Card */}
       <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="h-2" style={{ background: deptColor }} />
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-cairo font-bold shadow-lg" style={{ background: deptColor }}>
+        <div className="h-1.5 sm:h-2" style={{ background: deptColor }} />
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-5">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl font-cairo font-bold shadow-lg flex-shrink-0" style={{ background: deptColor }}>
               {displayName.charAt(0)}
             </div>
-            <div className="flex-1 text-center sm:text-right">
-              <h1 className="font-cairo font-bold text-2xl">{displayName}</h1>
+            <div className="flex-1 text-center sm:text-right min-w-0">
+              <h1 className="font-cairo font-bold text-lg sm:text-2xl truncate">{displayName}</h1>
               {emp?.job_title && <p className="text-sm text-muted-foreground mt-1">{emp.job_title}</p>}
               <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
                 {dept && (

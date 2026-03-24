@@ -70,27 +70,27 @@ const ReportCard = ({ report }) => {
 
   return (
     <Card className="card-hover" data-testid={`report-card-${report.id}`}>
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${type.color}`}>
-            <Icon className="w-6 h-6" />
+      <CardContent className="p-3 sm:p-5">
+        <div className="flex items-start gap-2.5 sm:gap-4">
+          <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${type.color} flex-shrink-0`}>
+            <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-sm">{report.title}</h3>
-              <Badge variant="outline" className="text-[10px]">{type.label}</Badge>
+            <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
+              <h3 className="font-semibold text-xs sm:text-sm truncate">{report.title}</h3>
+              <Badge variant="outline" className="text-[8px] sm:text-[10px] flex-shrink-0">{type.label}</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">{report.summary}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 line-clamp-2">{report.summary}</p>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   {report.date}
                 </span>
-                <span>{deptLabels[report.department] || report.department}</span>
+                <span className="truncate max-w-[80px] sm:max-w-none">{deptLabels[report.department] || report.department}</span>
               </div>
-              <Button variant="ghost" size="sm" className="text-primary text-xs h-7">
-                <Download className="w-3 h-3 ml-1" />
+              <Button variant="ghost" size="sm" className="text-primary text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2">
+                <Download className="w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5 sm:ml-1" />
                 تحميل
               </Button>
             </div>
@@ -237,19 +237,20 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6" data-testid="reports-page">
+    <div className="space-y-3 sm:space-y-6" data-testid="reports-page">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-cairo font-bold text-2xl">التقارير والإحصائيات</h1>
-          <p className="text-sm text-muted-foreground mt-1">عرض وتصدير التقارير والتحليلات</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="font-cairo font-bold text-base sm:text-2xl">التقارير والإحصائيات</h1>
+          <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">عرض وتصدير التقارير والتحليلات</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90" data-testid="export-daily-btn">
-                <Download className="w-4 h-4 ml-2" />
-                تصدير التقرير اليومي
+              <Button className="bg-primary hover:bg-primary/90 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4" data-testid="export-daily-btn">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+                <span className="hidden sm:inline">تصدير التقرير اليومي</span>
+                <span className="sm:hidden">تصدير</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -267,17 +268,17 @@ export default function ReportsPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         {quickStats.map((stat, index) => (
           <Card key={index} className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
+            <CardContent className="p-2.5 sm:p-5">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${stat.color} flex-shrink-0`}>
+                  <stat.icon className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-cairo font-bold">{stat.value}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-cairo font-bold">{stat.value}</p>
                 </div>
               </div>
             </CardContent>

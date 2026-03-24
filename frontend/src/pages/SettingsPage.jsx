@@ -42,28 +42,28 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SettingsSection = ({ icon: Icon, title, description, children }) => (
   <Card className="card-hover">
-    <CardHeader className="pb-3">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-primary" />
+    <CardHeader className="pb-2 sm:pb-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
         </div>
-        <div>
-          <CardTitle className="font-cairo text-lg">{title}</CardTitle>
-          <CardDescription className="text-xs">{description}</CardDescription>
+        <div className="min-w-0">
+          <CardTitle className="font-cairo text-sm sm:text-lg">{title}</CardTitle>
+          <CardDescription className="text-[10px] sm:text-xs">{description}</CardDescription>
         </div>
       </div>
     </CardHeader>
-    <CardContent>{children}</CardContent>
+    <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">{children}</CardContent>
   </Card>
 );
 
 const SettingItem = ({ label, description, children }) => (
-  <div className="flex items-center justify-between py-3">
-    <div className="space-y-0.5">
-      <Label className="font-medium">{label}</Label>
-      {description && <p className="text-xs text-muted-foreground">{description}</p>}
+  <div className="flex items-center justify-between py-2 sm:py-3 gap-3">
+    <div className="space-y-0.5 min-w-0 flex-1">
+      <Label className="font-medium text-xs sm:text-sm">{label}</Label>
+      {description && <p className="text-[10px] sm:text-xs text-muted-foreground">{description}</p>}
     </div>
-    {children}
+    <div className="flex-shrink-0">{children}</div>
   </div>
 );
 
@@ -131,16 +131,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6" data-testid="settings-page">
+    <div className="space-y-3 sm:space-y-6" data-testid="settings-page">
       {/* Header */}
       <div>
-        <h1 className="font-cairo font-bold text-2xl">{t('settings')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="font-cairo font-bold text-base sm:text-2xl">{t('settings')}</h1>
+        <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
           {language === 'ar' ? 'إدارة إعدادات النظام والتفضيلات الشخصية' : 'Manage system settings and personal preferences'}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
         {/* My Account - حسابي */}
         <SettingsSection
           icon={UserCircle}
@@ -149,13 +149,13 @@ export default function SettingsPage() {
         >
           <div className="space-y-4">
             {/* Avatar + Role badge */}
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-cairo font-bold text-2xl text-primary">
+            <div className="flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-lg bg-muted/50">
+              <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="font-cairo font-bold text-lg sm:text-2xl text-primary">
                   {user?.name?.charAt(0) || 'م'}
                 </span>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold" data-testid="profile-display-name">{user?.name || 'مستخدم'}</h3>
                 <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary" data-testid="profile-role-badge">
                   {roleLabels[user?.role] || user?.role}

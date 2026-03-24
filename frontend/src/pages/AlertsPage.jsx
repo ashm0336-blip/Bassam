@@ -230,77 +230,53 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-3 sm:space-y-6 max-w-full">
       {/* Header */}
-      <div>
-        <h2 className="font-cairo font-bold text-xl text-right">إدارة البلاغات</h2>
-        <p className="text-sm text-muted-foreground mt-1 text-right">متابعة وإدارة جميع البلاغات</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-cairo font-bold text-base sm:text-xl text-right">إدارة البلاغات</h2>
+          <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 text-right">متابعة وإدارة جميع البلاغات</p>
+        </div>
+        {isAdmin() && (
+          <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-primary flex-shrink-0 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-4">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+            <span className="hidden sm:inline">بلاغ جديد</span>
+            <span className="sm:hidden">جديد</span>
+          </Button>
+        )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">الإجمالي</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <FileText className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">مفتوحة</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.open}</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">مكتملة</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              </div>
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">حرجة</p>
-                <p className="text-2xl font-bold text-red-600">{stats.critical}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats — horizontal scrollable on mobile */}
+      <div className="flex sm:grid sm:grid-cols-4 gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-1">
+        {[
+          { label: "الإجمالي", value: stats.total, icon: FileText, color: "text-primary" },
+          { label: "مفتوحة", value: stats.open, icon: Clock, color: "text-yellow-600" },
+          { label: "مكتملة", value: stats.completed, icon: CheckCircle2, color: "text-green-600" },
+          { label: "حرجة", value: stats.critical, icon: AlertTriangle, color: "text-red-600" },
+        ].map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <Card key={i} className="flex-shrink-0 w-[130px] sm:w-auto">
+              <CardContent className="p-2.5 sm:p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-right min-w-0">
+                    <p className="text-[9px] sm:text-xs text-muted-foreground">{s.label}</p>
+                    <p className={`text-lg sm:text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  </div>
+                  <Icon className={`w-5 h-5 sm:w-8 sm:h-8 ${s.color} flex-shrink-0`} />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            {isAdmin() && (
-              <Button onClick={() => setDialogOpen(true)} className="bg-primary">
-                <Plus className="w-4 h-4 ml-2" />
-                بلاغ جديد
-              </Button>
-            )}
-            
+        <CardContent className="p-2.5 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-28 sm:w-40 flex-shrink-0 h-8 sm:h-10 text-xs sm:text-sm">
                 <SelectValue placeholder="الحالة" />
               </SelectTrigger>
               <SelectContent>
@@ -312,7 +288,7 @@ export default function AlertsPage() {
             </Select>
             
             <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-28 sm:w-40 flex-shrink-0 h-8 sm:h-10 text-xs sm:text-sm">
                 <SelectValue placeholder="الأولوية" />
               </SelectTrigger>
               <SelectContent>
@@ -324,7 +300,7 @@ export default function AlertsPage() {
             </Select>
             
             <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-28 sm:w-48 flex-shrink-0 h-8 sm:h-10 text-xs sm:text-sm">
                 <SelectValue placeholder="القسم" />
               </SelectTrigger>
               <SelectContent>
@@ -336,7 +312,7 @@ export default function AlertsPage() {
             </Select>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-28 sm:w-40 flex-shrink-0 h-8 sm:h-10 text-xs sm:text-sm">
                 <SelectValue placeholder="ترتيب حسب" />
               </SelectTrigger>
               <SelectContent>

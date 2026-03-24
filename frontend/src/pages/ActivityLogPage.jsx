@@ -284,61 +284,61 @@ export default function ActivityLogPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="font-cairo font-bold text-xl flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-              <Activity className="w-4.5 h-4.5 text-indigo-500" />
+    <div className="space-y-3 sm:space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-cairo font-bold text-sm sm:text-xl flex items-center gap-1.5 sm:gap-2">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+              <Activity className="w-3 h-3 sm:w-4.5 sm:h-4.5 text-indigo-500" />
             </div>
             {isAr ? "سجل العمليات" : "Activity Log"}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
             {isAr
-              ? `تتبع جميع الإجراءات والتعديلات — ${scopeLabel}`
-              : `Track all actions and modifications — ${scopeLabel}`
+              ? `تتبع جميع الإجراءات — ${scopeLabel}`
+              : `Track all actions — ${scopeLabel}`
             }
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center border rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode("timeline")}
-              className={`p-2 transition-colors ${viewMode === "timeline" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              className={`p-1.5 sm:p-2 transition-colors ${viewMode === "timeline" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
               aria-label={isAr ? "عرض زمني" : "Timeline view"}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={() => setViewMode("table")}
-              className={`p-2 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              className={`p-1.5 sm:p-2 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
               aria-label={isAr ? "عرض جدول" : "Table view"}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
-          <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            {isAr ? "تحديث" : "Refresh"}
+          <Button variant="outline" size="sm" className="h-7 sm:h-9 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">{isAr ? "تحديث" : "Refresh"}</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {summaryCards.map((card, i) => {
           const Icon = card.icon;
           return (
             <Card key={i} className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
               <div className="absolute inset-0 opacity-[0.04]" style={{ background: `radial-gradient(circle at top ${isAr ? "right" : "left"}, ${card.color}, transparent 70%)` }} />
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-2">
+              <CardContent className="p-2.5 sm:p-4">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground truncate">{card.label}</p>
-                    <p className="text-3xl font-black leading-none mt-1.5" style={{ color: card.color }}>{card.value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1 truncate">{card.sub}</p>
+                    <p className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground truncate">{card.label}</p>
+                    <p className="text-xl sm:text-3xl font-black leading-none mt-1" style={{ color: card.color }}>{card.value}</p>
+                    <p className="text-[8px] sm:text-[10px] text-muted-foreground mt-0.5 sm:mt-1 truncate">{card.sub}</p>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                    <Icon className="w-5 h-5" style={{ color: card.color }} />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: card.color }} />
                   </div>
                 </div>
               </CardContent>
