@@ -458,7 +458,7 @@ code {
   }
 }
 
-/* ── Mobile-first optimizations ── */
+/* ── Mobile Premium Optimizations ── */
 @media (max-width: 640px) {
   input[type="number"],
   input[type="tel"] {
@@ -470,18 +470,23 @@ code {
     min-width: 36px;
   }
 
-  .card, [class*="CardContent"] {
-    border-radius: 0.75rem;
-  }
-
   ::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
+    width: 2px;
+    height: 2px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
   }
 
   dialog, [role="dialog"] {
-    max-height: 85vh;
-    max-height: 85dvh;
+    max-height: 90vh;
+    max-height: 90dvh;
+    border-radius: 1rem 1rem 0 0 !important;
+  }
+
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 16px) !important;
   }
 }
 
@@ -492,5 +497,10 @@ code {
 
   input, select, textarea {
     font-size: 16px !important;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 }

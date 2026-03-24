@@ -356,44 +356,44 @@ export const Layout = () => {
         />
       )}
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar - Premium sheet style */}
       <aside 
         className={`
-          fixed top-0 right-0 bottom-0 w-[280px] bg-card z-50 flex flex-col transform transition-transform duration-300
-          lg:hidden
-          ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}
+          fixed top-0 right-0 bottom-0 w-[300px] z-50 flex flex-col transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+          lg:hidden rounded-l-2xl
         `}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          background: isDark ? 'hsl(var(--card))' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: mobileMenuOpen ? '-8px 0 40px rgba(0,0,0,0.12)' : 'none',
+          transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+        }}
       >
-        <div className="h-14 flex items-center justify-between px-3 border-b border-border flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white font-cairo font-bold text-sm">ح</span>
+        <div className="flex items-center justify-between px-4 pt-5 pb-3 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <span className="text-white font-cairo font-bold text-base">ح</span>
             </div>
             <div>
-              <h1 className="font-cairo font-bold text-primary text-xs">{language === 'ar' ? 'خدمات الحشود' : 'Crowd Services'}</h1>
-              <p className="text-[9px] text-muted-foreground leading-tight">Al-Haram OS</p>
+              <h1 className="font-cairo font-bold text-primary text-sm leading-tight">{language === 'ar' ? 'خدمات الحشود' : 'Crowd Services'}</h1>
+              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                {new Date().toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+          <button
             onClick={() => setMobileMenuOpen(false)}
             data-testid="mobile-menu-close"
+            className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center hover:bg-muted transition-colors"
           >
-            <X className="w-4 h-4" />
-          </Button>
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
 
-        <div className="px-3 py-2 border-b border-border bg-muted/30 flex-shrink-0">
-          <p className="text-[10px] text-muted-foreground text-right">
-            {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto overscroll-contain py-2" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <nav className="space-y-0.5 px-2">
+        <div className="flex-1 overflow-y-auto overscroll-contain pt-1 pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <nav className="space-y-0.5 px-3">
             {navigation.map((item) => (
               <NavItem 
                 key={item.id} 
@@ -404,9 +404,9 @@ export const Layout = () => {
             ))}
           </nav>
           
-          <Separator className="my-2 mx-2" />
+          <div className="mx-4 my-3 h-px bg-border/50" />
           
-          <nav className="space-y-0.5 px-2">
+          <nav className="space-y-0.5 px-3">
             {secondaryNav.map((item) => (
               <NavItem 
                 key={item.id} 
@@ -416,34 +416,35 @@ export const Layout = () => {
               />
             ))}
           </nav>
-          <div className="h-2" />
+          <div className="h-3" />
         </div>
 
-        <div className="border-t border-border flex-shrink-0">
-          <div className="px-3 py-2 flex items-center gap-2.5">
-            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors flex-shrink-0">
-              <span className="font-cairo font-semibold text-primary text-sm">
+        <div className="flex-shrink-0 px-4 pb-4 pt-2" style={{ borderTop: '1px solid hsl(var(--border) / 0.4)' }}>
+          <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors mb-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' }}>
+              <span className="font-cairo font-bold text-white text-sm">
                 {user?.name?.charAt(0) || 'م'}
               </span>
-            </button>
-            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="flex-1 min-w-0 text-right">
-              <p className="text-xs font-medium truncate">{user?.name}</p>
-              <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
+            </div>
+            <div className="flex-1 min-w-0 text-right">
+              <p className="text-sm font-semibold truncate">{user?.name}</p>
+              <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-md text-[9px] font-bold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
                 {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
               </span>
-            </button>
-          </div>
-          <div className="px-3 pb-3 flex items-center gap-1.5">
-            <Button variant="outline" size="sm" className="flex-1 gap-1 text-[10px] h-8" onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn">
-              <Bell className="w-3.5 h-3.5" />
+            </div>
+            <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground">
+              <Bell className="w-4 h-4" />
               <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={toggleTheme} data-testid="mobile-theme-btn">
-              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-destructive hover:bg-destructive hover:text-white" onClick={handleLogout} data-testid="mobile-logout-btn">
-              <LogOut className="w-3.5 h-3.5" />
-            </Button>
+            </button>
+            <button onClick={toggleTheme} data-testid="mobile-theme-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center">
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button onClick={handleLogout} data-testid="mobile-logout-btn" className="w-10 h-10 rounded-xl bg-destructive/10 hover:bg-destructive/20 transition-colors flex items-center justify-center text-destructive">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
@@ -452,25 +453,24 @@ export const Layout = () => {
       <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${sidebarOpen ? "mr-0 lg:mr-64" : "mr-0 lg:mr-20"}`}>
         {/* Top bar */}
         <header 
-          className={`flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 border-b transition-all duration-200 ${headerSettings.show_shadow ? 'shadow-md' : ''}`}
+          className={`flex items-center justify-between px-3 lg:px-6 sticky top-0 z-30 transition-all duration-200`}
           style={{
             height: `${headerSettings.header_height || 64}px`,
             backgroundColor: isDark ? 'hsl(var(--card))' : (headerSettings.background_color || '#FFFFFF'),
             color: isDark ? 'hsl(var(--foreground))' : (headerSettings.text_color || '#000000'),
             opacity: (headerSettings.transparency || 100) / 100,
-            borderColor: 'var(--border)'
+            borderBottom: '1px solid hsl(var(--border) / 0.5)',
+            boxShadow: headerSettings.show_shadow ? '0 1px 8px rgba(0,0,0,0.04)' : 'none',
           }}
         >
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
+          <div className="flex items-center gap-3">
+            <button
+              className="lg:hidden w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center active:bg-muted transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               data-testid="mobile-menu-open"
             >
-              <Menu className="w-5 h-5" />
-            </Button>
+              <Menu className="w-[18px] h-[18px]" />
+            </button>
             
             {headerSettings.show_logo && headerSettings.header_logo_url && (
               <img 
@@ -501,29 +501,27 @@ export const Layout = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 lg:gap-2">
             {/* Mobile: short greeting only */}
             {headerSettings.show_user_name && user && (
-              <span className="text-sm font-medium lg:hidden" data-testid="header-mobile-greeting">
-                {language === 'ar' ? 'أهلاً' : 'Hi'}، {(user.name || '').split(' ').slice(0, 2).join(' ')}
+              <span className="text-xs font-semibold lg:hidden text-muted-foreground" data-testid="header-mobile-greeting">
+                {language === 'ar' ? 'أهلاً' : 'Hi'}، {(user.name || '').split(' ')[0]}
               </span>
             )}
 
-            {/* Mobile: show notification bell prominently */}
+            {/* Mobile: notification bell */}
             {headerSettings.show_notifications_bell && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover:text-primary lg:hidden"
+              <button
+                className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-muted/60 active:bg-muted transition-colors lg:hidden"
                 onClick={() => navigate('/notifications')}
                 data-testid="header-notifications-mobile">
-                <Bell className="w-5 h-5" />
+                <Bell className="w-[18px] h-[18px]" />
                 {unreadAlerts > 0 && (
-                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  <span className="absolute top-1 right-1 min-w-[14px] h-3.5 bg-destructive text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5">
                     {unreadAlerts > 9 ? "9+" : unreadAlerts}
                   </span>
                 )}
-              </Button>
+              </button>
             )}
 
             {/* Desktop: full greeting + role badge */}
@@ -619,15 +617,15 @@ export const Layout = () => {
         data-testid="mobile-bottom-nav"
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
-          background: 'hsl(var(--card) / 0.95)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid hsl(var(--border) / 0.5)',
+          background: isDark ? 'hsl(var(--card) / 0.92)' : 'rgba(255,255,255,0.92)',
+          backdropFilter: 'saturate(180%) blur(20px)',
+          WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+          borderTop: '1px solid hsl(var(--border) / 0.3)',
           paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -4px 24px rgba(0,0,0,0.08)',
+          boxShadow: '0 -1px 12px rgba(0,0,0,0.04)',
         }}
       >
-        <div className="flex h-[60px] items-stretch px-1">
+        <div className="flex h-[56px] items-stretch px-2">
           {[...navigation.slice(0, 4)].map((item) => {
             const Icon = item.icon;
             return (
@@ -638,21 +636,20 @@ export const Layout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid={`bottom-nav-${item.href.replace(/\//g, '') || 'home'}`}
                 className={({ isActive }) =>
-                  `flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative py-1
+                  `flex-1 flex flex-col items-center justify-center gap-[3px] transition-all duration-200 relative
                   ${isActive ? 'text-primary' : 'text-muted-foreground'}`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    {isActive && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-primary rounded-b-full" />
-                    )}
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300
-                      ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : 'hover:bg-muted'}`}>
-                      <Icon className="w-5 h-5" />
+                    <div className={`relative flex items-center justify-center transition-all duration-300`}>
+                      <Icon className={`w-[22px] h-[22px] transition-all duration-300 ${isActive ? 'scale-105' : ''}`} />
+                      {isActive && (
+                        <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary" />
+                      )}
                     </div>
-                    <span className={`text-[9px] font-cairo font-semibold truncate max-w-[56px] text-center leading-tight transition-colors
-                      ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <span className={`text-[9px] font-cairo font-semibold truncate max-w-[56px] text-center leading-none transition-all
+                      ${isActive ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                       {item.name}
                     </span>
                   </>
@@ -665,12 +662,10 @@ export const Layout = () => {
           <button
             data-testid="bottom-nav-more"
             onClick={() => setMobileMenuOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-colors py-1"
+            className="flex-1 flex flex-col items-center justify-center gap-[3px] text-muted-foreground active:text-primary transition-colors"
           >
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-muted transition-colors">
-              <Menu className="w-5 h-5" />
-            </div>
-            <span className="text-[9px] font-cairo font-semibold">
+            <Menu className="w-[22px] h-[22px]" />
+            <span className="text-[9px] font-cairo font-semibold leading-none">
               {language === 'ar' ? 'المزيد' : 'More'}
             </span>
           </button>

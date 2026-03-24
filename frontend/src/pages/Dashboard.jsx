@@ -57,35 +57,35 @@ function KPICard({ icon: Icon, label, value, total, unit, color, sub, gradient }
   const pct = total ? Math.round((value / total) * 100) : 0;
   const safeColor = color || "#6b7280";
   return (
-    <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-200">
-      <div className="absolute inset-0 opacity-[0.04]" style={{ background: `radial-gradient(circle at top left, ${safeColor}, transparent 70%)` }} />
-      <CardContent className="p-2.5 sm:p-3 lg:p-5">
-        <div className="flex items-start justify-between gap-2 lg:gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 lg:mb-2 truncate">{label}</p>
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
-              <AnimNum value={value} />
-            </p>
-            {total !== undefined && (
-              <p className="text-[10px] lg:text-xs text-muted-foreground mt-1 lg:mt-1.5">
+    <Card className="relative overflow-hidden border-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:shadow-md hover:shadow-lg transition-all duration-300 group">
+      <div className="absolute inset-0 opacity-[0.03] lg:opacity-[0.04]" style={{ background: `linear-gradient(135deg, ${safeColor}, transparent 70%)` }} />
+      <CardContent className="p-3 lg:p-5">
+        <div className="flex items-center gap-2.5 lg:items-start lg:flex-col lg:gap-0">
+          <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-[10px] lg:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105" style={{ background: `${safeColor}12`, boxShadow: `0 2px 8px ${safeColor}15` }}>
+            <Icon className="w-[18px] h-[18px] lg:w-5 lg:h-5" style={{ color: safeColor }} />
+          </div>
+          <div className="flex-1 min-w-0 lg:mt-3">
+            <p className="text-[10px] lg:text-xs font-semibold text-muted-foreground truncate">{label}</p>
+            <div className="flex items-baseline gap-1.5 mt-0.5 lg:mt-1">
+              <p className="text-xl lg:text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
+                <AnimNum value={value} />
+              </p>
+              {total !== undefined && (
+                <span className="text-[10px] lg:text-xs font-bold" style={{ color: safeColor, opacity: 0.6 }}>{pct}%</span>
+              )}
+            </div>
+            {sub && <p className="text-[9px] lg:text-[10px] text-muted-foreground mt-0.5 truncate leading-tight">{sub}</p>}
+          </div>
+          {total !== undefined && (
+            <div className="hidden lg:block w-full mt-2">
+              <div className="w-full h-1 rounded-full bg-muted/60 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: safeColor }} />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
                 من <span className="font-semibold">{total.toLocaleString('ar-SA')}</span> {unit}
               </p>
-            )}
-            {sub && <p className="text-[10px] lg:text-xs text-muted-foreground mt-0.5 lg:mt-1 truncate">{sub}</p>}
-          </div>
-          <div className="flex flex-col items-end gap-1 lg:gap-2 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-xl lg:rounded-2xl flex items-center justify-center" style={{ background: `${safeColor}18` }}>
-              <Icon className="w-4 h-4 lg:w-5 lg:h-5" style={{ color: safeColor }} />
             </div>
-            {total !== undefined && (
-              <div className="text-right">
-                <p className="text-sm sm:text-base lg:text-lg font-black" style={{ color: safeColor }}>{pct}%</p>
-                <div className="w-10 sm:w-12 lg:w-16 h-1 lg:h-1.5 rounded-full bg-muted overflow-hidden mt-0.5 lg:mt-1">
-                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: safeColor }} />
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -108,9 +108,54 @@ function DeptCard({ dept, navigate, compact = false }) {
   const doneTasks  = (dept.tasks?.done || 0) + (dept.tasks?.early || 0);
   const taskPct    = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
+  if (compact) {
+    return (
+      <div
+        className="w-[156px] flex-shrink-0 rounded-2xl border border-border/60 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.05)] active:scale-[0.97] transition-all duration-200 cursor-pointer overflow-hidden"
+        onClick={() => navigate(dept.route)}
+        data-testid={`dept-card-${dept.id}`}
+      >
+        <div className="px-3 pt-3 pb-2" style={{ background: `linear-gradient(135deg, ${cfg.accent}08, ${cfg.accent}03)` }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${cfg.accent}15` }}>
+              <Icon className="w-4 h-4" style={{ color: cfg.accent }} />
+            </div>
+            <div className={`flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full ${schedBadge.cls}`}>
+              <StatusIcon className="w-2.5 h-2.5" />
+              {schedBadge.label}
+            </div>
+          </div>
+          <h3 className="font-cairo font-bold text-[11px] leading-tight truncate" style={{ color: cfg.accent }}>{dept.name}</h3>
+        </div>
+        <div className="px-3 py-2">
+          {schedStatus === "active" ? (
+            <div className="flex items-center justify-between">
+              {[
+                { val: dept.on_duty_now || dept.working, dot: "bg-emerald-500" },
+                { val: dept.off_shift || 0,              dot: "bg-amber-500" },
+                { val: dept.on_rest,                     dot: "bg-slate-400" },
+              ].map((s, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                  <span className="text-xs font-black text-foreground">{s.val}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-muted-foreground text-center">{schedStatus === "draft" ? "مسودة" : "لا جدول"}</p>
+          )}
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="text-[9px] text-muted-foreground">{dept.total} موظف</span>
+            <ChevronLeft className="w-3 h-3 text-muted-foreground/50" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card
-      className={`border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:translate-y-[-2px] active:scale-[0.99] ring-1 ${cfg.ring} ${compact ? "w-[180px] flex-shrink-0" : ""}`}
+      className={`border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:translate-y-[-2px] active:scale-[0.99] ring-1 ${cfg.ring}`}
       onClick={() => navigate(dept.route)}
       data-testid={`dept-card-${dept.id}`}
     >
@@ -256,19 +301,19 @@ export default function Dashboard() {
     <div className="space-y-3 sm:space-y-4 lg:space-y-5" data-testid="ops-dashboard">
 
       {/* ── شريط الرأس ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-cairo font-black text-xl text-foreground">غرفة العمليات</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="font-cairo font-black text-base sm:text-xl text-foreground leading-tight">غرفة العمليات</h1>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
             آخر تحديث: {lastUpdate?.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) || '—'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <CrowdAlertMonitor />
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800" data-testid="live-indicator">
-            <span className="relative flex h-2 w-2">
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800" data-testid="live-indicator">
+            <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
             </span>
             مباشر
           </div>
@@ -312,22 +357,41 @@ export default function Dashboard() {
 
       {/* ── شريط حالة الموظفين ── */}
       {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 lg:gap-3">
-          {[
-            { label: "مداوم الآن",    value: kpis.active_employees, color: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800", desc: "داخل ساعات الوردية" },
-            { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "text-amber-600 dark:text-amber-400",   bar: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",       desc: "يوم عمل — خارج الوقت" },
-            { label: "في راحة",       value: kpis.on_rest || 0,     color: "text-slate-500 dark:text-slate-400",   bar: "bg-slate-400",   bg: "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700",       desc: "إجازة أسبوعية" },
-          ].map((s, i) => (
-            <div key={i} className={`flex items-center gap-2 sm:gap-3 lg:gap-4 px-2 sm:px-3 lg:px-5 py-2 sm:py-3 lg:py-4 rounded-lg lg:rounded-xl border ${s.bg}`}>
-              <div className={`w-0.5 sm:w-1 h-7 sm:h-8 lg:h-10 rounded-full ${s.bar} flex-shrink-0`} />
-              <div className="min-w-0">
-                <p className={`font-black text-lg sm:text-xl lg:text-3xl leading-none ${s.color}`}>{s.value}</p>
-                <p className="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5 lg:mt-1 truncate">{s.label}</p>
-                <p className="text-[9px] lg:text-[10px] text-muted-foreground hidden sm:block">{s.desc}</p>
+        <>
+          <div className="hidden sm:grid sm:grid-cols-3 gap-2 lg:gap-3">
+            {[
+              { label: "مداوم الآن",    value: kpis.active_employees, color: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800", desc: "داخل ساعات الوردية" },
+              { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "text-amber-600 dark:text-amber-400",   bar: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",       desc: "يوم عمل — خارج الوقت" },
+              { label: "في راحة",       value: kpis.on_rest || 0,     color: "text-slate-500 dark:text-slate-400",   bar: "bg-slate-400",   bg: "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700",       desc: "إجازة أسبوعية" },
+            ].map((s, i) => (
+              <div key={i} className={`flex items-center gap-3 lg:gap-4 px-3 lg:px-5 py-3 lg:py-4 rounded-xl border ${s.bg}`}>
+                <div className={`w-1 h-8 lg:h-10 rounded-full ${s.bar} flex-shrink-0`} />
+                <div className="min-w-0">
+                  <p className={`font-black text-xl lg:text-3xl leading-none ${s.color}`}>{s.value}</p>
+                  <p className="text-xs font-semibold text-foreground mt-1 truncate">{s.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                </div>
               </div>
+            ))}
+          </div>
+          <div className="sm:hidden">
+            <div className="flex items-center rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+              {[
+                { label: "مداوم",  value: kpis.active_employees, dot: "bg-emerald-500", color: "text-emerald-600 dark:text-emerald-400" },
+                { label: "خارج",   value: kpis.off_shift || 0,   dot: "bg-amber-500",   color: "text-amber-600 dark:text-amber-400" },
+                { label: "راحة",   value: kpis.on_rest || 0,     dot: "bg-slate-400",   color: "text-slate-500 dark:text-slate-400" },
+              ].map((s, i) => (
+                <div key={i} className={`flex-1 text-center py-2.5 ${i < 2 ? 'border-l border-border/50' : ''}`}>
+                  <p className={`text-lg font-black leading-none ${s.color}`}>{s.value}</p>
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                    <span className="text-[10px] font-medium text-muted-foreground">{s.label}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* ── الشبكة الرئيسية ── */}
