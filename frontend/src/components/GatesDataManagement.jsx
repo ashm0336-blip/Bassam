@@ -635,7 +635,7 @@ export default function GatesDataManagement() {
                     { field: "gate_type", label: "النوع", icon: Tag, bg: "bg-violet-100", iconColor: "text-violet-600", w: "w-28", center: true },
                     { field: "direction", label: "المسار", icon: ArrowUpDown, bg: "bg-amber-100", iconColor: "text-amber-600", w: "w-24", center: true },
                     { field: "category", label: "الفئة", icon: Shield, bg: "bg-rose-100", iconColor: "text-rose-600", w: "w-32", center: true },
-                    { field: "status", label: "الحالة", icon: Activity, bg: "bg-emerald-100", iconColor: "text-emerald-600", w: "w-24", center: true },
+
                     { field: "current_indicator", label: "المؤشر", icon: Activity, bg: "bg-orange-100", iconColor: "text-orange-500", w: "w-24", center: true },
                   ].map(col => (
                     <TableHead key={col.field} className={`${col.center ? 'text-center' : 'text-right'} py-2.5 ${col.w || ''} cursor-pointer select-none hover:bg-primary/5 transition-colors`}
@@ -707,14 +707,6 @@ export default function GatesDataManagement() {
                         {(Array.isArray(gate.category) ? gate.category.filter(Boolean) : [gate.category].filter(Boolean)).length > 0 ? (
                           <span className="text-[10px] font-medium">{Array.isArray(gate.category) ? gate.category.filter(Boolean).join(' + ') : gate.category}</span>
                         ) : <span className="text-[10px] text-amber-500 font-medium">غير محدد</span>}
-                      </TableCell>
-                      {/* الحالة */}
-                      <TableCell className="text-center">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full
-                          ${isOpen ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isUndefined ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-emerald-500' : isUndefined ? 'bg-amber-500' : 'bg-slate-400'}`}/>
-                          {statusLabel}
-                        </span>
                       </TableCell>
                       {/* المؤشر */}
                       <TableCell className="text-center">
