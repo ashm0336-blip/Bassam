@@ -279,8 +279,9 @@ export default function GatesDataManagement() {
       {/* ══ ANALYTICS DASHBOARD — chip-based ═══════════════════ */}
       {gates.length > 0 && (() => {
         const total   = gates.length;
-        const openGates = gates.filter(g => g.status === 'مفتوح');
+        const openGates = gates.filter(g => g.status !== 'مغلق');
         const openCount = openGates.length;
+        const closedCount = total - openCount;
         const noStaff = openGates.filter(g => getEmployeesAtGate(g.name).length === 0).length;
 
         // helper: حساب عدد الأبواب المفتوحة بقيمة معينة
@@ -351,7 +352,7 @@ export default function GatesDataManagement() {
               {[
                 { label:"إجمالي",        value:total,      color:"#2563eb", Icon:DoorOpen,     desc:"باب مسجل" },
                 { label:"مفتوحة",        value:openCount,  color:"#059669", Icon:DoorOpen,     desc:"الآن" },
-                { label:"مغلقة",         value:total - openCount, color:"#6b7280", Icon:DoorClosed, desc:"موقوف" },
+                { label:"مغلقة",         value:closedCount, color:"#6b7280", Icon:DoorClosed, desc:"موقوف" },
                 { label:"بلا موظف",      value:noStaff,    color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
               ].map((s,i)=>(
                 <div key={i} className="rounded-2xl border p-2.5 flex items-center gap-2.5 transition-all hover:shadow-sm"
@@ -577,7 +578,7 @@ export default function GatesDataManagement() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {paginatedGates.map(gate => {
             const gateEmployees = getEmployeesAtGate(gate.name);
-            const isOpen = gate.status === 'مفتوح';
+            const isOpen = gate.status !== 'مغلق';
             const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
             const indicatorColor = indicatorColors[gate.current_indicator] || '#94a3b8';
             return (
@@ -669,7 +670,7 @@ export default function GatesDataManagement() {
               <TableBody>
                 {paginatedGates.map((gate) => {
                   const gateEmployees = getEmployeesAtGate(gate.name);
-                  const isOpen = gate.status === 'مفتوح';
+                  const isOpen = gate.status !== 'مغلق';
                   const noStaff = gateEmployees.length === 0;
                   const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
                   const indicatorColor = indicatorColors[gate.current_indicator] || '#94a3b8';
