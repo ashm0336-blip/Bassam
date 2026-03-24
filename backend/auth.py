@@ -121,6 +121,8 @@ async def log_activity(action: str, user: dict, target: str = None, details: str
             "user_id": user["id"],
             "user_name": user["name"],
             "user_email": user.get("email"),
+            "user_role": user.get("role"),
+            "department": user.get("department"),
             "target": target,
             "details": details,
             "timestamp": datetime.now(timezone.utc).isoformat()

@@ -38,8 +38,10 @@ def _is_email(identifier: str) -> bool:
 async def get_activity_logs(
     action: Optional[str] = None,
     user_email: Optional[str] = None,
+    user_name: Optional[str] = None,
+    department: Optional[str] = None,
     date: Optional[str] = None,
-    limit: int = 100,
+    limit: int = 200,
     admin: dict = Depends(require_admin)
 ):
     query = {}
@@ -48,6 +50,11 @@ async def get_activity_logs(
     if user_email:
         safe_email = re.escape(user_email)
         query["user_email"] = {"$regex": safe_email, "$options": "i"}
+    if user_name:
+        safe_name = re.escape(user_name)
+        query["user_name"] = {"$regex": safe_name, "$options": "i"}
+    if department and department != "all":
+        query["department"] = department
     if date:
         start = datetime.fromisoformat(f"{date}T00:00:00")
         end   = datetime.fromisoformat(f"{date}T23:59:59")
