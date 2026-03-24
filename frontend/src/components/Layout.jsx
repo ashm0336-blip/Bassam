@@ -140,7 +140,7 @@ export const Layout = () => {
   })).filter(item => item.is_active);
 
   // Organize into parent and children (exclude sidebar_hidden items from nav)
-  const parentItems = allMenuItems.filter(item => !item.parent_id);
+  const parentItems = allMenuItems.filter(item => !item.parent_id && !item.sidebar_hidden);
   const childrenMap = {};
   allMenuItems.filter(item => item.parent_id && !item.sidebar_hidden).forEach(child => {
     if (!childrenMap[child.parent_id]) {
@@ -446,11 +446,10 @@ export const Layout = () => {
 
           <div className="flex items-center gap-1.5 px-3 pb-3">
             {mobileSettings.show_sidebar_notifications && (
-              <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-xs font-medium text-foreground relative">
+              <button onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn" className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors flex items-center justify-center relative">
                 <Bell className="w-4 h-4" />
-                <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
                 {unreadAlerts > 0 && (
-                  <span className="absolute -top-1 left-2 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -left-1 min-w-[16px] h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
                     {unreadAlerts > 9 ? "9+" : unreadAlerts}
                   </span>
                 )}

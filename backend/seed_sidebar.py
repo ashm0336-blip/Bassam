@@ -95,7 +95,7 @@ def _sidebar_items():
         name_ar="تحليلات الإحصائيات", name_en="Statistics Analytics",
         icon="TrendingUp", order=4, department="all")
     add("/notifications", name_ar="الإشعارات", name_en="Notifications",
-        icon="Bell", order=10, department="all", is_secondary=True)
+        icon="Bell", order=10, department="all", is_secondary=True, sidebar_hidden=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
         icon="Shield", order=11, department="system_admin", is_secondary=True, admin_only=True)
 
