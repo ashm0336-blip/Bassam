@@ -9,6 +9,7 @@ import {
   DoorOpen, DoorClosed, Users, AlertTriangle, Activity,
   MapPin, ArrowUpDown, Tag, Shield, Hash, MoreVertical,
   Search, LayoutGrid, List, Download, Upload, FileText, ChevronDown, Filter,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,13 @@ export default function GatesDataManagement() {
   const [filterDirection, setFilterDirection] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [view, setView] = useState("list");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [sortField, setSortField] = useState("number");
+  const [sortDir, setSortDir] = useState("asc");
+  const [importMode, setImportMode] = useState(null);
+  const [pendingImportFile, setPendingImportFile] = useState(null);
 
   useEffect(() => {
     fetchGates();
@@ -107,6 +115,49 @@ export default function GatesDataManagement() {
       return true;
     });
   }, [gates, search, filterStatus, filterType, filterPlaza, filterDirection, filterCategory]);
+
+  useEffect(() => { setCurrentPage(1); }, [search, filterStatus, filterType, filterPlaza, filterDirection, filterCategory]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      let va = a[sortField] ?? "";
+      let vb = b[sortField] ?? "";
+      if (sortField === "number" || sortField === "max_flow" || sortField === "current_flow") {
+        va = Number(va) || 0;
+        vb = Number(vb) || 0;
+      } else if (Array.isArray(va)) {
+        va = va.join(" ");
+        vb = Array.isArray(vb) ? vb.join(" ") : String(vb);
+      } else {
+        va = String(va);
+        vb = String(vb);
+      }
+      if (va < vb) return sortDir === "asc" ? -1 : 1;
+      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return arr;
+  }, [filtered, sortField, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / rowsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedGates = sorted.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return <ArrowUpDown className={`w-3 h-3 text-primary ${sortDir === "desc" ? "rotate-180" : ""} transition-transform`} />;
+  };
 
   // Unique plazas for filter
   const plazas = useMemo(() => [...new Set(gates.map(g => g.plaza).filter(Boolean))], [gates]);
@@ -489,16 +540,11 @@ export default function GatesDataManagement() {
           </DropdownMenuContent>
         </DropdownMenu>
         <input id="import-gates-xlsx" type="file" accept=".xlsx,.xls" className="hidden"
-          onChange={async (e) => {
+          onChange={(e) => {
             const file = e.target.files?.[0]; e.target.value = "";
             if (!file) return;
-            const fd = new FormData(); fd.append("file", file);
-            try {
-              const tk = localStorage.getItem("token");
-              const res = await axios.post(`${API}/gates/import`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
-              toast.success(res.data.message || "تم الاستيراد");
-              fetchGates();
-            } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
+            setPendingImportFile(file);
+            setImportMode("ask");
           }} />
 
         {/* Add Gate */}
@@ -529,7 +575,7 @@ export default function GatesDataManagement() {
       {/* ── CARDS VIEW ────────────────────────────────────── */}
       {view === "cards" && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {filtered.map(gate => {
+          {paginatedGates.map(gate => {
             const gateEmployees = getEmployeesAtGate(gate.name);
             const isOpen = gate.status === 'مفتوح';
             const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
@@ -586,100 +632,42 @@ export default function GatesDataManagement() {
             <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/25 [&>th:not(:last-child)]:border-l [&>th:not(:last-child)]:border-primary/10">
-                  {/* رقم الباب */}
-                  <TableHead className="text-right py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shadow-sm">
-                        <Hash className="w-4 h-4 text-primary"/>
+                  {[
+                    { field: "number", label: "رقم الباب", icon: Hash, bg: "bg-primary/15", iconColor: "text-primary" },
+                    { field: "name", label: "اسم الباب", icon: DoorOpen, bg: "bg-emerald-100", iconColor: "text-emerald-600" },
+                    { field: "plaza", label: "المنطقة", icon: MapPin, bg: "bg-sky-100", iconColor: "text-sky-600", w: "w-28", center: true },
+                    { field: "gate_type", label: "النوع", icon: Tag, bg: "bg-violet-100", iconColor: "text-violet-600", w: "w-28", center: true },
+                    { field: "direction", label: "المسار", icon: ArrowUpDown, bg: "bg-amber-100", iconColor: "text-amber-600", w: "w-24", center: true },
+                    { field: "category", label: "الفئة", icon: Shield, bg: "bg-rose-100", iconColor: "text-rose-600", w: "w-32", center: true },
+                    { field: "status", label: "الحالة", icon: Activity, bg: "bg-emerald-100", iconColor: "text-emerald-600", w: "w-24", center: true },
+                    { field: "current_indicator", label: "المؤشر", icon: Activity, bg: "bg-orange-100", iconColor: "text-orange-500", w: "w-24", center: true },
+                  ].map(col => (
+                    <TableHead key={col.field} className={`${col.center ? 'text-center' : 'text-right'} py-2.5 ${col.w || ''} cursor-pointer select-none hover:bg-primary/5 transition-colors`}
+                      onClick={() => handleSort(col.field)}>
+                      <div className={`flex items-center gap-2 ${col.center ? 'justify-center' : ''}`}>
+                        <div className={`w-7 h-7 rounded-lg ${col.bg} flex items-center justify-center`}>
+                          <col.icon className={`w-3.5 h-3.5 ${col.iconColor}`}/>
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600">{col.label}</span>
+                        <SortIcon field={col.field} />
                       </div>
-                      <span className="font-bold text-foreground text-sm">رقم الباب</span>
-                    </div>
-                  </TableHead>
-                  {/* اسم الباب */}
-                  <TableHead className="text-right py-2.5">
-                    <div className="flex flex-col items-start gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
-                        <DoorOpen className="w-4 h-4 text-emerald-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">اسم الباب</span>
-                    </div>
-                  </TableHead>
-                  {/* المنطقة */}
-                  <TableHead className="text-center py-2.5 w-28">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shadow-sm">
-                        <MapPin className="w-4 h-4 text-sky-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">المنطقة</span>
-                    </div>
-                  </TableHead>
-                  {/* النوع */}
-                  <TableHead className="text-center py-2.5 w-28">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shadow-sm">
-                        <Tag className="w-4 h-4 text-violet-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">النوع</span>
-                    </div>
-                  </TableHead>
-                  {/* المسار */}
-                  <TableHead className="text-center py-2.5 w-24">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
-                        <ArrowUpDown className="w-4 h-4 text-amber-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">المسار</span>
-                    </div>
-                  </TableHead>
-                  {/* الفئة */}
+                    </TableHead>
+                  ))}
                   <TableHead className="text-center py-2.5 w-32">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center shadow-sm">
-                        <Shield className="w-4 h-4 text-rose-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">الفئة</span>
-                    </div>
-                  </TableHead>
-                  {/* الحالة */}
-                  <TableHead className="text-center py-2.5 w-24">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
-                        <Activity className="w-4 h-4 text-emerald-600"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">الحالة</span>
-                    </div>
-                  </TableHead>
-                  {/* المؤشر */}
-                  <TableHead className="text-center py-2.5 w-24">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center shadow-sm">
-                        <Activity className="w-4 h-4 text-orange-500"/>
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-600">المؤشر</span>
-                    </div>
-                  </TableHead>
-                  {/* الموظفين */}
-                  <TableHead className="text-center py-2.5 w-32">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
-                        <Users className="w-4 h-4 text-blue-600"/>
+                    <div className="flex items-center gap-2 justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Users className="w-3.5 h-3.5 text-blue-600"/>
                       </div>
                       <span className="text-[11px] font-bold text-slate-600">الموظفين</span>
                     </div>
                   </TableHead>
-                  {/* الإجراءات */}
                   <TableHead className="text-center py-2.5 w-20">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shadow-sm">
-                        <MoreVertical className="w-4 h-4 text-slate-500"/>
-                      </div>
-                      <span className="text-[11px] font-semibold text-slate-400">⋯</span>
-                    </div>
+                    <span className="text-[11px] font-semibold text-slate-400">⋯</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((gate) => {
+                {paginatedGates.map((gate) => {
                   const gateEmployees = getEmployeesAtGate(gate.name);
                   const isOpen = gate.status === 'مفتوح';
                   const noStaff = gateEmployees.length === 0;
@@ -772,6 +760,108 @@ export default function GatesDataManagement() {
           </div>
         </Card>
       )}
+
+      {/* ── PAGINATION BAR ──────────────────────────────── */}
+      {filtered.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-card rounded-xl border px-4 py-3">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{sorted.length}</span>
+            <span>{language === 'ar' ? 'باب' : 'gates'}</span>
+            <span className="text-xs">|</span>
+            <span>{language === 'ar' ? 'صفحة' : 'Page'} <span className="font-bold text-foreground">{safePage}</span> {language === 'ar' ? 'من' : 'of'} <span className="font-bold text-foreground">{totalPages}</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{language === 'ar' ? 'عرض' : 'Show'}</span>
+            <Select value={String(rowsPerPage)} onValueChange={v => { setRowsPerPage(Number(v)); setCurrentPage(1); }}>
+              <SelectTrigger className="h-8 w-20 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {[10, 25, 50, 100].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(1)}>
+              <ChevronsRight className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            {(() => {
+              const pages = [];
+              let start = Math.max(1, safePage - 2);
+              let end = Math.min(totalPages, start + 4);
+              if (end - start < 4) start = Math.max(1, end - 4);
+              for (let i = start; i <= end; i++) pages.push(i);
+              return pages.map(p => (
+                <Button key={p} variant={p === safePage ? "default" : "outline"} size="icon" className="h-8 w-8 text-xs"
+                  onClick={() => setCurrentPage(p)}>{p}</Button>
+              ));
+            })()}
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage >= totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage >= totalPages} onClick={() => setCurrentPage(totalPages)}>
+              <ChevronsLeft className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── IMPORT MODE DIALOG ───────────────────────────── */}
+      <Dialog open={importMode === "ask"} onOpenChange={(open) => { if (!open) { setImportMode(null); setPendingImportFile(null); } }}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="font-cairo">{language === 'ar' ? 'خيارات الاستيراد' : 'Import Options'}</DialogTitle>
+            <DialogDescription>
+              {language === 'ar'
+                ? 'اختر كيف تريد التعامل مع الأبواب الموجودة مسبقاً بنفس الاسم'
+                : 'Choose how to handle gates that already exist with the same name'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-4">
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-start gap-1 text-right"
+              onClick={async () => {
+                setImportMode(null);
+                if (!pendingImportFile) return;
+                const fd = new FormData(); fd.append("file", pendingImportFile);
+                try {
+                  const tk = localStorage.getItem("token");
+                  const res = await axios.post(`${API}/gates/import?mode=skip`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
+                  toast.success(res.data.message);
+                  fetchGates();
+                } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
+                setPendingImportFile(null);
+              }}>
+              <span className="font-bold text-sm">{language === 'ar' ? 'إضافة الجديد فقط' : 'Add new only'}</span>
+              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تخطي الأبواب الموجودة مسبقاً' : 'Skip existing gates'}</span>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-start gap-1 text-right border-amber-300 hover:bg-amber-50"
+              onClick={async () => {
+                setImportMode(null);
+                if (!pendingImportFile) return;
+                const fd = new FormData(); fd.append("file", pendingImportFile);
+                try {
+                  const tk = localStorage.getItem("token");
+                  const res = await axios.post(`${API}/gates/import?mode=update`, fd, { headers: { Authorization: `Bearer ${tk}`, "Content-Type": "multipart/form-data" } });
+                  toast.success(res.data.message);
+                  fetchGates();
+                } catch (err) { toast.error(err.response?.data?.detail || "فشل الاستيراد"); }
+                setPendingImportFile(null);
+              }}>
+              <span className="font-bold text-sm flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-amber-600" />
+                {language === 'ar' ? 'تحديث الموجود + إضافة الجديد' : 'Update existing + add new'}
+              </span>
+              <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تحديث بيانات الأبواب المكررة وإضافة الجديدة' : 'Update duplicates and add new ones'}</span>
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setImportMode(null); setPendingImportFile(null); }}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

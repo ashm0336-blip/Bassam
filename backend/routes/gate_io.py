@@ -117,7 +117,11 @@ async def download_gates_template():
 
 
 @router.post("/gates/import")
-async def import_gates(file: UploadFile = File(...), user: dict = Depends(require_department_manager)):
+async def import_gates(
+    file: UploadFile = File(...),
+    mode: str = "skip",
+    user: dict = Depends(require_department_manager),
+):
     import openpyxl
 
     content = await file.read()
@@ -133,40 +137,63 @@ async def import_gates(file: UploadFile = File(...), user: dict = Depends(requir
     if "name" not in col_map:
         raise HTTPException(status_code=400, detail="عمود 'اسم الباب' مطلوب في الملف")
 
+    def _val(vals, field, default=""):
+        idx = col_map.get(field, -1)
+        if idx == -1 or idx >= len(vals):
+            return default
+        return vals[idx] or default
+
     added = 0
+    updated = 0
     skipped = 0
     for row in ws.iter_rows(min_row=2, values_only=False):
         vals = [str(cell.value or "").strip() for cell in row]
         if not any(vals):
             continue
 
-        name = vals[col_map["name"]] if "name" in col_map else ""
+        name = _val(vals, "name")
         if not name:
             skipped += 1
             continue
 
-        existing = await db.gates.find_one({"name": name}, {"_id": 0})
+        gate_data = {
+            "number": _val(vals, "number"),
+            "name": name,
+            "plaza": _val(vals, "plaza"),
+            "gate_type": _val(vals, "gate_type", "رئيسي"),
+            "direction": _val(vals, "direction", "دخول"),
+            "category": [c.strip() for c in _val(vals, "category").split("+")] if "category" in col_map else [],
+            "classification": _val(vals, "classification", "عام"),
+            "status": _val(vals, "status", "مفتوح"),
+            "max_flow": int(_val(vals, "max_flow", "5000") or 5000),
+        }
+
+        existing = await db.gates.find_one({"name": name}, {"_id": 1})
         if existing:
-            skipped += 1
+            if mode == "update":
+                await db.gates.update_one({"_id": existing["_id"]}, {"$set": gate_data})
+                updated += 1
+            else:
+                skipped += 1
             continue
 
-        gate = {
+        gate_data.update({
             "id": str(uuid.uuid4()),
-            "number": vals[col_map.get("number", -1)] if "number" in col_map and col_map["number"] < len(vals) else "",
-            "name": name,
-            "plaza": vals[col_map.get("plaza", -1)] if "plaza" in col_map and col_map["plaza"] < len(vals) else "",
-            "gate_type": vals[col_map.get("gate_type", -1)] if "gate_type" in col_map and col_map["gate_type"] < len(vals) else "رئيسي",
-            "direction": vals[col_map.get("direction", -1)] if "direction" in col_map and col_map["direction"] < len(vals) else "دخول",
-            "category": [c.strip() for c in (vals[col_map.get("category", -1)] if "category" in col_map and col_map["category"] < len(vals) else "").split("+")] if "category" in col_map else [],
-            "classification": vals[col_map.get("classification", -1)] if "classification" in col_map and col_map["classification"] < len(vals) else "عام",
-            "status": vals[col_map.get("status", -1)] if "status" in col_map and col_map["status"] < len(vals) else "مفتوح",
-            "max_flow": int(vals[col_map.get("max_flow", -1)] or 5000) if "max_flow" in col_map and col_map["max_flow"] < len(vals) else 5000,
             "current_flow": 0,
             "current_indicator": "خفيف",
             "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-        await db.gates.insert_one({**gate})
+        })
+        await db.gates.insert_one(gate_data)
         added += 1
 
-    await log_activity("استيراد أبواب", user, f"{added}", f"تم استيراد {added} باب، تخطي {skipped}")
-    return {"message": f"تم استيراد {added} باب بنجاح", "added": added, "skipped": skipped}
+    parts = []
+    if added:
+        parts.append(f"إضافة {added}")
+    if updated:
+        parts.append(f"تحديث {updated}")
+    if skipped:
+        parts.append(f"تخطي {skipped}")
+    summary = "، ".join(parts) if parts else "لا توجد تغييرات"
+
+    await log_activity("استيراد أبواب", user, f"{added+updated}", f"{summary}")
+    return {"message": f"تم: {summary}", "added": added, "updated": updated, "skipped": skipped}
