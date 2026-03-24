@@ -225,9 +225,13 @@ async def import_gates(
             continue
         total_data_rows += 1
         name = _raw(vals, "name").strip()
+        number_str = _raw(vals, "number").strip()
         if not name:
-            empty_name_count += 1
-            continue
+            if number_str:
+                name = f"باب {number_str}"
+            else:
+                empty_name_count += 1
+                continue
         raw_max = _raw(vals, "max_flow")
         all_rows.append({
             "number": _raw(vals, "number"),
