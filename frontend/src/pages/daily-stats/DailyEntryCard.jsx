@@ -45,7 +45,7 @@ export function DailyEntryCard({ mosqueType, fields, formData, setFormData, onSa
     <div key={field.key} className="relative">
       <Label className="text-[10px] text-muted-foreground mb-0.5 block font-cairo text-center truncate">{shortLabel || field.label}</Label>
       <Input
-        type="number"
+        type="number" inputMode="numeric"
         placeholder="0"
         value={formData[field.key] ?? ""}
         onChange={(e) => setFormData((prev) => ({ ...prev, [field.key]: e.target.value }))}

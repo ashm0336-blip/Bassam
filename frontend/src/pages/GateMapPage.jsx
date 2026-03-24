@@ -675,7 +675,7 @@ export default function GateMapPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">{isAr ? "الترتيب" : "Order"}</Label>
-              <Input type="number" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="mt-1" />
+              <Input type="number" inputMode="numeric" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="mt-1" />
             </div>
             <div>
               <Label className="text-sm font-medium">{isAr ? "صورة الطابق" : "Floor Image"}</Label>

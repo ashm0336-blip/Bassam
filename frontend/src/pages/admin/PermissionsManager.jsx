@@ -771,7 +771,7 @@ export default function PermissionsManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>الترتيب</Label><Input type="number" value={pageForm.order} onChange={e => setPageForm({ ...pageForm, order: parseInt(e.target.value) || 0 })} /></div>
+              <div><Label>الترتيب</Label><Input type="number" inputMode="numeric" value={pageForm.order} onChange={e => setPageForm({ ...pageForm, order: parseInt(e.target.value) || 0 })} /></div>
             </div>
             <div>
               <Label>الإدارة</Label>

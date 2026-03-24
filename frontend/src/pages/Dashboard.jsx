@@ -59,28 +59,28 @@ function KPICard({ icon: Icon, label, value, total, unit, color, sub, gradient }
   return (
     <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-200">
       <div className="absolute inset-0 opacity-[0.04]" style={{ background: `radial-gradient(circle at top left, ${safeColor}, transparent 70%)` }} />
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-2.5 sm:p-3 lg:p-5">
+        <div className="flex items-start justify-between gap-2 lg:gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-muted-foreground mb-2 truncate">{label}</p>
-            <p className="text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
+            <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1 lg:mb-2 truncate">{label}</p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none" style={{ color: safeColor }}>
               <AnimNum value={value} />
             </p>
             {total !== undefined && (
-              <p className="text-xs text-muted-foreground mt-1.5">
+              <p className="text-[10px] lg:text-xs text-muted-foreground mt-1 lg:mt-1.5">
                 من <span className="font-semibold">{total.toLocaleString('ar-SA')}</span> {unit}
               </p>
             )}
-            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+            {sub && <p className="text-[10px] lg:text-xs text-muted-foreground mt-0.5 lg:mt-1 truncate">{sub}</p>}
           </div>
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: `${safeColor}18` }}>
-              <Icon className="w-5 h-5" style={{ color: safeColor }} />
+          <div className="flex flex-col items-end gap-1 lg:gap-2 flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-xl lg:rounded-2xl flex items-center justify-center" style={{ background: `${safeColor}18` }}>
+              <Icon className="w-4 h-4 lg:w-5 lg:h-5" style={{ color: safeColor }} />
             </div>
             {total !== undefined && (
               <div className="text-right">
-                <p className="text-lg font-black" style={{ color: safeColor }}>{pct}%</p>
-                <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden mt-1">
+                <p className="text-sm sm:text-base lg:text-lg font-black" style={{ color: safeColor }}>{pct}%</p>
+                <div className="w-10 sm:w-12 lg:w-16 h-1 lg:h-1.5 rounded-full bg-muted overflow-hidden mt-0.5 lg:mt-1">
                   <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: safeColor }} />
                 </div>
               </div>
@@ -253,7 +253,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="space-y-5" data-testid="ops-dashboard">
+    <div className="space-y-3 sm:space-y-4 lg:space-y-5" data-testid="ops-dashboard">
 
       {/* ── شريط الرأس ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -277,19 +277,19 @@ export default function Dashboard() {
 
       {/* ── تنبيهات ذكية ── */}
       {smart_alerts.length > 0 && (
-        <div className="space-y-2" data-testid="smart-alerts">
+        <div className="space-y-1.5 sm:space-y-2" data-testid="smart-alerts">
           {smart_alerts.map((alert, i) => {
             const style = ALERT_STYLE[alert.type] || ALERT_STYLE.info;
             const AlertIcon = ALERT_ICON_MAP[alert.icon] || AlertTriangle;
             return (
-              <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${style.bg} ${style.border}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${style.dot}`} />
-                  <AlertIcon className={`w-4 h-4 flex-shrink-0 ${style.icon}`} />
-                  <p className={`text-sm font-semibold ${style.text}`}>{alert.message}</p>
+              <div key={i} className={`flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border ${style.bg} ${style.border}`}>
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${style.dot}`} />
+                  <AlertIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 ${style.icon}`} />
+                  <p className={`text-xs sm:text-sm font-semibold ${style.text} truncate`}>{alert.message}</p>
                 </div>
                 {alert.href && (
-                  <Button variant="ghost" size="sm" className={`text-xs gap-1 ${style.text}`} onClick={() => navigate(alert.href)}>
+                  <Button variant="ghost" size="sm" className={`text-[10px] sm:text-xs gap-1 h-7 px-2 ${style.text} flex-shrink-0`} onClick={() => navigate(alert.href)}>
                     {alert.action} <ChevronLeft className="w-3 h-3" />
                   </Button>
                 )}
@@ -300,7 +300,7 @@ export default function Dashboard() {
       )}
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
         <KPICard icon={DoorOpen}      label="الأبواب المفتوحة"  value={kpis.open_gates}             total={kpis.total_gates}   unit="باب"   color="#059669" />
         <KPICard icon={Users}         label="مداومون الآن"       value={kpis.active_employees}        total={kpis.total_employees} unit="موظف" color="#2563eb"
           sub={kpis.off_shift > 0 ? `${kpis.off_shift} خارج الوردية` : "جميعهم في الخدمة"} />
@@ -312,18 +312,18 @@ export default function Dashboard() {
 
       {/* ── شريط حالة الموظفين ── */}
       {(kpis.active_employees > 0 || kpis.off_shift > 0 || kpis.on_rest > 0) && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 lg:gap-3">
           {[
             { label: "مداوم الآن",    value: kpis.active_employees, color: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800", desc: "داخل ساعات الوردية" },
             { label: "خارج الوردية", value: kpis.off_shift || 0,   color: "text-amber-600 dark:text-amber-400",   bar: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",       desc: "يوم عمل — خارج الوقت" },
             { label: "في راحة",       value: kpis.on_rest || 0,     color: "text-slate-500 dark:text-slate-400",   bar: "bg-slate-400",   bg: "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700",       desc: "إجازة أسبوعية" },
           ].map((s, i) => (
-            <div key={i} className={`flex items-center gap-4 px-5 py-4 rounded-xl border ${s.bg}`}>
-              <div className={`w-1 h-10 rounded-full ${s.bar} flex-shrink-0`} />
-              <div>
-                <p className={`font-black text-3xl leading-none ${s.color}`}>{s.value}</p>
-                <p className="text-xs font-semibold text-foreground mt-1">{s.label}</p>
-                <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+            <div key={i} className={`flex items-center gap-2 sm:gap-3 lg:gap-4 px-2 sm:px-3 lg:px-5 py-2 sm:py-3 lg:py-4 rounded-lg lg:rounded-xl border ${s.bg}`}>
+              <div className={`w-0.5 sm:w-1 h-7 sm:h-8 lg:h-10 rounded-full ${s.bar} flex-shrink-0`} />
+              <div className="min-w-0">
+                <p className={`font-black text-lg sm:text-xl lg:text-3xl leading-none ${s.color}`}>{s.value}</p>
+                <p className="text-[10px] sm:text-xs font-semibold text-foreground mt-0.5 lg:mt-1 truncate">{s.label}</p>
+                <p className="text-[9px] lg:text-[10px] text-muted-foreground hidden sm:block">{s.desc}</p>
               </div>
             </div>
           ))}
@@ -331,7 +331,7 @@ export default function Dashboard() {
       )}
 
       {/* ── الشبكة الرئيسية ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
 
         {/* عمود 1: حالة البوابات */}
         <Card className="border-0 shadow-md">

@@ -417,7 +417,7 @@ export default function ZoneCategoryManager() {
                   </div>
                   <div>
                     <Label className="text-[10px] text-slate-500 font-medium">{isAr ? "الترتيب" : "Order"}</Label>
-                    <Input type="number" className="mt-1 h-8 text-sm" value={form.order}
+                    <Input type="number" inputMode="numeric" className="mt-1 h-8 text-sm" value={form.order}
                       onChange={(e) => setF({ order: parseInt(e.target.value) || 0 })} />
                   </div>
                 </div>

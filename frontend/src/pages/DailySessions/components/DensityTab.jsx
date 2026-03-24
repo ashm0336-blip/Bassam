@@ -236,7 +236,7 @@ export function DensityTab({
                       {/* Quick number input */}
                       {!readOnly && zone.max_capacity > 0 && (
                         <input
-                          type="number"
+                          type="number" inputMode="numeric"
                           min={0}
                           max={Math.ceil(zone.max_capacity * 1.5)}
                           value={displayCount}
@@ -538,7 +538,7 @@ function ZoneMiniCard({ zone, ZONE_TYPES, densityEdits, activePrayer, handleDens
           {!readOnly && (
           <div className="flex items-center gap-2">
             <div className="flex items-center border rounded-lg overflow-hidden flex-1">
-              <Input type="number" min={0} max={120}
+              <Input type="number" inputMode="numeric" min={0} max={120}
                 className={`h-8 text-center text-sm font-mono font-bold border-0 ${isEdited ? "ring-2 ring-amber-300 bg-amber-50" : ""}`}
                 value={zone.fillPct}
                 onChange={(e) => handleDensityChange(zone.id, "prayer_count", Math.min(parseInt(e.target.value) || 0, 120))}

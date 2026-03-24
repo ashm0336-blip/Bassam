@@ -466,7 +466,7 @@ export default function DropdownManager() {
               <Label htmlFor="order">{language === 'ar' ? 'الترتيب' : 'Order'}</Label>
               <Input
                 id="order"
-                type="number"
+                type="number" inputMode="numeric"
                 value={formData.order}
                 onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
                 placeholder="0"

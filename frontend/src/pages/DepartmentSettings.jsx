@@ -625,7 +625,7 @@ export default function DepartmentSettings({ department }) {
               {activeTab !== 'shifts' && (
                 <div>
                   <Label htmlFor="order">{language === 'ar' ? 'الترتيب' : 'Order'}</Label>
-                  <Input id="order" type="number" value={formData.order} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} className="mt-1" />
+                  <Input id="order" type="number" inputMode="numeric" value={formData.order} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })} className="mt-1" />
                 </div>
               )}
             </div>

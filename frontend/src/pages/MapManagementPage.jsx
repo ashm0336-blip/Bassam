@@ -465,11 +465,11 @@ export default function MapManagementPage({ department = "plazas" }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium">{isAr ? "رقم الطابق" : "Floor Number"}</Label>
-                <Input type="number" value={floorForm.floor_number} onChange={e => setFloorForm(p => ({ ...p, floor_number: parseInt(e.target.value) || 0 }))} className="mt-1" data-testid="floor-number-input" />
+                <Input type="number" inputMode="numeric" value={floorForm.floor_number} onChange={e => setFloorForm(p => ({ ...p, floor_number: parseInt(e.target.value) || 0 }))} className="mt-1" data-testid="floor-number-input" />
               </div>
               <div>
                 <Label className="text-sm font-medium">{isAr ? "الترتيب" : "Order"}</Label>
-                <Input type="number" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="mt-1" data-testid="floor-order-input" />
+                <Input type="number" inputMode="numeric" value={floorForm.order} onChange={e => setFloorForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="mt-1" data-testid="floor-order-input" />
               </div>
             </div>
             <div>
@@ -697,7 +697,7 @@ export default function MapManagementPage({ department = "plazas" }) {
             {calibPoints.length === 2 && (
               <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                 <label className="text-sm font-cairo font-bold text-amber-800 flex-shrink-0">{isAr ? "المسافة الحقيقية:" : "Real distance:"}</label>
-                <input type="number" min="0.1" step="0.1" value={calibDistance} onChange={e => setCalibDistance(e.target.value)}
+                <input type="number" inputMode="decimal" min="0.1" step="0.1" value={calibDistance} onChange={e => setCalibDistance(e.target.value)}
                   placeholder={isAr ? "مثال: 15.5" : "e.g. 15.5"} autoFocus
                   className="flex-1 h-10 text-lg font-mono text-center border-2 border-amber-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
                   data-testid="calibration-distance-input" />

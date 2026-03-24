@@ -457,3 +457,40 @@ code {
     display: contents !important;
   }
 }
+
+/* ── Mobile-first optimizations ── */
+@media (max-width: 640px) {
+  input[type="number"],
+  input[type="tel"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  button, a, [role="button"] {
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  .card, [class*="CardContent"] {
+    border-radius: 0.75rem;
+  }
+
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+
+  dialog, [role="dialog"] {
+    max-height: 85vh;
+    max-height: 85dvh;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}

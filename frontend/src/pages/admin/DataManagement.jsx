@@ -593,7 +593,7 @@ export default function DataManagement() {
                 <div>
                   <Label>{language === 'ar' ? 'رقم الباب' : 'Gate Number'}</Label>
                   <Input
-                    type="number"
+                    type="number" inputMode="numeric"
                     value={gateForm.number}
                     onChange={(e) => setGateForm({...gateForm, number: e.target.value})}
                     required
@@ -795,7 +795,7 @@ export default function DataManagement() {
                 <div>
                   <Label>{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</Label>
                   <Input
-                    type="number"
+                    type="number" inputMode="numeric"
                     value={plazaForm.current_crowd}
                     onChange={(e) => setPlazaForm({...plazaForm, current_crowd: e.target.value})}
                     className="mt-1"
@@ -804,7 +804,7 @@ export default function DataManagement() {
                 <div>
                   <Label>{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</Label>
                   <Input
-                    type="number"
+                    type="number" inputMode="numeric"
                     value={plazaForm.max_capacity}
                     onChange={(e) => setPlazaForm({...plazaForm, max_capacity: e.target.value})}
                     className="mt-1"
@@ -850,7 +850,7 @@ export default function DataManagement() {
                 <div>
                   <Label>{language === 'ar' ? 'الحشود الحالية' : 'Current Crowd'}</Label>
                   <Input
-                    type="number"
+                    type="number" inputMode="numeric"
                     value={matafForm.current_crowd}
                     onChange={(e) => setMatafForm({...matafForm, current_crowd: e.target.value})}
                     className="mt-1"
@@ -859,7 +859,7 @@ export default function DataManagement() {
                 <div>
                   <Label>{language === 'ar' ? 'الطاقة القصوى' : 'Max Capacity'}</Label>
                   <Input
-                    type="number"
+                    type="number" inputMode="numeric"
                     value={matafForm.max_capacity}
                     onChange={(e) => setMatafForm({...matafForm, max_capacity: e.target.value})}
                     className="mt-1"
@@ -870,7 +870,7 @@ export default function DataManagement() {
               <div>
                 <Label>{language === 'ar' ? 'متوسط وقت الطواف (بالدقائق)' : 'Average Tawaf Time (minutes)'}</Label>
                 <Input
-                  type="number"
+                  type="number" inputMode="numeric"
                   value={matafForm.average_tawaf_time}
                   onChange={(e) => setMatafForm({...matafForm, average_tawaf_time: e.target.value})}
                   className="mt-1"

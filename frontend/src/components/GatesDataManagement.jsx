@@ -782,7 +782,7 @@ export default function GatesDataManagement() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>{language === 'ar' ? 'رقم الباب' : 'Number'}</Label><Input type="number" value={formData.number} onChange={(e) => setFormData({...formData, number: e.target.value})} required className="mt-1" /></div>
+                <div><Label>{language === 'ar' ? 'رقم الباب' : 'Number'}</Label><Input type="number" inputMode="numeric" value={formData.number} onChange={(e) => setFormData({...formData, number: e.target.value})} required className="mt-1" /></div>
                 <div><Label>{language === 'ar' ? 'اسم الباب' : 'Name'}</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required className="mt-1" /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">

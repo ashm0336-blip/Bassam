@@ -1085,7 +1085,7 @@ export default function DailyGateSessionsPage() {
               {activeSession?.status === "draft" && (
                 <div>
                   <Label className="text-xs">{isAr?"عدد الموظفين":"Staff Count"}</Label>
-                  <Input type="number" min={0} className="mt-1" value={selectedGate.assigned_staff || 0} onChange={(e) => { const v = parseInt(e.target.value)||0; handleUpdateGate(selectedGate.id, {assigned_staff:v}); setSelectedGate(p=>({...p,assigned_staff:v})); }} data-testid="gate-staff-count" />
+                  <Input type="number" inputMode="numeric" min={0} className="mt-1" value={selectedGate.assigned_staff || 0} onChange={(e) => { const v = parseInt(e.target.value)||0; handleUpdateGate(selectedGate.id, {assigned_staff:v}); setSelectedGate(p=>({...p,assigned_staff:v})); }} data-testid="gate-staff-count" />
                 </div>
               )}
               {/* Daily note */}

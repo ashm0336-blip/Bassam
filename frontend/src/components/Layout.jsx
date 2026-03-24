@@ -152,7 +152,13 @@ export const Layout = () => {
     const Icon = item.icon;
     const hasChildren = children.length > 0;
     const isExpanded = expandedMenuId === item.id;
-    const isHeaderOnly = item._header_only; // Parent shown as header only (no link)
+    const isHeaderOnly = item._header_only;
+    
+    const itemPy = mobile ? 'py-2.5' : 'py-3';
+    const itemPx = mobile ? 'px-3' : 'px-4';
+    const itemGap = mobile ? 'gap-2.5' : 'gap-3';
+    const itemText = mobile ? 'text-[13px]' : 'text-sm';
+    const iconSize = mobile ? 'w-[18px] h-[18px]' : 'w-5 h-5';
     
     return (
       <div>
@@ -167,7 +173,7 @@ export const Layout = () => {
                 }
               }}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                flex items-center ${itemGap} ${itemPx} ${itemPy} rounded-lg ${itemText} font-medium
                 transition-colors duration-200 relative cursor-pointer
                 ${isHeaderOnly
                   ? "text-muted-foreground/60"
@@ -178,12 +184,12 @@ export const Layout = () => {
                 ${language === 'ar' ? 'flex-row-reverse' : ''}
               `}
             >
-              <Icon className={`w-5 h-5 flex-shrink-0 ${isHeaderOnly ? 'opacity-40' : ''}`} />
+              <Icon className={`${iconSize} flex-shrink-0 ${isHeaderOnly ? 'opacity-40' : ''}`} />
               {(sidebarOpen || mobile) && (
                 <>
-                  <span className={`flex-1 text-right whitespace-nowrap truncate text-[13px] ${isHeaderOnly ? 'opacity-50' : ''}`}>{item.name}</span>
+                  <span className={`flex-1 text-right whitespace-nowrap truncate ${isHeaderOnly ? 'opacity-50' : ''}`}>{item.name}</span>
                   <ChevronDown 
-                    className={`w-4 h-4 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                    className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                   />
                 </>
               )}
@@ -193,7 +199,7 @@ export const Layout = () => {
               to={item.href}
               onClick={() => mobile && setMobileMenuOpen(false)}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                flex items-center ${itemGap} ${itemPx} ${itemPy} rounded-lg ${itemText} font-medium
                 transition-colors duration-200 relative
                 ${isActive 
                   ? "bg-primary/10 text-primary border-r-[3px] border-primary" 
@@ -203,7 +209,7 @@ export const Layout = () => {
               `}
               data-testid={`nav-${item.href.replace("/", "") || "dashboard"}`}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <Icon className={`${iconSize} flex-shrink-0`} />
               {(sidebarOpen || mobile) && (
                 <>
                   <span className="flex-1 text-right">{item.name}</span>
@@ -218,9 +224,8 @@ export const Layout = () => {
           )}
         </div>
 
-        {/* Submenu items */}
         {hasChildren && isExpanded && (sidebarOpen || mobile) && (
-          <div className={`mt-1 space-y-1 ${language === 'ar' ? 'pr-4' : 'pl-4'}`}>
+          <div className={`mt-0.5 space-y-0.5 ${language === 'ar' ? 'pr-4' : 'pl-4'}`}>
             {children.map((child) => {
               const ChildIcon = child.icon;
               const isChildActive = location.pathname + location.search === child.href;
@@ -230,7 +235,7 @@ export const Layout = () => {
                   to={child.href}
                   onClick={() => mobile && setMobileMenuOpen(false)}
                   className={`
-                    flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                    flex items-center ${itemGap} ${itemPx} py-2 rounded-lg text-[12px] sm:text-sm
                     transition-colors duration-200
                     ${isChildActive 
                       ? "bg-primary/10 text-primary" 
@@ -240,7 +245,7 @@ export const Layout = () => {
                   `}
                   data-testid={`nav-${child.href.replace("/", "")}`}
                 >
-                  <ChildIcon className="w-4 h-4 flex-shrink-0" />
+                  <ChildIcon className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="flex-1 text-right">{child.name}</span>
                 </NavLink>
               );
@@ -354,40 +359,41 @@ export const Layout = () => {
       {/* Mobile sidebar */}
       <aside 
         className={`
-          fixed top-0 right-0 bottom-[60px] w-72 bg-card z-50 flex flex-col transform transition-transform duration-300
+          fixed top-0 right-0 bottom-0 w-[280px] bg-card z-50 flex flex-col transform transition-transform duration-300
           lg:hidden
           ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}
         `}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white font-cairo font-bold text-lg">ح</span>
+        <div className="h-14 flex items-center justify-between px-3 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-white font-cairo font-bold text-sm">ح</span>
             </div>
             <div>
-              <h1 className="font-cairo font-bold text-primary text-sm">{language === 'ar' ? 'خدمات الحشود' : 'Crowd Services'}</h1>
-              <p className="text-[10px] text-muted-foreground">Al-Haram OS</p>
+              <h1 className="font-cairo font-bold text-primary text-xs">{language === 'ar' ? 'خدمات الحشود' : 'Crowd Services'}</h1>
+              <p className="text-[9px] text-muted-foreground leading-tight">Al-Haram OS</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={() => setMobileMenuOpen(false)}
             data-testid="mobile-menu-close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Date at top of mobile sidebar */}
-        <div className="px-4 py-3 border-b border-border bg-muted/30">
-          <p className="text-xs text-muted-foreground text-right">
+        <div className="px-3 py-2 border-b border-border bg-muted/30 flex-shrink-0">
+          <p className="text-[10px] text-muted-foreground text-right">
             {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
-        <ScrollArea className="flex-1 py-4 overflow-y-auto">
-          <nav className="space-y-1 px-3">
+        <div className="flex-1 overflow-y-auto overscroll-contain py-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <nav className="space-y-0.5 px-2">
             {navigation.map((item) => (
               <NavItem 
                 key={item.id} 
@@ -398,9 +404,9 @@ export const Layout = () => {
             ))}
           </nav>
           
-          <Separator className="my-4 mx-3" />
+          <Separator className="my-2 mx-2" />
           
-          <nav className="space-y-1 px-3">
+          <nav className="space-y-0.5 px-2">
             {secondaryNav.map((item) => (
               <NavItem 
                 key={item.id} 
@@ -410,35 +416,33 @@ export const Layout = () => {
               />
             ))}
           </nav>
-        </ScrollArea>
+          <div className="h-2" />
+        </div>
 
-        {/* User info + action buttons at bottom of mobile sidebar */}
-        <div className="border-t border-border mt-auto">
-          <div className="px-4 py-3 flex items-center gap-3">
-            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
-              <span className="font-cairo font-semibold text-primary">
+        <div className="border-t border-border flex-shrink-0">
+          <div className="px-3 py-2 flex items-center gap-2.5">
+            <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors flex-shrink-0">
+              <span className="font-cairo font-semibold text-primary text-sm">
                 {user?.name?.charAt(0) || 'م'}
               </span>
             </button>
             <button onClick={() => { navigate('/my-profile'); setMobileMenuOpen(false); }} className="flex-1 min-w-0 text-right">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
+              <p className="text-xs font-medium truncate">{user?.name}</p>
+              <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${ROLE_LABELS[user?.role]?.color || 'bg-slate-100 text-slate-700'}`}>
                 {user.permission_group_name || ROLE_LABELS[user?.role]?.[language] || user?.role}
               </span>
             </button>
           </div>
-          <div className="px-4 pb-4 flex items-center gap-2">
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn">
-              <Bell className="w-4 h-4" />
+          <div className="px-3 pb-3 flex items-center gap-1.5">
+            <Button variant="outline" size="sm" className="flex-1 gap-1 text-[10px] h-8" onClick={() => { navigate('/notifications'); setMobileMenuOpen(false); }} data-testid="mobile-notifications-btn">
+              <Bell className="w-3.5 h-3.5" />
               <span>{language === 'ar' ? 'التنبيهات' : 'Alerts'}</span>
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={toggleTheme} data-testid="mobile-theme-btn">
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              <span>{isDark ? (language === 'ar' ? 'فاتح' : 'Light') : (language === 'ar' ? 'داكن' : 'Dark')}</span>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={toggleTheme} data-testid="mobile-theme-btn">
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs text-destructive hover:bg-destructive hover:text-white" onClick={handleLogout} data-testid="mobile-logout-btn">
-              <LogOut className="w-4 h-4" />
-              <span>{language === 'ar' ? 'خروج' : 'Logout'}</span>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-destructive hover:bg-destructive hover:text-white" onClick={handleLogout} data-testid="mobile-logout-btn">
+              <LogOut className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
@@ -605,7 +609,7 @@ export const Layout = () => {
         )}
 
         {/* Page content */}
-        <main className="flex-1 p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-24 lg:pb-6">
+        <main className="flex-1 p-2 sm:p-3 lg:p-6 overflow-x-hidden overflow-y-auto pb-20 lg:pb-6">
           <Outlet />
         </main>
       </div>
