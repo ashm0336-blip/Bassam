@@ -6,7 +6,7 @@ import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import { PLAZA_COLORS, GATE_TYPES, DIRECTIONS, CATEGORIES, CLASSIFICATIONS, GATE_STATUSES, CURRENT_INDICATORS } from "@/constants/gateData";
 import {
   Plus, Edit, Trash2, Loader2,
-  DoorOpen, DoorClosed, Users, AlertTriangle, Activity,
+  DoorOpen, DoorClosed, Users, AlertTriangle, Activity, HelpCircle,
   MapPin, ArrowUpDown, Tag, Shield, Hash, MoreVertical,
   Search, LayoutGrid, List, Download, Upload, FileText, ChevronDown, Filter,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
@@ -279,22 +279,20 @@ export default function GatesDataManagement() {
       {/* ══ ANALYTICS DASHBOARD — chip-based ═══════════════════ */}
       {gates.length > 0 && (() => {
         const total   = gates.length;
-        const openGates = gates.filter(g => g.status !== 'مغلق');
+        const openGates = gates.filter(g => g.status === 'مفتوح');
         const openCount = openGates.length;
-        const closedCount = total - openCount;
+        const closedCount = gates.filter(g => g.status === 'مغلق').length;
+        const undefinedCount = gates.filter(g => !g.status || (g.status !== 'مفتوح' && g.status !== 'مغلق')).length;
         const noStaff = openGates.filter(g => getEmployeesAtGate(g.name).length === 0).length;
 
-        // helper: حساب عدد الأبواب المفتوحة بقيمة معينة
-        const countOpen = (field, val) => openGates.filter(g =>
-          Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val
-        ).length;
-        // helper: حساب كل الأبواب
         const countAll = (field, val) => gates.filter(g =>
           Array.isArray(g[field]) ? g[field].includes(val) : g[field] === val
         ).length;
 
-        // ألوان ثابتة لكل مجموعة
-        const STATUS_COLORS   = { "مفتوح":"#059669", "مغلق":"#6b7280" };
+        const uniquePlazas = [...new Set(gates.map(g => g.plaza).filter(Boolean))];
+        const DYNAMIC_PLAZA_COLORS = ["#0284c7","#BC9661","#0E573A","#700D21","#1A4782","#7c3aed","#d97706","#0f766e","#be185d","#6d28d9"];
+
+        const STATUS_COLORS   = { "مفتوح":"#059669", "مغلق":"#6b7280", "غير محدد":"#f59e0b" };
         const TYPE_COLORS     = ["#6d28d9","#0284c7","#0f766e","#b45309","#7c3aed","#be185d","#0e7490","#65a30d","#9a3412"];
         const DIR_COLORS      = { "دخول":"#2563eb","خروج":"#dc2626","دخول وخروج":"#7c3aed" };
         const CLASS_COLORS    = { "عام":"#0f766e","رجال":"#1d4ed8","نساء":"#be185d","طوارئ":"#dc2626","خدمات":"#d97706","جنائز":"#374151" };
@@ -303,7 +301,7 @@ export default function GatesDataManagement() {
 
         // chip component
         const Chip = ({ label, cnt, color, warn, ofTotal }) => {
-          const base = ofTotal || openCount;
+          const base = ofTotal || total;
           const pct = base > 0 ? Math.round(cnt/base*100) : 0;
           return (
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all
@@ -348,12 +346,13 @@ export default function GatesDataManagement() {
           <div className="space-y-3">
 
             {/* الصف ١: KPIs مدمجة */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {[
-                { label:"إجمالي",        value:total,      color:"#2563eb", Icon:DoorOpen,     desc:"باب مسجل" },
-                { label:"مفتوحة",        value:openCount,  color:"#059669", Icon:DoorOpen,     desc:"الآن" },
-                { label:"مغلقة",         value:closedCount, color:"#6b7280", Icon:DoorClosed, desc:"موقوف" },
-                { label:"بلا موظف",      value:noStaff,    color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
+                { label:"إجمالي",        value:total,          color:"#2563eb", Icon:DoorOpen,      desc:"باب مسجل" },
+                { label:"مفتوحة",        value:openCount,      color:"#059669", Icon:DoorOpen,      desc:"الآن" },
+                { label:"مغلقة",         value:closedCount,    color:"#6b7280", Icon:DoorClosed,    desc:"موقوف" },
+                { label:"غير محدد",      value:undefinedCount, color:"#f59e0b", Icon:HelpCircle,    desc:"بدون حالة" },
+                { label:"بلا موظف",      value:noStaff,        color:noStaff>0?"#dc2626":"#059669", Icon:noStaff>0?AlertTriangle:Users, desc:noStaff>0?"⚠️ مفتوح":"كل مغطى" },
               ].map((s,i)=>(
                 <div key={i} className="rounded-2xl border p-2.5 flex items-center gap-2.5 transition-all hover:shadow-sm"
                   style={{ backgroundColor:s.color+"08", borderColor:s.color+"30" }}>
@@ -372,26 +371,25 @@ export default function GatesDataManagement() {
             {/* الصف ٢: chips المنطقة + الحالة + المؤشر */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
 
-              {/* المناطق — مفتوحة فقط */}
+              {/* المناطق — كل الأبواب */}
               <Section icon={MapPin} title="توزيع المناطق" iconBg="#e0f2fe" iconColor="#0284c7">
-                {Object.entries(PLAZA_COLORS).map(([name, color]) => (
-                  <Chip key={name} label={name} cnt={countOpen('plaza', name)} color={color}/>
+                {uniquePlazas.map((name, i) => (
+                  <Chip key={name} label={name} cnt={countAll('plaza', name)} color={PLAZA_COLORS[name] || DYNAMIC_PLAZA_COLORS[i % DYNAMIC_PLAZA_COLORS.length]} ofTotal={total}/>
                 ))}
               </Section>
 
               {/* الحالة */}
               <Section icon={Activity} title="حالة الأبواب" iconBg="#ecfdf5" iconColor="#059669"
                 warning={noStaff > 0 ? `${noStaff} مفتوح بلا غطاء` : undefined}>
-                {GATE_STATUSES.map(s => (
-                  <Chip key={s} label={s} cnt={countAll('status', s)} color={STATUS_COLORS[s]||"#6b7280"}
-                    warn={s==='مفتوح' && noStaff > 0} ofTotal={total}/>
-                ))}
+                <Chip label="مفتوح" cnt={openCount} color={STATUS_COLORS["مفتوح"]} warn={noStaff > 0} ofTotal={total}/>
+                <Chip label="مغلق" cnt={closedCount} color={STATUS_COLORS["مغلق"]} ofTotal={total}/>
+                {undefinedCount > 0 && <Chip label="غير محدد" cnt={undefinedCount} color={STATUS_COLORS["غير محدد"]} ofTotal={total}/>}
               </Section>
 
-              {/* المؤشر — أبواب مفتوحة فقط */}
+              {/* المؤشر — كل الأبواب */}
               <Section icon={Activity} title="مؤشر الازدحام" iconBg="#fff7ed" iconColor="#f97316">
                 {CURRENT_INDICATORS.map(ind => (
-                  <Chip key={ind.value} label={ind.label} cnt={countOpen('current_indicator', ind.value)} color={ind.color}/>
+                  <Chip key={ind.value} label={ind.label} cnt={countAll('current_indicator', ind.value)} color={ind.color} ofTotal={total}/>
                 ))}
               </Section>
             </div>
@@ -399,31 +397,31 @@ export default function GatesDataManagement() {
             {/* الصف ٣: chips النوع + المسار + الفئة + التصنيف */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
 
-              {/* النوع — مفتوحة فقط */}
+              {/* النوع */}
               <Section icon={Tag} title="نوع الباب" iconBg="#f5f3ff" iconColor="#7c3aed">
                 {GATE_TYPES.map((t,i) => (
-                  <Chip key={t} label={t} cnt={countOpen('gate_type', t)} color={TYPE_COLORS[i%TYPE_COLORS.length]}/>
+                  <Chip key={t} label={t} cnt={countAll('gate_type', t)} color={TYPE_COLORS[i%TYPE_COLORS.length]} ofTotal={total}/>
                 ))}
               </Section>
 
-              {/* المسار — مفتوحة فقط */}
+              {/* المسار */}
               <Section icon={ArrowUpDown} title="المسار" iconBg="#fffbeb" iconColor="#d97706">
                 {DIRECTIONS.map(d => (
-                  <Chip key={d} label={d} cnt={countOpen('direction', d)} color={DIR_COLORS[d]||"#6b7280"}/>
+                  <Chip key={d} label={d} cnt={countAll('direction', d)} color={DIR_COLORS[d]||"#6b7280"} ofTotal={total}/>
                 ))}
               </Section>
 
-              {/* الفئة — مفتوحة فقط */}
+              {/* الفئة */}
               <Section icon={Users} title="الفئة" iconBg="#fdf4ff" iconColor="#a21caf">
                 {CATEGORIES.map(c => (
-                  <Chip key={c} label={c} cnt={countOpen('category', c)} color={CAT_COLORS[c]||"#7c3aed"}/>
+                  <Chip key={c} label={c} cnt={countAll('category', c)} color={CAT_COLORS[c]||"#7c3aed"} ofTotal={total}/>
                 ))}
               </Section>
 
-              {/* التصنيف — مفتوحة فقط */}
+              {/* التصنيف */}
               <Section icon={Shield} title="التصنيف" iconBg="#fef2f2" iconColor="#dc2626">
                 {CLASSIFICATIONS.map(c => (
-                  <Chip key={c} label={c} cnt={countOpen('classification', c)} color={CLASS_COLORS[c]||"#6b7280"}/>
+                  <Chip key={c} label={c} cnt={countAll('classification', c)} color={CLASS_COLORS[c]||"#6b7280"} ofTotal={total}/>
                 ))}
               </Section>
             </div>
@@ -578,15 +576,18 @@ export default function GatesDataManagement() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {paginatedGates.map(gate => {
             const gateEmployees = getEmployeesAtGate(gate.name);
-            const isOpen = gate.status !== 'مغلق';
+            const isOpen = gate.status === 'مفتوح';
+            const isClosed = gate.status === 'مغلق';
+            const isUndefined = !isOpen && !isClosed;
+            const statusLabel = isOpen ? 'مفتوح' : isClosed ? 'مغلق' : 'غير محدد';
             const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
             const indicatorColor = indicatorColors[gate.current_indicator] || '#94a3b8';
             return (
               <div key={gate.id} className="group rounded-2xl border bg-white p-4 hover:shadow-lg transition-all space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${isOpen ? 'bg-emerald-100' : 'bg-slate-100'}`}>
-                      {isOpen ? <DoorOpen className="w-5 h-5 text-emerald-600"/> : <DoorClosed className="w-5 h-5 text-slate-400"/>}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${isOpen ? 'bg-emerald-100' : isUndefined ? 'bg-amber-100' : 'bg-slate-100'}`}>
+                      {isOpen ? <DoorOpen className="w-5 h-5 text-emerald-600"/> : isUndefined ? <HelpCircle className="w-5 h-5 text-amber-500"/> : <DoorClosed className="w-5 h-5 text-slate-400"/>}
                     </div>
                     <div>
                       <p className="font-bold text-sm">{gate.name}</p>
@@ -601,7 +602,7 @@ export default function GatesDataManagement() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{gate.status}</span>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isOpen ? 'bg-emerald-100 text-emerald-700' : isUndefined ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{statusLabel}</span>
                   <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">{gate.gate_type}</span>
                   <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">{gate.direction}</span>
                   {(Array.isArray(gate.category) ? gate.category : [gate.category]).filter(Boolean).map(c => (
@@ -670,7 +671,10 @@ export default function GatesDataManagement() {
               <TableBody>
                 {paginatedGates.map((gate) => {
                   const gateEmployees = getEmployeesAtGate(gate.name);
-                  const isOpen = gate.status !== 'مغلق';
+                  const isOpen = gate.status === 'مفتوح';
+                  const isClosed = gate.status === 'مغلق';
+                  const isUndefined = !isOpen && !isClosed;
+                  const statusLabel = isOpen ? 'مفتوح' : isClosed ? 'مغلق' : 'غير محدد';
                   const noStaff = gateEmployees.length === 0;
                   const indicatorColors = { خفيف:'#22c55e', متوسط:'#f97316', مزدحم:'#ef4444' };
                   const indicatorColor = indicatorColors[gate.current_indicator] || '#94a3b8';
@@ -705,9 +709,9 @@ export default function GatesDataManagement() {
                       {/* الحالة */}
                       <TableCell className="text-center">
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full
-                          ${isOpen ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-emerald-500' : 'bg-slate-400'}`}/>
-                          {gate.status}
+                          ${isOpen ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isUndefined ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isOpen ? 'bg-emerald-500' : isUndefined ? 'bg-amber-500' : 'bg-slate-400'}`}/>
+                          {statusLabel}
                         </span>
                       </TableCell>
                       {/* المؤشر */}
