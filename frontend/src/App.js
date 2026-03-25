@@ -116,6 +116,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<ConditionalDashboard />} />
+        <Route path="welcome" element={<WelcomePage />} />
         {/* map route removed */}
         <Route path="planning" element={
           <DepartmentProtectedRoute department="planning">

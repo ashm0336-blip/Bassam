@@ -37,6 +37,10 @@ def _sidebar_items():
         is_public=True, department="all",
         subtitle_ar="نظرة شاملة على حالة النظام", subtitle_en="System overview")
 
+    add("/welcome", name_ar="الصفحة الرئيسية", name_en="My Profile", icon="UserCircle", order=0,
+        is_public=True, department="all",
+        subtitle_ar="بياناتي ومعلومات الوردية", subtitle_en="My info and shift details")
+
     depts = [
         ("planning", "تخطيط خدمات الحشود", "Crowd Planning", "ClipboardList", 2),
         ("haram_map", "إدارة المصليات", "Prayer Areas", "Navigation", 3),
