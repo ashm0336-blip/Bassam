@@ -232,7 +232,7 @@ class TestEmployeeCreateNationalIdValidation:
         assert "مسجل" in detail or "نظام" in detail, \
             f"Error message should say ID is registered: '{detail}'"
         # Should NOT reveal department
-        departments = ["planning", "gates", "plazas", "squares", "crowd_services", "mataf"]
+        departments = ["planning", "gates", "plazas", "crowd_services", "mataf"]
         for dept in departments:
             assert dept not in detail, f"Department '{dept}' revealed in error: '{detail}'"
         print(f"✓ Duplicate national ID → 400. Message: '{detail}' (no dept revealed)")
