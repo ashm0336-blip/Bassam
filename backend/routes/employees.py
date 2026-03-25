@@ -459,7 +459,13 @@ async def get_employee_profile(employee_id: str, user: dict = Depends(get_curren
 @router.get("/auth/my-profile")
 async def get_my_profile(user: dict = Depends(get_current_user)):
     """الموظف يشوف بياناته الشخصية"""
-    emp = await db.employees.find_one({"national_id": user.get("national_id")}, {"_id": 0})
+    emp = None
+    nid = user.get("national_id")
+    eid = user.get("employee_id")
+    if eid:
+        emp = await db.employees.find_one({"id": eid}, {"_id": 0})
+    if not emp and nid:
+        emp = await db.employees.find_one({"national_id": nid}, {"_id": 0})
 
     account_data = {k: v for k, v in user.items() if k not in ("password", "_id")}
     # Add permission group name
