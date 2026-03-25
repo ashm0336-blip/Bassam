@@ -6,3 +6,9 @@ id = "5ojMnVQVLz2NMo_RcG7wS"
 uri = "file://.local/site_analysis_report.md"
 type = "text"
 title = "تقرير تحليل شامل — منصة خدمات الحشود"
+
+[[outputs]]
+id = "AGizw-WKJgfzzlBdFKOof"
+uri = "file://.local/site_tree_report.md"
+type = "text"
+title = "خريطة الموقع الشاملة — منصة خدمات الحشود"
