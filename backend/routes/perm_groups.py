@@ -386,22 +386,37 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
     # Map page permissions to old-style permission keys
     menu_items = await db.sidebar_menu.find({"is_active": True}, {"_id": 0}).to_list(200)
     permissions = {}
+    dept_permissions = {}
 
     for item in menu_items:
         href = item["href"]
         perm = page_perms.get(href, {"visible": False, "editable": False})
         name_en = item.get("name_en", "")
+        dept = item.get("department", "all")
         mapping = MENU_TO_PERM_MAP.get(name_en, {})
 
         if perm.get("visible"):
             for key in mapping.get("view", []):
                 if key not in permissions:
                     permissions[key] = "read"
+                dept_key = f"{dept}:{key}"
+                if dept_key not in dept_permissions:
+                    dept_permissions[dept_key] = "read"
             if perm.get("editable"):
                 for key in mapping.get("edit", []):
                     permissions[key] = "write"
+                    dept_permissions[f"{dept}:{key}"] = "write"
                 for key in mapping.get("view", []):
                     permissions[key] = "write"
+                    dept_permissions[f"{dept}:{key}"] = "write"
+
+    # page_permissions: direct href-based visibility+editability for frontend
+    page_vis = {}
+    for item in menu_items:
+        href = item["href"]
+        perm = page_perms.get(href, {"visible": False, "editable": False})
+        if perm.get("visible") or perm.get("editable"):
+            page_vis[href] = perm
 
     # Get group name
     group_name = None
@@ -411,6 +426,8 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
         group_name = grp_doc.get("name_ar") if grp_doc else None
 
     return {"permissions": permissions, "role": role,
+            "dept_permissions": dept_permissions,
+            "page_permissions": page_vis,
             "permission_group_id": grp_id,
             "permission_group_name": group_name}
 

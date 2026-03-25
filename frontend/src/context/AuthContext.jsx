@@ -62,13 +62,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       const userData = response.data;
-      // Fetch permissions
       let permissions = [];
+      let dept_permissions = {};
+      let page_permissions = {};
       try {
         const permRes = await axios.get(`${API}/auth/my-permissions`);
         permissions = permRes.data.permissions || [];
+        dept_permissions = permRes.data.dept_permissions || {};
+        page_permissions = permRes.data.page_permissions || {};
       } catch {}
-      const fullUser = { ...userData, permissions };
+      const fullUser = { ...userData, permissions, dept_permissions, page_permissions };
       prevRoleRef.current = userData.role;
       setUser(fullUser);
     } catch (error) {
@@ -103,6 +106,8 @@ export const AuthProvider = ({ children }) => {
         ...prev,
         ...meRes.data,
         permissions: permRes.data.permissions || prev.permissions || [],
+        dept_permissions: permRes.data.dept_permissions || prev.dept_permissions || {},
+        page_permissions: permRes.data.page_permissions || prev.page_permissions || {},
         permission_group_id: permRes.data.permission_group_id || prev.permission_group_id || null,
         permission_group_name: permRes.data.permission_group_name || prev.permission_group_name || null,
       } : prev);
@@ -123,8 +128,9 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setToken(access_token);
 
-      // Fetch effective permissions
       let permissions = [];
+      let dept_permissions = {};
+      let page_permissions = {};
       let permission_group_id = null;
       let permission_group_name = null;
       try {
@@ -132,11 +138,13 @@ export const AuthProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${access_token}` }
         });
         permissions = permRes.data.permissions || [];
+        dept_permissions = permRes.data.dept_permissions || {};
+        page_permissions = permRes.data.page_permissions || {};
         permission_group_id = permRes.data.permission_group_id || null;
         permission_group_name = permRes.data.permission_group_name || null;
       } catch {}
 
-      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, permission_group_id, permission_group_name };
+      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, dept_permissions, page_permissions, permission_group_id, permission_group_name };
       prevRoleRef.current = userData.role;
       setUser(fullUser);
       return { success: true, must_change_pin, user: fullUser };
@@ -165,12 +173,47 @@ export const AuthProvider = ({ children }) => {
   const canRead = (permission) => hasPermission(permission, 'read');
   const canWrite = (permission) => hasPermission(permission, 'write');
 
+  const canReadDept = (permission, department) => {
+    if (!user) return false;
+    if (user.role === 'system_admin') return true;
+    if (!department) return canRead(permission);
+    const dp = user.dept_permissions || {};
+    const level = dp[`${department}:${permission}`];
+    if (!level) return false;
+    return level === 'read' || level === 'write';
+  };
+
+  const canWriteDept = (permission, department) => {
+    if (!user) return false;
+    if (user.role === 'system_admin') return true;
+    if (!department) return canWrite(permission);
+    const dp = user.dept_permissions || {};
+    const level = dp[`${department}:${permission}`];
+    return level === 'write';
+  };
+
+  const canViewPage = (href) => {
+    if (!user) return false;
+    if (user.role === 'system_admin') return true;
+    const pp = user.page_permissions || {};
+    return pp[href]?.visible === true;
+  };
+
+  const canEditPage = (href) => {
+    if (!user) return false;
+    if (user.role === 'system_admin') return true;
+    const pp = user.page_permissions || {};
+    return pp[href]?.editable === true;
+  };
+
   const refreshPermissions = useCallback(async () => {
     if (!token) return;
     try {
       const res = await axios.get(`${API}/auth/my-permissions`);
       setUser(prev => prev ? { ...prev,
         permissions: res.data.permissions || [],
+        dept_permissions: res.data.dept_permissions || {},
+        page_permissions: res.data.page_permissions || {},
         permission_group_id: res.data.permission_group_id || null,
         permission_group_name: res.data.permission_group_name || null,
       } : prev);
@@ -235,7 +278,9 @@ export const AuthProvider = ({ children }) => {
       user, token, loading, login, logout, setUser,
       isAdmin, isGeneralManager,
       canManageDepartment, canViewDepartment, canAddAlerts,
-      isReadOnly, hasPermission, canRead, canWrite, refreshPermissions,
+      isReadOnly, hasPermission, canRead, canWrite,
+      canReadDept, canWriteDept, canViewPage, canEditPage,
+      refreshPermissions,
       isAuthenticated: !!user,
       roleChangeAlert, dismissRoleChange,
     }}>

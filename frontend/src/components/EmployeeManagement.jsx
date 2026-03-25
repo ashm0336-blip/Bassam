@@ -328,7 +328,7 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 // ── Main Component ───────────────────────────────────────────────
 export default function EmployeeManagement({ department, onScheduleChange }) {
   const { language } = useLanguage();
-  const { user, isReadOnly, hasPermission, canWrite, canRead } = useAuth();
+  const { user, isReadOnly, hasPermission, canWrite, canRead, canWriteDept, canReadDept } = useAuth();
 
   // Permission levels:
   // none = can't see at all
@@ -620,20 +620,19 @@ export default function EmployeeManagement({ department, onScheduleChange }) {
   }, [statsEmployees, shifts, schedule]);
 
   // canEdit: يمنع التعديل عندما الجدول معتمد (active) أو مؤرشف
-  const canEditSchedule = canWrite('create_schedule') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
-  const canEditEmp = canWrite('edit_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canEditSchedule = canWriteDept('create_schedule', department) && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canEditEmp = canWriteDept('edit_employees', department) && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
   const canEdit = canEditSchedule || canEditEmp;
-  // canUnlock: صلاحية فتح الجدول
-  const canUnlock = canWrite('unlock_schedule');
-  const canCreateSched = canWrite('create_schedule');
-  const canApproveSched = canWrite('approve_schedule');
-  const canDeleteSched = canWrite('delete_schedule');
-  const canViewEmp = canRead('edit_employees') || canRead('add_employees') || canRead('create_schedule') || canRead('page_schedule');
-  const canAddEmp = canWrite('add_employees') && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
-  const canDeleteEmp = canWrite('delete_employees');
-  const canManageAccounts = canWrite('manage_accounts');
-  const canResetPins = canWrite('reset_pins');
-  const canChangeRoles = canWrite('change_roles');
+  const canUnlock = canWriteDept('unlock_schedule', department);
+  const canCreateSched = canWriteDept('create_schedule', department);
+  const canApproveSched = canWriteDept('approve_schedule', department);
+  const canDeleteSched = canWriteDept('delete_schedule', department);
+  const canViewEmp = canReadDept('edit_employees', department) || canReadDept('add_employees', department) || canReadDept('create_schedule', department) || canReadDept('page_schedule', department);
+  const canAddEmp = canWriteDept('add_employees', department) && (!schedule || (schedule.status !== 'active' && schedule.status !== 'archived'));
+  const canDeleteEmp = canWriteDept('delete_employees', department);
+  const canManageAccounts = canWriteDept('manage_accounts', department);
+  const canResetPins = canWriteDept('reset_pins', department);
+  const canChangeRoles = canWriteDept('change_roles', department);
 
   // If can't view anything related to schedule or employees, hide
   if (!canViewEmp && user?.role !== 'system_admin') return (
