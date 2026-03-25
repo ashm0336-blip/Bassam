@@ -166,8 +166,12 @@ export const Layout = () => {
     }
   }, [parentItems.length, user?.department, autoExpanded]);
 
+  const prevPathRef = useRef(location.pathname + location.search);
   useEffect(() => {
     const currentPath = location.pathname + location.search;
+    const pathChanged = prevPathRef.current !== currentPath;
+    prevPathRef.current = currentPath;
+    if (!pathChanged) return;
     const activeParent = parentItems.find(item => {
       if (item._header_only || item.menu_only) {
         if (location.pathname === item.href) return true;
@@ -179,10 +183,10 @@ export const Layout = () => {
       }
       return false;
     });
-    if (activeParent && expandedMenuId !== activeParent.id) {
+    if (activeParent) {
       setExpandedMenuId(activeParent.id);
     }
-  }, [parentItems, location.pathname, location.search]);
+  }, [location.pathname, location.search]);
 
   const toggleMenu = (menuId) => {
     // Close if same menu clicked, otherwise open new one (close others automatically)
