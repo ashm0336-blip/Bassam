@@ -35,50 +35,24 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 import DailyStatsPage from "@/pages/DailyStatsPage";
 import StatsAnalyticsPage from "@/pages/StatsAnalyticsPage";
 import ActivityLogPage from "@/pages/ActivityLogPage";
+import WelcomePage from "@/pages/WelcomePage";
 
 // Conditional Dashboard
 function ConditionalDashboard() {
   const { user, hasPermission } = useAuth();
   
-  // Department users — redirect to their department if they don't have dashboard
-  if (user?.department && user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
-    if (hasPermission('page_overview')) {
-      const departmentRoutes = {
-        'planning': '/planning',
-        'haram_map': '/haram-map',
-        'gates': '/gates',
-        'plazas': '/plazas',
-        'squares': '/plazas',
-        'mataf': '/mataf',
-        'crowd_services': '/crowd-services'
-      };
-      const route = departmentRoutes[user.department];
-      if (route) {
-        return <Navigate to={route} replace />;
-      }
-    }
+  // System admin always sees the operations dashboard
+  if (user?.role === 'system_admin') {
+    return <Dashboard />;
   }
   
-  // Check dashboard permission for non-admin users
-  if (user?.role !== 'system_admin' && !hasPermission('page_dashboard')) {
-    if (hasPermission('page_alerts')) {
-      return <Navigate to="/notifications" replace />;
-    }
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-            <span className="text-destructive text-2xl">⛔</span>
-          </div>
-          <h2 className="font-cairo font-bold text-xl mb-2">غير مصرح بالدخول</h2>
-          <p className="text-muted-foreground">ليس لديك صلاحية للوصول إلى لوحة التحكم</p>
-        </div>
-      </div>
-    );
+  // Users with dashboard permission see the operations dashboard
+  if (hasPermission('page_dashboard')) {
+    return <Dashboard />;
   }
   
-  // Everyone with permission sees the same Dashboard (غرفة العمليات)
-  return <Dashboard />;
+  // Everyone else sees the welcome page
+  return <WelcomePage />;
 }
 
 // Protected Route Component

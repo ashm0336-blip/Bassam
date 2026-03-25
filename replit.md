@@ -48,6 +48,13 @@ The startup script:
 - `backend/ws_manager.py` - WebSocket manager for real-time features
 - `frontend/craco.config.js` - Build config with dev server proxy and allowedHosts
 - `frontend/.env` - Frontend environment variables
+- `frontend/src/pages/WelcomePage.jsx` - Welcome/profile landing page for non-admin users
+
+## Post-Login Routing (ConditionalDashboard)
+
+- `system_admin` → Dashboard (غرفة العمليات)
+- Users with `page_dashboard` permission → Dashboard
+- All other users → WelcomePage (shows profile info, shift, coverage location, available pages)
 
 ## Important Setup Notes
 
