@@ -15,7 +15,6 @@ const DEPT_LABELS = {
   planning: "إدارة تخطيط خدمات الحشود",
   gates: "إدارة الأبواب",
   plazas: "إدارة الساحات",
-  squares: "إدارة الساحات",
   mataf: "إدارة المطاف",
   crowd_services: "إدارة خدمات الحشود",
   haram_map: "إدارة المصليات",

@@ -116,7 +116,7 @@ function AppRoutes() {
           </DepartmentProtectedRoute>
         } />
         <Route path="plazas" element={
-          <DepartmentProtectedRoute department="squares">
+          <DepartmentProtectedRoute department="plazas">
             <PlazasDepartment />
           </DepartmentProtectedRoute>
         } />
