@@ -35,11 +35,8 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 import DailyStatsPage from "@/pages/DailyStatsPage";
 import StatsAnalyticsPage from "@/pages/StatsAnalyticsPage";
 import ActivityLogPage from "@/pages/ActivityLogPage";
-import WelcomePage from "@/pages/WelcomePage";
-
-// Everyone lands on WelcomePage as the home page
-function ConditionalDashboard() {
-  return <WelcomePage />;
+function HomePage() {
+  return <EmployeeProfilePage self />;
 }
 
 // Protected Route Component
@@ -102,7 +99,7 @@ function AppRoutes() {
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<ConditionalDashboard />} />
+        <Route index element={<HomePage />} />
         <Route path="welcome" element={<Navigate to="/" replace />} />
         <Route path="dashboard" element={
           <PermissionProtectedRoute permission="page_dashboard">

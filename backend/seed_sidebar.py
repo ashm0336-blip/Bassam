@@ -33,9 +33,9 @@ def _sidebar_items():
         kw.setdefault("sidebar_hidden", False)
         items.append(kw)
 
-    add("/", name_ar="الصفحة الرئيسية", name_en="Home", icon="UserCircle", order=0,
+    add("/", name_ar="ملفي الشخصي", name_en="My Profile", icon="UserCircle", order=0,
         is_public=True, department="all",
-        subtitle_ar="بياناتي ومعلومات الوردية", subtitle_en="My info and shift details")
+        subtitle_ar="بياناتي الشخصية ومعلومات العمل", subtitle_en="Personal info and work details")
 
     add("/dashboard", name_ar="غرفة العمليات", name_en="Operations Room", icon="LayoutDashboard", order=1,
         is_public=False, department="all",

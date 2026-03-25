@@ -48,12 +48,15 @@ The startup script:
 - `backend/ws_manager.py` - WebSocket manager for real-time features
 - `frontend/craco.config.js` - Build config with dev server proxy and allowedHosts
 - `frontend/.env` - Frontend environment variables
-- `frontend/src/pages/WelcomePage.jsx` - Welcome/profile landing page for non-admin users
+- `frontend/src/pages/EmployeeProfilePage.jsx` - Profile page with tabs (personal info, work info, activity log, available pages)
 
 ## Post-Login Routing
 
-- ALL users → WelcomePage `/` (home page with profile info, shift, coverage location, available pages)
-- Dashboard (غرفة العمليات) moved to `/dashboard` — requires `page_dashboard` permission
+- ALL users → EmployeeProfilePage `/` (tabbed profile: المعلومات الشخصية, معلومات العمل, سجل الأحداث, الصفحات المتاحة)
+- `/my-profile` also routes to EmployeeProfilePage (self mode) — accessible from sidebar user avatar
+- `/employee/:id` shows another employee's profile (requires `page_employees` permission, no "الصفحات المتاحة" tab)
+- Dashboard (غرفة العمليات) at `/dashboard` — requires `page_dashboard` permission
+- Department name: `plazas` is the only valid name for إدارة الساحات (no `squares` alias)
 
 ## Important Setup Notes
 
