@@ -53,7 +53,10 @@ def _sidebar_items():
     for dk, nar, nen, icon, order in depts:
         bh = DEPT_HREF[dk]
         add(bh, name_ar=nar, name_en=nen, icon=icon, order=order, department=dk,
-            subtitle_ar=f"إدارة {nar}", subtitle_en=f"{nen} management")
+            subtitle_ar=f"إدارة {nar}", subtitle_en=f"{nen} management",
+            menu_only=True)
+        add(f"{bh}?tab=overview", parent_href=bh,
+            name_ar="الإحصائيات العامة", name_en="Overview", icon="BarChart3", order=1, department=dk)
         if dk == "haram_map":
             add("/daily-sessions", parent_href=bh,
                 name_ar="السجل اليومي", name_en="Daily Log", icon="Calendar", order=2, department=dk)

@@ -7,7 +7,8 @@ import EmployeeManagement from "@/components/EmployeeManagement";
 
 export default function PlazasDepartment() {
   const [searchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'dashboard';
+  const rawTab = searchParams.get('tab') || 'dashboard';
+  const activeTab = rawTab === 'overview' ? 'dashboard' : rawTab;
   const { canViewPage } = useAuth();
 
   const dept = "plazas";

@@ -166,13 +166,23 @@ export const Layout = () => {
     }
   }, [parentItems.length, user?.department, autoExpanded]);
 
-  // Auto-expand header-only parents (they have no link, just show children)
   useEffect(() => {
-    const headerParent = parentItems.find(item => item._header_only && childrenMap[item.id]?.length > 0);
-    if (headerParent && expandedMenuId !== headerParent.id) {
-      setExpandedMenuId(headerParent.id);
+    const currentPath = location.pathname + location.search;
+    const activeParent = parentItems.find(item => {
+      if (item._header_only || item.menu_only) {
+        if (location.pathname === item.href) return true;
+        const kids = childrenMap[item.id] || [];
+        return kids.some(c => 
+          location.pathname === c.href?.split('?')[0] || 
+          currentPath === c.href
+        );
+      }
+      return false;
+    });
+    if (activeParent && expandedMenuId !== activeParent.id) {
+      setExpandedMenuId(activeParent.id);
     }
-  }, [parentItems]);
+  }, [parentItems, location.pathname, location.search]);
 
   const toggleMenu = (menuId) => {
     // Close if same menu clicked, otherwise open new one (close others automatically)
@@ -185,12 +195,19 @@ export const Layout = () => {
   };
 
   const NavItem = ({ item, mobile = false, children = [] }) => {
-    const isActive = location.pathname === item.href || 
-                     (item.href.includes('?') && location.pathname + location.search === item.href);
     const Icon = item.icon;
     const hasChildren = children.length > 0;
     const isExpanded = expandedMenuId === item.id;
     const isHeaderOnly = item._header_only;
+    const isMenuOnly = item.menu_only;
+    const childActive = children.some(c => 
+      location.pathname === c.href?.split('?')[0] || 
+      (c.href?.includes('?') && location.pathname + location.search === c.href)
+    );
+    const isActive = isMenuOnly 
+      ? (location.pathname === item.href || childActive)
+      : (location.pathname === item.href || 
+         (item.href.includes('?') && location.pathname + location.search === item.href));
     
     const itemPy = mobile ? 'py-2.5' : 'py-3';
     const itemPx = mobile ? 'px-3' : 'px-4';
@@ -205,7 +222,7 @@ export const Layout = () => {
             <div
               onClick={() => {
                 toggleMenu(item.id);
-                if (!isHeaderOnly) {
+                if (!isHeaderOnly && !isMenuOnly) {
                   navigate(item.href);
                   if (mobile) setMobileMenuOpen(false);
                 }
