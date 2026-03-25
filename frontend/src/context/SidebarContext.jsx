@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useRealtimeRefresh } from './WebSocketContext';
 import axios from 'axios';
@@ -19,10 +19,11 @@ export const SidebarProvider = ({ children }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const userId = user?.id;
 
   const fetchMenuItems = useCallback(async () => {
     const token = localStorage.getItem("token");
-    if (!token || !user) {
+    if (!token || !userId) {
       setMenuItems([]);
       setLoading(false);
       return;
@@ -40,19 +41,18 @@ export const SidebarProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [userId]);
 
   const refreshMenu = useCallback(() => {
     fetchMenuItems();
   }, [fetchMenuItems]);
 
   useEffect(() => {
-    if (user) {
+    if (userId) {
       fetchMenuItems();
     }
-  }, [user, fetchMenuItems]);
+  }, [userId, fetchMenuItems]);
 
-  // تحديث السايدبار لحظياً عند تغيير الصلاحيات
   useRealtimeRefresh(["permissions", "settings"], refreshMenu);
 
   const value = {

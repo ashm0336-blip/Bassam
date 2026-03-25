@@ -77,6 +77,8 @@ export default function PermissionsManager() {
   const [loading, setLoading] = useState(true);
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
+  const [dirtyPerms, setDirtyPerms] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Group CRUD
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
@@ -168,12 +170,18 @@ export default function PermissionsManager() {
 
   // ── Active group ──
   const activeGroup = groups.find(g => g.id === activeGroupId);
-  const activePerms = activeGroup?.page_permissions || {};
+  const savedPerms = activeGroup?.page_permissions || {};
+  const activePerms = dirtyPerms ?? savedPerms;
+  const isDirty = dirtyPerms !== null;
   const colorIdx = groups.findIndex(g => g.id === activeGroupId);
   const groupColor = GROUP_COLORS[colorIdx % GROUP_COLORS.length] || GROUP_COLORS[0];
 
-  // ── Toggle permission for active group ──
-  const togglePerm = async (item, field) => {
+  const updateLocal = (newPerms) => {
+    setDirtyPerms(newPerms);
+  };
+
+  // ── Toggle permission for active group (LOCAL ONLY) ──
+  const togglePerm = (item, field) => {
     if (!activeGroup) return;
     const href = item.href;
     const current = activePerms[href] || { visible: false, editable: false };
@@ -186,10 +194,8 @@ export default function PermissionsManager() {
       updated.editable = !updated.editable;
     }
 
-    // If toggling a parent visible, also toggle its children
     const newPerms = { ...activePerms, [href]: updated };
 
-    // If hiding a parent, hide all children too
     if (field === "visible" && !updated.visible) {
       const children = menuItems.filter(i => i.parent_id === item.id);
       children.forEach(c => {
@@ -201,17 +207,11 @@ export default function PermissionsManager() {
       });
     }
 
-    try {
-      await axios.put(`${API}/admin/permission-groups/${activeGroupId}`,
-        { page_permissions: newPerms }, headers());
-      setGroups(prev => prev.map(g =>
-        g.id === activeGroupId ? { ...g, page_permissions: newPerms } : g));
-      refreshMenu();
-    } catch { toast.error("فشل الحفظ"); }
+    updateLocal(newPerms);
   };
 
-  // ── Toggle entire department (parent + all children + grandchildren) ──
-  const toggleDeptAll = async (parentItem, targetState) => {
+  // ── Toggle entire department (LOCAL ONLY) ──
+  const toggleDeptAll = (parentItem, targetState) => {
     if (!activeGroup) return;
     const newPerms = { ...activePerms };
     const allItems = [parentItem];
@@ -229,21 +229,11 @@ export default function PermissionsManager() {
         newPerms[item.href] = { visible: false, editable: false };
       }
     });
-    try {
-      await axios.put(`${API}/admin/permission-groups/${activeGroupId}`,
-        { page_permissions: newPerms }, headers());
-      setGroups(prev => prev.map(g =>
-        g.id === activeGroupId ? { ...g, page_permissions: newPerms } : g));
-      refreshMenu();
-      const name = parentItem.name_ar;
-      if (targetState === 'editable') toast.success(`تم تفعيل ${name} بالكامل (ظاهر + تعديل)`);
-      else if (targetState === 'visible') toast.success(`تم تفعيل ${name} (عرض فقط)`);
-      else toast.success(`تم إخفاء ${name} بالكامل`);
-    } catch { toast.error("فشل الحفظ"); }
+    updateLocal(newPerms);
   };
 
-  // ── Toggle ALL pages visible/editable ──
-  const toggleAll = async (field) => {
+  // ── Toggle ALL pages (LOCAL ONLY) ──
+  const toggleAll = (field) => {
     if (!activeGroup) return;
     const nonAdminItems = menuItems.filter(i =>
       i.department !== "system_admin" && !i.admin_only);
@@ -263,15 +253,27 @@ export default function PermissionsManager() {
         if (newPerms[i.href].visible) newPerms[i.href].editable = !allSet;
       }
     });
+    updateLocal(newPerms);
+  };
 
+  // ── Save all changes at once ──
+  const savePermissions = async () => {
+    if (!activeGroup || !isDirty) return;
+    setSaving(true);
     try {
       await axios.put(`${API}/admin/permission-groups/${activeGroupId}`,
-        { page_permissions: newPerms }, headers());
+        { page_permissions: dirtyPerms }, headers());
       setGroups(prev => prev.map(g =>
-        g.id === activeGroupId ? { ...g, page_permissions: newPerms } : g));
+        g.id === activeGroupId ? { ...g, page_permissions: dirtyPerms } : g));
+      setDirtyPerms(null);
       refreshMenu();
-      toast.success(allSet ? "تم إلغاء الكل" : "تم تفعيل الكل");
+      toast.success("تم حفظ الصلاحيات");
     } catch { toast.error("فشل الحفظ"); }
+    finally { setSaving(false); }
+  };
+
+  const discardChanges = () => {
+    setDirtyPerms(null);
   };
 
   // ── Group CRUD ──
@@ -430,7 +432,7 @@ export default function PermissionsManager() {
         {groups.map((g, idx) => {
           const gc = GROUP_COLORS[idx % GROUP_COLORS.length];
           return (
-            <button key={g.id} onClick={() => setActiveGroupId(g.id)} data-testid={`group-tab-${g.id}`}
+            <button key={g.id} onClick={() => { if (isDirty) { discardChanges(); } setActiveGroupId(g.id); }} data-testid={`group-tab-${g.id}`}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-cairo font-semibold text-sm transition-all
                 ${activeGroupId === g.id ? 'shadow-md scale-[1.02]' : 'hover:shadow-sm border-border bg-card'}`}
               style={activeGroupId === g.id ? { borderColor: gc.color, backgroundColor: gc.bg, color: gc.color } : {}}>
@@ -464,6 +466,16 @@ export default function PermissionsManager() {
                     شجرة الصفحات — {activeGroup.name_ar}
                   </p>
                   <div className="flex items-center gap-2">
+                    {isDirty && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={discardChanges} className="gap-1 text-xs h-7 border-red-300 text-red-600 hover:bg-red-50">
+                          <X className="w-3 h-3" /> تراجع
+                        </Button>
+                        <Button size="sm" onClick={savePermissions} disabled={saving} className="gap-1 h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} حفظ التعديلات
+                        </Button>
+                      </>
+                    )}
                     <Button size="sm" variant="outline" onClick={() => toggleAll("visible")} className="gap-1 text-xs h-7">
                       <Eye className="w-3 h-3" /> الكل ظاهر
                     </Button>
