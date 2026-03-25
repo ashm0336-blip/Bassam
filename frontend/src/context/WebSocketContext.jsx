@@ -24,7 +24,8 @@ export function WebSocketProvider({ children }) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          setLastEvent({ ...data, _ts: Date.now() });
+          const channel = data.channel || data.type || null;
+          setLastEvent({ ...data, channel, _ts: Date.now() });
         } catch {}
       };
 
