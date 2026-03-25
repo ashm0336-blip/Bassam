@@ -33,21 +33,17 @@ def _sidebar_items():
         kw.setdefault("sidebar_hidden", False)
         items.append(kw)
 
-    add("/", name_ar="ملفي الشخصي", name_en="My Profile", icon="UserCircle", order=0,
-        is_public=True, department="all",
-        subtitle_ar="بياناتي الشخصية ومعلومات العمل", subtitle_en="Personal info and work details")
-
-    add("/dashboard", name_ar="غرفة العمليات", name_en="Operations Room", icon="LayoutDashboard", order=1,
+    add("/dashboard", name_ar="غرفة العمليات", name_en="Operations Room", icon="LayoutDashboard", order=0,
         is_public=False, department="all",
         subtitle_ar="نظرة شاملة على حالة النظام", subtitle_en="System overview")
 
     depts = [
-        ("planning", "تخطيط خدمات الحشود", "Crowd Planning", "ClipboardList", 2),
-        ("haram_map", "إدارة المصليات", "Prayer Areas", "Navigation", 3),
-        ("gates", "إدارة الأبواب", "Gates Management", "DoorOpen", 4),
-        ("plazas", "إدارة الساحات", "Plazas Management", "LayoutGrid", 5),
-        ("crowd_services", "خدمات حشود الحرم", "Crowd Services", "Users", 6),
-        ("mataf", "صحن المطاف", "Mataf", "Circle", 7),
+        ("planning", "تخطيط خدمات الحشود", "Crowd Planning", "ClipboardList", 1),
+        ("haram_map", "إدارة المصليات", "Prayer Areas", "Navigation", 2),
+        ("gates", "إدارة الأبواب", "Gates Management", "DoorOpen", 3),
+        ("plazas", "إدارة الساحات", "Plazas Management", "LayoutGrid", 4),
+        ("crowd_services", "خدمات حشود الحرم", "Crowd Services", "Users", 5),
+        ("mataf", "صحن المطاف", "Mataf", "Circle", 6),
     ]
 
     for dk, nar, nen, icon, order in depts:
