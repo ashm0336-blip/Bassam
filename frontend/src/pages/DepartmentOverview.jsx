@@ -162,7 +162,11 @@ export default function DepartmentOverview({ department = "planning" }) {
     const acStatus = { active: 0, pending: 0, frozen: 0, no_account: 0, terminated: 0 };
     employees.forEach(e => { const s = e.account_status || "no_account"; acStatus[s] = (acStatus[s] || 0) + 1; });
     const roleMap = {};
-    employees.forEach(e => { const r = e.user_role || "field_staff"; roleMap[r] = (roleMap[r] || 0) + 1; });
+    employees.forEach(e => {
+      if (e.account_status !== 'active') return;
+      const r = e.user_role || "unassigned";
+      roleMap[r] = (roleMap[r] || 0) + 1;
+    });
     const today = new Date();
     const in30 = new Date(today); in30.setDate(today.getDate() + 30);
     const expiring = employees.filter(e => {
@@ -362,6 +366,7 @@ export default function DepartmentOverview({ department = "planning" }) {
             shift_supervisor:   { label:"مشرف وردية",   color:"#0f766e", icon:"🎯" },
             field_staff:        { label:"موظف ميداني",   color:"#047857", icon:"⛑️" },
             admin_staff:        { label:"موظف إداري",    color:"#64748b", icon:"💼" },
+            unassigned:         { label:"بدون دور",      color:"#94a3b8", icon:"❓" },
           }).filter(([k]) => stats.roleMap[k] > 0).map(([key, cfg2]) => {
             const count = stats.roleMap[key] || 0;
             const pct = stats.total > 0 ? Math.round(count/stats.total*100) : 0;

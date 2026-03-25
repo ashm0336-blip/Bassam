@@ -203,8 +203,8 @@ export function ZoneEmployeesTab({ activeZones, activeSession, setActiveSession,
     // Only show non-admin-staff employees with active contracts
     let emps = employees.filter(emp => {
       // Hide admin_staff role from field distribution
-      const role = emp.user_role || 'field_staff';
-      if (role === 'admin_staff') return false;
+      const role = emp.user_role || 'unassigned';
+      if (role === 'admin_staff' || role === 'unassigned') return false;
       // Active contract check
       if (emp.employment_type !== 'permanent' && emp.employment_type) {
         if (emp.contract_end && new Date(emp.contract_end) < new Date(new Date().toDateString())) return false;
