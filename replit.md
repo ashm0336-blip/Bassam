@@ -50,11 +50,10 @@ The startup script:
 - `frontend/.env` - Frontend environment variables
 - `frontend/src/pages/WelcomePage.jsx` - Welcome/profile landing page for non-admin users
 
-## Post-Login Routing (ConditionalDashboard)
+## Post-Login Routing
 
-- `system_admin` → Dashboard (غرفة العمليات)
-- Users with `page_dashboard` permission → Dashboard
-- All other users → WelcomePage (shows profile info, shift, coverage location, available pages)
+- ALL users → WelcomePage `/` (home page with profile info, shift, coverage location, available pages)
+- Dashboard (غرفة العمليات) moved to `/dashboard` — requires `page_dashboard` permission
 
 ## Important Setup Notes
 

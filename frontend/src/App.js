@@ -37,21 +37,8 @@ import StatsAnalyticsPage from "@/pages/StatsAnalyticsPage";
 import ActivityLogPage from "@/pages/ActivityLogPage";
 import WelcomePage from "@/pages/WelcomePage";
 
-// Conditional Dashboard
+// Everyone lands on WelcomePage as the home page
 function ConditionalDashboard() {
-  const { user, hasPermission } = useAuth();
-  
-  // System admin always sees the operations dashboard
-  if (user?.role === 'system_admin') {
-    return <Dashboard />;
-  }
-  
-  // Users with dashboard permission see the operations dashboard
-  if (hasPermission('page_dashboard')) {
-    return <Dashboard />;
-  }
-  
-  // Everyone else sees the welcome page
   return <WelcomePage />;
 }
 
@@ -116,7 +103,12 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<ConditionalDashboard />} />
-        <Route path="welcome" element={<WelcomePage />} />
+        <Route path="welcome" element={<Navigate to="/" replace />} />
+        <Route path="dashboard" element={
+          <PermissionProtectedRoute permission="page_dashboard">
+            <Dashboard />
+          </PermissionProtectedRoute>
+        } />
         {/* map route removed */}
         <Route path="planning" element={
           <DepartmentProtectedRoute department="planning">

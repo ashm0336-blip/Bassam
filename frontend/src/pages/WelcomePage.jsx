@@ -66,8 +66,8 @@ export default function WelcomePage() {
   const greeting = hours < 12 ? "صباح الخير" : hours < 17 ? "مساء الخير" : "مساء الخير";
 
   const topMenuItems = menuItems
-    .filter(item => !item.parent_id && item.href && item.href !== "/" && !item.admin_only)
-    .slice(0, 6);
+    .filter(item => !item.parent_id && item.href && item.href !== "/" && item.href !== "/welcome" && !item.admin_only)
+    .slice(0, 8);
 
   if (loading) {
     return (
