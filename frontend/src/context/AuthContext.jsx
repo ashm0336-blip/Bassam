@@ -243,19 +243,26 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  const DEPT_PATH_MAP = {
+    planning: '/planning',
+    haram_map: '/haram-map',
+    gates: '/gates',
+    plazas: '/plazas',
+    crowd_services: '/crowd-services',
+    mataf: '/mataf',
+  };
+
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
     if (user?.role === 'general_manager') return true;
-    // Check if user has group permissions for this department's pages
-    const perms = user?.permissions || {};
-    if (typeof perms === 'object' && !Array.isArray(perms)) {
-      // If user has page_overview or page_dashboard, they can view departments
-      if (perms['page_overview'] || perms['page_dashboard']) return true;
-    }
-    // Department managers can always view their own department
     if (user?.department === department) return true;
-    // Users with permission groups — check if sidebar would show this department
-    if (user?.permission_group_id) return true;
+    const pp = user?.page_permissions || {};
+    const prefix = DEPT_PATH_MAP[department];
+    if (prefix) {
+      for (const [href, perm] of Object.entries(pp)) {
+        if (href.startsWith(prefix) && perm?.visible) return true;
+      }
+    }
     return false;
   };
 

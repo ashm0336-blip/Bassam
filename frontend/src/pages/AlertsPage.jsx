@@ -80,7 +80,8 @@ const DEPARTMENTS = [
 
 export default function AlertsPage() {
   const { language } = useLanguage();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, canWrite } = useAuth();
+  const canEditAlerts = isAdmin() || canWrite('page_alerts');
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -237,7 +238,7 @@ export default function AlertsPage() {
           <h2 className="font-cairo font-bold text-base sm:text-xl text-right">إدارة البلاغات</h2>
           <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 text-right">متابعة وإدارة جميع البلاغات</p>
         </div>
-        {isAdmin() && (
+        {canEditAlerts && (
           <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-primary flex-shrink-0 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-4">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
             <span className="hidden sm:inline">بلاغ جديد</span>
@@ -375,7 +376,7 @@ export default function AlertsPage() {
                         <Select 
                           value={alert.status} 
                           onValueChange={(v) => handleStatusUpdate(alert.id, v)}
-                          disabled={!isAdmin()}
+                          disabled={!canEditAlerts}
                         >
                           <SelectTrigger className="h-8 w-32">
                             <SelectValue />
@@ -404,7 +405,7 @@ export default function AlertsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        {isAdmin() && (
+                        {canEditAlerts && (
                           <Button
                             variant="ghost"
                             size="icon"

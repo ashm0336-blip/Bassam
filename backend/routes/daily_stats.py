@@ -7,7 +7,7 @@ import io
 import logging
 
 from database import db
-from auth import get_current_user, log_activity
+from auth import get_current_user, log_activity, require_page_permission
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -202,6 +202,7 @@ async def get_daily_stat(stat_id: str, user: dict = Depends(get_current_user)):
 @router.post("/daily-stats")
 async def create_daily_stat(data: dict, user: dict = Depends(get_current_user)):
     """Create or update daily stat for a date."""
+    await require_page_permission(user, "/daily-stats", require_edit=True)
     date_hijri = data.get("date_hijri", "").strip().replace("/", "-")
     date_gregorian = data.get("date_gregorian", "").strip()
 
@@ -260,6 +261,7 @@ async def create_daily_stat(data: dict, user: dict = Depends(get_current_user)):
 @router.post("/daily-stats/fix-dates")
 async def fix_date_formats(user: dict = Depends(get_current_user)):
     """Fix dates that were stored without zero-padding (e.g., 1446-9-1 → 1446-09-01)."""
+    await require_page_permission(user, "/daily-stats", require_edit=True)
     all_docs = await db.daily_stats.find({}, {"_id": 0, "date_hijri": 1}).to_list(10000)
     fixed = 0
     for doc in all_docs:
@@ -292,6 +294,7 @@ async def fix_date_formats(user: dict = Depends(get_current_user)):
 
 @router.put("/daily-stats/{stat_id}")
 async def update_daily_stat(stat_id: str, data: dict, user: dict = Depends(get_current_user)):
+    await require_page_permission(user, "/daily-stats", require_edit=True)
     existing = await db.daily_stats.find_one({"id": stat_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="السجل غير موجود")
@@ -316,6 +319,7 @@ async def update_daily_stat(stat_id: str, data: dict, user: dict = Depends(get_c
 
 @router.delete("/daily-stats/{stat_id}")
 async def delete_daily_stat(stat_id: str, user: dict = Depends(get_current_user)):
+    await require_page_permission(user, "/daily-stats", require_edit=True)
     result = await db.daily_stats.delete_one({"id": stat_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="السجل غير موجود")
@@ -331,6 +335,7 @@ async def import_daily_stats(
     user: dict = Depends(get_current_user),
 ):
     """Import daily stats from Excel file."""
+    await require_page_permission(user, "/daily-stats", require_edit=True)
     if not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(status_code=400, detail="يرجى رفع ملف Excel (.xlsx)")
 

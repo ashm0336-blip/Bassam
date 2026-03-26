@@ -169,10 +169,14 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="daily-stats" element={
-          <DailyStatsPage />
+          <PermissionProtectedRoute permission="page_daily_stats">
+            <DailyStatsPage />
+          </PermissionProtectedRoute>
         } />
         <Route path="stats-analytics" element={
-          <StatsAnalyticsPage />
+          <PermissionProtectedRoute permission="page_stats_analytics">
+            <StatsAnalyticsPage />
+          </PermissionProtectedRoute>
         } />
         <Route path="activity-log" element={
           <PermissionProtectedRoute permission="page_activity_log">

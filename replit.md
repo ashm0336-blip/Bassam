@@ -58,6 +58,17 @@ The startup script:
 - Dashboard (غرفة العمليات) at `/dashboard` — requires `page_dashboard` permission
 - Department name: `plazas` is the only valid name for إدارة الساحات (no `squares` alias)
 
+## Permissions System
+
+- **Architecture**: Group-based permissions. Permission groups define `page_permissions: {href: {visible, editable}}`.
+- **Resolution order**: system_admin (full access) → custom_permissions → group permissions → default (hidden)
+- **Frontend enforcement**: `canViewPage(href)` filters sidebar, `canEditPage(href)` gates edit controls, `PermissionProtectedRoute` wraps routes
+- **Backend enforcement**: `require_page_permission(user, href_pattern, require_edit)` checks group+custom permissions on write endpoints
+- **Protected routes**: ALL routes in App.js are wrapped with `PermissionProtectedRoute` or `DepartmentProtectedRoute` (no unprotected pages)
+- **Department access**: `canViewDepartment` checks if user has any visible page with that department's path prefix
+- **Write protection**: daily_stats (POST/PUT/DELETE/import/fix-dates), alerts (PUT), broadcasts (POST) all enforce edit permissions server-side
+- **View-only pages**: `/dashboard`, `?tab=overview`, `/stats-analytics` — no edit button shown in permissions tree
+
 ## Important Setup Notes
 
 - **Python runtime**: `python-3.12` module must be installed (not just from .replit)

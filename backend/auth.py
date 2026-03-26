@@ -113,6 +113,33 @@ def check_department_access(user: dict, department: str) -> bool:
     return user.get("department") == department
 
 
+async def check_page_permission(user: dict, href_pattern: str, require_edit: bool = False) -> bool:
+    if user.get("role") == "system_admin":
+        return True
+    group_id = user.get("permission_group_id")
+    if not group_id:
+        return False
+    group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+    if not group:
+        return False
+    pp = group.get("page_permissions", {})
+    custom = user.get("custom_permissions", {})
+    for href in list(pp.keys()) + list(custom.keys()):
+        if href_pattern in href:
+            perm = {**(pp.get(href, {})), **(custom.get(href, {}))}
+            if require_edit and perm.get("editable"):
+                return True
+            if not require_edit and perm.get("visible"):
+                return True
+    return False
+
+
+async def require_page_permission(user: dict, href_pattern: str, require_edit: bool = False):
+    has = await check_page_permission(user, href_pattern, require_edit)
+    if not has:
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+
+
 async def log_activity(action: str, user: dict, target: str = None, details: str = None):
     try:
         activity = {

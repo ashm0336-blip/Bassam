@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 
 from database import db
-from auth import get_current_user, log_activity
+from auth import get_current_user, log_activity, require_page_permission
 from models import StatusCheck, StatusCheckCreate, AlertUpdate
 from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
 
@@ -291,6 +291,7 @@ async def get_unread_alerts_count(user: dict = Depends(get_current_user)):
 @router.post("/broadcasts")
 async def create_broadcast(data: dict, user: dict = Depends(get_current_user)):
     """Create a broadcast message to a department or all departments"""
+    await require_page_permission(user, "/alerts", require_edit=True)
     title = data.get("title", "").strip()
     message = data.get("message", "").strip()
     target_dept = data.get("department", "all")
@@ -336,6 +337,7 @@ async def create_broadcast(data: dict, user: dict = Depends(get_current_user)):
 
 @router.put("/alerts/{alert_id}")
 async def update_alert(alert_id: str, alert: AlertUpdate, user: dict = Depends(get_current_user)):
+    await require_page_permission(user, "/alerts", require_edit=True)
     existing = await db.alerts.find_one({"id": alert_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="البلاغ غير موجود")
