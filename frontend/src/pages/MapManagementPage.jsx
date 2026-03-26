@@ -497,8 +497,23 @@ export default function MapManagementPage({ department = "plazas", editable: edi
               {uploadingImage && <Progress value={uploadProgress} className="h-2 mt-2" data-testid="floor-upload-progress" />}
               <Input value={floorForm.image_url} onChange={e => setFloorForm(p => ({ ...p, image_url: e.target.value }))} placeholder={isAr ? "أو أدخل رابط الصورة" : "Or enter image URL"} className="mt-2 text-xs" dir="ltr" data-testid="floor-image-url-input" />
               {floorPreviewUrl && (
-                <div className="mt-3 rounded-lg border overflow-hidden">
+                <div className="mt-3 rounded-lg border overflow-hidden relative group">
                   <img src={floorPreviewUrl} alt="" className="w-full h-32 object-contain bg-slate-50" data-testid="floor-image-preview" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 left-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-7 px-2 text-xs"
+                    onClick={() => {
+                      if (localImagePreview) URL.revokeObjectURL(localImagePreview);
+                      setLocalImagePreview(null);
+                      setFloorForm(p => ({ ...p, image_url: "" }));
+                    }}
+                    data-testid="floor-image-delete-btn"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 ml-1" />
+                    {isAr ? "حذف الصورة" : "Remove"}
+                  </Button>
                 </div>
               )}
             </div>
@@ -519,7 +534,7 @@ export default function MapManagementPage({ department = "plazas", editable: edi
             )}
           </div>
           <DialogFooter>
-            <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar || !floorForm.image_url} className="bg-blue-600 hover:bg-blue-700" data-testid="floor-dialog-save-button">
+            <Button onClick={handleSaveFloor} disabled={!floorForm.name_ar} className="bg-blue-600 hover:bg-blue-700" data-testid="floor-dialog-save-button">
               <Save className="w-4 h-4 ml-2" />{isAr ? "حفظ" : "Save"}
             </Button>
             <Button variant="outline" onClick={() => setShowFloorDialog(false)} data-testid="floor-dialog-cancel-button">{isAr ? "إلغاء" : "Cancel"}</Button>
