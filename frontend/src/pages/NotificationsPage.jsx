@@ -170,8 +170,7 @@ export default function NotificationsPage() {
     title: "", message: "", department: "all", priority: "normal",
   });
 
-  const isAdmin = user?.role === 'system_admin' || user?.role === 'general_manager';
-  const canBroadcast = isAdmin || canEditPage('/notifications') || hasPermission('page_alerts', 'write');
+  const canBroadcast = user?.role === 'system_admin' || canEditPage('/notifications') || hasPermission('page_alerts', 'write');
 
   const fetchAlerts = useCallback(async (wsEvent) => {
     try {

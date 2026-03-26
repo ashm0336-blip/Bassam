@@ -77,7 +77,7 @@ function ZonePreview({ cat, size = 120 }) {
 }
 
 // Category card
-function CategoryCard({ cat, onEdit, onDelete }) {
+function CategoryCard({ cat, onEdit, onDelete, editable }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const hasPattern = cat.fill_type === "pattern" && cat.pattern_type;
@@ -125,7 +125,7 @@ function CategoryCard({ cat, onEdit, onDelete }) {
             </div>
           </div>
 
-          {/* أزرار الإجراءات */}
+          {editable && (
           <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
             <button onClick={() => onEdit(cat)}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
@@ -139,6 +139,7 @@ function CategoryCard({ cat, onEdit, onDelete }) {
               <Trash2 className="w-3.5 h-3.5 text-red-400" />
             </button>
           </div>
+          )}
         </div>
 
         {/* Footer: لون + نقش + ترتيب */}
@@ -181,7 +182,7 @@ function CategoryCard({ cat, onEdit, onDelete }) {
 }
 
 // ─── Main Component ────────────────────────────────────────────
-export default function ZoneCategoryManager() {
+export default function ZoneCategoryManager({ editable = false }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
@@ -298,6 +299,7 @@ export default function ZoneCategoryManager() {
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5 mr-10">{isAr ? "إضافة وتعديل فئات المصليات مع اللون والنقش — تنعكس مباشرة على الخرائط" : "Manage prayer area categories with color & pattern — reflected live on maps"}</p>
         </div>
+        {editable && (
         <div className="flex gap-2">
           {categories.length === 0 && (
             <Button variant="outline" size="sm" onClick={handleSeed} data-testid="seed-categories">
@@ -308,6 +310,7 @@ export default function ZoneCategoryManager() {
             <Plus className="w-4 h-4 ml-1" />{isAr ? "إضافة فئة" : "Add Category"}
           </Button>
         </div>
+        )}
       </div>
 
       {/* ── Summary stats — تصميم خرافي ─────────────────────── */}
@@ -371,7 +374,7 @@ export default function ZoneCategoryManager() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {categories.map(cat => (
-            <CategoryCard key={cat.id} cat={cat} onEdit={openEdit} onDelete={setDeleteId} />
+            <CategoryCard key={cat.id} cat={cat} onEdit={openEdit} onDelete={setDeleteId} editable={editable} />
           ))}
         </div>
       )}

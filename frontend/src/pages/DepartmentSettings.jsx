@@ -336,7 +336,7 @@ export default function DepartmentSettings({ department }) {
       {/* Tab Content */}
       <div className="transition-all duration-300">
         {activeTab === 'employees_list' && <EmployeesList department={department} editable={canEditSubTab('Staff')} onEmployeeAdded={() => setEmployeeVersion(v => v+1)} />}
-        {activeTab === 'employees' && <EmployeeManagement department={department} key={`schedule-${employeeVersion}`} onScheduleChange={fetchCounts} />}
+        {activeTab === 'employees' && <EmployeeManagement department={department} key={`schedule-${employeeVersion}`} onScheduleChange={fetchCounts} editable={canEditSubTab('Staff')} />}
 
         {activeTab === 'maps' && department === 'gates' && <GateMapPage editable={canEditMaps} />}
         {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} editable={canEditMaps} />}
@@ -524,7 +524,7 @@ export default function DepartmentSettings({ department }) {
         )}
 
         {activeTab === 'zone_categories' && (department === 'plazas' || department === 'haram_map') && (
-          <ZoneCategoryManager />
+          <ZoneCategoryManager editable={canEditSubTab('Categories')} />
         )}
       </div>
 

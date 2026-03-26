@@ -325,9 +325,10 @@ function MonthBar({ selectedMonth, onMonthChange, schedule, onCreateSchedule, on
 }
 
 // ── Main Component ───────────────────────────────────────────────
-export default function EmployeeManagement({ department, onScheduleChange }) {
+export default function EmployeeManagement({ department, onScheduleChange, editable: editableProp }) {
   const { language } = useLanguage();
-  const { user, isReadOnly, hasPermission, canWrite, canRead, canWriteDept, canReadDept } = useAuth();
+  const { user, isReadOnly, hasPermission, canWrite, canRead, canWriteDept: authCanWriteDept, canReadDept } = useAuth();
+  const canWriteDept = (perm, dept) => editableProp === true || authCanWriteDept(perm, dept);
 
   // Permission levels:
   // none = can't see at all
