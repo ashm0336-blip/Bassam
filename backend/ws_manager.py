@@ -2,11 +2,12 @@
 WebSocket Manager — Real-time broadcast for all connected clients.
 When any data changes (CRUD), the server broadcasts an event so all
 clients instantly refresh the relevant data.
+Also tracks online users by mapping connections to user IDs.
 """
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from typing import Set
+from typing import Set, Dict
 import json
 import logging
 import re
@@ -14,7 +15,6 @@ import re
 logger = logging.getLogger(__name__)
 
 
-# Map URL patterns to broadcast channels
 CHANNEL_MAP = [
     (re.compile(r"/api/employees"), "employees"),
     (re.compile(r"/api/admin/gate-sessions"), "gate_sessions"),
@@ -37,6 +37,8 @@ CHANNEL_MAP = [
     (re.compile(r"/api/transactions"), "dashboard"),
     (re.compile(r"/api/auth/reset-pin"), "employees"),
     (re.compile(r"/api/users"), "employees"),
+    (re.compile(r"/api/admin/activity-logs"), "activity_logs"),
+    (re.compile(r"/api/manager/activity-logs"), "activity_logs"),
 ]
 
 
@@ -45,20 +47,32 @@ class ConnectionManager:
 
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
+        self._conn_to_user: Dict[WebSocket, str] = {}
+        self._user_connections: Dict[str, Set[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, user_id: str | None = None):
         await websocket.accept()
         self.active_connections.add(websocket)
-        logger.info(f"WS connected — {len(self.active_connections)} active")
+        if user_id:
+            self._conn_to_user[websocket] = user_id
+            if user_id not in self._user_connections:
+                self._user_connections[user_id] = set()
+            self._user_connections[user_id].add(websocket)
+        logger.info(f"WS connected — {len(self.active_connections)} active, {len(self.get_online_user_ids())} users")
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.discard(websocket)
-        logger.info(f"WS disconnected — {len(self.active_connections)} active")
+        user_id = self._conn_to_user.pop(websocket, None)
+        if user_id and user_id in self._user_connections:
+            self._user_connections[user_id].discard(websocket)
+            if not self._user_connections[user_id]:
+                del self._user_connections[user_id]
+        logger.info(f"WS disconnected — {len(self.active_connections)} active, {len(self.get_online_user_ids())} users")
+
+    def get_online_user_ids(self) -> list[str]:
+        return list(self._user_connections.keys())
 
     async def broadcast(self, channel, action: str = "updated"):
-        """Broadcast event to all connected clients.
-        channel can be a string or a dict (for direct JSON payloads).
-        """
         if not self.active_connections:
             return
         if isinstance(channel, dict):
@@ -72,25 +86,27 @@ class ConnectionManager:
             except Exception:
                 dead.add(conn)
         for conn in dead:
-            self.active_connections.discard(conn)
+            self._cleanup_dead(conn)
+
+    def _cleanup_dead(self, conn: WebSocket):
+        self.active_connections.discard(conn)
+        user_id = self._conn_to_user.pop(conn, None)
+        if user_id and user_id in self._user_connections:
+            self._user_connections[user_id].discard(conn)
+            if not self._user_connections[user_id]:
+                del self._user_connections[user_id]
 
     def resolve_channel(self, path: str) -> str | None:
-        """Match a request path to a broadcast channel."""
         for pattern, channel in CHANNEL_MAP:
             if pattern.search(path):
                 return channel
         return None
 
 
-# Singleton
 ws_manager = ConnectionManager()
 
 
 class RealtimeBroadcastMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware: after any successful POST/PUT/DELETE/PATCH,
-    broadcast the relevant channel so all clients refresh instantly.
-    """
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 

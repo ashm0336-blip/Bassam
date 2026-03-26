@@ -128,29 +128,31 @@ app.include_router(api_router)
 # ============= WebSocket Endpoint =============
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # Authenticate via token query param — REQUIRED
     token = websocket.query_params.get("token")
     if not token:
-        # Must accept before closing to properly reject
         await websocket.accept()
         await websocket.close(code=4001, reason="Token required")
         return
+    user_id = None
     try:
         import jwt as pyjwt
-        pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
+        payload = pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
+        user_id = payload.get("user_id") or payload.get("sub")
     except Exception:
-        # Must accept before closing to properly reject
         await websocket.accept()
         await websocket.close(code=4001, reason="Unauthorized")
         return
-    await ws_manager.connect(websocket)
+    await ws_manager.connect(websocket, user_id=user_id)
     try:
+        await ws_manager.broadcast("presence", "updated")
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+        await ws_manager.broadcast("presence", "updated")
     except Exception:
         ws_manager.disconnect(websocket)
+        await ws_manager.broadcast("presence", "updated")
 
 app.add_middleware(
     CORSMiddleware,

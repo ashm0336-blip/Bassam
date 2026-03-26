@@ -2,14 +2,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeRefresh, useWsConnected } from "@/context/WebSocketContext";
 import {
   Activity, UserPlus, UserMinus, Edit, Trash2, LogIn, LogOut,
   Filter, Calendar, Search, Clock, TrendingUp,
   ChevronLeft, ChevronRight, X, Shield, Upload,
   Settings, FileText, BarChart3, AlertTriangle,
   CheckCircle, Lock, Unlock, Key, Users,
-  Building2, Eye, RefreshCw, LayoutList, LayoutGrid,
-  Clipboard
+  Building2, Eye, LayoutList, LayoutGrid,
+  Clipboard, Radio
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -145,9 +146,9 @@ export default function ActivityLogPage() {
   const [filterDate, setFilterDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("timeline");
-  const [refreshing, setRefreshing] = useState(false);
 
   const isAdminOrGM = user?.role === "system_admin" || user?.role === "general_manager";
+  const wsConnected = useWsConnected();
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -163,16 +164,12 @@ export default function ActivityLogPage() {
       setLogs([]);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [isAdminOrGM]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchLogs();
-  };
+  useRealtimeRefresh(["activity_logs", "employees", "settings", "permissions", "schedules", "alerts", "tasks"], fetchLogs);
 
   const computedFiltered = useMemo(() => {
     let filtered = [...logs];
@@ -317,10 +314,13 @@ export default function ActivityLogPage() {
               <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
-          <Button variant="outline" size="sm" className="h-7 sm:h-9 gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-3" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">{isAr ? "تحديث" : "Refresh"}</span>
-          </Button>
+          <div className={`h-7 sm:h-9 px-2.5 sm:px-3 rounded-md border flex items-center gap-1.5 text-[10px] sm:text-xs font-medium ${wsConnected ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-600"}`}>
+            <span className="relative flex h-2 w-2">
+              {wsConnected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${wsConnected ? "bg-emerald-500" : "bg-red-400"}`} />
+            </span>
+            <span>{wsConnected ? (isAr ? "مباشر" : "Live") : (isAr ? "غير متصل" : "Offline")}</span>
+          </div>
         </div>
       </div>
 

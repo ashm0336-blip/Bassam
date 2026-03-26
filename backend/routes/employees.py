@@ -647,3 +647,9 @@ async def delete_schedule(schedule_id: str, user: dict = Depends(get_current_use
     await db.monthly_schedules.delete_one({"id": schedule_id})
     await log_activity("schedule_deleted", user, schedule["month"], f"تم حذف جدول شهري: {schedule['month']}")
     return {"message": "تم حذف الجدول بنجاح"}
+
+
+@router.get("/employees/online")
+async def get_online_employees(user: dict = Depends(get_current_user)):
+    online_ids = ws_manager.get_online_user_ids()
+    return {"online_user_ids": online_ids, "count": len(online_ids)}

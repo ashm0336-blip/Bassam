@@ -6,7 +6,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useHeader } from "@/context/HeaderContext";
 import { useMobileSettings } from "@/context/MobileSettingsContext";
-import { useRealtimeRefresh, useLastEvent } from "@/context/WebSocketContext";
+import { useRealtimeRefresh, useLastEvent, useWsConnected } from "@/context/WebSocketContext";
 import { NotificationManager } from "@/components/NotificationManager";
 import axios from "axios";
 import { 
@@ -82,6 +82,9 @@ export const Layout = () => {
   const { headerSettings } = useHeader();
   const { mobileSettings } = useMobileSettings();
   const lastEvent = useLastEvent();
+  const wsConnected = useWsConnected();
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
 
   // Fetch unread alerts count
   useEffect(() => {
@@ -102,6 +105,16 @@ export const Layout = () => {
     axios.get(`${API}/alerts/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setUnreadAlerts(res.data.count || 0)).catch(() => {});
   }, []));
+
+  const fetchOnlineUsers = useCallback(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    axios.get(`${API}/employees/online`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => { setOnlineCount(res.data.count || 0); setOnlineUserIds(res.data.online_user_ids || []); })
+      .catch(() => {});
+  }, []);
+  useEffect(() => { fetchOnlineUsers(); }, [fetchOnlineUsers]);
+  useRealtimeRefresh(["presence"], fetchOnlineUsers);
 
   const PULL_THRESHOLD = 80;
   const handleTouchStart = useCallback((e) => {
@@ -381,10 +394,15 @@ export const Layout = () => {
         {sidebarOpen && (
           <div className="px-4 py-2 border-t border-border flex items-center justify-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              {wsConnected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${wsConnected ? "bg-emerald-500" : "bg-red-400"}`} />
             </span>
-            <span className="text-[10px] text-emerald-600 font-medium font-cairo">{language === 'ar' ? 'مباشر' : 'Live'}</span>
+            <span className={`text-[10px] font-medium font-cairo ${wsConnected ? "text-emerald-600" : "text-red-500"}`}>
+              {wsConnected
+                ? (language === 'ar' ? `${onlineCount} متصل الآن` : `${onlineCount} Online`)
+                : (language === 'ar' ? 'غير متصل' : 'Offline')
+              }
+            </span>
           </div>
         )}
 
