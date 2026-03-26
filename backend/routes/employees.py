@@ -651,5 +651,20 @@ async def delete_schedule(schedule_id: str, user: dict = Depends(get_current_use
 
 @router.get("/employees/online")
 async def get_online_employees(user: dict = Depends(get_current_user)):
-    online_ids = ws_manager.get_online_user_ids()
-    return {"online_user_ids": online_ids, "count": len(online_ids)}
+    online_user_ids = ws_manager.get_online_user_ids()
+    if not online_user_ids:
+        return {"online_user_ids": [], "online_employee_ids": [], "count": 0}
+    users_cursor = db.users.find(
+        {"id": {"$in": online_user_ids}},
+        {"_id": 0, "id": 1, "employee_id": 1}
+    )
+    online_employee_ids = []
+    async for u in users_cursor:
+        eid = u.get("employee_id")
+        if eid:
+            online_employee_ids.append(eid)
+    return {
+        "online_user_ids": online_user_ids,
+        "online_employee_ids": online_employee_ids,
+        "count": len(online_user_ids),
+    }

@@ -110,7 +110,7 @@ export const Layout = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     axios.get(`${API}/employees/online`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => { setOnlineCount(res.data.count || 0); setOnlineUserIds(res.data.online_user_ids || []); })
+      .then(res => { setOnlineCount(res.data.count || 0); setOnlineUserIds(res.data.online_employee_ids || []); })
       .catch(() => {});
   }, []);
   useEffect(() => { fetchOnlineUsers(); }, [fetchOnlineUsers]);

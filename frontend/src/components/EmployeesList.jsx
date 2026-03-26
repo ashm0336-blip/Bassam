@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { useAuth, DEPT_LABELS } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useRealtimeRefresh } from "@/context/WebSocketContext";
+import { useRealtimeRefresh, useWsConnected } from "@/context/WebSocketContext";
 import {
   Plus, Search, LayoutGrid, List, Download, Upload, FileText,
   Edit, Trash2, ShieldCheck, ShieldX, ShieldOff, UserPlus, KeyRound,
@@ -221,7 +221,7 @@ function AvatarInitial({ name, size = "md" }) {
 
 // ── Employee Card — تصميم احترافي متناسق ──────────────────────
 function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
-    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups, onOpenProfile }) {
+    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups, onOpenProfile, isOnline }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
   const avatarColors = ["#7c3aed","#047857","#0284c7","#b45309","#dc2626","#0f766e"];
@@ -246,6 +246,11 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
               style={{ backgroundColor: acCfg.color }}>
               <acCfg.Icon className="w-2 h-2 text-white" />
             </div>
+            {isOnline && (
+              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-500">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <button onClick={() => onOpenProfile(emp)} className="font-cairo font-bold text-sm leading-tight truncate text-right hover:text-primary transition-colors cursor-pointer block">{emp.name}</button>
@@ -358,6 +363,8 @@ export default function EmployeesList({ department, editable: editableProp, onEm
   const [profileEmp, setProfileEmp] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
+  const wsConnected = useWsConnected();
 
   // Live national ID check
   const checkNationalId = useCallback(async (id, excludeEmpId=null) => {
@@ -407,6 +414,14 @@ export default function EmployeesList({ department, editable: editableProp, onEm
   }, [fetchEmployees]);
 
   useRealtimeRefresh(["employees"], fetchEmployees);
+
+  const fetchOnline = useCallback(() => {
+    axios.get(`${API}/employees/online`, headers())
+      .then(res => setOnlineUserIds(res.data.online_employee_ids || []))
+      .catch(() => {});
+  }, []);
+  useEffect(() => { fetchOnline(); }, [fetchOnline]);
+  useRealtimeRefresh(["presence"], fetchOnline);
 
   // ── Filtered ───────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -874,7 +889,8 @@ export default function EmployeesList({ department, editable: editableProp, onEm
               onDelete={(e) => { setDeleteTarget(e); setDeleteDialog(true); }}
               onAccountAction={handleAccountAction}
               onChangeRole={handleChangeRole}
-              isAr={isAr} permGroups={permGroups} onOpenProfile={openProfile} />
+              isAr={isAr} permGroups={permGroups} onOpenProfile={openProfile}
+              isOnline={onlineUserIds.includes(emp.id)} />
           ))}
         </div>
       )}
@@ -931,6 +947,15 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                       <span className="text-[11px] font-semibold text-slate-600">الحساب</span>
                     </div>
                   </TableHead>
+                  {/* الاتصال */}
+                  <TableHead className="text-center py-2.5 w-20">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                        <Circle className="w-4 h-4 text-emerald-600"/>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600">الاتصال</span>
+                    </div>
+                  </TableHead>
                   {/* الصلاحيات */}
                     <TableHead className="text-center py-2.5 w-32">
                       <div className="flex flex-col items-center gap-1.5">
@@ -984,6 +1009,23 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                     <TableCell className="text-center">
                       <AccountStatusIcon emp={emp} canManageAccounts={canManage}
                         canResetPins={canResetPins} onAccountAction={handleAccountAction} isAr={isAr}/>
+                    </TableCell>
+                    {/* الاتصال */}
+                    <TableCell className="text-center">
+                      {(() => {
+                        const isOnline = onlineUserIds.includes(emp.id);
+                        return (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="relative flex h-2.5 w-2.5">
+                              {isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+                              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`} />
+                            </span>
+                            <span className={`text-[10px] font-medium ${isOnline ? "text-emerald-600" : "text-slate-400"}`}>
+                              {isOnline ? "متصل" : "غير متصل"}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     {/* الصلاحيات */}
                     <TableCell className="text-center">
