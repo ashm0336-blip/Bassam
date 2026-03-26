@@ -438,7 +438,7 @@ async def _seed_default_permission_groups(db):
         # Resolve page_permissions placeholder
         pp = grp["page_permissions"]
         if pp == "_all_editable":
-            pp = _build_all_pages_visible(editable=True, include_admin=True)
+            pp = _build_all_pages_visible(editable=True, include_admin=False)
         elif pp == "_field_only":
             pp = {
                 "/": {"visible": True, "editable": False},
@@ -470,7 +470,7 @@ async def _seed_default_permission_groups(db):
         # Resolve what the default page_permissions should be
         pp_template = grp_def["page_permissions"]
         if pp_template == "_all_editable":
-            default_pp = _build_all_pages_visible(editable=True, include_admin=True)
+            default_pp = _build_all_pages_visible(editable=True, include_admin=False)
         elif pp_template == "_field_only":
             default_pp = {
                 "/": {"visible": True, "editable": False},
