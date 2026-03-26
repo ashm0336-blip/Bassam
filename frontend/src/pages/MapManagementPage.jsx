@@ -215,10 +215,10 @@ export default function MapManagementPage({ department = "plazas", editable: edi
             </div>
             <div>
               <h1 className="font-cairo font-bold text-2xl" data-testid="page-title">
-                {isAr ? "إدارة الخرائط" : "Map Management"}
+                {isAr ? "إدارة مواقع التغطية" : "Coverage Sites Management"}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {isAr ? "إدارة خرائط طوابق الحرم الشريف - رفع وتنظيم صور الأدوار" : "Manage Haram floor plans - upload and organize floor images"}
+                {isAr ? "إدارة مواقع التغطية - رفع وتنظيم صور المواقع" : "Manage coverage sites - upload and organize site images"}
               </p>
             </div>
           </div>
