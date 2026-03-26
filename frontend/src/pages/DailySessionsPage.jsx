@@ -1034,7 +1034,7 @@ export default function DailySessionsPage() {
                   <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-xl"
                     style={{ background: "linear-gradient(135deg, #065f46, #059669)" }}>
                     {emptyDaySelected
-                      ? <Calendar className="w-11 h-11 text-white"/>
+                      ? <CalendarIcon className="w-11 h-11 text-white"/>
                       : <Eye className="w-11 h-11 text-white"/>}
                   </div>
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
