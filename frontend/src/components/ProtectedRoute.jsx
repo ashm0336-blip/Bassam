@@ -60,8 +60,8 @@ export const AdminProtectedRoute = ({ children }) => {
   return children;
 };
 
-export const PermissionProtectedRoute = ({ children, permission }) => {
-  const { hasPermission, isAuthenticated, loading } = useAuth();
+export const PermissionProtectedRoute = ({ children, permission, href, hrefFallbacks }) => {
+  const { hasPermission, canViewPage, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -80,8 +80,11 @@ export const PermissionProtectedRoute = ({ children, permission }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!hasPermission(permission)) {
-    // Redirect to home — no error message
+  const hasAccess = hasPermission(permission)
+    || (href && canViewPage(href))
+    || (hrefFallbacks && hrefFallbacks.some(h => canViewPage(h)));
+
+  if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
 

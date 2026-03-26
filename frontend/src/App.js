@@ -169,12 +169,12 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="daily-stats" element={
-          <PermissionProtectedRoute permission="page_daily_stats">
+          <PermissionProtectedRoute permission="page_daily_stats" href="/daily-stats" hrefFallbacks={['/daily-stats?tab=haram', '/daily-stats?tab=nabawi', '/daily-stats?tab=all']}>
             <DailyStatsPage />
           </PermissionProtectedRoute>
         } />
         <Route path="stats-analytics" element={
-          <PermissionProtectedRoute permission="page_stats_analytics">
+          <PermissionProtectedRoute permission="page_stats_analytics" href="/stats-analytics">
             <StatsAnalyticsPage />
           </PermissionProtectedRoute>
         } />
