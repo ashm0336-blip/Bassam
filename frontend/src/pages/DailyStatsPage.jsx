@@ -29,16 +29,15 @@ export default function DailyStatsPage() {
   const { user, canRead, canWrite, canViewPage, canEditPage } = useAuth();
   const { language } = useLanguage();
 
-  // Tab-level permissions (like Settings page)
   const isAdmin = user?.role === 'system_admin';
-  const canSeeHaram = isAdmin || canRead('page_stats_haram') || canViewPage('/daily-stats?tab=haram');
-  const canSeeNabawi = isAdmin || canRead('page_stats_nabawi') || canViewPage('/daily-stats?tab=nabawi');
-  const canSeeCombined = isAdmin || canRead('page_stats_all') || canViewPage('/daily-stats?tab=all');
+  const canSeeHaram = isAdmin || canViewPage('/daily-stats?tab=haram') || canRead('page_stats_haram');
+  const canSeeNabawi = isAdmin || canViewPage('/daily-stats?tab=nabawi') || canRead('page_stats_nabawi');
+  const canSeeCombined = isAdmin || canViewPage('/daily-stats?tab=all') || canRead('page_stats_all');
 
-  const canEditHaram = isAdmin || canWrite('edit_stats_haram') || canEditPage('/daily-stats?tab=haram');
-  const canEditNabawi = isAdmin || canWrite('edit_stats_nabawi') || canEditPage('/daily-stats?tab=nabawi');
-  const canEdit = isAdmin || canWrite('edit_daily_stats') || canEditPage('/daily-stats');
-  const canImport = isAdmin || canWrite('import_daily_stats') || canEditPage('/daily-stats?tab=all');
+  const canEditHaram = isAdmin || canEditPage('/daily-stats?tab=haram') || canWrite('edit_stats_haram');
+  const canEditNabawi = isAdmin || canEditPage('/daily-stats?tab=nabawi') || canWrite('edit_stats_nabawi');
+  const canEdit = isAdmin || canEditPage('/daily-stats') || canWrite('edit_daily_stats');
+  const canImport = isAdmin || canEditPage('/daily-stats?tab=all') || canWrite('import_daily_stats');
 
   // Determine first available tab
   const defaultTab = canSeeHaram ? "haram" : canSeeNabawi ? "nabawi" : canSeeCombined ? "all" : "haram";

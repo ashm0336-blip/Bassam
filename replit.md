@@ -44,10 +44,13 @@ The startup script:
 
 - Group-based RBAC with `page_permissions: {href: {visible, editable}}`
 - Resolution priority: system_admin > custom_permissions > group > default hidden
-- `canViewPage(href)` / `canEditPage(href)` on frontend (AuthContext)
-- `require_page_permission` decorator on backend
-- `HREF_TO_PERM_MAP` in `backend/routes/perm_groups.py` maps hrefs to legacy permission keys
+- **Primary check (page_permissions direct)**: `canViewPage(href)` / `canEditPage(href)` reads `page_permissions` directly — what admin sets in the tree is what the user gets
+- **Legacy fallback**: `canRead(key)` / `canWrite(key)` checks legacy permission keys via `HREF_TO_PERM_MAP` translation
+- All route guards use `href` prop on `PermissionProtectedRoute` for direct page_permissions check
+- All page/tab visibility uses `canViewPage(href)` as primary, legacy as fallback
+- All action permissions use `canEditPage(href)` as primary, or `editable` prop from parent
 - Settings sub-tabs use `canViewSubTab('Staff')` / `canEditSubTab('Shifts')` etc.
+- `GatesDataManagement`, `EmployeesList`, `MapManagementPage`, `GateMapPage` accept `editable` prop from parent `DepartmentSettings`
 - `/notifications` and `/alerts` have separate permissions (`page_notifications` / `page_alerts`)
 - Force-logout on account freeze/terminate via WebSocket broadcast
 - General manager (`general_manager` role) can access admin page (`/admin`)

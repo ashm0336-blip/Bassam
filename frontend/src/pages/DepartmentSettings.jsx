@@ -341,7 +341,7 @@ export default function DepartmentSettings({ department }) {
         {activeTab === 'maps' && department === 'gates' && <GateMapPage editable={canEditMaps} />}
         {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} editable={canEditMaps} />}
 
-        {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
+        {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement editable={canEditSubTab('GatesData')} />}
 
         {activeTab === 'shifts' && (
           <div className="space-y-5">

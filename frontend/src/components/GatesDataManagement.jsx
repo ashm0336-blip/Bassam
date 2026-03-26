@@ -24,9 +24,10 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export default function GatesDataManagement() {
+export default function GatesDataManagement({ editable: editableProp }) {
   const { language } = useLanguage();
-  const { isReadOnly, canWrite } = useAuth();
+  const { isReadOnly, canWrite: authCanWrite } = useAuth();
+  const canWrite = (perm) => editableProp === true || authCanWrite(perm);
   const [gates, setGates] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);

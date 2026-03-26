@@ -45,19 +45,19 @@ export default function DailySessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { isDark } = useTheme();
-  const { canWrite, canRead } = useAuth();
+  const { canWrite, canRead, canEditPage, canViewPage } = useAuth();
 
-  // Permission checks — write = edit buttons, read = view only, none = hidden
-  const canCreateSession = canWrite("create_session");
-  const canApproveSession = canWrite("approve_session");
-  const canDeleteSession = canWrite("delete_session");
-  const canStartPrayer = canWrite("start_prayer_round");
-  const canCompletePrayer = canWrite("complete_prayer_round");
-  const canSkipPrayer = canWrite("skip_prayer_round");
-  const canDistribute = canWrite("distribute_employees");
-  const canViewDistribute = canRead("distribute_employees");
-  const canEnterDensity = canWrite("enter_density");
-  const canViewDensity = canRead("enter_density") || canRead("view_density_reports");
+  const pageEditable = canEditPage('/daily-sessions');
+  const canCreateSession = pageEditable || canWrite("create_session");
+  const canApproveSession = pageEditable || canWrite("approve_session");
+  const canDeleteSession = pageEditable || canWrite("delete_session");
+  const canStartPrayer = pageEditable || canWrite("start_prayer_round");
+  const canCompletePrayer = pageEditable || canWrite("complete_prayer_round");
+  const canSkipPrayer = pageEditable || canWrite("skip_prayer_round");
+  const canDistribute = pageEditable || canWrite("distribute_employees");
+  const canViewDistribute = canViewPage('/daily-sessions') || canRead("distribute_employees");
+  const canEnterDensity = pageEditable || canWrite("enter_density");
+  const canViewDensity = canViewPage('/daily-sessions') || canRead("enter_density") || canRead("view_density_reports");
 
   // Core state
   const [floors, setFloors] = useState([]);

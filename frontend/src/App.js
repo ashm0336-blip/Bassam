@@ -102,7 +102,7 @@ function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="welcome" element={<Navigate to="/" replace />} />
         <Route path="dashboard" element={
-          <PermissionProtectedRoute permission="page_dashboard">
+          <PermissionProtectedRoute permission="page_dashboard" href="/dashboard">
             <Dashboard />
           </PermissionProtectedRoute>
         } />
@@ -133,17 +133,17 @@ function AppRoutes() {
           </DepartmentProtectedRoute>
         } />
         <Route path="alerts" element={
-          <PermissionProtectedRoute permission="page_alerts">
+          <PermissionProtectedRoute permission="page_alerts" href="/alerts">
             <AlertsPage />
           </PermissionProtectedRoute>
         } />
         <Route path="notifications" element={
-          <PermissionProtectedRoute permission="page_notifications">
+          <PermissionProtectedRoute permission="page_notifications" href="/notifications">
             <NotificationsPage />
           </PermissionProtectedRoute>
         } />
         <Route path="prohibited-items" element={
-          <PermissionProtectedRoute permission="page_alerts">
+          <PermissionProtectedRoute permission="page_alerts" href="/alerts">
             <ProhibitedItemsPage />
           </PermissionProtectedRoute>
         } />
@@ -154,17 +154,17 @@ function AppRoutes() {
           </DepartmentProtectedRoute>
         } />
         <Route path="daily-sessions" element={
-          <PermissionProtectedRoute permission="view_daily_sessions">
+          <PermissionProtectedRoute permission="view_daily_sessions" href="/daily-sessions">
             <DailySessionsPage />
           </PermissionProtectedRoute>
         } />
         <Route path="daily-gates" element={
-          <PermissionProtectedRoute permission="view_daily_sessions">
+          <PermissionProtectedRoute permission="view_daily_sessions" href="/daily-gates">
             <DailyGateSessionsPage />
           </PermissionProtectedRoute>
         } />
         <Route path="field" element={
-          <PermissionProtectedRoute permission="page_field">
+          <PermissionProtectedRoute permission="page_field" href="/field">
             <FieldWorkerPage />
           </PermissionProtectedRoute>
         } />
@@ -179,12 +179,12 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="activity-log" element={
-          <PermissionProtectedRoute permission="page_activity_log">
+          <PermissionProtectedRoute permission="page_activity_log" href="/activity-log">
             <ActivityLogPage />
           </PermissionProtectedRoute>
         } />
         <Route path="employee/:id" element={
-          <PermissionProtectedRoute permission="page_employees">
+          <PermissionProtectedRoute permission="page_employees" href="/employee">
             <EmployeeProfilePage />
           </PermissionProtectedRoute>
         } />

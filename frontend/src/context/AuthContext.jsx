@@ -242,14 +242,6 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = () => user?.role === 'system_admin';
   const isGeneralManager = () => user?.role === 'general_manager' || user?.role === 'system_admin';
 
-  const canManageDepartment = (department) => {
-    if (user?.role === 'system_admin') return true;
-    // If user has write permissions on this department's settings, they can manage it
-    if (hasPermission('manage_settings', 'write')) return true;
-    if (user?.role === 'department_manager' && user?.department === department) return true;
-    return false;
-  };
-
   const DEPT_PATH_MAP = {
     planning: '/planning',
     haram_map: '/haram-map',
@@ -257,6 +249,19 @@ export const AuthProvider = ({ children }) => {
     plazas: '/plazas',
     crowd_services: '/crowd-services',
     mataf: '/mataf',
+  };
+
+  const canManageDepartment = (department) => {
+    if (user?.role === 'system_admin') return true;
+    const prefix = DEPT_PATH_MAP[department];
+    if (prefix) {
+      const pp = user?.page_permissions || {};
+      const settingsHref = `${prefix}?tab=settings`;
+      if (pp[settingsHref]?.editable) return true;
+    }
+    if (hasPermission('manage_settings', 'write')) return true;
+    if (user?.role === 'department_manager' && user?.department === department) return true;
+    return false;
   };
 
   const canViewDepartment = (department) => {
@@ -275,6 +280,8 @@ export const AuthProvider = ({ children }) => {
 
   const canAddAlerts = () => {
     if (user?.role === 'system_admin') return true;
+    const pp = user?.page_permissions || {};
+    if (pp['/alerts']?.editable) return true;
     return hasPermission('page_alerts', 'write');
   };
 

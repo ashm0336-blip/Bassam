@@ -146,7 +146,7 @@ function LivePulse({ connected }) {
 
 
 export default function NotificationsPage() {
-  const { canAddAlerts, user, hasPermission } = useAuth();
+  const { canAddAlerts, user, hasPermission, canEditPage } = useAuth();
   const { language } = useLanguage();
   const wsConnected = useWsConnected();
   const [activeTab, setActiveTab] = useState("all");
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
   });
 
   const isAdmin = user?.role === 'system_admin' || user?.role === 'general_manager';
-  const canBroadcast = isAdmin || hasPermission('page_alerts', 'write');
+  const canBroadcast = isAdmin || canEditPage('/notifications') || hasPermission('page_alerts', 'write');
 
   const fetchAlerts = useCallback(async (wsEvent) => {
     try {

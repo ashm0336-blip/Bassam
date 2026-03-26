@@ -80,8 +80,8 @@ const DEPARTMENTS = [
 
 export default function AlertsPage() {
   const { language } = useLanguage();
-  const { isAdmin, user, canWrite } = useAuth();
-  const canEditAlerts = isAdmin() || canWrite('page_alerts');
+  const { isAdmin, user, canWrite, canEditPage } = useAuth();
+  const canEditAlerts = isAdmin() || canEditPage('/alerts') || canWrite('page_alerts');
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");

@@ -59,11 +59,12 @@ const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو
 export default function DailyGateSessionsPage() {
   const { language } = useLanguage();
   const isAr = language === "ar";
-  const { canWrite, canRead } = useAuth();
+  const { canWrite, canRead, canEditPage } = useAuth();
 
-  const canCreateSession = canWrite("create_session");
-  const canApproveSession = canWrite("approve_session");
-  const canDeleteSession = canWrite("delete_session");
+  const pageEditable = canEditPage('/daily-gates');
+  const canCreateSession = pageEditable || canWrite("create_session");
+  const canApproveSession = pageEditable || canWrite("approve_session");
+  const canDeleteSession = pageEditable || canWrite("delete_session");
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);

@@ -260,8 +260,10 @@ export default function TasksPage({ department }) {
   const { language } = useLanguage();
   const { user, hasPermission, canEditPage } = useAuth();
   const isAr = language === "ar";
-  const isManager = user?.role === "system_admin" || hasPermission("page_transactions", "write");
-  const canInteract = isManager || hasPermission("page_transactions", "write");
+  const deptHref = department ? `/${department}` : '';
+  const txnEditable = canEditPage(`${deptHref}?tab=transactions`) || hasPermission("page_transactions", "write");
+  const isManager = user?.role === "system_admin" || txnEditable;
+  const canInteract = isManager;
 
   const dept = department || user?.department;
   const token = () => localStorage.getItem("token");
