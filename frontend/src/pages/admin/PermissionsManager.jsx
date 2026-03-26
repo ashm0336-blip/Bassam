@@ -497,13 +497,14 @@ export default function PermissionsManager() {
                     const indent = (item._depth || 0) * 28;
                     const isTopLevel = (item._depth || 0) === 0 && hasChildren;
 
-                    // Pages that are view-only by nature (no editable content)
                     const href = item.href || "";
                     const isViewOnlyPage = (
-                      href === "/" ||                                           // Dashboard
-                      (isTopLevel && !href.includes("?"))                      // Department overview pages
+                      href === "/" ||
+                      href === "/dashboard" ||
+                      href === "/stats-analytics" ||
+                      href.includes("?tab=overview") ||
+                      (isTopLevel && !href.includes("?"))
                     );
-                    // Settings parent is just a container for tabs — view only
                     const isSettingsParent = href.includes("?tab=settings") && !href.includes("&sub=");
 
                     // For top-level departments: calc child summary
