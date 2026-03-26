@@ -318,7 +318,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
 
 
 // ── Main Component ────────────────────────────────────────────
-export default function EmployeesList({ department, onEmployeeAdded }) {
+export default function EmployeesList({ department, editable: editableProp, onEmployeeAdded }) {
   const { user } = useAuth();
   const { language } = useLanguage();
   const isAr = language === "ar";
@@ -373,7 +373,7 @@ export default function EmployeesList({ department, onEmployeeAdded }) {
   }, []);
 
   // Permissions
-  const canWrite = (perm) => user?.permissions?.[perm] === "write" || user?.role === "system_admin";
+  const canWrite = (perm) => user?.permissions?.[perm] === "write" || user?.role === "system_admin" || editableProp === true;
   const canRead  = (perm) => ["read","write"].includes(user?.permissions?.[perm]) || user?.role === "system_admin";
   const canAdd       = canWrite("add_employees");
   const canEdit      = canWrite("edit_employees");

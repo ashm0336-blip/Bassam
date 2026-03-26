@@ -44,9 +44,15 @@ HREF_TO_PERM_MAP = {
 def _find_href_mapping(href: str) -> dict:
     if href in HREF_TO_PERM_MAP:
         return HREF_TO_PERM_MAP[href]
+    merged = {"view": [], "edit": []}
     for pattern, mapping in HREF_TO_PERM_MAP.items():
         if pattern in href:
-            return mapping
+            merged["view"].extend(mapping.get("view", []))
+            merged["edit"].extend(mapping.get("edit", []))
+    if merged["view"] or merged["edit"]:
+        merged["view"] = list(dict.fromkeys(merged["view"]))
+        merged["edit"] = list(dict.fromkeys(merged["edit"]))
+        return merged
     return {}
 
 ALL_PERMISSIONS = {

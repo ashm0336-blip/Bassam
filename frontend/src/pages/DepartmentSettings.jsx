@@ -335,11 +335,11 @@ export default function DepartmentSettings({ department }) {
 
       {/* Tab Content */}
       <div className="transition-all duration-300">
-        {activeTab === 'employees_list' && <EmployeesList department={department} onEmployeeAdded={() => setEmployeeVersion(v => v+1)} />}
+        {activeTab === 'employees_list' && <EmployeesList department={department} editable={canEditSubTab('Staff')} onEmployeeAdded={() => setEmployeeVersion(v => v+1)} />}
         {activeTab === 'employees' && <EmployeeManagement department={department} key={`schedule-${employeeVersion}`} onScheduleChange={fetchCounts} />}
 
-        {activeTab === 'maps' && department === 'gates' && <GateMapPage />}
-        {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} />}
+        {activeTab === 'maps' && department === 'gates' && <GateMapPage editable={canEditMaps} />}
+        {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} editable={canEditMaps} />}
 
         {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement />}
 

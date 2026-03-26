@@ -38,12 +38,12 @@ const DIRECTIONS_MAP = {
   both: { label_ar: "دخول وخروج", label_en: "Both" },
 };
 
-export default function GateMapPage() {
+export default function GateMapPage({ editable: editableProp } = {}) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { toast } = useToast();
   const { canWrite } = useAuth();
-  const canEditMaps = canWrite('manage_maps');
+  const canEditMaps = canWrite('manage_maps') || editableProp === true;
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);

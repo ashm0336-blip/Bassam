@@ -20,12 +20,12 @@ import { Progress } from "@/components/ui/progress";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export default function MapManagementPage({ department = "plazas" }) {
+export default function MapManagementPage({ department = "plazas", editable: editableProp }) {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const { toast } = useToast();
   const { canWrite } = useAuth();
-  const canEditMaps = canWrite('manage_maps');
+  const canEditMaps = canWrite('manage_maps') || editableProp === true;
 
   const [floors, setFloors] = useState([]);
   const [loading, setLoading] = useState(true);
