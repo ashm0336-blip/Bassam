@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { useRealtimeRefresh } from './WebSocketContext';
+import { useRealtimeRefresh, useWsDisconnect, useWsReconnect } from './WebSocketContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -41,6 +41,8 @@ export const AuthProvider = ({ children }) => {
   const [roleChangeAlert, setRoleChangeAlert] = useState(null);
   const prevRoleRef = useRef(null);
   const prevGroupRef = useRef(undefined);
+  const disconnectWs = useWsDisconnect();
+  const reconnectWs = useWsReconnect();
 
   useEffect(() => {
     if (token) {
@@ -147,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, dept_permissions, page_permissions, permission_group_id, permission_group_name };
       prevRoleRef.current = userData.role;
       setUser(fullUser);
+      reconnectWs();
       return { success: true, must_change_pin, user: fullUser };
     } catch (error) {
       return { 
@@ -231,6 +234,7 @@ export const AuthProvider = ({ children }) => {
   useRealtimeRefresh(["force_logout"], handleForceLogout);
 
   const logout = () => {
+    disconnectWs();
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);

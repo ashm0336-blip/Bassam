@@ -136,7 +136,7 @@ async def get_ops_dashboard():
     soon = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()[:10]
     expiring = [e for e in employees if e.get("contract_end") and e["contract_end"] <= soon]
     if expiring:
-        smart_alerts.append({"type": "info", "icon": "Calendar", "message": f"{len(expiring)} موظف تنتهي عقودهم خلال 30 يوماً", "count": len(expiring), "action": "عرض الموظفين", "href": "/admin"})
+        smart_alerts.append({"type": "info", "icon": "Calendar", "message": f"{len(expiring)} موظف تنتهي عقودهم خلال 30 يوماً", "count": len(expiring), "action": "عرض الموظفين", "href": "/planning?tab=settings"})
 
     # Critical alerts
     critical = [a for a in alerts if a.get("priority") == "critical"]

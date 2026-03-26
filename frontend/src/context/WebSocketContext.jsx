@@ -3,13 +3,18 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 const WebSocketContext = createContext(null);
 const WsStatusContext = createContext(false);
 
+const WsControlContext = createContext({ disconnect: () => {}, reconnect: () => {} });
+
 export function WebSocketProvider({ children }) {
   const [lastEvent, setLastEvent] = useState(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
+  const intentionalClose = useRef(false);
 
   const connect = useCallback(() => {
+    intentionalClose.current = false;
+    if (wsRef.current && wsRef.current.readyState <= 1) return;
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = window.location.host;
@@ -30,9 +35,11 @@ export function WebSocketProvider({ children }) {
       };
 
       ws.onclose = () => {
-        console.log("[WS] Disconnected — reconnecting in 3s");
         setConnected(false);
-        reconnectTimer.current = setTimeout(connect, 3000);
+        if (!intentionalClose.current) {
+          console.log("[WS] Disconnected — reconnecting in 3s");
+          reconnectTimer.current = setTimeout(connect, 3000);
+        }
       };
 
       ws.onerror = () => {
@@ -41,25 +48,55 @@ export function WebSocketProvider({ children }) {
 
       wsRef.current = ws;
     } catch {
-      reconnectTimer.current = setTimeout(connect, 5000);
+      if (!intentionalClose.current) {
+        reconnectTimer.current = setTimeout(connect, 5000);
+      }
     }
   }, []);
+
+  const disconnectWs = useCallback(() => {
+    intentionalClose.current = true;
+    clearTimeout(reconnectTimer.current);
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    setConnected(false);
+  }, []);
+
+  const reconnectWs = useCallback(() => {
+    disconnectWs();
+    setTimeout(() => connect(), 100);
+  }, [disconnectWs, connect]);
 
   useEffect(() => {
     connect();
     return () => {
+      intentionalClose.current = true;
       clearTimeout(reconnectTimer.current);
       if (wsRef.current) wsRef.current.close();
     };
   }, [connect]);
 
   return (
-    <WsStatusContext.Provider value={connected}>
-      <WebSocketContext.Provider value={lastEvent}>
-        {children}
-      </WebSocketContext.Provider>
-    </WsStatusContext.Provider>
+    <WsControlContext.Provider value={{ disconnect: disconnectWs, reconnect: reconnectWs }}>
+      <WsStatusContext.Provider value={connected}>
+        <WebSocketContext.Provider value={lastEvent}>
+          {children}
+        </WebSocketContext.Provider>
+      </WsStatusContext.Provider>
+    </WsControlContext.Provider>
   );
+}
+
+export function useWsDisconnect() {
+  const { disconnect } = useContext(WsControlContext);
+  return disconnect;
+}
+
+export function useWsReconnect() {
+  const { reconnect } = useContext(WsControlContext);
+  return reconnect;
 }
 
 /**

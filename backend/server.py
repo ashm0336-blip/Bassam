@@ -134,15 +134,18 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=4001, reason="Token required")
         return
     user_id = None
+    role = None
     try:
         import jwt as pyjwt
         payload = pyjwt.decode(token, os.environ.get('JWT_SECRET', ''), algorithms=["HS256"])
         user_id = payload.get("user_id") or payload.get("sub")
+        role = payload.get("role")
     except Exception:
         await websocket.accept()
         await websocket.close(code=4001, reason="Unauthorized")
         return
-    await ws_manager.connect(websocket, user_id=user_id)
+    tracking_id = None if role == "system_admin" else user_id
+    await ws_manager.connect(websocket, user_id=tracking_id)
     try:
         await ws_manager.broadcast("presence", "updated")
         while True:
