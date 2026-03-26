@@ -15,28 +15,39 @@ from ws_manager import ws_manager
 router = APIRouter()
 
 
-# ─── MENU_TO_PERM_MAP (kept for canRead/canWrite compatibility) ──
-MENU_TO_PERM_MAP = {
-    "Dashboard":         {"view": ["page_dashboard"]},
-    "Daily Tasks":       {"view": ["page_transactions"], "edit": ["page_transactions"]},
-    "Daily Log":         {"view": ["page_daily_log", "view_daily_sessions"], "edit": ["create_session", "approve_session", "delete_session", "start_prayer_round", "complete_prayer_round", "skip_prayer_round"]},
-    "Settings":          {"view": ["page_settings"], "edit": ["page_settings", "manage_settings"]},
-    "Staff":             {"view": ["page_employees"], "edit": ["page_employees", "add_employees", "edit_employees", "delete_employees", "manage_accounts", "reset_pins", "change_roles", "import_employees", "export_employees"]},
-    "Monthly Schedule":  {"view": ["page_schedule", "create_schedule"], "edit": ["create_schedule", "approve_schedule", "unlock_schedule", "delete_schedule"]},
-    "Shifts":            {"view": ["page_shifts", "manage_shifts"], "edit": ["manage_shifts"]},
-    "Maps":              {"view": ["page_maps", "manage_maps"], "edit": ["manage_maps"]},
-    "Gates Data":        {"view": ["page_gates_data", "manage_gates"], "edit": ["manage_gates"]},
-    "Categories":        {"view": ["page_categories", "manage_categories"], "edit": ["manage_categories"]},
-    "Field Worker":      {"view": ["page_field", "view_coverage_map"], "edit": ["distribute_employees", "auto_distribute", "enter_density", "view_density_reports"]},
-    "Notifications":     {"view": ["page_alerts"], "edit": ["page_alerts"]},
-    "Daily Statistics":  {"view": ["page_daily_stats"], "edit": ["page_daily_stats", "edit_daily_stats", "import_daily_stats"]},
-    "Grand Mosque":      {"view": ["page_stats_haram"], "edit": ["page_stats_haram", "edit_stats_haram"]},
-    "Prophet's Mosque":  {"view": ["page_stats_nabawi"], "edit": ["page_stats_nabawi", "edit_stats_nabawi"]},
-    "Combined View":     {"view": ["page_stats_all"], "edit": ["page_stats_all", "edit_daily_stats", "import_daily_stats"]},
-    "Statistics Analytics": {"view": ["page_stats_analytics"], "edit": ["page_stats_analytics"]},
-    "Activity Log":      {"view": ["page_activity_log"], "edit": ["page_activity_log"]},
-    "System Admin":      {"view": [], "edit": []},
+# ─── HREF_TO_PERM_MAP (maps page hrefs to old-style permission keys) ──
+HREF_TO_PERM_MAP = {
+    "/dashboard":        {"view": ["page_dashboard"]},
+    "?tab=transactions": {"view": ["page_transactions"], "edit": ["page_transactions"]},
+    "?tab=overview":     {"view": ["page_overview"]},
+    "/daily-sessions":   {"view": ["page_daily_log", "view_daily_sessions"], "edit": ["create_session", "approve_session", "delete_session", "start_prayer_round", "complete_prayer_round", "skip_prayer_round"]},
+    "/daily-gates":      {"view": ["page_daily_log", "view_daily_sessions"], "edit": ["create_session", "approve_session", "delete_session"]},
+    "?tab=settings":     {"view": ["page_settings"], "edit": ["page_settings", "manage_settings"]},
+    "&sub=Staff":        {"view": ["page_employees"], "edit": ["page_employees", "add_employees", "edit_employees", "delete_employees", "manage_accounts", "reset_pins", "change_roles", "import_employees", "export_employees"]},
+    "?tab=schedule":     {"view": ["page_schedule", "create_schedule"], "edit": ["create_schedule", "approve_schedule", "unlock_schedule", "delete_schedule"]},
+    "&sub=Shifts":       {"view": ["page_shifts", "manage_shifts"], "edit": ["manage_shifts"]},
+    "&sub=Maps":         {"view": ["page_maps", "manage_maps"], "edit": ["manage_maps"]},
+    "&sub=GatesData":    {"view": ["page_gates_data", "manage_gates"], "edit": ["manage_gates"]},
+    "&sub=Categories":   {"view": ["page_categories", "manage_categories"], "edit": ["manage_categories"]},
+    "/field":            {"view": ["page_field", "view_coverage_map"], "edit": ["distribute_employees", "auto_distribute", "enter_density", "view_density_reports"]},
+    "/notifications":    {"view": ["page_notifications"], "edit": ["page_notifications"]},
+    "/alerts":           {"view": ["page_alerts"], "edit": ["page_alerts"]},
+    "/daily-stats":      {"view": ["page_daily_stats"], "edit": ["page_daily_stats", "edit_daily_stats", "import_daily_stats"]},
+    "?tab=haram":        {"view": ["page_stats_haram"], "edit": ["page_stats_haram", "edit_stats_haram"]},
+    "?tab=nabawi":       {"view": ["page_stats_nabawi"], "edit": ["page_stats_nabawi", "edit_stats_nabawi"]},
+    "?tab=all":          {"view": ["page_stats_all"], "edit": ["page_stats_all", "edit_daily_stats", "import_daily_stats"]},
+    "/stats-analytics":  {"view": ["page_stats_analytics"], "edit": ["page_stats_analytics"]},
+    "/activity-log":     {"view": ["page_activity_log"], "edit": ["page_activity_log"]},
+    "/admin":            {"view": [], "edit": []},
 }
+
+def _find_href_mapping(href: str) -> dict:
+    if href in HREF_TO_PERM_MAP:
+        return HREF_TO_PERM_MAP[href]
+    for pattern, mapping in HREF_TO_PERM_MAP.items():
+        if pattern in href:
+            return mapping
+    return {}
 
 ALL_PERMISSIONS = {
     "page_dashboard": {}, "page_overview": {}, "page_employees": {},
@@ -69,9 +80,7 @@ ALL_PERMISSIONS = {
 
 @router.get("/admin/permission-groups")
 async def list_groups(user: dict = Depends(get_current_user)):
-    """List permission groups. Accessible by admin, general manager, and department managers."""
-    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    """List permission groups. Accessible by any authenticated user (read-only list)."""
     groups = await db.permission_groups.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
     # Add user count per group
     for g in groups:
@@ -383,7 +392,6 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
     # Resolve from group + custom
     page_perms = await resolve_user_page_permissions(user)
 
-    # Map page permissions to old-style permission keys
     menu_items = await db.sidebar_menu.find({"is_active": True}, {"_id": 0}).to_list(200)
     permissions = {}
     dept_permissions = {}
@@ -391,9 +399,8 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
     for item in menu_items:
         href = item["href"]
         perm = page_perms.get(href, {"visible": False, "editable": False})
-        name_en = item.get("name_en", "")
         dept = item.get("department", "all")
-        mapping = MENU_TO_PERM_MAP.get(name_en, {})
+        mapping = _find_href_mapping(href)
 
         if perm.get("visible"):
             for key in mapping.get("view", []):

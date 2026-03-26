@@ -502,6 +502,7 @@ export default function PermissionsManager() {
                       href === "/" ||
                       href === "/dashboard" ||
                       href === "/stats-analytics" ||
+                      href === "/activity-log" ||
                       href.includes("?tab=overview") ||
                       (isTopLevel && !href.includes("?"))
                     );

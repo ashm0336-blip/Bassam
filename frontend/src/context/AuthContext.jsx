@@ -220,8 +220,15 @@ export const AuthProvider = ({ children }) => {
     } catch {}
   }, [token]);
 
-  // Auto-refresh permissions when admin changes them
   useRealtimeRefresh(["permissions"], refreshPermissions);
+
+  const handleForceLogout = useCallback((data) => {
+    if (data?.user_id === user?.id) {
+      logout();
+      window.location.href = '/login';
+    }
+  }, [user?.id]);
+  useRealtimeRefresh(["force_logout"], handleForceLogout);
 
   const logout = () => {
     localStorage.removeItem('token');

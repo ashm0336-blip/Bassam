@@ -71,7 +71,7 @@ def _sidebar_items():
         for sub_key, sub_ar, sub_en, sub_icon, sub_order in [
             ("Staff", "الموظفون", "Staff", "Users", 1),
             ("Shifts", "الورديات", "Shifts", "Clock", 2),
-            ("Maps", "الخرائط", "Maps", "Layers", 3),
+            ("Maps", "المواقع", "Sites", "Layers", 3),
         ]:
             add(f"{bh}?tab=settings&sub={sub_key}", parent_href=settings_href,
                 name_ar=sub_ar, name_en=sub_en, icon=sub_icon, order=sub_order, department=dk)
@@ -99,6 +99,8 @@ def _sidebar_items():
         icon="TrendingUp", order=4, department="all")
     add("/notifications", name_ar="الإشعارات", name_en="Notifications",
         icon="Bell", order=10, department="all", is_secondary=True, sidebar_hidden=True)
+    add("/alerts", name_ar="التنبيهات", name_en="Alerts",
+        icon="AlertTriangle", order=10, department="all", is_secondary=True, sidebar_hidden=True)
     add("/admin", name_ar="إدارة النظام", name_en="System Admin",
         icon="Shield", order=11, department="system_admin", is_secondary=True, admin_only=True)
 
@@ -330,6 +332,7 @@ def _build_dept_pages(dept_key):
         "/daily-stats?tab=all": {"visible": True, "editable": True},
         "/stats-analytics": {"visible": True, "editable": False},
         "/notifications": {"visible": True, "editable": False},
+        "/alerts": {"visible": True, "editable": False},
         "/field": {"visible": True, "editable": True},
         "/activity-log": {"visible": True, "editable": False},
     }
@@ -342,11 +345,17 @@ def _build_dept_pages(dept_key):
     return pages
 
 
-def _build_all_pages_visible(editable=False):
+def _build_all_pages_visible(editable=False, include_admin=False):
     """Build page_permissions with ALL pages visible."""
     items = _sidebar_items()
-    return {item["href"]: {"visible": True, "editable": editable} for item in items
-            if item.get("department") != "system_admin" and not item.get("admin_only")}
+    result = {}
+    for item in items:
+        if item.get("admin_only") and not include_admin:
+            continue
+        if item.get("department") == "system_admin" and not include_admin:
+            continue
+        result[item["href"]] = {"visible": True, "editable": editable}
+    return result
 
 
 DEFAULT_GROUPS = [
@@ -429,7 +438,7 @@ async def _seed_default_permission_groups(db):
         # Resolve page_permissions placeholder
         pp = grp["page_permissions"]
         if pp == "_all_editable":
-            pp = _build_all_pages_visible(editable=True)
+            pp = _build_all_pages_visible(editable=True, include_admin=True)
         elif pp == "_field_only":
             pp = {
                 "/": {"visible": True, "editable": False},
@@ -461,7 +470,7 @@ async def _seed_default_permission_groups(db):
         # Resolve what the default page_permissions should be
         pp_template = grp_def["page_permissions"]
         if pp_template == "_all_editable":
-            default_pp = _build_all_pages_visible(editable=True)
+            default_pp = _build_all_pages_visible(editable=True, include_admin=True)
         elif pp_template == "_field_only":
             default_pp = {
                 "/": {"visible": True, "editable": False},

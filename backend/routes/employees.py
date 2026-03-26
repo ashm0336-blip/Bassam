@@ -7,6 +7,7 @@ from database import db
 from auth import get_current_user, require_admin, log_activity, check_department_access, hash_password
 from models import EmployeeCreate, EmployeeUpdate, MonthlyScheduleCreate, ScheduleAssignmentUpdate
 from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
+from ws_manager import ws_manager
 
 router = APIRouter()
 
@@ -320,6 +321,7 @@ async def freeze_employee_account(employee_id: str, user: dict = Depends(get_cur
         {"$set": {"account_status": "frozen", "is_active": False}}
     )
     await log_activity("account_frozen", user, emp["name"], f"تجميد حساب: {emp['name']}")
+    await ws_manager.broadcast({"type": "force_logout", "user_id": emp["user_id"], "reason": "account_frozen"})
     return {"message": f"تم تجميد حساب {emp['name']} 🔒"}
 
 
@@ -337,6 +339,7 @@ async def terminate_employee_account(employee_id: str, user: dict = Depends(get_
         {"$set": {"account_status": "terminated", "is_active": False}}
     )
     await log_activity("account_terminated", user, emp["name"], f"إنهاء خدمة: {emp['name']}")
+    await ws_manager.broadcast({"type": "force_logout", "user_id": emp["user_id"], "reason": "account_terminated"})
     return {"message": f"تم إنهاء خدمة {emp['name']} — الحساب مغلق نهائياً 🔴"}
 
 

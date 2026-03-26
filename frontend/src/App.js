@@ -138,7 +138,7 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         <Route path="notifications" element={
-          <PermissionProtectedRoute permission="page_alerts">
+          <PermissionProtectedRoute permission="page_notifications">
             <NotificationsPage />
           </PermissionProtectedRoute>
         } />

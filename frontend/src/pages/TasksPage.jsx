@@ -178,10 +178,20 @@ function TaskCard({ task, canManage, onEdit, onDelete, onStatus }) {
             </DropdownMenu>
           )}
           {!canManage && !isDone && (
-            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
-              onClick={()=>onStatus(task.id, task.status==="pending"?"in_progress":"done")}>
-              {task.status==="pending"?"بدء":"إنهاء"}
-            </Button>
+            <>
+              {task.status === "pending" && (
+                <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-blue-300 text-blue-600 hover:bg-blue-50"
+                  onClick={()=>onStatus(task.id, "in_progress")}>
+                  جاري العمل
+                </Button>
+              )}
+              {task.status === "in_progress" && (
+                <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                  onClick={()=>onStatus(task.id, "done")}>
+                  إنهاء
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -248,10 +258,10 @@ function CalendarCell({ date, data, isSelected, isToday, isFuture, onClick, onAd
 // ── Main Component ─────────────────────────────────────────────
 export default function TasksPage({ department }) {
   const { language } = useLanguage();
-  const { user, hasPermission } = useAuth();
+  const { user, hasPermission, canEditPage } = useAuth();
   const isAr = language === "ar";
-  // Use permission-based check: user can manage tasks if they have write access to transactions page
   const isManager = user?.role === "system_admin" || hasPermission("page_transactions", "write");
+  const canInteract = isManager || hasPermission("page_transactions", "write");
 
   const dept = department || user?.department;
   const token = () => localStorage.getItem("token");
@@ -882,10 +892,20 @@ export default function TasksPage({ department }) {
                         <span className="text-[10px] text-muted-foreground">{(t.assignees_info||[]).map(a=>a.name).join("، ")}</span>
                       </div>
                       {!isManager && t.status!=="done" && (
-                        <Button size="sm" variant="outline" className="h-7 text-[11px]"
-                          onClick={()=>handleStatus(t.id,t.status==="pending"?"in_progress":"done")}>
-                          {t.status==="pending"?"بدء":"إنهاء"}
-                        </Button>
+                        <>
+                          {t.status === "pending" && (
+                            <Button size="sm" variant="outline" className="h-7 text-[11px] border-blue-300 text-blue-600 hover:bg-blue-50"
+                              onClick={()=>handleStatus(t.id,"in_progress")}>
+                              جاري العمل
+                            </Button>
+                          )}
+                          {t.status === "in_progress" && (
+                            <Button size="sm" variant="outline" className="h-7 text-[11px] border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                              onClick={()=>handleStatus(t.id,"done")}>
+                              إنهاء
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -1003,10 +1023,18 @@ export default function TasksPage({ department }) {
                             )}
                             {!isManager && t.status!=="done" && (
                               <TableCell className="text-center">
-                                <Button size="sm" variant="outline" className="h-7 text-[11px]"
-                                  onClick={()=>handleStatus(t.id,t.status==="pending"?"in_progress":"done")}>
-                                  {t.status==="pending"?"بدء":"إنهاء"}
-                                </Button>
+                                {t.status === "pending" && (
+                                  <Button size="sm" variant="outline" className="h-7 text-[11px] border-blue-300 text-blue-600 hover:bg-blue-50"
+                                    onClick={()=>handleStatus(t.id,"in_progress")}>
+                                    جاري العمل
+                                  </Button>
+                                )}
+                                {t.status === "in_progress" && (
+                                  <Button size="sm" variant="outline" className="h-7 text-[11px] border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                                    onClick={()=>handleStatus(t.id,"done")}>
+                                    إنهاء
+                                  </Button>
+                                )}
                               </TableCell>
                             )}
                           </TableRow>

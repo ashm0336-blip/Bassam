@@ -452,13 +452,6 @@ export default function DepartmentOverview({ department = "planning" }) {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {cfg.sessions_href && (
-              <Button onClick={() => navigate(cfg.sessions_href)} size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white border-0 font-cairo font-semibold text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
-                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 ml-1"/>
-                {isAr?"السجل":"Daily Log"}
-              </Button>
-            )}
           </div>
         </div>
       </div>

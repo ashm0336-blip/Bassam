@@ -40,12 +40,26 @@ The startup script:
 - Email: `admin@crowd.sa`
 - Password: `admin123`
 
+## Permissions System
+
+- Group-based RBAC with `page_permissions: {href: {visible, editable}}`
+- Resolution priority: system_admin > custom_permissions > group > default hidden
+- `canViewPage(href)` / `canEditPage(href)` on frontend (AuthContext)
+- `require_page_permission` decorator on backend
+- `HREF_TO_PERM_MAP` in `backend/routes/perm_groups.py` maps hrefs to legacy permission keys
+- Settings sub-tabs use `canViewSubTab('Staff')` / `canEditSubTab('Shifts')` etc.
+- `/notifications` and `/alerts` have separate permissions (`page_notifications` / `page_alerts`)
+- Force-logout on account freeze/terminate via WebSocket broadcast
+- General manager (`general_manager` role) can access admin page (`/admin`)
+
 ## Key Files
 
 - `start.sh` - Main startup script (dev) — starts MongoDB, backend, then frontend
 - `backend/server.py` - FastAPI app entry point (WebSocket + rate limiting support)
 - `backend/database.py` - MongoDB connection
 - `backend/ws_manager.py` - WebSocket manager for real-time features
+- `backend/seed_sidebar.py` - Sidebar menu and permission group seeding (runs on startup)
+- `backend/routes/perm_groups.py` - Permission groups CRUD + resolution logic
 - `frontend/craco.config.js` - Build config with dev server proxy and allowedHosts
 - `frontend/.env` - Frontend environment variables
 - `frontend/src/pages/EmployeeProfilePage.jsx` - Profile page with tabs (personal info, work info, activity log, available pages)

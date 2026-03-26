@@ -90,10 +90,14 @@ function SettingsTabButton({ icon: Icon, label, count, isActive, onClick, theme 
 
 export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
-  const { user, isReadOnly, canWrite, canRead } = useAuth();
-  const canEditShifts = canWrite('manage_shifts');
-  const canEditMaps = canWrite('manage_maps');
-  const canEditSettings = canWrite('manage_settings');
+  const { user, isReadOnly, canWrite, canRead, canViewPage, canEditPage } = useAuth();
+  const DEPT_PATHS = { planning: '/planning', haram_map: '/haram-map', gates: '/gates', plazas: '/plazas', crowd_services: '/crowd-services', mataf: '/mataf' };
+  const deptHref = DEPT_PATHS[department] || '';
+  const canViewSubTab = (sub) => canViewPage(`${deptHref}?tab=settings&sub=${sub}`);
+  const canEditSubTab = (sub) => canEditPage(`${deptHref}?tab=settings&sub=${sub}`);
+  const canEditShifts = canEditSubTab('Shifts');
+  const canEditMaps = canEditSubTab('Maps');
+  const canEditSettings = canEditPage(`${deptHref}?tab=settings`);
   const hasDataTab = department === 'gates' || department === 'plazas';
   const [activeTab, setActiveTab] = useState('employees_list');
   const [loading, setLoading] = useState(true);
@@ -268,21 +272,20 @@ export default function DepartmentSettings({ department }) {
     }
   };
 
-  // Build tabs list — only show tabs the user has permission to see
   const tabs = [];
-  if (canRead('page_employees') || canRead('add_employees') || canRead('edit_employees')) {
+  if (canViewSubTab('Staff')) {
     tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون' : 'Staff', icon: Users, count: counts.employees });
   }
-  if (canRead('manage_shifts') || canRead('page_shifts')) {
+  if (canViewSubTab('Shifts')) {
     tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
   }
-  if (canRead('manage_maps') || canRead('page_maps')) {
-    tabs.push({ id: 'maps', label: language === 'ar' ? 'الخرائط' : 'Maps', icon: Layers, count: counts.maps });
+  if (canViewSubTab('Maps')) {
+    tabs.push({ id: 'maps', label: language === 'ar' ? 'المواقع' : 'Sites', icon: Layers, count: counts.maps });
   }
-  if (department === 'gates' && (canRead('manage_gates') || canRead('page_gates_data'))) {
+  if (department === 'gates' && canViewSubTab('GatesData')) {
     tabs.push({ id: 'gates_data', label: language === 'ar' ? 'الأبواب' : 'Gates', icon: DoorOpen, count: counts.gates });
   }
-  if ((department === 'plazas' || department === 'haram_map') && (canRead('manage_categories') || canRead('page_categories'))) {
+  if ((department === 'plazas' || department === 'haram_map') && canViewSubTab('Categories')) {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
   }
 

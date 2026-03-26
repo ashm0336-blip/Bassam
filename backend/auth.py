@@ -42,6 +42,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
         if not user:
             raise HTTPException(status_code=401, detail="المستخدم غير موجود")
+        if not user.get("is_active", True) or user.get("account_status") in ("frozen", "terminated"):
+            raise HTTPException(status_code=401, detail="تم تعليق حسابك — تواصل مع مديرك")
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="انتهت صلاحية الجلسة")
