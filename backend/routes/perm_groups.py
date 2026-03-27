@@ -469,11 +469,13 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
                     dept_permissions[dept_key] = "read"
             if perm.get("editable"):
                 for key in mapping.get("edit", []):
-                    permissions[key] = "write"
                     dept_permissions[f"{dept}:{key}"] = "write"
+                    if permissions.get(key) != "write":
+                        permissions[key] = "write"
                 for key in mapping.get("view", []):
-                    permissions[key] = "write"
                     dept_permissions[f"{dept}:{key}"] = "write"
+                    if permissions.get(key) != "write":
+                        permissions[key] = "write"
 
     # page_permissions: direct href-based visibility+editability for frontend
     page_vis = {}

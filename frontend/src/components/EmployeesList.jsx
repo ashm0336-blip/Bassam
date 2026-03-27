@@ -380,9 +380,22 @@ export default function EmployeesList({ department, editable: editableProp, onEm
     } catch { setNationalIdStatus(null); }
   }, []);
 
-  // Permissions
-  const canWrite = (perm) => user?.permissions?.[perm] === "write" || user?.role === "system_admin" || editableProp === true;
-  const canRead  = (perm) => ["read","write"].includes(user?.permissions?.[perm]) || user?.role === "system_admin";
+  // Permissions – dept-scoped: editableProp from parent is the source of truth for this department
+  const canWrite = (perm) => {
+    if (user?.role === "system_admin") return true;
+    if (editableProp !== true) return false;
+    const dp = user?.dept_permissions || {};
+    const deptLevel = dp[`${department}:${perm}`];
+    if (deptLevel === "write") return true;
+    return user?.permissions?.[perm] === "write";
+  };
+  const canRead  = (perm) => {
+    if (user?.role === "system_admin") return true;
+    const dp = user?.dept_permissions || {};
+    const deptLevel = dp[`${department}:${perm}`];
+    if (deptLevel === "read" || deptLevel === "write") return true;
+    return ["read","write"].includes(user?.permissions?.[perm]);
+  };
   const canAdd       = canWrite("add_employees");
   const canEdit      = canWrite("edit_employees");
   const canDelete    = canWrite("delete_employees");
