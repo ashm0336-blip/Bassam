@@ -142,7 +142,7 @@ async def list_group_members(group_id: str, user: dict = Depends(get_current_use
         query["department"] = user.get("department")
     users_in_group = await db.users.find(
         query,
-        {"_id": 0, "id": 1, "name": 1, "name_ar": 1, "role": 1, "department": 1, "employee_id": 1}
+        {"_id": 0, "id": 1, "name": 1, "name_ar": 1, "role": 1, "department": 1, "employee_id": 1, "custom_permissions": 1}
     ).to_list(200)
     for u in users_in_group:
         if u.get("employee_id"):
@@ -152,6 +152,8 @@ async def list_group_members(group_id: str, user: dict = Depends(get_current_use
                 u["job_title"] = emp.get("job_title", "")
         if not u.get("employee_name"):
             u["employee_name"] = u.get("name_ar") or u.get("name") or ""
+        custom = u.pop("custom_permissions", {})
+        u["custom_count"] = len(custom) if custom else 0
     return users_in_group
 
 
@@ -354,9 +356,17 @@ async def reset_user_custom_permissions(user_id: str, admin: dict = Depends(get_
     """Reset (clear) all custom permission overrides for a user."""
     if not await _is_gm_or_admin(admin):
         raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "custom_permissions": 1})
+    if admin.get("role") != "system_admin" and user_id == admin.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحياتك بنفسك")
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "custom_permissions": 1, "role": 1, "permission_group_id": 1})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if admin.get("role") != "system_admin":
+        from routes.employees import _get_effective_rank
+        caller_rank = await _get_effective_rank(admin)
+        target_rank = await _get_effective_rank(target)
+        if target_rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحيات شخص بنفس رتبتك أو أعلى")
     old_count = len(target.get("custom_permissions", {}))
     await db.users.update_one({"id": user_id}, {"$set": {"custom_permissions": {}}})
     await log_activity("إعادة ضبط صلاحيات فردية", admin, target.get("name", user_id),

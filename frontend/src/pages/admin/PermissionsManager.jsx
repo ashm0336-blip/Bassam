@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   Shield, ShieldCheck, Save, Loader2,
   Eye, EyeOff, Pencil, Lock, ChevronDown, Trash2, Edit, Plus, X,
-  ExternalLink, Users as UsersIcon,
+  ExternalLink, Users as UsersIcon, AlertTriangle, RotateCcw,
   LayoutDashboard, Map, ClipboardList, LayoutGrid, DoorOpen,
   Users, Circle, FileText, Bell, Settings as SettingsIcon,
   Calendar, BarChart3, PieChart, TrendingUp, Activity,
@@ -117,6 +117,7 @@ export default function PermissionsManager({ department: deptFilter }) {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState([]);
   const [assignLoading, setAssignLoading] = useState(false);
+  const [resetCustomDialog, setResetCustomDialog] = useState(null);
 
   const fetchMembers = useCallback(async (groupId) => {
     if (!groupId) { setMembers([]); return; }
@@ -201,6 +202,14 @@ export default function PermissionsManager({ department: deptFilter }) {
       fetchMembers(activeGroupId);
       fetchAll();
     } catch (err) { toast.error(err.response?.data?.detail || "فشل الإزالة"); }
+  };
+
+  const resetCustomPermissions = async (userId, name) => {
+    try {
+      const res = await axios.delete(`${API}/admin/users/${userId}/custom-permissions`, headers());
+      toast.success(`تم مسح الصلاحيات الفردية لـ ${name}`);
+      fetchMembers(activeGroupId);
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل إعادة الضبط"); }
   };
 
   // ── Active group ──
@@ -739,16 +748,40 @@ export default function PermissionsManager({ department: deptFilter }) {
                     </div>
                   ) : (
                     <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {members.some(m => m.custom_count > 0) && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 mb-1">
+                          <p className="text-[10px] text-amber-700 font-bold flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                            بعض الموظفين لديهم صلاحيات فردية تتجاوز صلاحيات المجموعة
+                          </p>
+                        </div>
+                      )}
                       {members.map(m => (
-                        <div key={m.id} className="flex items-center justify-between bg-muted/20 rounded-lg px-2.5 py-1.5 group">
+                        <div key={m.id} className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 group ${m.custom_count > 0 ? 'bg-amber-50/50 border border-amber-100' : 'bg-muted/20'}`}>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-bold truncate">{m.employee_name}</p>
+                            <p className="text-[11px] font-bold truncate flex items-center gap-1">
+                              {m.employee_name}
+                              {m.custom_count > 0 && (
+                                <span className="text-[8px] bg-amber-100 text-amber-700 rounded px-1 py-0.5 font-medium flex-shrink-0">
+                                  {m.custom_count} فردية
+                                </span>
+                              )}
+                            </p>
                             {m.job_title && <p className="text-[9px] text-muted-foreground truncate">{m.job_title}</p>}
                           </div>
-                          <button onClick={() => removeUserFromGroup(m.id)}
-                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-1">
-                            <X className="w-3 h-3" />
-                          </button>
+                          <div className="flex items-center gap-0.5">
+                            {m.custom_count > 0 && (
+                              <button onClick={() => setResetCustomDialog({ id: m.id, name: m.employee_name, count: m.custom_count })}
+                                className="opacity-0 group-hover:opacity-100 text-amber-500 hover:text-amber-700 transition-opacity p-1"
+                                title="إعادة ضبط — مسح الصلاحيات الفردية والاعتماد على المجموعة فقط">
+                                <RotateCcw className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button onClick={() => removeUserFromGroup(m.id)}
+                              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-1">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -973,6 +1006,28 @@ export default function PermissionsManager({ department: deptFilter }) {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!resetCustomDialog} onOpenChange={() => setResetCustomDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-cairo flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" /> إعادة ضبط الصلاحيات الفردية
+            </DialogTitle>
+            <DialogDescription>
+              سيتم مسح {resetCustomDialog?.count} صلاحية فردية لـ "{resetCustomDialog?.name}" والاعتماد على صلاحيات المجموعة فقط. هذا الإجراء لا يمكن التراجع عنه.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetCustomDialog(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={async () => {
+              await resetCustomPermissions(resetCustomDialog.id, resetCustomDialog.name);
+              setResetCustomDialog(null);
+            }}>
+              <RotateCcw className="w-4 h-4 ml-1" /> إعادة ضبط
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
