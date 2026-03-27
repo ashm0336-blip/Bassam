@@ -528,15 +528,15 @@ export default function EmployeesList({ department, editable: editableProp, onEm
 
   const toggleCustomPerm = (href, field) => {
     setCustomPerms(prev => {
-      const current = prev[href] || {};
-      const updated = { ...current };
+      const current = prev[href] || { visible: false, editable: false };
+      const updated = { visible: !!current.visible, editable: !!current.editable };
       if (field === "visible") {
         updated.visible = !updated.visible;
         if (!updated.visible) updated.editable = false;
       } else {
         updated.editable = !updated.editable;
+        if (updated.editable) updated.visible = true;
       }
-      // If both false, remove the override
       if (!updated.visible && !updated.editable) {
         const next = { ...prev };
         delete next[href];

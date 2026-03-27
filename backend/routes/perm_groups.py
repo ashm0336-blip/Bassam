@@ -418,19 +418,18 @@ async def resolve_user_page_permissions(user: dict) -> Dict[str, dict]:
     # Get custom overrides
     custom = user.get("custom_permissions", {})
 
-    # Merge: custom overrides group
+    # Merge: custom REPLACES group for that href (not partial merge)
     all_items = await db.sidebar_menu.find({"is_active": True}, {"_id": 0, "href": 1}).to_list(200)
     result = {}
     for item in all_items:
         href = item["href"]
-        # Default: hidden
-        perm = {"visible": False, "editable": False}
-        # Apply group
-        if href in group_perms:
-            perm = {**perm, **group_perms[href]}
-        # Apply custom override (takes priority)
         if href in custom:
-            perm = {**perm, **custom[href]}
+            c = custom[href]
+            perm = {"visible": bool(c.get("visible")), "editable": bool(c.get("editable"))}
+        elif href in group_perms:
+            perm = {"visible": bool(group_perms[href].get("visible")), "editable": bool(group_perms[href].get("editable"))}
+        else:
+            perm = {"visible": False, "editable": False}
         result[href] = perm
 
     return result
