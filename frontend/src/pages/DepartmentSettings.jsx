@@ -31,6 +31,7 @@ import PermissionsManager from "@/pages/admin/PermissionsManager";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DEPT_THEMES = {
+  general_admin:  { color: "slate",   accent: "#334155", light: "#f8fafc", border: "#cbd5e1" },
   gates:          { color: "emerald", accent: "#047857", light: "#ecfdf5", border: "#a7f3d0" },
   plazas:         { color: "blue",    accent: "#1d4ed8", light: "#eff6ff", border: "#bfdbfe" },
   planning:       { color: "violet",  accent: "#6d28d9", light: "#f5f3ff", border: "#c4b5fd" },
@@ -40,6 +41,7 @@ const DEPT_THEMES = {
 };
 
 const DEPT_NAMES = {
+  general_admin:  { ar: "الإدارة العامة",         en: "General Administration" },
   gates:          { ar: "إدارة الأبواب",         en: "Gates Management" },
   plazas:         { ar: "إدارة الساحات",           en: "Plazas Management" },
   planning:       { ar: "تخطيط خدمات الحشود",    en: "Crowd Planning" },
@@ -92,7 +94,7 @@ function SettingsTabButton({ icon: Icon, label, count, isActive, onClick, theme 
 export default function DepartmentSettings({ department }) {
   const { language } = useLanguage();
   const { user, isReadOnly, canWrite, canRead, canViewPage, canEditPage } = useAuth();
-  const DEPT_PATHS = { planning: '/planning', haram_map: '/haram-map', gates: '/gates', plazas: '/plazas', crowd_services: '/crowd-services', mataf: '/mataf' };
+  const DEPT_PATHS = { general_admin: '/general-admin', planning: '/planning', haram_map: '/haram-map', gates: '/gates', plazas: '/plazas', crowd_services: '/crowd-services', mataf: '/mataf' };
   const deptHref = DEPT_PATHS[department] || '';
   const canViewSubTab = (sub) => canViewPage(`${deptHref}?tab=settings&sub=${sub}`);
   const canEditSubTab = (sub) => canEditPage(`${deptHref}?tab=settings&sub=${sub}`);

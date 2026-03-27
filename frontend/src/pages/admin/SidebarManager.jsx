@@ -100,6 +100,7 @@ const AVAILABLE_ICONS = [
 
 const DEPARTMENTS = [
   { value: "all", label_ar: "الكل", label_en: "Everyone" },
+  { value: "general_admin", label_ar: "الإدارة العامة", label_en: "General Administration" },
   { value: "planning", label_ar: "إدارة التخطيط", label_en: "Planning" },
   { value: "haram_map", label_ar: "إدارة المصليات", label_en: "Prayer Areas" },
   { value: "plazas", label_ar: "إدارة الساحات", label_en: "Plazas Management" },

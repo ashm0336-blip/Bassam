@@ -67,6 +67,7 @@ const ROLES = {
 };
 
 const DEPARTMENTS = {
+  general_admin: { ar: "الإدارة العامة", en: "General Administration" },
   planning: { ar: "تخطيط خدمات الحشود", en: "Crowd Planning" },
   plazas: { ar: "إدارة الساحات", en: "Plazas Management" },
   gates: { ar: "إدارة الأبواب", en: "Gates Management" },

@@ -14,6 +14,7 @@ export const ROLE_LABELS = {
 };
 
 export const DEPT_LABELS = {
+  general_admin: { ar: 'الإدارة العامة', en: 'General Administration' },
   planning: { ar: 'إدارة التخطيط', en: 'Planning' },
   haram_map: { ar: 'إدارة المصليات', en: 'Prayer Areas' },
   gates: { ar: 'إدارة الأبواب', en: 'Gates' },
@@ -247,6 +248,7 @@ export const AuthProvider = ({ children }) => {
   const isGeneralManager = () => user?.role === 'general_manager' || user?.role === 'system_admin';
 
   const DEPT_PATH_MAP = {
+    general_admin: '/general-admin',
     planning: '/planning',
     haram_map: '/haram-map',
     gates: '/gates',

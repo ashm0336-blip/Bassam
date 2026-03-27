@@ -34,6 +34,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 // ── Constants ────────────────────────────────────────────────────
 const DEPARTMENTS = {
+  general_admin:  { ar: "الإدارة العامة",         en: "General Administration" },
   planning:       { ar: "إدارة التخطيط",         en: "Planning" },
   haram_map:      { ar: "إدارة المصليات",         en: "Prayer Areas" },
   plazas:         { ar: "إدارة الساحات",           en: "Plazas" },

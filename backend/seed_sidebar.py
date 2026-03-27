@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 DEPT_HREF = {
+    "general_admin": "/general-admin",
     "planning": "/planning",
     "haram_map": "/haram-map",
     "gates": "/gates",
@@ -33,9 +34,22 @@ def _sidebar_items():
         kw.setdefault("sidebar_hidden", False)
         items.append(kw)
 
-    add("/dashboard", name_ar="غرفة العمليات", name_en="Operations Room", icon="LayoutDashboard", order=0,
-        is_public=False, department="all",
+    ga_href = DEPT_HREF["general_admin"]
+    add(ga_href, name_ar="الإدارة العامة", name_en="General Administration",
+        icon="Building2", order=0, department="general_admin",
+        subtitle_ar="الإدارة العامة لخدمات الحشود", subtitle_en="General Administration",
+        menu_only=True)
+    add("/dashboard", parent_href=ga_href,
+        name_ar="غرفة العمليات", name_en="Operations Room", icon="LayoutDashboard", order=1,
+        is_public=False, department="general_admin",
         subtitle_ar="نظرة شاملة على حالة النظام", subtitle_en="System overview")
+    ga_settings_href = f"{ga_href}?tab=settings"
+    add(ga_settings_href, parent_href=ga_href,
+        name_ar="الإعدادات", name_en="Settings", icon="Settings", order=2, department="general_admin")
+    add(f"{ga_href}?tab=settings&sub=Staff", parent_href=ga_settings_href,
+        name_ar="الموظفون", name_en="Staff", icon="Users", order=1, department="general_admin")
+    add(f"{ga_href}?tab=settings&sub=Permissions", parent_href=ga_settings_href,
+        name_ar="الصلاحيات", name_en="Permissions", icon="Shield", order=10, department="general_admin")
 
     depts = [
         ("planning", "تخطيط خدمات الحشود", "Crowd Planning", "ClipboardList", 1),

@@ -70,6 +70,7 @@ const ALERT_TYPES = {
 };
 
 const DEPARTMENTS = [
+  { value: "general_admin", label: "الإدارة العامة" },
   { value: "planning", label: "تخطيط خدمات الحشود" },
   { value: "gates", label: "إدارة الأبواب" },
   { value: "plazas", label: "إدارة الساحات" },

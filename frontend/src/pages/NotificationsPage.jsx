@@ -52,6 +52,7 @@ const PRIORITIES = {
 
 const DEPARTMENTS = {
   all: "جميع الإدارات",
+  general_admin: "الإدارة العامة",
   planning: "إدارة التخطيط",
   plazas: "إدارة الساحات",
   gates: "إدارة الأبواب",

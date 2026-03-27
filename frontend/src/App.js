@@ -21,6 +21,7 @@ import PlazasDepartment from "@/pages/PlazasDepartment";
 import GatesDepartment from "@/pages/GatesDepartment";
 import CrowdServicesDepartment from "@/pages/CrowdServicesDepartment";
 import MatafDepartment from "@/pages/MatafDepartment";
+import GeneralAdminDepartment from "@/pages/GeneralAdminDepartment";
 import AlertsPage from "@/pages/AlertsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SettingsPage from "@/pages/SettingsPage";
@@ -107,6 +108,11 @@ function AppRoutes() {
           </PermissionProtectedRoute>
         } />
         {/* map route removed */}
+        <Route path="general-admin" element={
+          <DepartmentProtectedRoute department="general_admin">
+            <GeneralAdminDepartment />
+          </DepartmentProtectedRoute>
+        } />
         <Route path="planning" element={
           <DepartmentProtectedRoute department="planning">
             <PlanningDepartment />

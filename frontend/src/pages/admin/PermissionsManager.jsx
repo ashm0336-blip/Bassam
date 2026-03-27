@@ -47,6 +47,7 @@ const AVAILABLE_ICONS = [
 
 const DEPARTMENTS = [
   { value: "all", label_ar: "الكل" },
+  { value: "general_admin", label_ar: "الإدارة العامة" },
   { value: "planning", label_ar: "إدارة التخطيط" },
   { value: "haram_map", label_ar: "إدارة المصليات" },
   { value: "plazas", label_ar: "إدارة الساحات" },
@@ -57,7 +58,7 @@ const DEPARTMENTS = [
 ];
 
 const DEPT_SHORT = {
-  planning: "التخطيط", haram_map: "المصليات", plazas: "الساحات",
+  general_admin: "الإدارة العامة", planning: "التخطيط", haram_map: "المصليات", plazas: "الساحات",
   gates: "الأبواب", crowd_services: "الحشود", mataf: "المطاف",
 };
 

@@ -72,8 +72,24 @@ The startup script:
 - ALL users → EmployeeProfilePage `/` (tabbed profile: المعلومات الشخصية, معلومات العمل, سجل الأحداث, الصفحات المتاحة)
 - `/my-profile` also routes to EmployeeProfilePage (self mode) — accessible from sidebar user avatar
 - `/employee/:id` shows another employee's profile (requires `page_employees` permission, no "الصفحات المتاحة" tab)
-- Dashboard (غرفة العمليات) at `/dashboard` — requires `page_dashboard` permission
+- Dashboard (غرفة العمليات) at `/dashboard` — requires `page_dashboard` permission, nested under الإدارة العامة in sidebar
 - Department name: `plazas` is the only valid name for إدارة الساحات (no `squares` alias)
+
+## Departments
+
+7 departments total (key → Arabic name):
+- `general_admin` → الإدارة العامة (order 0, contains Operations Room + Settings with Staff/Permissions)
+- `planning` → تخطيط خدمات الحشود
+- `haram_map` → إدارة المصليات
+- `gates` → إدارة الأبواب
+- `plazas` → إدارة الساحات
+- `crowd_services` → خدمات حشود الحرم
+- `mataf` → صحن المطاف
+
+DEPARTMENTS constants are defined in multiple files and must be kept in sync:
+- `AuthContext.jsx` (DEPT_LABELS, DEPT_PATH_MAP)
+- `DepartmentSettings.jsx` (DEPT_THEMES, DEPT_NAMES, DEPT_PATHS)
+- `EmployeeManagement.jsx`, `UserManagement.jsx`, `SidebarManager.jsx`, `PermissionsManager.jsx`, `NotificationsPage.jsx`, `AlertsPage.jsx`
 
 ## Permissions System
 
