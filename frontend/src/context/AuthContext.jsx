@@ -110,8 +110,8 @@ export const AuthProvider = ({ children }) => {
         permissions: permRes.data.permissions || prev.permissions || [],
         dept_permissions: permRes.data.dept_permissions || prev.dept_permissions || {},
         page_permissions: permRes.data.page_permissions || prev.page_permissions || {},
-        permission_group_id: permRes.data.permission_group_id || prev.permission_group_id || null,
-        permission_group_name: permRes.data.permission_group_name || prev.permission_group_name || null,
+        permission_group_id: permRes.data.permission_group_id ?? null,
+        permission_group_name: permRes.data.permission_group_name ?? null,
       } : prev);
     } catch {}
   }, [token]);
