@@ -26,11 +26,9 @@ async def _get_effective_rank(user_doc: dict) -> int:
     rank = ROLE_RANK.get(role, 0)
     grp_id = user_doc.get("permission_group_id")
     if grp_id:
-        grp = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1})
-        if grp and grp.get("name_ar") == "مدير عام":
-            rank = max(rank, ROLE_RANK["general_manager"])
-        elif grp and grp.get("name_ar") == "مدير المكتب":
-            rank = max(rank, ROLE_RANK["department_manager"])
+        grp = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "rank": 1})
+        if grp:
+            rank = max(rank, grp.get("rank", 1))
     return rank
 
 async def _check_rank_protection(actor: dict, emp: dict):
@@ -258,8 +256,9 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
             emp["user_role"] = u.get("role") if u else None
             emp["permission_group_id"] = u.get("permission_group_id") if u else None
             if emp["permission_group_id"]:
-                pg = await db.permission_groups.find_one({"id": emp["permission_group_id"]}, {"_id": 0, "name_ar": 1})
+                pg = await db.permission_groups.find_one({"id": emp["permission_group_id"]}, {"_id": 0, "name_ar": 1, "rank": 1})
                 emp["permission_group_name"] = pg.get("name_ar", "") if pg else ""
+                emp["permission_group_rank"] = pg.get("rank", 1) if pg else 1
             emp["allowed_departments"] = u.get("allowed_departments", [emp.get("department")] if emp.get("department") else []) if u else []
         else:
             emp["account_status"] = "no_account"

@@ -113,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         page_permissions: permRes.data.page_permissions || prev.page_permissions || {},
         permission_group_id: permRes.data.permission_group_id ?? null,
         permission_group_name: permRes.data.permission_group_name ?? null,
+        permission_group_rank: permRes.data.permission_group_rank ?? 1,
       } : prev);
     } catch {}
   }, [token]);
@@ -136,6 +137,7 @@ export const AuthProvider = ({ children }) => {
       let page_permissions = {};
       let permission_group_id = null;
       let permission_group_name = null;
+      let permission_group_rank = 1;
       try {
         const permRes = await axios.get(`${API}/auth/my-permissions`, {
           headers: { Authorization: `Bearer ${access_token}` }
@@ -145,9 +147,10 @@ export const AuthProvider = ({ children }) => {
         page_permissions = permRes.data.page_permissions || {};
         permission_group_id = permRes.data.permission_group_id || null;
         permission_group_name = permRes.data.permission_group_name || null;
+        permission_group_rank = permRes.data.permission_group_rank || 1;
       } catch {}
 
-      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, dept_permissions, page_permissions, permission_group_id, permission_group_name };
+      const fullUser = { ...userData, must_change_pin: !!must_change_pin, permissions, dept_permissions, page_permissions, permission_group_id, permission_group_name, permission_group_rank };
       prevRoleRef.current = userData.role;
       setUser(fullUser);
       reconnectWs();
@@ -220,6 +223,7 @@ export const AuthProvider = ({ children }) => {
         page_permissions: res.data.page_permissions || {},
         permission_group_id: res.data.permission_group_id || null,
         permission_group_name: res.data.permission_group_name || null,
+        permission_group_rank: res.data.permission_group_rank || 1,
       } : prev);
     } catch {}
   }, [token]);

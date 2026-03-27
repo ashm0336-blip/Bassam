@@ -406,9 +406,8 @@ export default function EmployeesList({ department, editable: editableProp, onEm
   const canImport    = canWrite("import_employees");
   const canExport    = canRead("export_employees");
   const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
-  const GROUP_RANK = { "مدير عام": 4, "مدير المكتب": 3 };
-  const getEffectiveRank = (role, groupName) => Math.max(ROLE_HIERARCHY[role] || 0, GROUP_RANK[groupName] || 0);
-  const myLevel = getEffectiveRank(user?.role, user?.permission_group_name);
+  const getEffectiveRank = (role, groupRank) => Math.max(ROLE_HIERARCHY[role] || 0, groupRank || 0);
+  const myLevel = getEffectiveRank(user?.role, user?.permission_group_rank);
   const isGmOrAdmin = user?.role === 'system_admin' || user?.role === 'general_manager' || user?.permission_group_name === 'مدير عام';
 
   // ── Fetch ──────────────────────────────────────────────────
@@ -910,7 +909,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
               isAr={isAr} permGroups={permGroups} onOpenProfile={openProfile}
               isOnline={onlineUserIds.includes(emp.id)}
               isSelf={user?.role !== 'system_admin' && emp.user_id === user?.id}
-              isProtected={user?.role !== 'system_admin' && getEffectiveRank(emp.role, emp.permission_group_name) >= myLevel} />
+              isProtected={user?.role !== 'system_admin' && getEffectiveRank(emp.role, emp.permission_group_rank) >= myLevel} />
           ))}
         </div>
       )}
@@ -1049,12 +1048,12 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                     </TableCell>
                     {/* الصلاحيات */}
                     <TableCell className="text-center">
-                      <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles && !(user?.role !== 'system_admin' && emp.user_id === user?.id) && !(getEffectiveRank(emp.role, emp.permission_group_name) >= myLevel && user?.role !== 'system_admin')} onChangeRole={handleChangeRole}/>
+                      <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles && !(user?.role !== 'system_admin' && emp.user_id === user?.id) && !(getEffectiveRank(emp.role, emp.permission_group_rank) >= myLevel && user?.role !== 'system_admin')} onChangeRole={handleChangeRole}/>
                     </TableCell>
                     <TableCell>
                       {(() => {
                         const isSelf = user?.role !== 'system_admin' && emp.user_id === user?.id;
-                        const isHigher = user?.role !== 'system_admin' && getEffectiveRank(emp.role, emp.permission_group_name) >= myLevel;
+                        const isHigher = user?.role !== 'system_admin' && getEffectiveRank(emp.role, emp.permission_group_rank) >= myLevel;
                         const noAct = isSelf || isHigher;
                         return (
                       <DropdownMenu>

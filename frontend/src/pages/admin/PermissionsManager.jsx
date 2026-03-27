@@ -89,7 +89,7 @@ export default function PermissionsManager({ department: deptFilter }) {
   // Group CRUD
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
-  const [groupForm, setGroupForm] = useState({ name_ar: "", name_en: "", description_ar: "" });
+  const [groupForm, setGroupForm] = useState({ name_ar: "", name_en: "", description_ar: "", rank: 1 });
   const [deleteGroupDialog, setDeleteGroupDialog] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
 
@@ -306,10 +306,10 @@ export default function PermissionsManager({ department: deptFilter }) {
   const openGroupDialog = (group = null) => {
     if (group) {
       setEditingGroup(group);
-      setGroupForm({ name_ar: group.name_ar, name_en: group.name_en, description_ar: group.description_ar || "" });
+      setGroupForm({ name_ar: group.name_ar, name_en: group.name_en, description_ar: group.description_ar || "", rank: group.rank || 1 });
     } else {
       setEditingGroup(null);
-      setGroupForm({ name_ar: "", name_en: "", description_ar: "" });
+      setGroupForm({ name_ar: "", name_en: "", description_ar: "", rank: 1 });
     }
     setGroupDialogOpen(true);
   };
@@ -776,6 +776,19 @@ export default function PermissionsManager({ department: deptFilter }) {
             <div>
               <Label>وصف المجموعة</Label>
               <Input value={groupForm.description_ar} onChange={e => setGroupForm({ ...groupForm, description_ar: e.target.value })} placeholder="صلاحيات المشرفين في الوردية الليلية" />
+            </div>
+            <div>
+              <Label>الرتبة (مستوى الحماية) *</Label>
+              <Select value={String(groupForm.rank)} onValueChange={v => setGroupForm({ ...groupForm, rank: parseInt(v) })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 — موظف عادي</SelectItem>
+                  <SelectItem value="2">2 — مشرف ميداني</SelectItem>
+                  <SelectItem value="3">3 — مدير إدارة / مكتب</SelectItem>
+                  <SelectItem value="4">4 — مدير عام</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">الموظف لا يستطيع التعديل على شخص بنفس رتبته أو أعلى</p>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setGroupDialogOpen(false)}><X className="w-4 h-4 ml-1" />إلغاء</Button>

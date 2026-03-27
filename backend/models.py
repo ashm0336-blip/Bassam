@@ -354,6 +354,7 @@ class PermissionGroup(BaseModel):
     name_ar: str
     name_en: str = ""
     description_ar: str = ""
+    rank: int = 1
     is_system: bool = False
     page_permissions: Dict = Field(default_factory=dict)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -363,6 +364,7 @@ class PermissionGroupCreate(BaseModel):
     name_ar: str
     name_en: str = ""
     description_ar: str = ""
+    rank: int = 1
     page_permissions: Dict = Field(default_factory=dict)
     department: Optional[str] = None
 
@@ -370,6 +372,7 @@ class PermissionGroupUpdate(BaseModel):
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
     description_ar: Optional[str] = None
+    rank: Optional[int] = None
     page_permissions: Optional[Dict] = None
     department: Optional[str] = None
 

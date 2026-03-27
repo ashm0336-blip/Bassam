@@ -206,6 +206,7 @@ async def create_group(data: PermissionGroupCreate, admin: dict = Depends(get_cu
         "name_ar": data.name_ar,
         "name_en": data.name_en,
         "description_ar": data.description_ar,
+        "rank": data.rank,
         "department": data.department,
         "is_system": False,
         "page_permissions": data.page_permissions,
@@ -485,18 +486,22 @@ async def get_my_permissions(user: dict = Depends(get_current_user)):
         if perm.get("visible") or perm.get("editable"):
             page_vis[href] = perm
 
-    # Get group name
+    # Get group name + rank
     group_name = None
+    group_rank = 1
     grp_id = user.get("permission_group_id")
     if grp_id:
-        grp_doc = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1})
-        group_name = grp_doc.get("name_ar") if grp_doc else None
+        grp_doc = await db.permission_groups.find_one({"id": grp_id}, {"_id": 0, "name_ar": 1, "rank": 1})
+        if grp_doc:
+            group_name = grp_doc.get("name_ar")
+            group_rank = grp_doc.get("rank", 1)
 
     return {"permissions": permissions, "role": role,
             "dept_permissions": dept_permissions,
             "page_permissions": page_vis,
             "permission_group_id": grp_id,
-            "permission_group_name": group_name}
+            "permission_group_name": group_name,
+            "permission_group_rank": group_rank}
 
 
 # ═══════════════════════════════════════════
