@@ -9,7 +9,7 @@ export default function PlanningDepartment() {
   const [searchParams] = useSearchParams();
   const rawTab = searchParams.get('tab') || 'dashboard';
   const activeTab = rawTab === 'overview' ? 'dashboard' : rawTab;
-  const { canViewPage } = useAuth();
+  const { canViewPage, canEditPage } = useAuth();
 
   const dept = "planning";
   const base = "/planning";
@@ -19,7 +19,7 @@ export default function PlanningDepartment() {
       {activeTab === 'dashboard'     && <DepartmentOverview department={dept} />}
       {activeTab === 'employees'     && canViewPage(`${base}?tab=settings&sub=Staff`) && <DepartmentSettings department={dept} />}
       {activeTab === 'transactions'  && canViewPage(`${base}?tab=transactions`) && <TasksPage department={dept} />}
-      {activeTab === 'schedule'      && canViewPage(`${base}?tab=schedule`) && <EmployeeManagement department={dept} />}
+      {activeTab === 'schedule'      && canViewPage(`${base}?tab=schedule`) && <EmployeeManagement department={dept} editableSchedule={canEditPage(`${base}?tab=schedule`)} editable={canEditPage(`${base}?tab=settings&sub=Staff`)} />}
       {activeTab === 'settings'      && canViewPage(`${base}?tab=settings`) && <DepartmentSettings department={dept} />}
     </div>
   );
