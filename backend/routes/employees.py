@@ -157,7 +157,16 @@ async def get_employees_availability(department: str, user: dict = Depends(get_c
 async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
     user_role = user.get("role")
-    if user_role == "system_admin":
+
+    is_gm = False
+    if user_role == "general_manager":
+        is_gm = True
+    elif user.get("permission_group_id"):
+        grp = await db.permission_groups.find_one({"id": user["permission_group_id"]}, {"_id": 0, "name_ar": 1})
+        if grp and grp.get("name_ar") == "مدير عام":
+            is_gm = True
+
+    if user_role == "system_admin" or is_gm:
         if department:
             query["department"] = department
     elif user_role == "department_manager":
