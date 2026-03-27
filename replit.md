@@ -83,6 +83,7 @@ The startup script:
 - **Backend enforcement**: `require_page_permission(user, href_pattern, require_edit)` checks group+custom permissions on write endpoints
 - **Protected routes**: ALL routes in App.js are wrapped with `PermissionProtectedRoute` or `DepartmentProtectedRoute` (no unprotected pages)
 - **Department access**: `canViewDepartment` checks if user has any visible page with that department's path prefix
+- **Department-scoped groups**: Permission groups can have a `department` field. Department managers can only CRUD groups scoped to their department. `DepartmentSettings` has a "الصلاحيات" (Permissions) tab per department that shows `PermissionsManager` filtered to that department's pages and groups only.
 - **Write protection**: daily_stats (POST/PUT/DELETE/import/fix-dates), alerts (PUT), broadcasts (POST) all enforce edit permissions server-side
 - **View-only pages**: `/dashboard`, `?tab=overview`, `/stats-analytics` — no edit button shown in permissions tree
 

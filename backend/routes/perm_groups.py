@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid
 
 from database import db
-from auth import require_admin, get_current_user, log_activity
+from auth import require_admin, get_current_user, log_activity, require_manager_or_above
 from models import PermissionGroupCreate, PermissionGroupUpdate
 from ws_manager import ws_manager
 
@@ -85,10 +85,15 @@ ALL_PERMISSIONS = {
 # ═══════════════════════════════════════════
 
 @router.get("/admin/permission-groups")
-async def list_groups(user: dict = Depends(get_current_user)):
-    """List permission groups. Accessible by any authenticated user (read-only list)."""
-    groups = await db.permission_groups.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
-    # Add user count per group
+async def list_groups(user: dict = Depends(get_current_user), department: str = None):
+    """List permission groups. Dept managers see only their department's groups."""
+    query = {}
+    if user["role"] == "department_manager":
+        dept = user.get("department")
+        query["department"] = dept
+    elif department:
+        query["department"] = department
+    groups = await db.permission_groups.find(query, {"_id": 0}).sort("created_at", 1).to_list(100)
     for g in groups:
         g["user_count"] = await db.users.count_documents({"permission_group_id": g["id"]})
     return groups
@@ -117,12 +122,14 @@ async def list_group_members(group_id: str, user: dict = Depends(get_current_use
 
 
 @router.get("/admin/assignable-users")
-async def list_assignable_users(user: dict = Depends(get_current_user)):
+async def list_assignable_users(user: dict = Depends(get_current_user), department: str = None):
     if user["role"] not in ("system_admin", "general_manager", "department_manager"):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     query = {"role": {"$ne": "system_admin"}, "is_active": True}
     if user["role"] == "department_manager":
         query["department"] = user.get("department")
+    elif department:
+        query["department"] = department
     all_users = await db.users.find(
         query,
         {"_id": 0, "id": 1, "name": 1, "name_ar": 1, "role": 1, "department": 1,
@@ -146,21 +153,33 @@ async def list_assignable_users(user: dict = Depends(get_current_user)):
 
 @router.get("/admin/permission-groups/{group_id}")
 async def get_group(group_id: str, user: dict = Depends(get_current_user)):
-    if user["role"] not in ("system_admin", "general_manager", "department_manager"):
+    role = user.get("role", "")
+    if role not in ("system_admin", "general_manager", "department_manager"):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0})
     if not group:
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
+    if role == "department_manager":
+        g_dept = group.get("department")
+        if g_dept and g_dept != user.get("department"):
+            raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     return group
 
 
 @router.post("/admin/permission-groups")
-async def create_group(data: PermissionGroupCreate, admin: dict = Depends(require_admin)):
+async def create_group(data: PermissionGroupCreate, admin: dict = Depends(get_current_user)):
+    role = admin.get("role", "")
+    if role == "department_manager":
+        if not data.department or data.department != admin.get("department"):
+            raise HTTPException(status_code=403, detail="يمكنك إنشاء مجموعات لإدارتك فقط")
+    elif role not in ("system_admin", "general_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     doc = {
         "id": str(uuid.uuid4()),
         "name_ar": data.name_ar,
         "name_en": data.name_en,
         "description_ar": data.description_ar,
+        "department": data.department,
         "is_system": False,
         "page_permissions": data.page_permissions,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -173,11 +192,20 @@ async def create_group(data: PermissionGroupCreate, admin: dict = Depends(requir
 
 
 @router.put("/admin/permission-groups/{group_id}")
-async def update_group(group_id: str, data: PermissionGroupUpdate, admin: dict = Depends(require_admin)):
+async def update_group(group_id: str, data: PermissionGroupUpdate, admin: dict = Depends(get_current_user)):
+    role = admin.get("role", "")
     existing = await db.permission_groups.find_one({"id": group_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
+    if role == "department_manager":
+        group_dept = existing.get("department")
+        if not group_dept or group_dept != admin.get("department"):
+            raise HTTPException(status_code=403, detail="يمكنك تعديل مجموعات إدارتك فقط")
+    elif role not in ("system_admin", "general_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     update = {k: v for k, v in data.model_dump().items() if v is not None}
+    if "department" in update:
+        del update["department"]
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.permission_groups.update_one({"id": group_id}, {"$set": update})
     await log_activity("تحديث مجموعة صلاحيات", admin, existing["name_ar"], f"تم تحديث مجموعة: {existing['name_ar']}")
@@ -187,13 +215,19 @@ async def update_group(group_id: str, data: PermissionGroupUpdate, admin: dict =
 
 
 @router.delete("/admin/permission-groups/{group_id}")
-async def delete_group(group_id: str, admin: dict = Depends(require_admin)):
+async def delete_group(group_id: str, admin: dict = Depends(get_current_user)):
+    role = admin.get("role", "")
     existing = await db.permission_groups.find_one({"id": group_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
     if existing.get("is_system"):
         raise HTTPException(status_code=403, detail="لا يمكن حذف مجموعة النظام")
-    # Check if any users are using this group
+    if role == "department_manager":
+        group_dept = existing.get("department")
+        if not group_dept or group_dept != admin.get("department"):
+            raise HTTPException(status_code=403, detail="يمكنك حذف مجموعات إدارتك فقط")
+    elif role not in ("system_admin", "general_manager"):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     count = await db.users.count_documents({"permission_group_id": group_id})
     if count > 0:
         raise HTTPException(status_code=400, detail=f"لا يمكن الحذف — {count} مستخدم في هذه المجموعة")
@@ -229,9 +263,17 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
     new_group_name = "بدون مجموعة"
     old_group_name = "بدون مجموعة"
     if group_id:
-        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "name_ar": 1})
+        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "name_ar": 1, "department": 1})
         if not group:
             raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
+        g_dept = group.get("department")
+        if admin["role"] == "department_manager":
+            if g_dept and g_dept != admin.get("department"):
+                raise HTTPException(status_code=403, detail="لا يمكنك تعيين مجموعة من إدارة أخرى")
+        if g_dept:
+            target_dept_check = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1})
+            if target_dept_check and target_dept_check.get("department") != g_dept:
+                raise HTTPException(status_code=400, detail="لا يمكن تعيين مجموعة إدارة لموظف من إدارة مختلفة")
         new_group_name = group.get("name_ar", "")
     if old_group_id:
         old_grp = await db.permission_groups.find_one({"id": old_group_id}, {"_id": 0, "name_ar": 1})

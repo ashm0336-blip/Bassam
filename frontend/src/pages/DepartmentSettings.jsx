@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRealtimeRefresh } from "@/context/WebSocketContext";
 import {
   Clock, Plus, Edit, Trash2, Loader2, DoorOpen, Users, Layers, Settings, Tag,
-  CalendarDays, Sun, Sunset, Moon, Zap, AlarmClock, Timer,
+  CalendarDays, Sun, Sunset, Moon, Zap, AlarmClock, Timer, Shield,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import EmployeesList from "@/components/EmployeesList";
 import GateMapPage from "@/pages/GateMapPage";
 import MapManagementPage from "@/pages/MapManagementPage";
 import ZoneCategoryManager from "@/pages/admin/ZoneCategoryManager";
+import PermissionsManager from "@/pages/admin/PermissionsManager";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -288,6 +289,9 @@ export default function DepartmentSettings({ department }) {
   if (department === 'haram_map' && canViewSubTab('Categories')) {
     tabs.push({ id: 'zone_categories', label: language === 'ar' ? 'الفئات' : 'Categories', icon: Tag, count: counts.categories });
   }
+  if (canViewSubTab('Permissions')) {
+    tabs.push({ id: 'permissions', label: language === 'ar' ? 'الصلاحيات' : 'Permissions', icon: Shield });
+  }
 
   // Auto-select first available tab if current tab is hidden
   if (tabs.length > 0 && !tabs.find(t => t.id === activeTab)) {
@@ -342,6 +346,8 @@ export default function DepartmentSettings({ department }) {
         {activeTab === 'maps' && department !== 'gates' && <MapManagementPage department={department} editable={canEditMaps} />}
 
         {activeTab === 'gates_data' && department === 'gates' && <GatesDataManagement editable={canEditSubTab('GatesData')} />}
+
+        {activeTab === 'permissions' && <PermissionsManager department={department} />}
 
         {activeTab === 'shifts' && (
           <div className="space-y-5">

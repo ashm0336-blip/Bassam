@@ -69,7 +69,7 @@ const GROUP_COLORS = [
   { color: "#be123c", bg: "#fff1f2" },
 ];
 
-export default function PermissionsManager() {
+export default function PermissionsManager({ department: deptFilter }) {
   const { refreshMenu } = useSidebar();
 
   const [menuItems, setMenuItems] = useState([]);
@@ -113,25 +113,44 @@ export default function PermissionsManager() {
 
   const fetchAll = useCallback(async () => {
     try {
+      const deptParam = deptFilter ? `?department=${deptFilter}` : '';
       const [menuRes, groupsRes] = await Promise.all([
         axios.get(`${API}/admin/sidebar-menu`, headers()),
-        axios.get(`${API}/admin/permission-groups`, headers()),
+        axios.get(`${API}/admin/permission-groups${deptParam}`, headers()),
       ]);
-      setMenuItems(menuRes.data);
-      setGroups(groupsRes.data);
-      if (!activeGroupId && groupsRes.data.length > 0) {
-        setActiveGroupId(groupsRes.data[0].id);
+      let items = menuRes.data;
+      if (deptFilter) {
+        const deptParent = items.find(i => !i.parent_id && i.department === deptFilter);
+        if (deptParent) {
+          const childIds = new Set();
+          const collect = (parentId) => {
+            items.filter(i => i.parent_id === parentId).forEach(c => {
+              childIds.add(c.id);
+              collect(c.id);
+            });
+          };
+          collect(deptParent.id);
+          items = items.filter(i => i.id === deptParent.id || childIds.has(i.id));
+        }
+      }
+      setMenuItems(items);
+      const deptGroups = deptFilter
+        ? groupsRes.data.filter(g => g.department === deptFilter)
+        : groupsRes.data;
+      setGroups(deptGroups);
+      if (!activeGroupId && deptGroups.length > 0) {
+        setActiveGroupId(deptGroups[0].id);
       }
       const autoExpand = {};
-      menuRes.data.forEach(item => {
-        if (!item.parent_id && menuRes.data.some(c => c.parent_id === item.id)) {
+      items.forEach(item => {
+        if (!item.parent_id && items.some(c => c.parent_id === item.id)) {
           autoExpand[item.id] = true;
         }
       });
       setExpandedItems(prev => ({ ...autoExpand, ...prev }));
     } catch { toast.error("فشل جلب البيانات"); }
     finally { setLoading(false); }
-  }, [activeGroupId]);
+  }, [activeGroupId, deptFilter]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchMembers(activeGroupId); }, [activeGroupId, fetchMembers]);
@@ -140,7 +159,8 @@ export default function PermissionsManager() {
     setAssignLoading(true);
     setAssignDialogOpen(true);
     try {
-      const res = await axios.get(`${API}/admin/assignable-users`, headers());
+      const deptParam = deptFilter ? `?department=${deptFilter}` : '';
+      const res = await axios.get(`${API}/admin/assignable-users${deptParam}`, headers());
       setAssignableUsers(res.data);
     } catch { toast.error("فشل جلب الموظفين"); }
     finally { setAssignLoading(false); }
@@ -292,11 +312,13 @@ export default function PermissionsManager() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload = { ...groupForm };
+      if (deptFilter) payload.department = deptFilter;
       if (editingGroup) {
-        await axios.put(`${API}/admin/permission-groups/${editingGroup.id}`, groupForm, headers());
+        await axios.put(`${API}/admin/permission-groups/${editingGroup.id}`, payload, headers());
         toast.success("تم تحديث المجموعة");
       } else {
-        const res = await axios.post(`${API}/admin/permission-groups`, groupForm, headers());
+        const res = await axios.post(`${API}/admin/permission-groups`, payload, headers());
         setActiveGroupId(res.data.id);
         toast.success("تم إنشاء المجموعة");
       }
@@ -322,12 +344,14 @@ export default function PermissionsManager() {
   // ── Duplicate group ──
   const duplicateGroup = async (group) => {
     try {
-      const res = await axios.post(`${API}/admin/permission-groups`, {
+      const payload = {
         name_ar: `${group.name_ar} (نسخة)`,
         name_en: `${group.name_en} (copy)`,
         description_ar: group.description_ar,
         page_permissions: group.page_permissions,
-      }, headers());
+      };
+      if (deptFilter) payload.department = deptFilter;
+      const res = await axios.post(`${API}/admin/permission-groups`, payload, headers());
       setActiveGroupId(res.data.id);
       toast.success("تم نسخ المجموعة");
       fetchAll();
@@ -476,15 +500,19 @@ export default function PermissionsManager() {
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => toggleAll("visible")} className="gap-1 text-xs h-7">
-                      <Eye className="w-3 h-3" /> الكل ظاهر
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => toggleAll("editable")} className="gap-1 text-xs h-7">
-                      <Pencil className="w-3 h-3" /> الكل تعديل
-                    </Button>
-                    <Button size="sm" onClick={() => openPageDialog()} className="gap-1 bg-primary h-7 text-xs">
-                      <Plus className="w-3 h-3" /> صفحة
-                    </Button>
+                    {!deptFilter && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => toggleAll("visible")} className="gap-1 text-xs h-7">
+                          <Eye className="w-3 h-3" /> الكل ظاهر
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => toggleAll("editable")} className="gap-1 text-xs h-7">
+                          <Pencil className="w-3 h-3" /> الكل تعديل
+                        </Button>
+                        <Button size="sm" onClick={() => openPageDialog()} className="gap-1 bg-primary h-7 text-xs">
+                          <Plus className="w-3 h-3" /> صفحة
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
 

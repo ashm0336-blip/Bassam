@@ -364,12 +364,14 @@ class PermissionGroupCreate(BaseModel):
     name_en: str = ""
     description_ar: str = ""
     page_permissions: Dict = Field(default_factory=dict)
+    department: Optional[str] = None
 
 class PermissionGroupUpdate(BaseModel):
     name_ar: Optional[str] = None
     name_en: Optional[str] = None
     description_ar: Optional[str] = None
     page_permissions: Optional[Dict] = None
+    department: Optional[str] = None
 
 # ============= Zone Category Models =============
 class ZoneCategory(BaseModel):

@@ -81,6 +81,8 @@ def _sidebar_items():
         elif dk == "gates":
             add(f"{bh}?tab=settings&sub=GatesData", parent_href=settings_href,
                 name_ar="بيانات الأبواب", name_en="Gates Data", icon="DoorOpen", order=4, department=dk)
+        add(f"{bh}?tab=settings&sub=Permissions", parent_href=settings_href,
+            name_ar="الصلاحيات", name_en="Permissions", icon="Shield", order=10, department=dk)
 
     add("/field", name_ar="الواجهة الميدانية", name_en="Field Worker",
         icon="MapPin", order=8, department="all", is_secondary=True)
@@ -326,6 +328,7 @@ def _build_dept_pages(dept_key):
         f"{bh}?tab=settings&sub=Staff": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Shifts": {"visible": True, "editable": True},
         f"{bh}?tab=settings&sub=Maps": {"visible": True, "editable": True},
+        f"{bh}?tab=settings&sub=Permissions": {"visible": True, "editable": True},
         "/daily-stats": {"visible": True, "editable": True},
         "/daily-stats?tab=haram": {"visible": True, "editable": True},
         "/daily-stats?tab=nabawi": {"visible": True, "editable": True},
