@@ -147,7 +147,7 @@ export default function ActivityLogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("timeline");
 
-  const isAdminOrGM = user?.role === "system_admin" || user?.role === "general_manager";
+  const isAdminOrGM = user?.role === "system_admin";
   const wsConnected = useWsConnected();
 
   const fetchLogs = useCallback(async () => {

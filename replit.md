@@ -53,7 +53,10 @@ The startup script:
 - `GatesDataManagement`, `EmployeesList`, `MapManagementPage`, `GateMapPage` accept `editable` prop from parent `DepartmentSettings`
 - `/notifications` and `/alerts` have separate permissions (`page_notifications` / `page_alerts`)
 - Force-logout on account freeze/terminate via WebSocket broadcast
-- General manager (`general_manager` role) can access admin page (`/admin`)
+- General manager (`general_manager` role) access is controlled by admin via permission groups — no automatic full access
+- Admin controls GM permissions through the "مدير عام" permission group in the admin panel
+- GM controls department managers through الإدارة العامة settings/permissions page
+- Backend role checks: system_admin has unconditional access; GM/dept_manager/others fall through to page_permission checks
 
 ## Key Files
 

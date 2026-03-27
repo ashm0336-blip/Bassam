@@ -68,51 +68,61 @@ async def _user_has_group_permission(user: dict, required_perms: list) -> bool:
 
 
 async def require_admin(user: dict = Depends(get_current_user)):
-    """Only system_admin and general_manager can access admin functions."""
-    if user["role"] in ("system_admin", "general_manager"):
+    """Only system_admin can access admin-panel endpoints."""
+    if user["role"] == "system_admin":
         return user
     raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
 
 async def require_manager_or_above(user: dict = Depends(get_current_user)):
-    """System admin, general manager, or department manager."""
-    if user["role"] in ("system_admin", "general_manager", "department_manager"):
+    """System admin or department manager, or anyone with editable page permissions."""
+    if user["role"] in ("system_admin", "department_manager"):
         return user
-    # Check group permissions — if user has any editable page, they have manager-level access
     group_id = user.get("permission_group_id")
     if group_id:
         group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
         if group:
             pp = group.get("page_permissions", {})
-            has_edit = any(v.get("editable") for v in pp.values())
-            if has_edit:
+            if any(v.get("editable") for v in pp.values()):
                 return user
     raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
 
 async def require_department_manager(user: dict = Depends(get_current_user)):
     """User with department management permissions (via role OR group)."""
-    if user["role"] in ["system_admin", "general_manager", "department_manager"]:
+    if user["role"] in ("system_admin", "department_manager"):
         return user
-    # Check group permissions
     group_id = user.get("permission_group_id")
     if group_id:
         group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
         if group:
             pp = group.get("page_permissions", {})
-            has_edit = any(v.get("editable") for v in pp.values())
-            if has_edit:
+            if any(v.get("editable") for v in pp.values()):
                 return user
     raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
 
 
-def check_department_access(user: dict, department: str) -> bool:
-    if user["role"] in ["system_admin", "general_manager"]:
+DEPT_PATH_MAP = {
+    "general_admin": "/general-admin",
+    "planning": "/planning",
+    "haram_map": "/haram-map",
+    "gates": "/gates",
+    "plazas": "/plazas",
+    "crowd_services": "/crowd-services",
+    "mataf": "/mataf",
+}
+
+async def check_department_access(user: dict, department: str) -> bool:
+    if user["role"] == "system_admin":
         return True
-    if user["role"] == "department_manager":
-        return user.get("department") == department
-    # For other roles: must be in the same department
-    return user.get("department") == department
+    if user.get("department") == department:
+        return True
+    prefix = DEPT_PATH_MAP.get(department)
+    if prefix:
+        has_perm = await check_page_permission(user, prefix)
+        if has_perm:
+            return True
+    return False
 
 
 async def check_page_permission(user: dict, href_pattern: str, require_edit: bool = False) -> bool:

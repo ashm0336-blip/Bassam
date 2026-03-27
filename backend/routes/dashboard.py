@@ -234,12 +234,12 @@ async def get_alerts(department: Optional[str] = None, type: Optional[str] = Non
     if category == "tasks":
         query["type"] = {"$in": ["task", "task_done"]}
         # Non-admin users see only their own task notifications
-        if user_role not in ("system_admin", "general_manager"):
+        if user_role != "system_admin":
             query["target_user_id"] = user_id
     elif category == "broadcasts":
         query["type"] = "broadcast"
         # Broadcasts visible to user's department or "all"
-        if user_role not in ("system_admin", "general_manager"):
+        if user_role != "system_admin":
             dept_filter = [{"department": "all"}]
             if user_dept:
                 dept_filter.append({"department": user_dept})
@@ -248,14 +248,14 @@ async def get_alerts(department: Optional[str] = None, type: Optional[str] = Non
         query["type"] = {"$nin": ["task", "task_done", "broadcast"]}
         if department:
             query["department"] = department
-        elif user_role not in ("system_admin", "general_manager"):
+        elif user_role != "system_admin":
             if user_dept:
                 query["$or"] = [{"department": user_dept}, {"department": "all"}]
     else:
         # "all" — smart filter by role
         if department:
             query["department"] = department
-        elif user_role not in ("system_admin", "general_manager"):
+        elif user_role != "system_admin":
             if user_dept:
                 dept_or = [{"department": user_dept}, {"department": "all"}]
                 # Also include task notifications targeted to this user
@@ -276,7 +276,7 @@ async def get_unread_alerts_count(user: dict = Depends(get_current_user)):
     user_id = user.get("id")
 
     query = {"is_read": False}
-    if user_role not in ("system_admin", "general_manager"):
+    if user_role != "system_admin":
         or_conds = [{"department": "all"}]
         if user_dept:
             or_conds.append({"department": user_dept})
@@ -361,7 +361,7 @@ async def get_notifications(unread_only: bool = False, user: dict = Depends(get_
         query["is_read"] = False
     user_role = user.get("role", "")
     user_dept = user.get("department")
-    if user_role not in ("system_admin", "general_manager"):
+    if user_role != "system_admin":
         or_conds = [{"department": "all"}]
         if user_dept:
             or_conds.append({"department": user_dept})

@@ -61,7 +61,7 @@ async def import_employees(
     user: dict = Depends(get_current_user)
 ):
     """استيراد موظفين من ملف Excel"""
-    if not check_department_access(user, department):
+    if not await check_department_access(user, department):
         raise HTTPException(status_code=403, detail="لا يمكنك الوصول لهذه الإدارة")
 
     if not file.filename.endswith(('.xlsx', '.xls')):
@@ -229,7 +229,7 @@ async def export_employees(department: Optional[str] = None, user: dict = Depend
 
     query = {}
     if department:
-        if not check_department_access(user, department):
+        if not await check_department_access(user, department):
             raise HTTPException(status_code=403, detail="لا يمكنك الوصول لهذه الإدارة")
         query["department"] = department
 

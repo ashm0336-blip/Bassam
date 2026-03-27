@@ -54,7 +54,7 @@ def get_time_status(due_at_str, status):
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
-MANAGER_ROLES = {"system_admin", "general_manager", "department_manager"}
+MANAGER_ROLES = {"system_admin", "department_manager"}
 
 
 async def _can_manage_tasks(user: dict) -> bool:

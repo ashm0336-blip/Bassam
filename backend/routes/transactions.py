@@ -96,10 +96,15 @@ async def delete_transaction(transaction_id: str, user: dict = Depends(get_curre
     user_role = user.get("role")
     user_dept = user.get("department")
     trans_dept = transaction.get("department")
-    if user_role not in ["system_admin", "general_manager"]:
-        if user_role == "department_manager" and user_dept != trans_dept:
+    if user_role == "system_admin":
+        pass
+    elif user_role == "department_manager":
+        if user_dept != trans_dept:
             raise HTTPException(status_code=403, detail="لا يمكنك حذف معاملات قسم آخر")
-        elif user_role not in ["department_manager"]:
+    else:
+        from auth import check_page_permission
+        has_perm = await check_page_permission(user, "tab=transactions", require_edit=True)
+        if not has_perm:
             raise HTTPException(status_code=403, detail="ليس لديك صلاحية الحذف")
     await db.transactions.delete_one({"id": transaction_id})
     await log_activity("حذف معاملة", user, transaction_id, "تم الحذف")

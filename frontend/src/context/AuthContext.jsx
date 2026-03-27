@@ -272,7 +272,6 @@ export const AuthProvider = ({ children }) => {
 
   const canViewDepartment = (department) => {
     if (user?.role === 'system_admin') return true;
-    if (user?.role === 'general_manager') return true;
     if (user?.department === department) return true;
     const pp = user?.page_permissions || {};
     const prefix = DEPT_PATH_MAP[department];

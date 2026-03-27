@@ -5,7 +5,7 @@ import uuid
 import re
 
 from database import db
-from auth import get_current_user, require_admin, require_manager_or_above, log_activity, hash_password, verify_password, create_token
+from auth import get_current_user, require_admin, require_manager_or_above, log_activity, hash_password, verify_password, create_token, check_page_permission
 from models import (
     UserCreate, UserUpdate, UserLogin, UserResponse, TokenResponse,
     PinChangeRequest, AccountStatusUpdate,
@@ -225,11 +225,14 @@ async def reset_pin(request: Request, user_id: str, manager: dict = Depends(get_
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
 
-    if manager["role"] not in ["system_admin", "general_manager"]:
-        if manager.get("role") == "department_manager":
-            if target.get("department") != manager.get("department"):
-                raise HTTPException(status_code=403, detail="يمكنك إعادة تعيين PIN موظفي إدارتك فقط")
-        else:
+    if manager["role"] == "system_admin":
+        pass
+    elif manager.get("role") == "department_manager":
+        if target.get("department") != manager.get("department"):
+            raise HTTPException(status_code=403, detail="يمكنك إعادة تعيين PIN موظفي إدارتك فقط")
+    else:
+        has_perm = await check_page_permission(manager, "sub=Staff", require_edit=True)
+        if not has_perm:
             raise HTTPException(status_code=403, detail="غير مصرح")
 
     # PIN الجديد = الرقم الوظيفي من بيانات الموظف
@@ -264,11 +267,14 @@ async def update_account_status(user_id: str, data: AccountStatusUpdate, manager
     if data.status not in ["active", "frozen", "terminated"]:
         raise HTTPException(status_code=400, detail="حالة غير صحيحة")
 
-    if manager["role"] not in ["system_admin", "general_manager"]:
-        if manager.get("role") == "department_manager":
-            if target.get("department") != manager.get("department"):
-                raise HTTPException(status_code=403, detail="يمكنك إدارة موظفي إدارتك فقط")
-        else:
+    if manager["role"] == "system_admin":
+        pass
+    elif manager.get("role") == "department_manager":
+        if target.get("department") != manager.get("department"):
+            raise HTTPException(status_code=403, detail="يمكنك إدارة موظفي إدارتك فقط")
+    else:
+        has_perm = await check_page_permission(manager, "sub=Staff", require_edit=True)
+        if not has_perm:
             raise HTTPException(status_code=403, detail="غير مصرح")
 
     # لا يمكن تغيير حالة مسؤول النظام
