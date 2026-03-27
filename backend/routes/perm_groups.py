@@ -22,10 +22,15 @@ async def _is_gm_or_admin(user: dict) -> bool:
         return True
     gid = user.get("permission_group_id")
     if gid:
-        grp = await db.permission_groups.find_one({"id": gid}, {"_id": 0, "name_ar": 1})
-        if grp and grp.get("name_ar") == "مدير عام":
+        grp = await db.permission_groups.find_one({"id": gid}, {"_id": 0, "rank": 1})
+        if grp and grp.get("rank", 1) >= 4:
             return True
     return False
+
+
+async def _get_caller_rank(user: dict) -> int:
+    from routes.employees import _get_effective_rank
+    return await _get_effective_rank(user)
 
 
 async def _can_manage_groups(user: dict) -> bool:
@@ -201,6 +206,9 @@ async def create_group(data: PermissionGroupCreate, admin: dict = Depends(get_cu
     if admin.get("role") == "department_manager":
         if not data.department or data.department != admin.get("department"):
             raise HTTPException(status_code=403, detail="يمكنك إنشاء مجموعات لإدارتك فقط")
+    caller_rank = await _get_caller_rank(admin)
+    if data.rank >= caller_rank and admin.get("role") != "system_admin":
+        raise HTTPException(status_code=403, detail="لا يمكنك إنشاء مجموعة برتبة مساوية أو أعلى من رتبتك")
     doc = {
         "id": str(uuid.uuid4()),
         "name_ar": data.name_ar,
@@ -230,6 +238,12 @@ async def update_group(group_id: str, data: PermissionGroupUpdate, admin: dict =
         group_dept = existing.get("department")
         if not group_dept or group_dept != admin.get("department"):
             raise HTTPException(status_code=403, detail="يمكنك تعديل مجموعات إدارتك فقط")
+    if admin.get("role") != "system_admin":
+        caller_rank = await _get_caller_rank(admin)
+        if existing.get("rank", 1) >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل مجموعة برتبة مساوية أو أعلى من رتبتك")
+        if data.rank is not None and data.rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك رفع رتبة المجموعة لمستوى مساوٍ أو أعلى من رتبتك")
     update = {k: v for k, v in data.model_dump().items() if v is not None}
     if "department" in update:
         del update["department"]
@@ -250,6 +264,10 @@ async def delete_group(group_id: str, admin: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
     if existing.get("is_system"):
         raise HTTPException(status_code=403, detail="لا يمكن حذف مجموعة النظام")
+    if admin.get("role") != "system_admin":
+        caller_rank = await _get_caller_rank(admin)
+        if existing.get("rank", 1) >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك حذف مجموعة برتبة مساوية أو أعلى من رتبتك")
     if admin.get("role") == "department_manager":
         group_dept = existing.get("department")
         if not group_dept or group_dept != admin.get("department"):
@@ -282,17 +300,25 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
             raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحيات مدير إدارة آخر")
 
     group_id = data.get("permission_group_id")
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1})
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1, "role": 1})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if admin.get("role") != "system_admin":
+        from routes.employees import _get_effective_rank
+        caller_rank = await _get_effective_rank(admin)
+        target_rank = await _get_effective_rank(target)
+        if target_rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحيات شخص بنفس رتبتك أو أعلى")
     old_group_id = target.get("permission_group_id")
     old_custom = target.get("custom_permissions", {})
     new_group_name = "بدون مجموعة"
     old_group_name = "بدون مجموعة"
     if group_id:
-        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "name_ar": 1, "department": 1})
+        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "name_ar": 1, "department": 1, "rank": 1})
         if not group:
             raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
+        if admin.get("role") != "system_admin" and group.get("rank", 1) >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعيين مجموعة برتبة مساوية أو أعلى من رتبتك")
         g_dept = group.get("department")
         if admin["role"] == "department_manager":
             if g_dept and g_dept != admin.get("department"):
@@ -344,7 +370,17 @@ async def set_user_custom_permissions(user_id: str, data: dict, admin: dict = De
     """Set individual permission overrides for a user."""
     if not await _is_gm_or_admin(admin):
         raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
+    if admin.get("role") != "system_admin" and user_id == admin.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحياتك بنفسك")
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "role": 1, "permission_group_id": 1})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if admin.get("role") != "system_admin":
+        from routes.employees import _get_effective_rank
+        caller_rank = await _get_effective_rank(admin)
+        target_rank = await _get_effective_rank(target)
+        if target_rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحيات شخص بنفس رتبتك أو أعلى")
     custom = data.get("custom_permissions", {})
     await db.users.update_one({"id": user_id}, {"$set": {"custom_permissions": custom}})
     count = len(custom)
@@ -359,13 +395,24 @@ async def copy_user_permissions(user_id: str, data: dict, admin: dict = Depends(
     """Copy permission group + custom permissions from another user."""
     if not await _is_gm_or_admin(admin):
         raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
+    if admin.get("role") != "system_admin" and user_id == admin.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحياتك بنفسك")
     source_user_id = data.get("source_user_id")
     if not source_user_id:
         raise HTTPException(status_code=400, detail="يجب تحديد المستخدم المصدر")
-    source = await db.users.find_one({"id": source_user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1})
-    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1})
+    source = await db.users.find_one({"id": source_user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "custom_permissions": 1, "role": 1})
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "permission_group_id": 1, "role": 1, "permission_group_id": 1})
     if not source or not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if admin.get("role") != "system_admin":
+        from routes.employees import _get_effective_rank
+        caller_rank = await _get_effective_rank(admin)
+        target_rank = await _get_effective_rank(target)
+        if target_rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك تعديل صلاحيات شخص بنفس رتبتك أو أعلى")
+        source_rank = await _get_effective_rank(source)
+        if source_rank >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك نسخ صلاحيات شخص بنفس رتبتك أو أعلى")
 
     # Detect group mismatch warning
     source_grp_id = source.get("permission_group_id")
