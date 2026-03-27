@@ -252,7 +252,10 @@ async def update_pwa_settings(settings: PWASettingsUpdate, admin: dict = Depends
 
 # ============= Sidebar Menu =============
 @router.get("/admin/sidebar-menu")
-async def get_sidebar_menu_items(admin: dict = Depends(require_admin)):
+async def get_sidebar_menu_items(user: dict = Depends(get_current_user)):
+    from routes.perm_groups import _can_manage_groups
+    if not (user.get("role") == "system_admin" or await _can_manage_groups(user)):
+        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     items = await db.sidebar_menu.find({}, {"_id": 0}).sort("order", 1).to_list(1000)
     return items
 
