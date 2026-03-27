@@ -68,6 +68,11 @@ The startup script:
 - **Rank-based group visibility**: `list_groups` API filters by `rank < caller_rank` — users only see groups below their rank level
 - **Schedule permissions decoupled**: `EmployeeManagement` takes separate `editable` (staff) and `editableSchedule` (schedule) props — schedule operations work independently from staff editing
 - **Custom permissions warning**: Members list shows amber warning when users have custom_permissions overriding group, with reset button + confirmation dialog
+- **Force-logout on credential changes**: Editing national_id or employee_number on activated employee forces logout + resets password; delete_employee also force-logouts before deletion
+
+### Planned Features (Not Yet Implemented)
+
+- **Employee transfer (نقل موظف)**: Formal transfer flow for moving employees between departments — GM/system_admin only. Should: change department, clear permission group + custom permissions, remove from old dept schedules/tasks, force-logout to reload permissions. Currently department field can be edited manually but with no cleanup logic.
 
 ### Department Scope Enforcement
 
