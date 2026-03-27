@@ -17,7 +17,7 @@ async def root():
 
 
 @router.get("/dashboard/stats")
-async def get_dashboard_stats():
+async def get_dashboard_stats(user: dict = Depends(get_current_user)):
     gates = await db.gates.find({}, {"_id": 0}).to_list(200)
     plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
