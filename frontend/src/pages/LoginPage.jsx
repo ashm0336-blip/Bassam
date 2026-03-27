@@ -101,8 +101,8 @@ export default function LoginPage() {
         if (result.must_change_pin) { setShowPinChange(true); }
         else {
           const u = result.user;
-          const roleName = u?.permission_group_name || ROLE_LABELS[u?.role]?.ar || u?.role;
-          toast.success(`مرحباً ${u?.name} — ${roleName}`);
+          const roleName = u?.permission_group_name || (u?.role === 'system_admin' ? 'مسؤول النظام' : null);
+          toast.success(roleName ? `مرحباً ${u?.name} — ${roleName}` : `مرحباً ${u?.name}`);
           navigate('/');
         }
       } else { toast.error(result.error); }
