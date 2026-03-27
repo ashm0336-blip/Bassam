@@ -140,11 +140,12 @@ const ALL_ASSIGNABLE_ROLES = [
 function RoleSelector({ emp, permGroups = [], canChange = false, onChangeRole }) {
   if (!emp.user_id) return <span className="text-[9px] text-slate-400">—</span>;
   const currentGroup = permGroups.find(g => g.id === emp.permission_group_id);
-  const name = currentGroup?.name_ar || 'بدون مجموعة';
+  const name = currentGroup?.name_ar || (emp.permission_group_id ? (emp.permission_group_name || 'مجموعة أخرى') : 'بدون مجموعة');
+  const isExternalGroup = emp.permission_group_id && !currentGroup;
 
   if (!canChange || !onChangeRole) {
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${currentGroup ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>
+      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${currentGroup ? 'bg-violet-50 text-violet-700' : isExternalGroup ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
         <Shield className="w-3 h-3" />{name}
       </span>
     );
@@ -399,11 +400,11 @@ export default function EmployeesList({ department, editable: editableProp, onEm
     try {
       const [empRes, grpRes, menuRes] = await Promise.all([
         axios.get(`${API}/employees?department=${department}`, headers()),
-        axios.get(`${API}/admin/permission-groups`, headers()).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/permission-groups?department=${department}`, headers()).catch(() => ({ data: [] })),
         axios.get(`${API}/admin/sidebar-menu`, headers()).catch(() => ({ data: [] })),
       ]);
       setEmployees(empRes.data);
-      setPermGroups(grpRes.data);
+      setPermGroups(grpRes.data.filter(g => g.department === department));
       setMenuItems(menuRes.data);
     } catch { toast.error("فشل جلب بيانات الموظفين"); }
     finally { setLoading(false); }

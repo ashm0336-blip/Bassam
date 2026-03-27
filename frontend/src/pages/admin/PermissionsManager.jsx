@@ -56,6 +56,11 @@ const DEPARTMENTS = [
   { value: "system_admin", label_ar: "مسؤول النظام" },
 ];
 
+const DEPT_SHORT = {
+  planning: "التخطيط", haram_map: "المصليات", plazas: "الساحات",
+  gates: "الأبواب", crowd_services: "الحشود", mataf: "المطاف",
+};
+
 const GROUP_COLORS = [
   { color: "#7c3aed", bg: "#f5f3ff" },
   { color: "#1d4ed8", bg: "#eff6ff" },
@@ -462,6 +467,9 @@ export default function PermissionsManager({ department: deptFilter }) {
               style={activeGroupId === g.id ? { borderColor: gc.color, backgroundColor: gc.bg, color: gc.color } : {}}>
               <Shield className="w-4 h-4" />
               {g.name_ar}
+              {!deptFilter && g.department && DEPT_SHORT[g.department] && (
+                <span className="text-[8px] bg-white/80 rounded-full px-1.5 py-0.5 font-bold opacity-70">{DEPT_SHORT[g.department]}</span>
+              )}
               {g.user_count > 0 && (
                 <span className="text-[9px] bg-white/60 rounded-full px-1.5 py-0.5 font-bold">{g.user_count}</span>
               )}
@@ -640,6 +648,11 @@ export default function PermissionsManager({ department: deptFilter }) {
                     <ShieldCheck className="w-7 h-7" />
                   </div>
                   <p className="font-cairo font-bold text-base">{activeGroup.name_ar}</p>
+                  {!deptFilter && activeGroup.department && DEPT_SHORT[activeGroup.department] && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 mt-1">
+                      {DEPT_SHORT[activeGroup.department]}
+                    </span>
+                  )}
                   {activeGroup.description_ar && (
                     <p className="text-[10px] text-muted-foreground mt-1">{activeGroup.description_ar}</p>
                   )}

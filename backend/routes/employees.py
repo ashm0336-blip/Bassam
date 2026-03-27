@@ -169,6 +169,9 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
             emp["account_status"] = u.get("account_status", "no_account") if u else "no_account"
             emp["user_role"] = u.get("role") if u else None
             emp["permission_group_id"] = u.get("permission_group_id") if u else None
+            if emp["permission_group_id"]:
+                pg = await db.permission_groups.find_one({"id": emp["permission_group_id"]}, {"_id": 0, "name_ar": 1})
+                emp["permission_group_name"] = pg.get("name_ar", "") if pg else ""
             emp["allowed_departments"] = u.get("allowed_departments", [emp.get("department")] if emp.get("department") else []) if u else []
         else:
             emp["account_status"] = "no_account"
