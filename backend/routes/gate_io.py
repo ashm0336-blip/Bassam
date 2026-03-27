@@ -74,7 +74,7 @@ async def export_gates(user: dict = Depends(get_current_user)):
 
 
 @router.get("/gates/export/template")
-async def download_gates_template():
+async def download_gates_template(user: dict = Depends(get_current_user)):
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from fastapi.responses import StreamingResponse

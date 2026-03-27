@@ -17,7 +17,7 @@ router = APIRouter()
 
 # ============= Interactive Maps =============
 @router.get("/maps")
-async def get_maps(department: Optional[str] = None):
+async def get_maps(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {"is_active": True}
     if department:
         query["department"] = department
@@ -26,7 +26,7 @@ async def get_maps(department: Optional[str] = None):
 
 
 @router.get("/maps/{map_id}/markers")
-async def get_map_markers(map_id: str, type: Optional[str] = None):
+async def get_map_markers(map_id: str, type: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {"map_id": map_id}
     if type:
         query["type"] = type
@@ -97,7 +97,7 @@ async def get_map_floors(department: Optional[str] = None, user: dict = Depends(
 
 
 @router.get("/floors/{floor_id}")
-async def get_floor(floor_id: str):
+async def get_floor(floor_id: str, user: dict = Depends(get_current_user)):
     floor = await db.map_floors.find_one({"id": floor_id}, {"_id": 0})
     if not floor:
         raise HTTPException(status_code=404, detail="الطابق غير موجود")
@@ -136,7 +136,7 @@ async def delete_floor(floor_id: str, admin: dict = Depends(require_department_m
 
 # ============= Zone Management =============
 @router.get("/zones")
-async def get_all_zones(floor_id: Optional[str] = None, zone_type: Optional[str] = None):
+async def get_all_zones(floor_id: Optional[str] = None, zone_type: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {"is_active": True}
     if floor_id:
         query["floor_id"] = floor_id
@@ -156,7 +156,7 @@ async def get_all_zones(floor_id: Optional[str] = None, zone_type: Optional[str]
 
 
 @router.get("/floors/{floor_id}/zones")
-async def get_floor_zones(floor_id: str):
+async def get_floor_zones(floor_id: str, user: dict = Depends(get_current_user)):
     zones = await db.map_zones.find({"floor_id": floor_id, "is_active": True}, {"_id": 0}).to_list(500)
     for zone in zones:
         max_cap = zone.get("max_capacity", 1) or 1
@@ -166,7 +166,7 @@ async def get_floor_zones(floor_id: str):
 
 
 @router.get("/zones/{zone_id}")
-async def get_zone(zone_id: str):
+async def get_zone(zone_id: str, user: dict = Depends(get_current_user)):
     zone = await db.map_zones.find_one({"id": zone_id}, {"_id": 0})
     if not zone:
         raise HTTPException(status_code=404, detail="المنطقة غير موجودة")
@@ -219,7 +219,7 @@ async def bulk_update_zone_crowd(request: Request, admin: dict = Depends(require
 
 
 @router.get("/zones/stats/summary")
-async def get_zones_stats():
+async def get_zones_stats(user: dict = Depends(get_current_user)):
     zones = await db.map_zones.find({"is_active": True}, {"_id": 0}).to_list(500)
     total_current = sum(z.get("current_crowd", 0) for z in zones)
     total_max = sum(z.get("max_capacity", 0) for z in zones) or 1
@@ -244,7 +244,7 @@ async def get_zones_stats():
 
 # ============= Gate Map =============
 @router.get("/gate-map/floors")
-async def get_gate_map_floors():
+async def get_gate_map_floors(user: dict = Depends(get_current_user)):
     floors = await db.gate_map_floors.find({}, {"_id": 0}).sort("order", 1).to_list(100)
     return floors
 
@@ -278,7 +278,7 @@ async def delete_gate_map_floor(floor_id: str, admin: dict = Depends(require_dep
 
 
 @router.get("/gate-map/markers")
-async def get_gate_markers(floor_id: Optional[str] = None):
+async def get_gate_markers(floor_id: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
     if floor_id:
         query["floor_id"] = floor_id
@@ -364,7 +364,7 @@ async def sync_gates_to_markers(request: Request, admin: dict = Depends(require_
 
 
 @router.get("/gate-map/daily-logs")
-async def get_gate_daily_logs(limit: int = 30):
+async def get_gate_daily_logs(limit: int = 30, user: dict = Depends(get_current_user)):
     logs = await db.gate_daily_logs.find({}, {"_id": 0}).sort("date", -1).to_list(limit)
     return logs
 
@@ -404,7 +404,7 @@ async def auto_create_daily_log(admin: dict = Depends(require_department_manager
 
 # ============= External Data =============
 @router.get("/external/haramain-density")
-async def get_haramain_density():
+async def get_haramain_density(user: dict = Depends(get_current_user)):
     try:
         import requests
         from bs4 import BeautifulSoup

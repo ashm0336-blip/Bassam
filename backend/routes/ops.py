@@ -1,14 +1,15 @@
 """Dashboard Ops endpoint — unified data for the operations-room dashboard"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from datetime import datetime, timezone, timedelta
 from database import db
+from auth import get_current_user
 from employee_status import build_employee_statuses, aggregate_statuses, get_sa_now
 
 router = APIRouter()
 
 
 @router.get("/dashboard/ops")
-async def get_ops_dashboard():
+async def get_ops_dashboard(user: dict = Depends(get_current_user)):
     """All-in-one endpoint for the operations room dashboard"""
     # ── KPIs ──
     gates = await db.gates.find({}, {"_id": 0}).to_list(500)

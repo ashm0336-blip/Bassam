@@ -6,7 +6,7 @@ import uuid
 import io
 
 from database import db
-from auth import get_current_user, log_activity
+from auth import get_current_user, log_activity, require_page_permission, check_department_access
 from models import Transaction, TransactionCreate, TransactionUpdate
 
 router = APIRouter()
@@ -49,6 +49,9 @@ async def get_transaction_stats(department: Optional[str] = None, user: dict = D
 
 @router.post("/transactions")
 async def create_transaction(transaction: TransactionCreate, user: dict = Depends(get_current_user)):
+    await require_page_permission(user, "/transactions", require_edit=True)
+    if user.get("role") == "department_manager" and transaction.department != user.get("department"):
+        raise HTTPException(status_code=403, detail="لا يمكنك إنشاء معاملات لإدارة أخرى")
     trans_date = datetime.fromisoformat(transaction.transaction_date.replace('Z', '+00:00'))
     if trans_date > datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="لا يمكن أن يكون تاريخ المعاملة في المستقبل")
@@ -65,9 +68,12 @@ async def create_transaction(transaction: TransactionCreate, user: dict = Depend
 
 @router.put("/transactions/{transaction_id}")
 async def update_transaction(transaction_id: str, transaction: TransactionUpdate, user: dict = Depends(get_current_user)):
+    await require_page_permission(user, "/transactions", require_edit=True)
     existing = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
+    if user.get("role") == "department_manager" and existing.get("department") != user.get("department"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تعديل معاملات إدارة أخرى")
     update_data = {k: v for k, v in transaction.model_dump().items() if v is not None}
     if update_data.get("status") == "completed" and existing.get("status") != "completed":
         if existing.get("status") not in ["pending", "in_progress"]:

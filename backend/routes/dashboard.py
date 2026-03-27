@@ -36,7 +36,7 @@ async def get_dashboard_stats(user: dict = Depends(get_current_user)):
 
 
 @router.get("/dashboard/departments")
-async def get_departments():
+async def get_departments(user: dict = Depends(get_current_user)):
     """ملخص حالة كل إدارة: موظفين + جدول + حالة الوردية + مهام اليوم"""
     now_sa = get_sa_now()
     current_month = now_sa.strftime("%Y-%m")
@@ -133,12 +133,12 @@ async def get_departments():
 
 
 @router.get("/dashboard/crowd-hourly")
-async def get_hourly_crowd():
+async def get_hourly_crowd(user: dict = Depends(get_current_user)):
     return [{"hour": f"{hour:02d}:00", "count": 0, "percentage": 0} for hour in range(24)]
 
 
 @router.get("/gates")
-async def get_gates(status: Optional[str] = None):
+async def get_gates(status: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
     if status:
         query["status"] = status
@@ -151,7 +151,7 @@ async def get_gates(status: Optional[str] = None):
 
 
 @router.get("/gates/stats")
-async def get_gates_stats():
+async def get_gates_stats(user: dict = Depends(get_current_user)):
     gates = await db.gates.find({}, {"_id": 0}).to_list(200)
     return {
         "total": len(gates), "open": len([g for g in gates if g.get("status") == "open"]),
@@ -164,7 +164,7 @@ async def get_gates_stats():
 
 
 @router.get("/plazas")
-async def get_plazas():
+async def get_plazas(user: dict = Depends(get_current_user)):
     plazas = await db.plazas.find({}, {"_id": 0}).to_list(50)
     for plaza in plazas:
         max_cap = plaza.get("max_capacity", 1)
@@ -195,7 +195,7 @@ async def get_plazas_stats(user: dict = Depends(get_current_user)):
 
 
 @router.get("/mataf")
-async def get_mataf():
+async def get_mataf(user: dict = Depends(get_current_user)):
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
     for level in mataf:
         max_cap = level.get("max_capacity", 1)
@@ -207,7 +207,7 @@ async def get_mataf():
 
 
 @router.get("/mataf/stats")
-async def get_mataf_stats():
+async def get_mataf_stats(user: dict = Depends(get_current_user)):
     mataf = await db.mataf.find({}, {"_id": 0}).to_list(10)
     total_current = sum(m.get("current_crowd", 0) for m in mataf)
     total_max = sum(m.get("max_capacity", 0) for m in mataf) or 1
@@ -355,10 +355,18 @@ async def update_alert(alert_id: str, alert: AlertUpdate, user: dict = Depends(g
 
 
 @router.get("/notifications")
-async def get_notifications(unread_only: bool = False):
+async def get_notifications(unread_only: bool = False, user: dict = Depends(get_current_user)):
     query = {}
     if unread_only:
         query["is_read"] = False
+    user_role = user.get("role", "")
+    user_dept = user.get("department")
+    if user_role not in ("system_admin", "general_manager"):
+        or_conds = [{"department": "all"}]
+        if user_dept:
+            or_conds.append({"department": user_dept})
+        or_conds.append({"target_user_id": user.get("id")})
+        query["$or"] = or_conds
     notifications = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(100)
     return notifications
 
@@ -389,7 +397,7 @@ async def get_reports(type: Optional[str] = None, department: Optional[str] = No
 
 
 @router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
+async def create_status_check(input: StatusCheckCreate, user: dict = Depends(get_current_user)):
     status_dict = input.model_dump()
     status_obj = StatusCheck(**status_dict)
     doc = status_obj.model_dump()
@@ -399,7 +407,7 @@ async def create_status_check(input: StatusCheckCreate):
 
 
 @router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
+async def get_status_checks(user: dict = Depends(get_current_user)):
     status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
     for check in status_checks:
         if isinstance(check['timestamp'], str):

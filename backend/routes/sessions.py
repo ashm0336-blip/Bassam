@@ -5,7 +5,7 @@ import uuid
 import copy
 
 from database import db
-from auth import require_department_manager, log_activity
+from auth import get_current_user, require_department_manager, log_activity
 from models import (
     SessionZone, MapSession, MapSessionCreate, MapSessionUpdate, SessionZoneUpdate,
     GateSession, GateSessionCreate, GateSessionUpdate, SessionGateUpdate,
@@ -16,7 +16,7 @@ router = APIRouter()
 
 # ============= Daily Map Sessions =============
 @router.get("/map-sessions")
-async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60, parent_session_id: Optional[str] = None, session_type: Optional[str] = None):
+async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60, parent_session_id: Optional[str] = None, session_type: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
     if floor_id:
         query["floor_id"] = floor_id
@@ -34,7 +34,7 @@ async def get_map_sessions(floor_id: Optional[str] = None, limit: int = 60, pare
 
 
 @router.get("/map-sessions/{session_id}")
-async def get_map_session(session_id: str):
+async def get_map_session(session_id: str, user: dict = Depends(get_current_user)):
     session = await db.map_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
@@ -534,7 +534,7 @@ async def batch_update_density(session_id: str, data: dict = Body(...), admin: d
 
 
 @router.get("/map-sessions/compare/{session_id_1}/{session_id_2}")
-async def compare_sessions(session_id_1: str, session_id_2: str):
+async def compare_sessions(session_id_1: str, session_id_2: str, user: dict = Depends(get_current_user)):
     s1 = await db.map_sessions.find_one({"id": session_id_1}, {"_id": 0})
     s2 = await db.map_sessions.find_one({"id": session_id_2}, {"_id": 0})
     if not s1 or not s2:
@@ -594,7 +594,7 @@ async def _enrich_gates_with_master(gates_snapshot):
 
 
 @router.get("/gate-sessions")
-async def get_gate_sessions(floor_id: Optional[str] = None, limit: int = 60):
+async def get_gate_sessions(floor_id: Optional[str] = None, limit: int = 60, user: dict = Depends(get_current_user)):
     query = {}
     if floor_id:
         query["floor_id"] = floor_id
@@ -603,7 +603,7 @@ async def get_gate_sessions(floor_id: Optional[str] = None, limit: int = 60):
 
 
 @router.get("/gate-sessions/{session_id}")
-async def get_gate_session(session_id: str):
+async def get_gate_session(session_id: str, user: dict = Depends(get_current_user)):
     session = await db.gate_sessions.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")

@@ -156,9 +156,19 @@ async def get_employees_availability(department: str, user: dict = Depends(get_c
 @router.get("/employees")
 async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
-    if department:
-        query["department"] = department
-    elif user.get("role") not in ["system_admin", "general_manager"] and not user.get("permission_group_id"):
+    user_role = user.get("role")
+    if user_role in ["system_admin", "general_manager"]:
+        if department:
+            query["department"] = department
+    elif user_role == "department_manager":
+        query["department"] = user.get("department")
+    elif user.get("permission_group_id"):
+        allowed = user.get("allowed_departments", [user.get("department")] if user.get("department") else [])
+        if department and department in allowed:
+            query["department"] = department
+        elif allowed:
+            query["department"] = {"$in": allowed} if len(allowed) > 1 else allowed[0]
+    else:
         if user.get("department"):
             query["department"] = user.get("department")
     employees = await db.employees.find(query, {"_id": 0}).to_list(1000)
