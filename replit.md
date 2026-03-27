@@ -43,8 +43,9 @@ The startup script:
 ## Permissions System
 
 - Group-based RBAC with `page_permissions: {href: {visible, editable}}`
-- Resolution priority: system_admin > custom_permissions > group > default hidden
-- **Primary check (page_permissions direct)**: `canViewPage(href)` / `canEditPage(href)` reads `page_permissions` directly — what admin sets in the tree is what the user gets
+- Resolution priority: system_admin > custom_permissions (full replace) > group > default hidden
+- **Custom overrides**: When a user has `custom_permissions` for an href, it REPLACES group permissions entirely (no merge)
+- **Primary check (page_permissions direct)**: `canViewPage(href)` / `canEditPage(href)` reads `page_permissions` directly
 - **Legacy fallback**: `canRead(key)` / `canWrite(key)` checks legacy permission keys via `HREF_TO_PERM_MAP` translation
 - All route guards use `href` prop on `PermissionProtectedRoute` for direct page_permissions check
 - All page/tab visibility uses `canViewPage(href)` as primary, legacy as fallback
@@ -54,9 +55,29 @@ The startup script:
 - `/notifications` and `/alerts` have separate permissions (`page_notifications` / `page_alerts`)
 - Force-logout on account freeze/terminate via WebSocket broadcast
 - General manager (`general_manager` role) access is controlled by admin via permission groups — no automatic full access
-- Admin controls GM permissions through the "مدير عام" permission group in the admin panel
-- GM controls department managers through الإدارة العامة settings/permissions page
 - Backend role checks: system_admin has unconditional access; GM/dept_manager/others fall through to page_permission checks
+
+### Rank Hierarchy (Role Protection)
+
+- Each permission group has a `rank` field (1-4): 1=field staff, 2=shift supervisor, 3=dept manager, 4=general manager
+- `system_admin` is always rank 5 (bypasses all checks)
+- Effective rank = max(role_rank, group_rank)
+- A user CANNOT edit/delete/freeze/terminate/reset-pin anyone at same rank or higher
+- `_check_rank_protection()` is enforced on ALL 6 employee management endpoints
+- Rank protection applies even to employees without activated accounts (checks `permission_group_id` on employee record)
+
+### Department Scope Enforcement
+
+- `_check_dept_scope()` is enforced on ALL employee endpoints (create, update, delete, activate, freeze, terminate, reset-pin)
+- Users with permission groups: allowed departments derived from `page_permissions` hrefs via `DEPT_HREF_MAP` (requires `editable`)
+- Department managers without groups: restricted to their own department only
+- system_admin bypasses department scope checks
+
+### Href Pattern Matching (check_page_permission)
+
+- `_href_matches()`: Exact match for paths, or proper prefix (path + "?" or path + "/")
+- Query-param patterns (e.g. `sub=Staff`, `tab=settings`) match as query string parameters only
+- Prevents partial string matching vulnerability (e.g. `/daily-stats` won't match `/daily-stats-admin`)
 
 ## Key Files
 

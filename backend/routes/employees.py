@@ -36,12 +36,43 @@ async def _check_rank_protection(actor: dict, emp: dict):
     if actor_role == "system_admin":
         return
     actor_rank = await _get_effective_rank(actor)
+    target_rank = 1
     if emp.get("user_id"):
         target_user = await db.users.find_one({"id": emp["user_id"]}, {"_id": 0, "role": 1, "permission_group_id": 1})
         if target_user:
             target_rank = await _get_effective_rank(target_user)
-            if target_rank >= actor_rank:
-                raise HTTPException(status_code=403, detail="لا يمكنك التعديل على موظف بنفس رتبتك أو أعلى منك")
+    elif emp.get("permission_group_id"):
+        grp = await db.permission_groups.find_one({"id": emp["permission_group_id"]}, {"_id": 0, "rank": 1})
+        if grp:
+            target_rank = grp.get("rank", 1)
+    if target_rank >= actor_rank:
+        raise HTTPException(status_code=403, detail="لا يمكنك التعديل على موظف بنفس رتبتك أو أعلى منك")
+
+
+async def _check_dept_scope(user: dict, target_dept: str):
+    if user.get("role") == "system_admin":
+        return
+    user_dept = user.get("department")
+    group_id = user.get("permission_group_id")
+    if group_id:
+        grp = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "page_permissions": 1})
+        allowed = _extract_allowed_depts_from_perms(grp.get("page_permissions", {})) if grp else []
+        custom = user.get("custom_permissions", {})
+        if custom:
+            for href, perm in custom.items():
+                if perm.get("editable"):
+                    for prefix, dept_key in DEPT_HREF_MAP.items():
+                        if href == prefix or href.startswith(prefix + "?"):
+                            if dept_key not in allowed:
+                                allowed.append(dept_key)
+                            break
+        if user_dept and user_dept not in allowed:
+            allowed.append(user_dept)
+        if target_dept not in allowed:
+            raise HTTPException(status_code=403, detail="ليس لديك صلاحية على هذا القسم")
+    elif user.get("role") == "department_manager":
+        if target_dept != user_dept:
+            raise HTTPException(status_code=403, detail="يمكنك إدارة موظفي قسمك فقط")
 
 
 async def _can_manage_employees(user: dict) -> bool:
@@ -270,10 +301,9 @@ async def get_employees(department: Optional[str] = None, user: dict = Depends(g
 
 @router.post("/employees")
 async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") == "department_manager" and not user.get("permission_group_id") and employee.department != user.get("department"):
-        raise HTTPException(status_code=403, detail="يمكنك إضافة موظفين لقسمك فقط")
     if not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    await _check_dept_scope(user, employee.department)
 
     # التحقق من تكرار رقم الهوية
     if employee.national_id:
@@ -319,10 +349,9 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
     if user.get("role") != "system_admin" and existing.get("user_id") == user.get("id"):
         raise HTTPException(status_code=403, detail="لا يمكنك تعديل بياناتك بنفسك")
     await _check_rank_protection(user, existing)
-    if user.get("role") == "department_manager" and existing["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي قسمك فقط")
     if not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    await _check_dept_scope(user, existing["department"])
     dump = employee.model_dump()
     update_data = {}
     for k, v in dump.items():
@@ -360,10 +389,9 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     await _check_rank_protection(user, emp)
-    if user.get("role") == "department_manager" and emp["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="إدارتك فقط")
     if not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="غير مصرح")
+    await _check_dept_scope(user, emp["department"])
 
     uid = emp.get("user_id")
     if not uid:
@@ -408,8 +436,9 @@ async def freeze_employee_account(employee_id: str, user: dict = Depends(get_cur
     if not emp or not emp.get("user_id"):
         raise HTTPException(status_code=404, detail="لا يوجد حساب لهذا الموظف")
     await _check_rank_protection(user, emp)
-    if user.get("role") == "department_manager" and emp["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="إدارتك فقط")
+    if not await _can_manage_employees(user):
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    await _check_dept_scope(user, emp["department"])
 
     await db.users.update_one(
         {"id": emp["user_id"]},
@@ -427,8 +456,9 @@ async def terminate_employee_account(employee_id: str, user: dict = Depends(get_
     if not emp or not emp.get("user_id"):
         raise HTTPException(status_code=404, detail="لا يوجد حساب لهذا الموظف")
     await _check_rank_protection(user, emp)
-    if user.get("role") == "department_manager" and emp["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="إدارتك فقط")
+    if not await _can_manage_employees(user):
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    await _check_dept_scope(user, emp["department"])
 
     await db.users.update_one(
         {"id": emp["user_id"]},
@@ -446,8 +476,9 @@ async def reset_employee_pin(employee_id: str, user: dict = Depends(get_current_
     if not emp or not emp.get("user_id"):
         raise HTTPException(status_code=404, detail="لا يوجد حساب لهذا الموظف")
     await _check_rank_protection(user, emp)
-    if user.get("role") == "department_manager" and emp["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="إدارتك فقط")
+    if not await _can_manage_employees(user):
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    await _check_dept_scope(user, emp["department"])
 
     default_pin = emp.get("employee_number") or "0000"
     await db.users.update_one(
@@ -474,10 +505,9 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
     if user.get("role") != "system_admin" and existing.get("user_id") == user.get("id"):
         raise HTTPException(status_code=403, detail="لا يمكنك حذف حسابك بنفسك")
     await _check_rank_protection(user, existing)
-    if user.get("role") == "department_manager" and existing["department"] != user.get("department"):
-        raise HTTPException(status_code=403, detail="يمكنك حذف موظفي قسمك فقط")
     if not await _can_manage_employees(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    await _check_dept_scope(user, existing["department"])
 
     # ──── حذف شامل: تنظيف كل البيانات المرتبطة بالموظف ────
     # 1) حذف حساب المستخدم نهائياً

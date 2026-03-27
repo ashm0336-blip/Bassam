@@ -136,14 +136,31 @@ async def check_page_permission(user: dict, href_pattern: str, require_edit: boo
         return False
     pp = group.get("page_permissions", {})
     custom = user.get("custom_permissions", {})
+
+    seen = set()
     for href in list(pp.keys()) + list(custom.keys()):
-        if href_pattern in href:
-            perm = {**(pp.get(href, {})), **(custom.get(href, {}))}
-            if require_edit and perm.get("editable"):
-                return True
-            if not require_edit and perm.get("visible"):
-                return True
+        if href in seen:
+            continue
+        seen.add(href)
+        if not _href_matches(href, href_pattern):
+            continue
+        if href in custom:
+            perm = custom[href]
+        else:
+            perm = pp.get(href, {})
+        if require_edit and perm.get("editable"):
+            return True
+        if not require_edit and perm.get("visible"):
+            return True
     return False
+
+
+def _href_matches(href: str, pattern: str) -> bool:
+    if href == pattern:
+        return True
+    if pattern.startswith("/"):
+        return href == pattern or href.startswith(pattern + "?") or href.startswith(pattern + "/")
+    return pattern in href.split("&") or href.endswith(pattern) or ("?" + pattern) in href or ("&" + pattern) in href
 
 
 async def require_page_permission(user: dict, href_pattern: str, require_edit: bool = False):
