@@ -279,10 +279,10 @@ export default function DepartmentSettings({ department }) {
   if (canViewSubTab('Staff')) {
     tabs.push({ id: 'employees_list', label: language === 'ar' ? 'الموظفون' : 'Staff', icon: Users, count: counts.employees });
   }
-  if (canViewSubTab('Shifts')) {
+  if (department !== 'general_admin' && canViewSubTab('Shifts')) {
     tabs.push({ id: 'shifts', label: language === 'ar' ? 'الورديات' : 'Shifts', icon: Clock, count: counts.shifts });
   }
-  if (canViewSubTab('Maps')) {
+  if (department !== 'general_admin' && canViewSubTab('Maps')) {
     tabs.push({ id: 'maps', label: language === 'ar' ? 'المواقع' : 'Sites', icon: Layers, count: counts.maps });
   }
   if (department === 'gates' && canViewSubTab('GatesData')) {
