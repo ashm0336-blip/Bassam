@@ -15,6 +15,19 @@ from ws_manager import ws_manager
 router = APIRouter()
 
 
+async def _is_gm_or_admin(user: dict) -> bool:
+    if user.get("role") == "system_admin":
+        return True
+    if user.get("role") == "general_manager":
+        return True
+    gid = user.get("permission_group_id")
+    if gid:
+        grp = await db.permission_groups.find_one({"id": gid}, {"_id": 0, "name_ar": 1})
+        if grp and grp.get("name_ar") == "مدير عام":
+            return True
+    return False
+
+
 async def _can_manage_groups(user: dict) -> bool:
     if user.get("role") == "system_admin":
         return True
@@ -312,12 +325,8 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
 @router.delete("/admin/users/{user_id}/custom-permissions")
 async def reset_user_custom_permissions(user_id: str, admin: dict = Depends(get_current_user)):
     """Reset (clear) all custom permission overrides for a user."""
-    if not await _can_manage_groups(admin):
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
-    if admin["role"] == "department_manager":
-        target_check = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1})
-        if not target_check or target_check.get("department") != admin.get("department"):
-            raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
+    if not await _is_gm_or_admin(admin):
+        raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
     target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "custom_permissions": 1})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
@@ -332,12 +341,8 @@ async def reset_user_custom_permissions(user_id: str, admin: dict = Depends(get_
 @router.put("/admin/users/{user_id}/custom-permissions")
 async def set_user_custom_permissions(user_id: str, data: dict, admin: dict = Depends(get_current_user)):
     """Set individual permission overrides for a user."""
-    if not await _can_manage_groups(admin):
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
-    if admin["role"] == "department_manager":
-        target_check = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1})
-        if not target_check or target_check.get("department") != admin.get("department"):
-            raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
+    if not await _is_gm_or_admin(admin):
+        raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
     target = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1})
     custom = data.get("custom_permissions", {})
     await db.users.update_one({"id": user_id}, {"$set": {"custom_permissions": custom}})
@@ -351,12 +356,8 @@ async def set_user_custom_permissions(user_id: str, data: dict, admin: dict = De
 @router.put("/admin/users/{user_id}/copy-permissions")
 async def copy_user_permissions(user_id: str, data: dict, admin: dict = Depends(get_current_user)):
     """Copy permission group + custom permissions from another user."""
-    if not await _can_manage_groups(admin):
-        raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
-    if admin["role"] == "department_manager":
-        target_check = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1})
-        if not target_check or target_check.get("department") != admin.get("department"):
-            raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
+    if not await _is_gm_or_admin(admin):
+        raise HTTPException(status_code=403, detail="الصلاحيات الفردية متاحة للمدير العام فقط")
     source_user_id = data.get("source_user_id")
     if not source_user_id:
         raise HTTPException(status_code=400, detail="يجب تحديد المستخدم المصدر")

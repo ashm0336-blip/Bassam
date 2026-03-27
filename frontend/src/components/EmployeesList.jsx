@@ -393,6 +393,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
   const canExport    = canRead("export_employees");
   const ROLE_HIERARCHY = { system_admin:5, general_manager:4, department_manager:3, shift_supervisor:2, field_staff:1, admin_staff:1 };
   const myLevel = ROLE_HIERARCHY[user?.role] || 0;
+  const isGmOrAdmin = user?.role === 'system_admin' || user?.role === 'general_manager' || user?.permission_group_name === 'مدير عام';
 
   // ── Fetch ──────────────────────────────────────────────────
   const fetchEmployees = useCallback(async () => {
@@ -1053,12 +1054,12 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                           <DropdownMenuItem onClick={() => openProfile(emp)}>
                             <User className="w-4 h-4 ml-2 text-primary"/>عرض البروفايل
                           </DropdownMenuItem>
-                          {canChangeRoles && !isSelf && emp.user_id && (
+                          {isGmOrAdmin && !isSelf && emp.user_id && (
                             <DropdownMenuItem onClick={() => openCustomPerms(emp)}>
                               <Settings className="w-4 h-4 ml-2 text-violet-500"/>صلاحيات فردية
                             </DropdownMenuItem>
                           )}
-                          {canChangeRoles && !isSelf && emp.user_id && (
+                          {isGmOrAdmin && !isSelf && emp.user_id && (
                             <DropdownMenuItem onClick={() => openCopyPerms(emp)}>
                               <Copy className="w-4 h-4 ml-2 text-sky-500"/>نسخ صلاحيات من موظف
                             </DropdownMenuItem>
