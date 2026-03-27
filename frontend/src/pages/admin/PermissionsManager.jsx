@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useSidebar } from "@/context/SidebarContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   Shield, ShieldCheck, Save, Loader2,
   Eye, EyeOff, Pencil, Lock, ChevronDown, Trash2, Edit, Plus, X,
@@ -75,8 +76,16 @@ const GROUP_COLORS = [
   { color: "#be123c", bg: "#fff1f2" },
 ];
 
+const RANK_LABELS = {
+  1: { label: "موظف عادي", icon: "👤", color: "text-gray-600", bg: "bg-gray-50", desc: "صلاحيات أساسية — عرض البيانات فقط بدون تعديل على أي موظف" },
+  2: { label: "مشرف ميداني", icon: "🎯", color: "text-blue-600", bg: "bg-blue-50", desc: "إشراف على الموظفين العاديين (رتبة 1) — لا يستطيع التعديل على المشرفين أو المدراء" },
+  3: { label: "مدير إدارة / مكتب", icon: "🏢", color: "text-amber-600", bg: "bg-amber-50", desc: "إدارة المشرفين والموظفين (رتبة 1-2) — لا يستطيع التعديل على مدراء الإدارات الأخرى أو المدير العام" },
+  4: { label: "مدير عام", icon: "⭐", color: "text-emerald-600", bg: "bg-emerald-50", desc: "أعلى صلاحية إدارية — يدير كل الرتب (1-3) ولا يُعدّل عليه إلا مسؤول النظام" },
+};
+
 export default function PermissionsManager({ department: deptFilter }) {
   const { refreshMenu } = useSidebar();
+  const { user: currentUser } = useAuth();
 
   const [menuItems, setMenuItems] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -468,6 +477,9 @@ export default function PermissionsManager({ department: deptFilter }) {
               style={activeGroupId === g.id ? { borderColor: gc.color, backgroundColor: gc.bg, color: gc.color } : {}}>
               <Shield className="w-4 h-4" />
               {g.name_ar}
+              {RANK_LABELS[g.rank] && (
+                <span className={`text-[8px] rounded-full px-1.5 py-0.5 font-bold ${RANK_LABELS[g.rank].bg} ${RANK_LABELS[g.rank].color} border`}>{RANK_LABELS[g.rank].icon} {g.rank}</span>
+              )}
               {!deptFilter && g.department && DEPT_SHORT[g.department] && (
                 <span className="text-[8px] bg-white/80 rounded-full px-1.5 py-0.5 font-bold opacity-70">{DEPT_SHORT[g.department]}</span>
               )}
@@ -657,6 +669,12 @@ export default function PermissionsManager({ department: deptFilter }) {
                   {activeGroup.description_ar && (
                     <p className="text-[10px] text-muted-foreground mt-1">{activeGroup.description_ar}</p>
                   )}
+                  {RANK_LABELS[activeGroup.rank] && (
+                    <div className={`mt-2 mx-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border ${RANK_LABELS[activeGroup.rank].bg} ${RANK_LABELS[activeGroup.rank].color}`}>
+                      <span>{RANK_LABELS[activeGroup.rank].icon}</span>
+                      <span>رتبة {activeGroup.rank}: {RANK_LABELS[activeGroup.rank].label}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-center">
@@ -782,13 +800,34 @@ export default function PermissionsManager({ department: deptFilter }) {
               <Select value={String(groupForm.rank)} onValueChange={v => setGroupForm({ ...groupForm, rank: parseInt(v) })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 — موظف عادي</SelectItem>
-                  <SelectItem value="2">2 — مشرف ميداني</SelectItem>
-                  <SelectItem value="3">3 — مدير إدارة / مكتب</SelectItem>
-                  <SelectItem value="4">4 — مدير عام</SelectItem>
+                  {[1, 2, 3, 4].map(r => {
+                    const info = RANK_LABELS[r];
+                    const myRank = currentUser?.role === "system_admin" ? 5 : (currentUser?.permission_group_rank || 1);
+                    const disabled = currentUser?.role !== "system_admin" && r >= myRank;
+                    return (
+                      <SelectItem key={r} value={String(r)} disabled={disabled}>
+                        <span className="flex items-center gap-2">
+                          <span>{info.icon}</span>
+                          <span>{r} — {info.label}</span>
+                          {disabled && <span className="text-[9px] text-red-400 mr-1">(أعلى من رتبتك)</span>}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">الموظف لا يستطيع التعديل على شخص بنفس رتبته أو أعلى</p>
+              {groupForm.rank && RANK_LABELS[groupForm.rank] && (
+                <div className={`mt-2 p-2.5 rounded-lg border text-[11px] leading-relaxed ${RANK_LABELS[groupForm.rank].bg} ${RANK_LABELS[groupForm.rank].color}`}>
+                  <p className="font-bold mb-0.5">{RANK_LABELS[groupForm.rank].icon} {RANK_LABELS[groupForm.rank].label}</p>
+                  <p className="opacity-80">{RANK_LABELS[groupForm.rank].desc}</p>
+                  {groupForm.rank > 1 && (
+                    <p className="mt-1 text-[10px] opacity-60">يدير: الرتب من 1 إلى {groupForm.rank - 1} | لا يُعدَّل عليه إلا من رتبة {groupForm.rank + 1} وأعلى</p>
+                  )}
+                  {groupForm.rank === 1 && (
+                    <p className="mt-1 text-[10px] opacity-60">لا يستطيع التعديل على أي موظف آخر</p>
+                  )}
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setGroupDialogOpen(false)}><X className="w-4 h-4 ml-1" />إلغاء</Button>
