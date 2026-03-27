@@ -138,7 +138,7 @@ const ALL_ASSIGNABLE_ROLES = [
 ];
 
 function RoleSelector({ emp, permGroups = [], canChange = false, onChangeRole }) {
-  if (!emp.user_id) return <span className="text-[9px] text-slate-400">—</span>;
+  if (!emp.user_id && !canChange) return <span className="text-[9px] text-slate-400">—</span>;
   const currentGroup = permGroups.find(g => g.id === emp.permission_group_id);
   const name = currentGroup?.name_ar || (emp.permission_group_id ? (emp.permission_group_name || 'مجموعة أخرى') : 'بدون مجموعة');
   const isExternalGroup = emp.permission_group_id && !currentGroup;
@@ -487,18 +487,30 @@ export default function EmployeesList({ department, editable: editableProp, onEm
   // ── Change Permission Group ────────────────────────────────
   const handleChangeRole = async (emp, newGroupId) => {
     try {
-      let customCleared = false;
       if (emp.user_id) {
         const res = await axios.put(`${API}/admin/users/${emp.user_id}/permission-group`,
           { permission_group_id: newGroupId }, headers());
-        customCleared = res.data?.custom_cleared;
-        if (customCleared) {
+        if (res.data?.custom_cleared) {
           toast.info(`تم مسح ${res.data.custom_cleared_count} صلاحية فردية سابقة تلقائياً`, { duration: 4000 });
         }
+        if (res.data?.auto_frozen) {
+          toast.info("تم تجميد حساب الموظف تلقائياً (بدون مجموعة صلاحيات) 🔒", { duration: 5000 });
+        }
+        if (res.data?.auto_unfrozen) {
+          toast.success("تم إعادة تنشيط حساب الموظف تلقائياً ✅", { duration: 5000 });
+        }
       }
-      await axios.put(`${API}/employees/${emp.id}`, { permission_group_id: newGroupId }, headers());
-      const grpName = permGroups.find(g => g.id === newGroupId)?.name_ar || 'بدون مجموعة';
-      toast.success(`تم تغيير المجموعة إلى: ${grpName}`);
+      const empRes = await axios.put(`${API}/employees/${emp.id}`, { permission_group_id: newGroupId }, headers());
+      if (empRes.data?.auto_activated && empRes.data?.login_info) {
+        toast.success(empRes.data.message + "\n" + empRes.data.login_info, { duration: 10000 });
+      } else if (empRes.data?.auto_frozen) {
+        toast.info(empRes.data.message, { duration: 5000 });
+      } else if (empRes.data?.auto_unfrozen) {
+        toast.success(empRes.data.message, { duration: 5000 });
+      } else {
+        const grpName = permGroups.find(g => g.id === newGroupId)?.name_ar || 'بدون مجموعة';
+        toast.success(`تم تغيير المجموعة إلى: ${grpName}`);
+      }
       fetchEmployees();
     } catch (e) { toast.error(e.response?.data?.detail || "فشل تغيير المجموعة"); }
   };
@@ -636,13 +648,21 @@ export default function EmployeesList({ department, editable: editableProp, onEm
         job_title: form.job_title, contact_phone: form.contact_phone||undefined,
         national_id: form.national_id||undefined,
         employment_type: form.employment_type,
-        permission_group_id: form.permission_group_id||undefined,
         season: form.season||undefined, contract_end: form.contract_end||undefined,
         department,
       };
       if (editEmp) {
-        await axios.put(`${API}/employees/${editEmp.id}`, payload, headers());
-        toast.success("تم تحديث بيانات الموظف ✅");
+        payload.permission_group_id = form.permission_group_id||undefined;
+        const res = await axios.put(`${API}/employees/${editEmp.id}`, payload, headers());
+        if (res.data?.auto_activated && res.data?.login_info) {
+          toast.success(res.data.message + "\n" + res.data.login_info, { duration: 10000 });
+        } else if (res.data?.auto_frozen) {
+          toast.info(res.data.message, { duration: 5000 });
+        } else if (res.data?.auto_unfrozen) {
+          toast.success(res.data.message, { duration: 5000 });
+        } else {
+          toast.success("تم تحديث بيانات الموظف ✅");
+        }
       } else {
         await axios.post(`${API}/employees`, { ...payload, shift:"", rest_days:[] }, headers());
         toast.success("تم إضافة الموظف بنجاح ✅");
@@ -1259,7 +1279,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
               </div>
             )}
 
-            {/* الإدارات المسموحة */}
+            {editEmp && (
             <div>
               <Label className="text-[11px] font-semibold mb-2 block flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-primary"/>مجموعة الصلاحيات
@@ -1283,6 +1303,13 @@ export default function EmployeesList({ department, editable: editableProp, onEm
               </Select>
               <p className="text-[9px] text-muted-foreground mt-1">تحدد الصفحات اللي يشوفها ويقدر يعدّلها</p>
             </div>
+            )}
+            {!editEmp && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-2.5 flex items-start gap-2">
+                <Shield className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0"/>
+                <p className="text-[10px] text-blue-700 leading-relaxed">بعد إضافة الموظف، عيّن له مجموعة صلاحيات من جدول الموظفين لتفعيل حسابه تلقائياً</p>
+              </div>
+            )}
 
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={()=>setEmpDialog(false)}>إلغاء</Button>

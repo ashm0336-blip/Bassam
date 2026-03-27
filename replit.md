@@ -70,6 +70,15 @@ The startup script:
 - **Custom permissions warning**: Members list shows amber warning when users have custom_permissions overriding group, with reset button + confirmation dialog
 - **Force-logout on credential changes**: Editing national_id or employee_number on activated employee forces logout + resets password; delete_employee also force-logouts before deletion
 
+### Permission Group ↔ Account Lifecycle
+
+- **Adding employee**: No permission group in the add dialog — group is assigned afterwards from the employee table
+- **Assigning group (no account)**: Auto-creates user account + activates it + shows login credentials. Requires national_id.
+- **Assigning group (frozen account)**: Auto-unfreezes account + force-logout to reload permissions
+- **Removing group (active account)**: Auto-freezes account + force-logout
+- **"Activate account" button**: Rejects if employee has no permission group ("يجب تسكين الموظف في مجموعة صلاحيات أولاً")
+- Both `assign_user_group` (perm_groups.py) and `update_employee` (employees.py) enforce these rules
+
 ### Planned Features (Not Yet Implemented)
 
 - **Employee transfer (نقل موظف)**: Formal transfer flow for moving employees between departments — GM/system_admin only. Should: change department, clear permission group + custom permissions, remove from old dept schedules/tasks, force-logout to reload permissions. Currently department field can be edited manually but with no cleanup logic.

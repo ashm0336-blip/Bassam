@@ -347,20 +347,48 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
         old_grp = await db.permission_groups.find_one({"id": old_group_id}, {"_id": 0, "name_ar": 1})
         old_group_name = old_grp.get("name_ar", "") if old_grp else "بدون مجموعة"
 
-    # Auto-clear custom permissions when group changes to prevent conflicts
     had_custom = len(old_custom) > 0
     update_data = {"permission_group_id": group_id, "custom_permissions": {}}
+
+    user_full = await db.users.find_one({"id": user_id}, {"_id": 0, "account_status": 1, "is_active": 1})
+    acct_status = user_full.get("account_status", "pending") if user_full else "pending"
+    auto_frozen = False
+    auto_unfrozen = False
+
+    if group_id and acct_status in ("frozen", "pending"):
+        update_data["account_status"] = "active"
+        update_data["is_active"] = True
+        update_data["failed_attempts"] = 0
+        auto_unfrozen = True
+    elif not group_id and acct_status == "active":
+        update_data["account_status"] = "frozen"
+        update_data["is_active"] = False
+        auto_frozen = True
+
     await db.users.update_one({"id": user_id}, {"$set": update_data})
+
+    if auto_frozen or auto_unfrozen:
+        await ws_manager.broadcast({
+            "type": "force_logout",
+            "user_id": user_id,
+            "reason": "account_frozen" if auto_frozen else "group_changed"
+        })
 
     detail = f"تم تغيير مجموعة {target.get('name')} من «{old_group_name}» إلى «{new_group_name}»"
     if had_custom:
         detail += f" — تم مسح {len(old_custom)} صلاحية فردية سابقة تلقائياً"
+    if auto_frozen:
+        detail += " — تم تجميد الحساب تلقائياً"
+    if auto_unfrozen:
+        detail += " — تم إعادة تنشيط الحساب تلقائياً"
     await log_activity("تغيير مجموعة صلاحيات", admin, target.get("name", user_id), detail)
     await ws_manager.broadcast({"type": "permissions", "action": "user_changed", "user_id": user_id})
     return {
         "message": "تم تعيين المجموعة",
         "custom_cleared": had_custom,
         "custom_cleared_count": len(old_custom),
+        "auto_frozen": auto_frozen,
+        "auto_unfrozen": auto_unfrozen,
     }
 
 

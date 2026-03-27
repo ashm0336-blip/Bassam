@@ -352,13 +352,22 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     await _check_dept_scope(user, existing["department"])
     dump = employee.model_dump()
+    sent_fields = employee.model_fields_set
     update_data = {}
     for k, v in dump.items():
+        if k not in sent_fields:
+            continue
         if k == "rest_days" and v is not None:
             update_data[k] = v
         elif v is not None:
             update_data[k] = v
-    if "rest_days" in dump and dump["rest_days"] is not None:
+
+    group_explicitly_set = "permission_group_id" in sent_fields
+
+    if group_explicitly_set:
+        update_data["permission_group_id"] = dump.get("permission_group_id")
+
+    if "rest_days" in sent_fields and dump["rest_days"] is not None:
         update_data["rest_days"] = dump["rest_days"]
 
     if "national_id" in update_data and update_data["national_id"]:
@@ -378,6 +387,17 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
 
     # ──── مزامنة البيانات مع حساب المستخدم ────
     credentials_changed = False
+    auto_activated = False
+    auto_frozen = False
+    auto_unfrozen = False
+    login_info = None
+
+    new_group_id = dump.get("permission_group_id")
+    old_group_id = existing.get("permission_group_id")
+    group_changed = group_explicitly_set and new_group_id != old_group_id
+
+    refreshed = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+
     if existing.get("user_id"):
         user_sync = {}
         if "name" in update_data:
@@ -386,8 +406,8 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
             user_sync["department"] = update_data["department"]
         if "allowed_departments" in dump and dump["allowed_departments"] is not None:
             user_sync["allowed_departments"] = dump["allowed_departments"]
-        if "permission_group_id" in dump and dump["permission_group_id"] is not None:
-            user_sync["permission_group_id"] = dump["permission_group_id"]
+        if group_explicitly_set:
+            user_sync["permission_group_id"] = new_group_id
 
         old_national_id = existing.get("national_id", "")
         old_employee_number = existing.get("employee_number", "")
@@ -406,21 +426,70 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
             user_sync["locked_until"] = None
             credentials_changed = True
 
+        if group_changed:
+            user_sync["custom_permissions"] = {}
+            user_acct = await db.users.find_one({"id": existing["user_id"]}, {"_id": 0, "account_status": 1})
+            acct_status = user_acct.get("account_status", "pending") if user_acct else "pending"
+
+            if new_group_id and acct_status in ("frozen", "pending"):
+                user_sync["account_status"] = "active"
+                user_sync["is_active"] = True
+                user_sync["failed_attempts"] = 0
+                auto_unfrozen = True
+            elif not new_group_id and acct_status == "active":
+                user_sync["account_status"] = "frozen"
+                user_sync["is_active"] = False
+                auto_frozen = True
+
         if user_sync:
             await db.users.update_one({"id": existing["user_id"]}, {"$set": user_sync})
 
-        if credentials_changed:
+        if credentials_changed or auto_frozen or auto_unfrozen:
             await ws_manager.broadcast({
                 "type": "force_logout",
                 "user_id": existing["user_id"],
-                "reason": "credentials_changed"
+                "reason": "credentials_changed" if credentials_changed else ("account_frozen" if auto_frozen else "group_changed")
             })
+
+    elif group_changed and new_group_id and not existing.get("user_id"):
+        nat_id = refreshed.get("national_id") or existing.get("national_id")
+        if nat_id:
+            uid = await _auto_create_user_account(employee_id, refreshed)
+            if uid:
+                await db.employees.update_one({"id": employee_id}, {"$set": {"user_id": uid}})
+                await db.users.update_one({"id": uid}, {"$set": {
+                    "account_status": "active",
+                    "is_active": True,
+                    "permission_group_id": new_group_id,
+                }})
+                auto_activated = True
+                u = await db.users.find_one({"id": uid}, {"_id": 0, "national_id": 1})
+                default_pin = refreshed.get("employee_number") or "0000"
+                login_info = f"رقم الهوية: {u.get('national_id', nat_id)} — الرقم السري: {default_pin}"
+        else:
+            raise HTTPException(status_code=400, detail="لا يمكن تفعيل الحساب — أضف رقم الهوية أولاً ثم عيّن المجموعة")
 
     await log_activity("employee_updated", user, update_data.get("name", existing["name"]), f"تم تحديث: {existing['name']}")
 
-    if credentials_changed:
-        return {"message": "تم تحديث الموظف — تم طرد الموظف وإعادة تعيين بيانات الدخول"}
-    return {"message": "تم تحديث الموظف بنجاح"}
+    msg = "تم تحديث الموظف بنجاح"
+    if auto_activated:
+        msg = f"تم تحديث الموظف وتفعيل حسابه تلقائياً ✅"
+    elif auto_frozen:
+        msg = "تم تحديث الموظف وتجميد حسابه تلقائياً (بدون مجموعة صلاحيات) 🔒"
+    elif auto_unfrozen:
+        msg = "تم تحديث الموظف وإعادة تنشيط حسابه ✅"
+    elif credentials_changed:
+        msg = "تم تحديث الموظف — تم طرد الموظف وإعادة تعيين بيانات الدخول"
+
+    result = {"message": msg}
+    if auto_activated and login_info:
+        result["login_info"] = login_info
+        result["auto_activated"] = True
+    if auto_frozen:
+        result["auto_frozen"] = True
+    if auto_unfrozen:
+        result["auto_unfrozen"] = True
+    return result
 
 
 @router.post("/employees/{employee_id}/activate-account")
@@ -434,15 +503,16 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
         raise HTTPException(status_code=403, detail="غير مصرح")
     await _check_dept_scope(user, emp["department"])
 
+    if not emp.get("permission_group_id"):
+        raise HTTPException(status_code=400, detail="يجب تسكين الموظف في مجموعة صلاحيات أولاً")
+
     uid = emp.get("user_id")
     if not uid:
-        # إنشاء حساب جديد إذا لم يكن موجوداً
         uid = await _auto_create_user_account(employee_id, emp)
         if not uid:
             raise HTTPException(status_code=400, detail="لا يوجد رقم هوية للموظف — أضفه أولاً")
         await db.employees.update_one({"id": employee_id}, {"$set": {"user_id": uid}})
 
-    # دائماً إعادة ضبط كلمة المرور للرقم الوظيفي عند التفعيل
     default_pin = emp.get("employee_number") or "0000"
     await db.users.update_one(
         {"id": uid},
@@ -452,15 +522,14 @@ async def activate_employee_account(employee_id: str, user: dict = Depends(get_c
             "failed_attempts": 0,
             "password": hash_password(default_pin),
             "must_change_pin": True,
+            "permission_group_id": emp.get("permission_group_id"),
         }}
     )
     await log_activity("account_activated", user, emp["name"], f"تفعيل حساب: {emp['name']}")
-    
-    # Get login info for the admin
-    u = await db.users.find_one({"id": uid}, {"_id": 0, "national_id": 1, "must_change_pin": 1})
+
+    u = await db.users.find_one({"id": uid}, {"_id": 0, "national_id": 1})
     nat_id = u.get("national_id", "") if u else ""
-    default_pin = emp.get("employee_number") or "0000"
-    
+
     return {
         "message": f"تم تفعيل حساب {emp['name']} ✅",
         "user_id": uid,
