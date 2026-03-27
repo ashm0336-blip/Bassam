@@ -220,10 +220,11 @@ async def change_pin(request: Request, data: PinChangeRequest, user: dict = Depe
 @router.post("/auth/reset-pin/{user_id}")
 @limiter.limit("10/minute")
 async def reset_pin(request: Request, user_id: str, manager: dict = Depends(get_current_user)):
-    # المدير يعيد تعيين موظفيه فقط — الأدمن يعيد الجميع
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if manager.get("role") != "system_admin" and user_id == manager.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك إعادة تعيين رمزك بنفسك")
 
     if manager["role"] == "system_admin":
         pass
@@ -263,6 +264,8 @@ async def update_account_status(user_id: str, data: AccountStatusUpdate, manager
     target = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if manager.get("role") != "system_admin" and user_id == manager.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تغيير حالة حسابك بنفسك")
 
     if data.status not in ["active", "frozen", "terminated"]:
         raise HTTPException(status_code=400, detail="حالة غير صحيحة")

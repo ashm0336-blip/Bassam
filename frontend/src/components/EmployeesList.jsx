@@ -222,7 +222,7 @@ function AvatarInitial({ name, size = "md" }) {
 
 // ── Employee Card — تصميم احترافي متناسق ──────────────────────
 function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins, canChangeRoles, myLevel,
-    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups, onOpenProfile, isOnline }) {
+    onEdit, onDelete, onAccountAction, onChangeRole, isAr, permGroups, onOpenProfile, isOnline, isSelf }) {
   const acCfg = ACCOUNT_STATUS_CFG[emp.account_status] || ACCOUNT_STATUS_CFG.no_account;
   const hasNatId = !!emp.national_id;
   const avatarColors = ["#7c3aed","#047857","#0284c7","#b45309","#dc2626","#0f766e"];
@@ -279,17 +279,17 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" dir="rtl" className="font-cairo w-52">
               <DropdownMenuItem onClick={()=>onOpenProfile(emp)}><User className="w-4 h-4 ml-2 text-primary"/>عرض البروفايل</DropdownMenuItem>
-              {canEdit && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onEdit(emp)}><Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات</DropdownMenuItem></>}
-              {canResetPins && hasNatId && (emp.account_status==="active"||emp.account_status==="frozen") && (
+              {canEdit && !isSelf && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onEdit(emp)}><Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات</DropdownMenuItem></>}
+              {canResetPins && !isSelf && hasNatId && (emp.account_status==="active"||emp.account_status==="frozen") && (
                 <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"reset-pin",emp.name)}><KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN</DropdownMenuItem>
               )}
-              {canManageAccounts && hasNatId && <>
+              {canManageAccounts && !isSelf && hasNatId && <>
                 <DropdownMenuSeparator/>
                 {emp.account_status==="active" && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"freeze-account",emp.name)} className="text-blue-600"><ShieldX className="w-4 h-4 ml-2"/>تجميد مؤقتاً</DropdownMenuItem>}
                 {["pending","frozen","no_account"].includes(emp.account_status||"no_account") && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"activate-account",emp.name)} className="text-emerald-600"><ShieldCheck className="w-4 h-4 ml-2"/>تفعيل الحساب</DropdownMenuItem>}
                 {emp.account_status!=="terminated" && <DropdownMenuItem onClick={()=>onAccountAction(emp.id,"terminate-account",emp.name)} className="text-orange-600"><ShieldOff className="w-4 h-4 ml-2"/>إنهاء الخدمة</DropdownMenuItem>}
               </>}
-              {canDelete && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onDelete(emp)} className="text-destructive"><Trash2 className="w-4 h-4 ml-2"/>حذف نهائياً</DropdownMenuItem></>}
+              {canDelete && !isSelf && <><DropdownMenuSeparator/><DropdownMenuItem onClick={()=>onDelete(emp)} className="text-destructive"><Trash2 className="w-4 h-4 ml-2"/>حذف نهائياً</DropdownMenuItem></>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -313,7 +313,7 @@ function EmployeeCard({ emp, canEdit, canDelete, canManageAccounts, canResetPins
           {(
             <div className="flex items-center gap-1">
               <Shield className="w-3 h-3 text-violet-400" />
-              <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles} onChangeRole={onChangeRole}/>
+              <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles && !isSelf} onChangeRole={onChangeRole}/>
             </div>
           )}
         </div>
@@ -891,7 +891,8 @@ export default function EmployeesList({ department, editable: editableProp, onEm
               onAccountAction={handleAccountAction}
               onChangeRole={handleChangeRole}
               isAr={isAr} permGroups={permGroups} onOpenProfile={openProfile}
-              isOnline={onlineUserIds.includes(emp.id)} />
+              isOnline={onlineUserIds.includes(emp.id)}
+              isSelf={user?.role !== 'system_admin' && emp.user_id === user?.id} />
           ))}
         </div>
       )}
@@ -1030,9 +1031,12 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                     </TableCell>
                     {/* الصلاحيات */}
                     <TableCell className="text-center">
-                      <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles} onChangeRole={handleChangeRole}/>
+                      <RoleSelector emp={emp} permGroups={permGroups} canChange={canChangeRoles && !(user?.role !== 'system_admin' && emp.user_id === user?.id)} onChangeRole={handleChangeRole}/>
                     </TableCell>
                     <TableCell>
+                      {(() => {
+                        const isSelf = user?.role !== 'system_admin' && emp.user_id === user?.id;
+                        return (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-slate-100"
@@ -1041,7 +1045,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" side="bottom" className="w-52 font-cairo" dir="rtl">
-                          {canEdit && (
+                          {canEdit && !isSelf && (
                             <DropdownMenuItem onClick={() => handleOpenDialog(emp)}>
                               <Edit className="w-4 h-4 ml-2 text-slate-500"/>تعديل البيانات
                             </DropdownMenuItem>
@@ -1049,22 +1053,22 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                           <DropdownMenuItem onClick={() => openProfile(emp)}>
                             <User className="w-4 h-4 ml-2 text-primary"/>عرض البروفايل
                           </DropdownMenuItem>
-                          {canChangeRoles && emp.user_id && (
+                          {canChangeRoles && !isSelf && emp.user_id && (
                             <DropdownMenuItem onClick={() => openCustomPerms(emp)}>
                               <Settings className="w-4 h-4 ml-2 text-violet-500"/>صلاحيات فردية
                             </DropdownMenuItem>
                           )}
-                          {canChangeRoles && emp.user_id && (
+                          {canChangeRoles && !isSelf && emp.user_id && (
                             <DropdownMenuItem onClick={() => openCopyPerms(emp)}>
                               <Copy className="w-4 h-4 ml-2 text-sky-500"/>نسخ صلاحيات من موظف
                             </DropdownMenuItem>
                           )}
-                          {canResetPins && (emp.account_status==='active'||emp.account_status==='frozen') && (
+                          {canResetPins && !isSelf && (emp.account_status==='active'||emp.account_status==='frozen') && (
                             <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'reset-pin',emp.name)}>
                               <KeyRound className="w-4 h-4 ml-2 text-amber-500"/>إعادة تعيين PIN
                             </DropdownMenuItem>
                           )}
-                          {canManage && emp.national_id && <>
+                          {canManage && !isSelf && emp.national_id && <>
                             <DropdownMenuSeparator/>
                             {emp.account_status==='active' && (
                               <DropdownMenuItem onClick={()=>handleAccountAction(emp.id,'freeze-account',emp.name)} className="text-blue-600 focus:text-blue-700">
@@ -1082,7 +1086,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                               </DropdownMenuItem>
                             )}
                           </>}
-                          {canDelete && <>
+                          {canDelete && !isSelf && <>
                             <DropdownMenuSeparator/>
                             <DropdownMenuItem onClick={()=>{setDeleteTarget(emp);setDeleteDialog(true);}} className="text-destructive focus:text-destructive">
                               <Trash2 className="w-4 h-4 ml-2"/>حذف الموظف نهائياً
@@ -1090,6 +1094,8 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                           </>}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -239,6 +239,8 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
     existing = await db.employees.find_one({"id": employee_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    if user.get("role") != "system_admin" and existing.get("user_id") == user.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تعديل بياناتك بنفسك")
     if user.get("role") == "department_manager" and existing["department"] != user.get("department"):
         raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي قسمك فقط")
     if not await _can_manage_employees(user):
@@ -387,6 +389,8 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
     existing = await db.employees.find_one({"id": employee_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    if user.get("role") != "system_admin" and existing.get("user_id") == user.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك حذف حسابك بنفسك")
     if user.get("role") == "department_manager" and existing["department"] != user.get("department"):
         raise HTTPException(status_code=403, detail="يمكنك حذف موظفي قسمك فقط")
     if not await _can_manage_employees(user):
