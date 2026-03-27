@@ -36,7 +36,9 @@ async def _get_caller_rank(user: dict) -> int:
 async def _can_manage_groups(user: dict) -> bool:
     if user.get("role") == "system_admin":
         return True
-    if user.get("role") == "department_manager":
+    if user.get("role") in ("general_manager", "department_manager"):
+        return True
+    if await _is_gm_or_admin(user):
         return True
     has_perm = await check_page_permission(user, "tab=settings", require_edit=True)
     if has_perm:
@@ -118,7 +120,7 @@ ALL_PERMISSIONS = {
 
 @router.get("/admin/permission-groups")
 async def list_groups(user: dict = Depends(get_current_user), department: str = None):
-    """List permission groups. Dept managers see only their department's groups."""
+    """List permission groups. Filters by caller rank: only groups with rank < caller's rank are shown."""
     if not await _can_manage_groups(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     query = {}
@@ -127,6 +129,9 @@ async def list_groups(user: dict = Depends(get_current_user), department: str = 
         query["department"] = dept
     elif department:
         query["department"] = department
+    if user.get("role") != "system_admin":
+        caller_rank = await _get_caller_rank(user)
+        query["rank"] = {"$lt": caller_rank}
     groups = await db.permission_groups.find(query, {"_id": 0}).sort("created_at", 1).to_list(100)
     for g in groups:
         g["user_count"] = await db.users.count_documents({"permission_group_id": g["id"]})
@@ -137,6 +142,10 @@ async def list_groups(user: dict = Depends(get_current_user), department: str = 
 async def list_group_members(group_id: str, user: dict = Depends(get_current_user)):
     if not await _can_manage_groups(user):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
+    if user.get("role") != "system_admin":
+        group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0, "rank": 1})
+        if group and group.get("rank", 1) >= await _get_caller_rank(user):
+            raise HTTPException(status_code=403, detail="لا يمكنك الوصول لمجموعة بنفس رتبتك أو أعلى")
     query = {"permission_group_id": group_id}
     if user["role"] == "department_manager":
         query["department"] = user.get("department")
@@ -194,6 +203,10 @@ async def get_group(group_id: str, user: dict = Depends(get_current_user)):
     group = await db.permission_groups.find_one({"id": group_id}, {"_id": 0})
     if not group:
         raise HTTPException(status_code=404, detail="المجموعة غير موجودة")
+    if user.get("role") != "system_admin":
+        caller_rank = await _get_caller_rank(user)
+        if group.get("rank", 1) >= caller_rank:
+            raise HTTPException(status_code=403, detail="لا يمكنك الوصول لمجموعة بنفس رتبتك أو أعلى")
     if user.get("role") == "department_manager":
         g_dept = group.get("department")
         if g_dept and g_dept != user.get("department"):
