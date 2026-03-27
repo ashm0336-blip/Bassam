@@ -153,28 +153,63 @@ async def get_employees_availability(department: str, user: dict = Depends(get_c
 
 
 
+DEPT_HREF_MAP = {
+    "/general-admin": "general_admin",
+    "/planning": "planning",
+    "/haram-map": "haram_map",
+    "/gates": "gates",
+    "/plazas": "plazas",
+    "/crowd-services": "crowd_services",
+    "/mataf": "mataf",
+}
+
+
+def _extract_allowed_depts_from_perms(page_permissions: dict) -> list:
+    depts = set()
+    for href, perm in page_permissions.items():
+        if not perm.get("visible"):
+            continue
+        for prefix, dept_key in DEPT_HREF_MAP.items():
+            if href == prefix or href.startswith(prefix + "?"):
+                depts.add(dept_key)
+                break
+    return list(depts)
+
+
 @router.get("/employees")
 async def get_employees(department: Optional[str] = None, user: dict = Depends(get_current_user)):
     query = {}
     user_role = user.get("role")
 
-    is_gm = False
-    if user_role == "general_manager":
-        is_gm = True
-    elif user.get("permission_group_id"):
-        grp = await db.permission_groups.find_one({"id": user["permission_group_id"]}, {"_id": 0, "name_ar": 1})
-        if grp and grp.get("name_ar") == "مدير عام":
-            is_gm = True
-
-    if user_role == "system_admin" or is_gm:
+    if user_role == "system_admin":
         if department:
             query["department"] = department
     elif user_role == "department_manager":
         query["department"] = user.get("department")
     elif user.get("permission_group_id"):
-        allowed = user.get("allowed_departments", [user.get("department")] if user.get("department") else [])
+        grp = await db.permission_groups.find_one(
+            {"id": user["permission_group_id"]},
+            {"_id": 0, "page_permissions": 1}
+        )
+        allowed = _extract_allowed_depts_from_perms(grp.get("page_permissions", {})) if grp else []
+        custom = user.get("custom_permissions", {})
+        if custom:
+            for href, perm in custom.items():
+                if perm.get("visible"):
+                    for prefix, dept_key in DEPT_HREF_MAP.items():
+                        if href == prefix or href.startswith(prefix + "?"):
+                            if dept_key not in allowed:
+                                allowed.append(dept_key)
+                            break
+
+        user_dept = user.get("department")
+        if user_dept and user_dept not in allowed:
+            allowed.append(user_dept)
+
         if department and department in allowed:
             query["department"] = department
+        elif department:
+            query["department"] = "__none__"
         elif allowed:
             query["department"] = {"$in": allowed} if len(allowed) > 1 else allowed[0]
     else:
