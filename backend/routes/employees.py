@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
+import re
 
 from database import db
 from auth import get_current_user, require_admin, log_activity, check_department_access, hash_password
@@ -161,7 +162,6 @@ async def _auto_create_user_account(employee_id: str, employee_doc: dict):
 @router.get("/employees/check-national-id")
 async def check_national_id(national_id: str, exclude_emp_id: Optional[str] = None, user: dict = Depends(get_current_user)):
     """التحقق من توفر رقم هوية — يُرجع فقط متاح/غير متاح بدون أي بيانات أخرى"""
-    import re
     if not re.match(r'^[12]\d{9}$', national_id):
         return {"available": False, "reason": "format"}
     query = {"national_id": national_id}
@@ -308,7 +308,6 @@ async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_cur
     # التحقق من تكرار رقم الهوية
     if employee.national_id:
         # تحقق من صحة التنسيق
-        import re
         if not re.match(r'^[12]\d{9}$', employee.national_id):
             raise HTTPException(status_code=400, detail="رقم الهوية غير صحيح — يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2")
         existing_emp = await db.employees.find_one({"national_id": employee.national_id})
@@ -361,10 +360,24 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
             update_data[k] = v
     if "rest_days" in dump and dump["rest_days"] is not None:
         update_data["rest_days"] = dump["rest_days"]
+
+    if "national_id" in update_data and update_data["national_id"]:
+        new_nid = update_data["national_id"]
+        if not re.match(r'^[12]\d{9}$', new_nid):
+            raise HTTPException(status_code=400, detail="رقم الهوية غير صحيح — يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2")
+        dup_emp = await db.employees.find_one({"national_id": new_nid, "id": {"$ne": employee_id}})
+        if dup_emp:
+            raise HTTPException(status_code=400, detail="رقم الهوية مسجل مسبقاً في النظام")
+        if existing.get("user_id"):
+            dup_user = await db.users.find_one({"national_id": new_nid, "id": {"$ne": existing["user_id"]}})
+            if dup_user:
+                raise HTTPException(status_code=400, detail="رقم الهوية مسجل مسبقاً في النظام")
+
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.employees.update_one({"id": employee_id}, {"$set": update_data})
 
     # ──── مزامنة البيانات مع حساب المستخدم ────
+    credentials_changed = False
     if existing.get("user_id"):
         user_sync = {}
         if "name" in update_data:
@@ -375,10 +388,38 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
             user_sync["allowed_departments"] = dump["allowed_departments"]
         if "permission_group_id" in dump and dump["permission_group_id"] is not None:
             user_sync["permission_group_id"] = dump["permission_group_id"]
+
+        old_national_id = existing.get("national_id", "")
+        old_employee_number = existing.get("employee_number", "")
+        new_national_id = update_data.get("national_id")
+        new_employee_number = update_data.get("employee_number")
+
+        if new_national_id and new_national_id != old_national_id:
+            user_sync["national_id"] = new_national_id
+            credentials_changed = True
+
+        if new_employee_number and new_employee_number != old_employee_number:
+            new_pin = new_employee_number
+            user_sync["password"] = hash_password(new_pin)
+            user_sync["must_change_pin"] = True
+            user_sync["failed_attempts"] = 0
+            user_sync["locked_until"] = None
+            credentials_changed = True
+
         if user_sync:
             await db.users.update_one({"id": existing["user_id"]}, {"$set": user_sync})
 
+        if credentials_changed:
+            await ws_manager.broadcast({
+                "type": "force_logout",
+                "user_id": existing["user_id"],
+                "reason": "credentials_changed"
+            })
+
     await log_activity("employee_updated", user, update_data.get("name", existing["name"]), f"تم تحديث: {existing['name']}")
+
+    if credentials_changed:
+        return {"message": "تم تحديث الموظف — تم طرد الموظف وإعادة تعيين بيانات الدخول"}
     return {"message": "تم تحديث الموظف بنجاح"}
 
 
@@ -510,6 +551,14 @@ async def delete_employee(employee_id: str, user: dict = Depends(get_current_use
     await _check_dept_scope(user, existing["department"])
 
     # ──── حذف شامل: تنظيف كل البيانات المرتبطة بالموظف ────
+    # 0) طرد الموظف فوراً قبل حذف حسابه
+    if existing.get("user_id"):
+        await ws_manager.broadcast({
+            "type": "force_logout",
+            "user_id": existing["user_id"],
+            "reason": "account_deleted"
+        })
+
     # 1) حذف حساب المستخدم نهائياً
     if existing.get("user_id"):
         await db.users.delete_one({"id": existing["user_id"]})
