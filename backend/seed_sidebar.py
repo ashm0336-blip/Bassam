@@ -238,16 +238,15 @@ async def _sync_login_settings(db):
 
 async def _sync_sidebar_menu(db):
     """
-    FULL SYNC: drops old items, keeps user role_visibility settings.
-    Guarantees exact 50 items matching preview.
+    FULL SYNC via upsert-by-href: safe against concurrent startup events.
+    Preserves user role_visibility settings.
     """
     expected = _sidebar_items()
     expected_hrefs = {item["href"] for item in expected}
 
-    # 1. Read existing items — preserve role_visibility settings
     existing_list = await db.sidebar_menu.find({}, {"_id": 0}).to_list(300)
-    preserved_rv = {}  # href -> role_visibility
-    preserved_ids = {}  # href -> id (keep stable IDs when possible)
+    preserved_rv = {}
+    preserved_ids = {}
     for item in existing_list:
         href = item.get("href", "")
         rv = item.get("role_visibility", {})
@@ -258,10 +257,6 @@ async def _sync_sidebar_menu(db):
 
     old_count = len(existing_list)
 
-    # 2. Drop entire collection and rebuild fresh
-    await db.sidebar_menu.drop()
-
-    # 3. Insert all expected items (3 passes for parent resolution)
     by_href = {}
     for _pass in range(3):
         for item in expected:
@@ -280,8 +275,12 @@ async def _sync_sidebar_menu(db):
             doc["is_editable"] = True
             doc["created_at"] = datetime.now(timezone.utc).isoformat()
 
-            await db.sidebar_menu.insert_one({**doc})
+            await db.sidebar_menu.replace_one(
+                {"href": href}, doc, upsert=True
+            )
             by_href[href] = doc
+
+    await db.sidebar_menu.delete_many({"href": {"$nin": list(expected_hrefs)}})
 
     total = await db.sidebar_menu.count_documents({})
     if old_count != total:
@@ -382,55 +381,6 @@ DEFAULT_GROUPS = [
         "description_ar": "يشوف كل الإدارات مع صلاحية التعديل",
         "is_system": True,
         "page_permissions": "_all_editable",
-    },
-    {
-        "name_ar": "مدير إدارة التخطيط",
-        "name_en": "Planning Manager",
-        "description_ar": "مدير إدارة تخطيط خدمات الحشود",
-        "is_system": True,
-        "page_permissions": "_dept_planning",
-    },
-    {
-        "name_ar": "مدير إدارة المصليات",
-        "name_en": "Prayer Areas Manager",
-        "description_ar": "مدير إدارة المصليات",
-        "is_system": True,
-        "page_permissions": "_dept_haram_map",
-    },
-    {
-        "name_ar": "مدير إدارة الأبواب",
-        "name_en": "Gates Manager",
-        "description_ar": "مدير إدارة الأبواب",
-        "is_system": True,
-        "page_permissions": "_dept_gates",
-    },
-    {
-        "name_ar": "مدير إدارة الساحات",
-        "name_en": "Plazas Manager",
-        "description_ar": "مدير إدارة الساحات",
-        "is_system": True,
-        "page_permissions": "_dept_plazas",
-    },
-    {
-        "name_ar": "مدير خدمات الحشود",
-        "name_en": "Crowd Services Manager",
-        "description_ar": "مدير خدمات حشود الحرم",
-        "is_system": True,
-        "page_permissions": "_dept_crowd_services",
-    },
-    {
-        "name_ar": "مدير صحن المطاف",
-        "name_en": "Mataf Manager",
-        "description_ar": "مدير صحن المطاف",
-        "is_system": True,
-        "page_permissions": "_dept_mataf",
-    },
-    {
-        "name_ar": "موظف ميداني",
-        "name_en": "Field Staff",
-        "description_ar": "موظف ميداني — عرض فقط مع صلاحية الواجهة الميدانية",
-        "is_system": True,
-        "page_permissions": "_field_only",
     },
 ]
 
