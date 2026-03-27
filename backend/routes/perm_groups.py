@@ -258,9 +258,9 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
     """Assign a permission group to a user. Dept managers can only change their own department's users."""
     if not await _can_manage_groups(admin):
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
-    if admin["role"] == "department_manager":
-        if user_id == admin.get("id"):
-            raise HTTPException(status_code=403, detail="لا يمكنك تغيير صلاحياتك — المدير العام هو المسؤول عن ذلك")
+    if admin.get("role") != "system_admin" and user_id == admin.get("id"):
+        raise HTTPException(status_code=403, detail="لا يمكنك تغيير صلاحياتك بنفسك")
+    if admin.get("role") == "department_manager":
         target_full = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1, "role": 1})
         if not target_full or target_full.get("department") != admin.get("department"):
             raise HTTPException(status_code=403, detail="يمكنك تعديل موظفي إدارتك فقط")
