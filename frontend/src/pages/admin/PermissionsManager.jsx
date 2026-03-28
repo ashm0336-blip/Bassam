@@ -119,6 +119,11 @@ export default function PermissionsManager({ department: deptFilter }) {
   const [assignLoading, setAssignLoading] = useState(false);
   const [resetCustomDialog, setResetCustomDialog] = useState(null);
 
+  const [customPermUser, setCustomPermUser] = useState(null);
+  const [customPerms, setCustomPerms] = useState({});
+  const [customSaving, setCustomSaving] = useState(false);
+  const [customExpanded, setCustomExpanded] = useState({});
+
   const fetchMembers = useCallback(async (groupId) => {
     if (!groupId) { setMembers([]); return; }
     try {
@@ -210,6 +215,85 @@ export default function PermissionsManager({ department: deptFilter }) {
       toast.success(`تم مسح الصلاحيات الفردية لـ ${name}`);
       fetchMembers(activeGroupId);
     } catch (err) { toast.error(err.response?.data?.detail || "فشل إعادة الضبط"); }
+  };
+
+  const openCustomPermsDialog = (member) => {
+    const existing = member.custom_permissions || {};
+    setCustomPerms(existing);
+    setCustomPermUser(member);
+    const autoExp = {};
+    menuItems.forEach(item => {
+      if (!item.parent_id && menuItems.some(c => c.parent_id === item.id)) {
+        autoExp[item.id] = true;
+      }
+    });
+    setCustomExpanded(autoExp);
+  };
+
+  const toggleCustomPerm = (item, field) => {
+    const href = item.href;
+    const groupPerms = activeGroup?.page_permissions || {};
+    const base = groupPerms[href] || { visible: false, editable: false };
+    const current = customPerms[href] || {};
+    const effectiveVisible = current.visible !== undefined ? current.visible : base.visible;
+    const effectiveEditable = current.editable !== undefined ? current.editable : base.editable;
+
+    const updated = { ...current };
+    if (field === "visible") {
+      const newVal = !effectiveVisible;
+      updated.visible = newVal;
+      if (!newVal) updated.editable = false;
+    } else {
+      if (!effectiveVisible) return;
+      updated.editable = !effectiveEditable;
+    }
+
+    const newPerms = { ...customPerms, [href]: updated };
+
+    if (field === "visible" && !updated.visible) {
+      const children = menuItems.filter(i => i.parent_id === item.id);
+      children.forEach(c => {
+        newPerms[c.href] = { visible: false, editable: false };
+        menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => {
+          newPerms[gc.href] = { visible: false, editable: false };
+        });
+      });
+    }
+
+    setCustomPerms(newPerms);
+  };
+
+  const saveCustomPerms = async () => {
+    if (!customPermUser) return;
+    setCustomSaving(true);
+    try {
+      await axios.put(`${API}/admin/users/${customPermUser.id}/custom-permissions`,
+        { custom_permissions: customPerms }, headers());
+      toast.success(`تم حفظ الصلاحيات الفردية لـ ${customPermUser.employee_name}`);
+      setCustomPermUser(null);
+      fetchMembers(activeGroupId);
+    } catch (err) { toast.error(err.response?.data?.detail || "فشل الحفظ"); }
+    finally { setCustomSaving(false); }
+  };
+
+  const getCustomDisplayItems = () => {
+    const result = [];
+    const parents = menuItems.filter(i => !i.parent_id).sort((a, b) => (a.order || 0) - (b.order || 0));
+    parents.forEach(p => {
+      if (p.department === "system_admin" || p.admin_only) return;
+      result.push({ ...p, _depth: 0 });
+      if (customExpanded[p.id]) {
+        const children = menuItems.filter(i => i.parent_id === p.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+        children.forEach(c => {
+          const grandchildren = menuItems.filter(i => i.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+          result.push({ ...c, _depth: 1, _hasChildren: grandchildren.length > 0 });
+          if (customExpanded[c.id]) {
+            grandchildren.forEach(gc => result.push({ ...gc, _depth: 2 }));
+          }
+        });
+      }
+    });
+    return result;
   };
 
   // ── Active group ──
@@ -770,6 +854,11 @@ export default function PermissionsManager({ department: deptFilter }) {
                             {m.job_title && <p className="text-[9px] text-muted-foreground truncate">{m.job_title}</p>}
                           </div>
                           <div className="flex items-center gap-0.5">
+                            <button onClick={() => openCustomPermsDialog(m)}
+                              className="opacity-0 group-hover:opacity-100 text-primary hover:text-primary/80 transition-opacity p-1"
+                              title="صلاحيات فردية إضافية">
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
                             {m.custom_count > 0 && (
                               <button onClick={() => setResetCustomDialog({ id: m.id, name: m.employee_name, count: m.custom_count })}
                                 className="opacity-0 group-hover:opacity-100 text-amber-500 hover:text-amber-700 transition-opacity p-1"
@@ -1027,6 +1116,136 @@ export default function PermissionsManager({ department: deptFilter }) {
             }}>
               <RotateCcw className="w-4 h-4 ml-1" /> إعادة ضبط
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!customPermUser} onOpenChange={(open) => { if (!open) setCustomPermUser(null); }}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b bg-gradient-to-l from-violet-50 to-blue-50 rounded-t-lg">
+            <DialogTitle className="font-cairo flex items-center gap-2 text-base">
+              <Shield className="w-5 h-5 text-violet-600" />
+              صلاحيات فردية — {customPermUser?.employee_name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              أضف صلاحيات إضافية لهذا الموظف تتجاوز صلاحيات المجموعة ({activeGroup?.name_ar})
+            </DialogDescription>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                <Eye className="w-3 h-3" /> من المجموعة
+              </span>
+              <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-violet-100 text-violet-700">
+                <ShieldCheck className="w-3 h-3" /> فردي مُضاف
+              </span>
+              <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">
+                <EyeOff className="w-3 h-3" /> فردي مُخفي
+              </span>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-1" dir="rtl">
+            <div className="divide-y">
+              {customPermUser && getCustomDisplayItems().map(item => {
+                const IconComp = getIcon(item.icon);
+                const groupPerms = activeGroup?.page_permissions || {};
+                const base = groupPerms[item.href] || { visible: false, editable: false };
+                const custom = customPerms[item.href] || {};
+                const effectiveVisible = custom.visible !== undefined ? custom.visible : base.visible;
+                const effectiveEditable = custom.editable !== undefined ? custom.editable : base.editable;
+                const hasCustomVisible = custom.visible !== undefined && custom.visible !== base.visible;
+                const hasCustomEditable = custom.editable !== undefined && custom.editable !== base.editable;
+                const hasChildren = menuItems.some(i => i.parent_id === item.id) || item._hasChildren;
+                const indent = (item._depth || 0) * 24;
+                const isTopLevel = (item._depth || 0) === 0;
+
+                const href = item.href || "";
+                const isViewOnlyPage = (
+                  href === "/" || href === "/dashboard" || href === "/stats-analytics" ||
+                  href === "/activity-log" || href.includes("?tab=overview") ||
+                  (isTopLevel && !href.includes("?"))
+                );
+                const isSettingsParent = href.includes("?tab=settings") && !href.includes("&sub=");
+
+                return (
+                  <div key={item.id}
+                    className={`flex items-center justify-between py-2 px-3 hover:bg-muted/20 transition-colors
+                      ${!effectiveVisible ? 'opacity-40' : ''}
+                      ${item._depth === 2 ? 'bg-muted/10' : item._depth === 1 ? 'bg-muted/5' : ''}`}
+                    style={{ paddingRight: `${12 + indent}px` }}>
+
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {hasChildren ? (
+                        <button onClick={() => setCustomExpanded(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                          className="text-slate-400 hover:text-slate-600 transition-transform"
+                          style={{ transform: customExpanded[item.id] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      ) : <span className="w-3.5" />}
+                      <IconComp className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-cairo font-bold text-[12px] truncate">{item.name_ar}</p>
+                        {base.visible && (
+                          <p className="text-[9px] text-blue-500">من المجموعة: {base.editable ? 'عرض + تعديل' : 'عرض فقط'}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-shrink-0 mr-2">
+                      <button onClick={() => toggleCustomPerm(item, 'visible')}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
+                          ${hasCustomVisible
+                            ? effectiveVisible
+                              ? 'bg-violet-100 text-violet-600 ring-2 ring-violet-300'
+                              : 'bg-red-100 text-red-500 ring-2 ring-red-300'
+                            : effectiveVisible
+                              ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-200'
+                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                          }`}>
+                        {effectiveVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      </button>
+
+                      {!isViewOnlyPage && !isSettingsParent && (
+                        <button onClick={() => toggleCustomPerm(item, 'editable')}
+                          disabled={!effectiveVisible}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
+                            ${!effectiveVisible ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
+                              : hasCustomEditable
+                                ? effectiveEditable
+                                  ? 'bg-violet-100 text-violet-600 ring-2 ring-violet-300'
+                                  : 'bg-red-100 text-red-500 ring-2 ring-red-300'
+                                : effectiveEditable
+                                  ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
+                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                            }`}>
+                          {effectiveEditable ? <Pencil className="w-3.5 h-3.5" /> : <Lock className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <DialogFooter className="px-5 py-3 border-t bg-muted/20">
+            <div className="flex items-center justify-between w-full">
+              <div className="text-[10px] text-muted-foreground">
+                {Object.keys(customPerms).length > 0
+                  ? `${Object.keys(customPerms).length} صلاحية فردية`
+                  : 'لا توجد صلاحيات فردية'
+                }
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setCustomPermUser(null)} size="sm">
+                  إلغاء
+                </Button>
+                <Button onClick={saveCustomPerms} disabled={customSaving} size="sm"
+                  className="gap-1 bg-violet-600 hover:bg-violet-700 text-white">
+                  {customSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  حفظ الصلاحيات الفردية
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

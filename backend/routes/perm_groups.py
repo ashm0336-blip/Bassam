@@ -161,7 +161,7 @@ async def list_group_members(group_id: str, user: dict = Depends(get_current_use
                 u["job_title"] = emp.get("job_title", "")
         if not u.get("employee_name"):
             u["employee_name"] = u.get("name_ar") or u.get("name") or ""
-        custom = u.pop("custom_permissions", {})
+        custom = u.get("custom_permissions", {})
         u["custom_count"] = len(custom) if custom else 0
     return users_in_group
 
