@@ -1589,13 +1589,19 @@ export default function EmployeesList({ department, editable: editableProp, onEm
 
               const allFlatItems = [];
               roots.forEach(root => {
-                allFlatItems.push({ ...root, _depth: 0, _hasChildren: menuItems.some(c => c.parent_id === root.id) });
-                const children = menuItems.filter(c => c.parent_id === root.id).sort((a, b) => (a.order || 0) - (b.order || 0));
-                children.forEach(child => {
-                  allFlatItems.push({ ...child, _depth: 1, _hasChildren: menuItems.some(gc => gc.parent_id === child.id) });
-                  menuItems.filter(gc => gc.parent_id === child.id).sort((a, b) => (a.order || 0) - (b.order || 0))
-                    .forEach(gc => allFlatItems.push({ ...gc, _depth: 2, _hasChildren: false }));
-                });
+                const hasChildren = menuItems.some(c => c.parent_id === root.id);
+                allFlatItems.push({ ...root, _depth: 0, _hasChildren: hasChildren });
+                if (!hasChildren || customPermExpanded?.[root.id] === true) {
+                  const children = menuItems.filter(c => c.parent_id === root.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+                  children.forEach(child => {
+                    const hasGrandchildren = menuItems.some(gc => gc.parent_id === child.id);
+                    allFlatItems.push({ ...child, _depth: 1, _hasChildren: hasGrandchildren });
+                    if (!hasGrandchildren || customPermExpanded?.[child.id] === true) {
+                      menuItems.filter(gc => gc.parent_id === child.id).sort((a, b) => (a.order || 0) - (b.order || 0))
+                        .forEach(gc => allFlatItems.push({ ...gc, _depth: 2, _hasChildren: false }));
+                    }
+                  });
+                }
               });
 
               return allFlatItems.map(item => {
