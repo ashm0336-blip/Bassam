@@ -311,6 +311,21 @@ async def _ensure_indexes():
         logger.warning(f"Index creation warning: {e}")
 
 
+FRONTEND_BUILD = ROOT_DIR.parent / "frontend" / "build"
+if os.environ.get("SERVE_STATIC") == "true" and FRONTEND_BUILD.exists():
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = FRONTEND_BUILD / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(FRONTEND_BUILD / "index.html")
+
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_BUILD / "static")), name="frontend-static")
+    logger.info(f"Serving frontend static files from {FRONTEND_BUILD}")
+
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

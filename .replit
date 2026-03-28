@@ -43,8 +43,9 @@ channel = "stable-25_05"
 packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "rustc", "tcl", "tk", "zlib", "mongodb"]
 
 [deployment]
-deploymentTarget = "gce"
-run = ["sh", "-c", "bash start.sh"]
+deploymentTarget = "autoscale"
+run = ["bash", "/home/runner/workspace/start_prod.sh"]
+build = ["bash", "-c", "cd /home/runner/workspace/frontend && REACT_APP_BACKEND_URL='' yarn build"]
 
 [userenv]
 
