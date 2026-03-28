@@ -88,6 +88,7 @@ export default function PermissionsManager({ department: deptFilter }) {
   const { user: currentUser } = useAuth();
 
   const [menuItems, setMenuItems] = useState([]);
+  const [allMenuItems, setAllMenuItems] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeGroupId, setActiveGroupId] = useState(null);
@@ -140,6 +141,7 @@ export default function PermissionsManager({ department: deptFilter }) {
         axios.get(`${API}/admin/permission-groups${deptParam}`, headers()),
       ]);
       let items = menuRes.data;
+      setAllMenuItems(items);
       if (deptFilter) {
         const deptParent = items.find(i => !i.parent_id && i.department === deptFilter);
         if (deptParent) {
@@ -239,10 +241,11 @@ export default function PermissionsManager({ department: deptFilter }) {
     const newPerms = { ...customPerms, [href]: updated };
 
     if (field === "visible" && !updated.visible) {
-      const children = menuItems.filter(i => i.parent_id === item.id);
+      const items = allMenuItems.length > 0 ? allMenuItems : menuItems;
+      const children = items.filter(i => i.parent_id === item.id);
       children.forEach(c => {
         newPerms[c.href] = { visible: false, editable: false };
-        menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => {
+        items.filter(gc => gc.parent_id === c.id).forEach(gc => {
           newPerms[gc.href] = { visible: false, editable: false };
         });
       });
@@ -252,7 +255,8 @@ export default function PermissionsManager({ department: deptFilter }) {
   };
 
   const toggleCustomAll = (field) => {
-    const nonAdmin = menuItems.filter(i => i.department !== "system_admin" && !i.admin_only);
+    const items = allMenuItems.length > 0 ? allMenuItems : menuItems;
+    const nonAdmin = items.filter(i => i.department !== "system_admin" && !i.admin_only);
     const groupPerms = activeGroup?.page_permissions || {};
 
     const allSet = nonAdmin.every(i => {
@@ -278,13 +282,14 @@ export default function PermissionsManager({ department: deptFilter }) {
   };
 
   const toggleCustomDeptAll = (parentItem, targetState) => {
+    const items = allMenuItems.length > 0 ? allMenuItems : menuItems;
     const groupPerms = activeGroup?.page_permissions || {};
     const newPerms = { ...customPerms };
     const allItems = [parentItem];
-    const children = menuItems.filter(i => i.parent_id === parentItem.id);
+    const children = items.filter(i => i.parent_id === parentItem.id);
     children.forEach(c => {
       allItems.push(c);
-      menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc));
+      items.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc));
     });
     allItems.forEach(item => {
       if (!newPerms[item.href]) newPerms[item.href] = {};
@@ -313,15 +318,16 @@ export default function PermissionsManager({ department: deptFilter }) {
   };
 
   const getCustomDisplayItems = () => {
+    const items = allMenuItems.length > 0 ? allMenuItems : menuItems;
     const result = [];
-    const parents = menuItems.filter(i => !i.parent_id).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const parents = items.filter(i => !i.parent_id).sort((a, b) => (a.order || 0) - (b.order || 0));
     parents.forEach(p => {
       if (p.department === "system_admin" || p.admin_only) return;
-      result.push({ ...p, _depth: 0 });
+      result.push({ ...p, _depth: 0, _hasChildren: items.some(c => c.parent_id === p.id) });
       if (customExpanded[p.id]) {
-        const children = menuItems.filter(i => i.parent_id === p.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+        const children = items.filter(i => i.parent_id === p.id).sort((a, b) => (a.order || 0) - (b.order || 0));
         children.forEach(c => {
-          const grandchildren = menuItems.filter(i => i.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+          const grandchildren = items.filter(i => i.parent_id === c.id).sort((a, b) => (a.order || 0) - (b.order || 0));
           result.push({ ...c, _depth: 1, _hasChildren: grandchildren.length > 0 });
           if (customExpanded[c.id]) {
             grandchildren.forEach(gc => result.push({ ...gc, _depth: 2 }));
@@ -1200,7 +1206,8 @@ export default function PermissionsManager({ department: deptFilter }) {
                 const effectiveEditable = custom.editable !== undefined ? custom.editable : base.editable;
                 const hasCustomVisible = custom.visible !== undefined && custom.visible !== base.visible;
                 const hasCustomEditable = custom.editable !== undefined && custom.editable !== base.editable;
-                const hasChildren = menuItems.some(i => i.parent_id === item.id) || item._hasChildren;
+                const cItems = allMenuItems.length > 0 ? allMenuItems : menuItems;
+                const hasChildren = cItems.some(i => i.parent_id === item.id) || item._hasChildren;
                 const indent = (item._depth || 0) * 24;
                 const isTopLevel = (item._depth || 0) === 0;
 
@@ -1239,8 +1246,8 @@ export default function PermissionsManager({ department: deptFilter }) {
                     <div className="flex items-center gap-1.5 flex-shrink-0 mr-2">
                       {isTopLevel && hasChildren && (() => {
                         const allItems = [item];
-                        const ch = menuItems.filter(i => i.parent_id === item.id);
-                        ch.forEach(c => { allItems.push(c); menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc)); });
+                        const ch = cItems.filter(i => i.parent_id === item.id);
+                        ch.forEach(c => { allItems.push(c); cItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc)); });
                         const gp = activeGroup?.page_permissions || {};
                         const allEditable = allItems.every(i => {
                           const b = gp[i.href] || {}; const c2 = customPerms[i.href] || {};
