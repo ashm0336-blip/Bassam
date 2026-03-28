@@ -894,12 +894,14 @@ export default function PermissionsManager({ department: deptFilter }) {
                             {m.job_title && <p className="text-[9px] text-muted-foreground truncate">{m.job_title}</p>}
                           </div>
                           <div className="flex items-center gap-0.5">
-                            <button onClick={() => openCustomPermsDialog(m)}
-                              className="opacity-0 group-hover:opacity-100 text-primary hover:text-primary/80 transition-opacity p-1"
-                              title="صلاحيات فردية إضافية">
-                              <ExternalLink className="w-3 h-3" />
-                            </button>
-                            {m.custom_count > 0 && (
+                            {(currentUser?.role === 'system_admin' || currentUser?.role === 'general_manager') && (
+                              <button onClick={() => openCustomPermsDialog(m)}
+                                className="opacity-0 group-hover:opacity-100 text-primary hover:text-primary/80 transition-opacity p-1"
+                                title="صلاحيات فردية إضافية">
+                                <ExternalLink className="w-3 h-3" />
+                              </button>
+                            )}
+                            {(currentUser?.role === 'system_admin' || currentUser?.role === 'general_manager') && m.custom_count > 0 && (
                               <button onClick={() => setResetCustomDialog({ id: m.id, name: m.employee_name, count: m.custom_count })}
                                 className="opacity-0 group-hover:opacity-100 text-amber-500 hover:text-amber-700 transition-opacity p-1"
                                 title="إعادة ضبط — مسح الصلاحيات الفردية والاعتماد على المجموعة فقط">
