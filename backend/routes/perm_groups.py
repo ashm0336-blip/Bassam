@@ -132,7 +132,7 @@ async def list_groups(user: dict = Depends(get_current_user), department: str = 
     if user.get("role") != "system_admin":
         caller_rank = await _get_caller_rank(user)
         query["rank"] = {"$lt": caller_rank}
-    groups = await db.permission_groups.find(query, {"_id": 0}).sort("created_at", 1).to_list(100)
+    groups = await db.permission_groups.find(query, {"_id": 0}).sort([("rank", -1), ("created_at", 1)]).to_list(100)
     for g in groups:
         g["user_count"] = await db.users.count_documents({"permission_group_id": g["id"]})
     return groups
