@@ -656,18 +656,16 @@ export default function PermissionsManager({ department: deptFilter }) {
                         </Button>
                       </>
                     )}
+                    <Button size="sm" variant="outline" onClick={() => toggleAll("visible")} className="gap-1 text-xs h-7">
+                      <Eye className="w-3 h-3" /> الكل ظاهر
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => toggleAll("editable")} className="gap-1 text-xs h-7">
+                      <Pencil className="w-3 h-3" /> الكل تعديل
+                    </Button>
                     {!deptFilter && (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => toggleAll("visible")} className="gap-1 text-xs h-7">
-                          <Eye className="w-3 h-3" /> الكل ظاهر
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => toggleAll("editable")} className="gap-1 text-xs h-7">
-                          <Pencil className="w-3 h-3" /> الكل تعديل
-                        </Button>
-                        <Button size="sm" onClick={() => openPageDialog()} className="gap-1 bg-primary h-7 text-xs">
-                          <Plus className="w-3 h-3" /> صفحة
-                        </Button>
-                      </>
+                      <Button size="sm" onClick={() => openPageDialog()} className="gap-1 bg-primary h-7 text-xs">
+                        <Plus className="w-3 h-3" /> صفحة
+                      </Button>
                     )}
                   </div>
                 </div>
