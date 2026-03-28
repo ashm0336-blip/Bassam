@@ -374,15 +374,7 @@ def _build_all_pages_visible(editable=False, include_admin=False):
     return result
 
 
-DEFAULT_GROUPS = [
-    {
-        "name_ar": "مدير عام",
-        "name_en": "General Manager",
-        "description_ar": "يشوف كل الإدارات مع صلاحية التعديل",
-        "is_system": True,
-        "page_permissions": "_all_editable",
-    },
-]
+DEFAULT_GROUPS = []
 
 
 async def _seed_default_permission_groups(db):
