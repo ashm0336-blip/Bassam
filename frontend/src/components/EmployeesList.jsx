@@ -14,7 +14,7 @@ import {
   Loader2, MoreVertical, User, Users, Briefcase, Calendar, Hash,
   RefreshCw, Filter, ChevronDown, Phone, Building2, Shield,
   Check, X, Info, UserCheck, CalendarDays, Clock, Zap,
-  Eye, EyeOff, Pencil, Lock, Settings,
+  Eye, EyeOff, Pencil, Lock, Settings, RotateCcw,
   LayoutDashboard, Navigation, DoorOpen, LayoutGrid as LayoutGridIcon,
   Circle, Bell, MapPin, Copy,
 } from "lucide-react";
@@ -1547,6 +1547,34 @@ export default function EmployeesList({ department, editable: editableProp, onEm
             <span className="flex items-center gap-1 text-slate-400">(من المجموعة) = موروث</span>
           </div>
 
+          <div className="flex items-center gap-2 mt-2">
+            <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => {
+              const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
+              const grpPerms = grp?.page_permissions || {};
+              const nonAdmin = menuItems.filter(i => i.department !== 'system_admin' && !i.admin_only);
+              const allVisible = nonAdmin.every(i => { const c = customPerms[i.href]; const b = grpPerms[i.href] || {}; return c ? c.visible : b.visible; });
+              const np = { ...customPerms };
+              nonAdmin.forEach(i => { np[i.href] = { ...(np[i.href] || {}), visible: !allVisible }; if (allVisible) np[i.href].editable = false; });
+              setCustomPerms(np);
+            }}>
+              <Eye className="w-3 h-3" /> الكل ظاهر
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => {
+              const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
+              const grpPerms = grp?.page_permissions || {};
+              const nonAdmin = menuItems.filter(i => i.department !== 'system_admin' && !i.admin_only);
+              const allEditable = nonAdmin.every(i => { const c = customPerms[i.href]; const b = grpPerms[i.href] || {}; const v = c ? c.visible : b.visible; const e = c ? c.editable : b.editable; return v && e; });
+              const np = { ...customPerms };
+              nonAdmin.forEach(i => { np[i.href] = { visible: true, editable: !allEditable }; if (allEditable) np[i.href].visible = true; });
+              setCustomPerms(np);
+            }}>
+              <Pencil className="w-3 h-3" /> الكل تعديل
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1 text-xs h-7 text-amber-600 border-amber-300 hover:bg-amber-50" onClick={() => setCustomPerms({})}>
+              <RotateCcw className="w-3 h-3" /> إعادة ضبط
+            </Button>
+          </div>
+
           <div className="space-y-1 mt-1">
             {(() => {
               const grp = permGroups.find(g => g.id === customPermEmp?.permission_group_id);
@@ -1628,7 +1656,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                       return c ? c.visible : grpPerms[d.href]?.visible;
                     }).length;
 
-                    const isExpanded = customPermExpanded?.[root.id] !== false; // default expanded
+                    const isExpanded = customPermExpanded?.[root.id] === true; // default collapsed
 
                     return (
                       <div key={root.id} className="border rounded-xl overflow-hidden mb-2" data-testid={`custom-dept-${root.department}`}>
@@ -1645,14 +1673,23 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                               <Badge className="text-[8px] px-1.5 py-0 h-4 bg-violet-100 text-violet-700 border-violet-200">{overrideCount} مُخصص</Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            {grpVisibleCount > 0 ? (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                                {grpVisibleCount} من المجموعة
-                              </span>
-                            ) : (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">مخفية</span>
-                            )}
+                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                            <button onClick={(e) => {
+                              e.stopPropagation();
+                              const allEdit = allDescendants.every(d => { const c = customPerms[d.href]; const b = grpPerms[d.href] || {}; return c ? (c.visible && c.editable) : (b.visible && b.editable); });
+                              const np = { ...customPerms };
+                              allDescendants.forEach(d => { np[d.href] = allEdit ? { visible: false, editable: false } : { visible: true, editable: true }; });
+                              setCustomPerms(np);
+                            }}
+                              className={`text-[8px] px-2 py-1 rounded-lg font-bold transition-all ${
+                                allDescendants.every(d => { const c = customPerms[d.href]; const b = grpPerms[d.href] || {}; return c ? (c.visible && c.editable) : (b.visible && b.editable); })
+                                  ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-600'
+                                  : effectiveVisibleCount > 0
+                                    ? 'bg-blue-100 text-blue-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                    : 'bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-700'
+                              }`}>
+                              {allDescendants.every(d => { const c = customPerms[d.href]; const b = grpPerms[d.href] || {}; return c ? (c.visible && c.editable) : (b.visible && b.editable); }) ? 'كامل ✓' : effectiveVisibleCount > 0 ? 'جزئي' : 'مخفي'}
+                            </button>
                           </div>
                         </button>
 
