@@ -287,10 +287,14 @@ async def delete_group(group_id: str, admin: dict = Depends(get_current_user)):
         group_dept = existing.get("department")
         if not group_dept or group_dept != admin.get("department"):
             raise HTTPException(status_code=403, detail="يمكنك حذف مجموعات إدارتك فقط")
-    count = await db.users.count_documents({"permission_group_id": group_id})
-    if count > 0:
-        raise HTTPException(status_code=400, detail=f"لا يمكن الحذف — {count} مستخدم في هذه المجموعة")
+    user_count = await db.users.count_documents({"permission_group_id": group_id})
+    if user_count > 0:
+        raise HTTPException(status_code=400, detail=f"لا يمكن الحذف — {user_count} مستخدم في هذه المجموعة")
     await db.permission_groups.delete_one({"id": group_id})
+    await db.employees.update_many(
+        {"permission_group_id": group_id},
+        {"$set": {"permission_group_id": None}}
+    )
     await log_activity("حذف مجموعة صلاحيات", admin, existing["name_ar"], f"تم حذف مجموعة: {existing['name_ar']}")
     await ws_manager.broadcast({"type": "permissions", "action": "group_changed"})
     return {"message": "تم حذف المجموعة"}
@@ -335,10 +339,11 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
         if admin.get("role") != "system_admin" and group.get("rank", 1) >= caller_rank:
             raise HTTPException(status_code=403, detail="لا يمكنك تعيين مجموعة برتبة مساوية أو أعلى من رتبتك")
         g_dept = group.get("department")
+        g_rank = group.get("rank", 1)
         if admin["role"] == "department_manager":
             if g_dept and g_dept != admin.get("department"):
                 raise HTTPException(status_code=403, detail="لا يمكنك تعيين مجموعة من إدارة أخرى")
-        if g_dept:
+        if g_dept and g_rank < 4:
             target_dept_check = await db.users.find_one({"id": user_id}, {"_id": 0, "department": 1})
             if target_dept_check and target_dept_check.get("department") != g_dept:
                 raise HTTPException(status_code=400, detail="لا يمكن تعيين مجموعة إدارة لموظف من إدارة مختلفة")
@@ -366,6 +371,10 @@ async def assign_user_group(user_id: str, data: dict, admin: dict = Depends(get_
         auto_frozen = True
 
     await db.users.update_one({"id": user_id}, {"$set": update_data})
+    await db.employees.update_many(
+        {"user_id": user_id},
+        {"$set": {"permission_group_id": group_id}}
+    )
 
     if auto_frozen or auto_unfrozen:
         await ws_manager.broadcast({

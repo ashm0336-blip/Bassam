@@ -51,7 +51,7 @@ async def _check_rank_protection(actor: dict, emp: dict):
 
 
 async def _check_dept_scope(user: dict, target_dept: str):
-    if user.get("role") == "system_admin":
+    if user.get("role") in ("system_admin", "general_manager"):
         return
     user_dept = user.get("department")
     group_id = user.get("permission_group_id")
@@ -78,7 +78,7 @@ async def _check_dept_scope(user: dict, target_dept: str):
 
 async def _can_manage_employees(user: dict) -> bool:
     """Check if user can manage employees via role OR group permissions."""
-    if user.get("role") in ["system_admin", "department_manager"]:
+    if user.get("role") in ["system_admin", "department_manager", "general_manager"]:
         return True
     group_id = user.get("permission_group_id")
     if not group_id:
@@ -466,8 +466,6 @@ async def update_employee(employee_id: str, employee: EmployeeUpdate, user: dict
                 u = await db.users.find_one({"id": uid}, {"_id": 0, "national_id": 1})
                 default_pin = refreshed.get("employee_number") or "0000"
                 login_info = f"رقم الهوية: {u.get('national_id', nat_id)} — الرقم السري: {default_pin}"
-        else:
-            raise HTTPException(status_code=400, detail="لا يمكن تفعيل الحساب — أضف رقم الهوية أولاً ثم عيّن المجموعة")
 
     await log_activity("employee_updated", user, update_data.get("name", existing["name"]), f"تم تحديث: {existing['name']}")
 
