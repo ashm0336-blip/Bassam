@@ -121,7 +121,7 @@ def _sidebar_items():
         icon="Shield", order=11, department="system_admin", is_secondary=True, admin_only=True)
 
     add("/activity-log", name_ar="سجل العمليات", name_en="Activity Log",
-        icon="Activity", order=10, department=None, is_secondary=False)
+        icon="Activity", order=10, department=None, is_secondary=True)
 
     return items
 
