@@ -10,4 +10,4 @@ echo "Using MongoDB Atlas"
 echo "Starting backend (serving API + static frontend)..."
 
 cd /home/runner/workspace/backend
-python3 -m uvicorn server:app --host 0.0.0.0 --port 5000 --workers 2
+python3 -m uvicorn server:app --host 0.0.0.0 --port 5000
