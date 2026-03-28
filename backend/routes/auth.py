@@ -203,6 +203,13 @@ async def login(request: Request, credentials: UserLogin):
     )
 
 
+# ─── تسجيل الخروج ──────────────────────────────────────────────
+@router.post("/auth/logout")
+async def logout(user: dict = Depends(get_current_user)):
+    await log_activity("logout", user, user.get("name"), f"تسجيل خروج — {user.get('name','')}")
+    return {"message": "تم تسجيل الخروج"}
+
+
 # ─── تغيير PIN (إجباري عند أول دخول) ──────────────────────────
 @router.post("/auth/change-pin")
 @limiter.limit("5/minute")

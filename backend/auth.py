@@ -171,13 +171,19 @@ async def require_page_permission(user: dict, href_pattern: str, require_edit: b
 
 async def log_activity(action: str, user: dict, target: str = None, details: str = None):
     try:
+        role = user.get("role")
+        if not role and user.get("permission_group_id"):
+            grp = await db.permission_groups.find_one(
+                {"id": user["permission_group_id"]}, {"_id": 0, "name_ar": 1}
+            )
+            role = grp.get("name_ar") if grp else "موظف"
         activity = {
             "id": str(uuid.uuid4()),
             "action": action,
             "user_id": user["id"],
             "user_name": user["name"],
             "user_email": user.get("email"),
-            "user_role": user.get("role"),
+            "user_role": role or "موظف",
             "department": user.get("department"),
             "target": target,
             "details": details,

@@ -258,7 +258,11 @@ export const AuthProvider = ({ children }) => {
   }, [user?.id]);
   useRealtimeRefresh(["force_logout"], handleForceLogout);
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      const t = localStorage.getItem('token');
+      if (t) await axios.post(`${API}/auth/logout`, {}, { headers: { Authorization: `Bearer ${t}` } }).catch(() => {});
+    } catch {}
     disconnectWs();
     localStorage.removeItem('token');
     try { sessionStorage.removeItem('_perms_cache'); } catch {}
