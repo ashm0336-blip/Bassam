@@ -61,21 +61,41 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [token, user?.id]);
 
+  const fetchPermissionsWithRetry = async (retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const permRes = await axios.get(`${API}/auth/my-permissions`);
+        const data = permRes.data;
+        if (data.permissions || data.page_permissions) {
+          try { sessionStorage.setItem('_perms_cache', JSON.stringify(data)); } catch {}
+          return data;
+        }
+      } catch {}
+      if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
+    try {
+      const cached = sessionStorage.getItem('_perms_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return { permissions: [], dept_permissions: {}, page_permissions: {} };
+  };
+
   const fetchUser = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       const userData = response.data;
-      let permissions = [];
-      let dept_permissions = {};
-      let page_permissions = {};
-      try {
-        const permRes = await axios.get(`${API}/auth/my-permissions`);
-        permissions = permRes.data.permissions || [];
-        dept_permissions = permRes.data.dept_permissions || {};
-        page_permissions = permRes.data.page_permissions || {};
-      } catch {}
-      const fullUser = { ...userData, permissions, dept_permissions, page_permissions };
+      const permData = await fetchPermissionsWithRetry();
+      const fullUser = {
+        ...userData,
+        permissions: permData.permissions || [],
+        dept_permissions: permData.dept_permissions || {},
+        page_permissions: permData.page_permissions || {},
+        permission_group_id: permData.permission_group_id ?? null,
+        permission_group_name: permData.permission_group_name ?? null,
+        permission_group_rank: permData.permission_group_rank ?? 1,
+      };
       prevRoleRef.current = userData.role;
+      prevGroupRef.current = permData.permission_group_name;
       setUser(fullUser);
     } catch (error) {
       console.error('Failed to fetch user:', error);
@@ -241,6 +261,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     disconnectWs();
     localStorage.removeItem('token');
+    try { sessionStorage.removeItem('_perms_cache'); } catch {}
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
