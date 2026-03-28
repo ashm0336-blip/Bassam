@@ -69,7 +69,10 @@ async def get_manager_activity_logs(
     limit: int = 50,
     user: dict = Depends(require_manager_or_above)
 ):
+    admin_ids = [a["id"] async for a in db.users.find({"role": "system_admin"}, {"_id": 0, "id": 1})]
     query = {"user_role": {"$ne": "system_admin"}}
+    if admin_ids:
+        query["user_id"] = {"$nin": admin_ids}
     role = user.get("role")
     if role == "department_manager":
         dept = user.get("department")
