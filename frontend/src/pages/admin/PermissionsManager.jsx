@@ -263,6 +263,54 @@ export default function PermissionsManager({ department: deptFilter }) {
     setCustomPerms(newPerms);
   };
 
+  const toggleCustomAll = (field) => {
+    const nonAdmin = menuItems.filter(i => i.department !== "system_admin" && !i.admin_only);
+    const groupPerms = activeGroup?.page_permissions || {};
+
+    const allSet = nonAdmin.every(i => {
+      const base = groupPerms[i.href] || { visible: false, editable: false };
+      const custom = customPerms[i.href] || {};
+      const eff = custom[field] !== undefined ? custom[field] : base[field];
+      return eff;
+    });
+
+    const newPerms = { ...customPerms };
+    nonAdmin.forEach(i => {
+      if (!newPerms[i.href]) newPerms[i.href] = {};
+      if (field === "visible") {
+        newPerms[i.href].visible = !allSet;
+        if (allSet) newPerms[i.href].editable = false;
+      } else {
+        const base = groupPerms[i.href] || { visible: false, editable: false };
+        const customV = newPerms[i.href].visible !== undefined ? newPerms[i.href].visible : base.visible;
+        if (customV) newPerms[i.href].editable = !allSet;
+      }
+    });
+    setCustomPerms(newPerms);
+  };
+
+  const toggleCustomDeptAll = (parentItem, targetState) => {
+    const groupPerms = activeGroup?.page_permissions || {};
+    const newPerms = { ...customPerms };
+    const allItems = [parentItem];
+    const children = menuItems.filter(i => i.parent_id === parentItem.id);
+    children.forEach(c => {
+      allItems.push(c);
+      menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc));
+    });
+    allItems.forEach(item => {
+      if (!newPerms[item.href]) newPerms[item.href] = {};
+      if (targetState === 'editable') {
+        newPerms[item.href] = { visible: true, editable: true };
+      } else if (targetState === 'visible') {
+        newPerms[item.href] = { visible: true, editable: false };
+      } else {
+        newPerms[item.href] = { visible: false, editable: false };
+      }
+    });
+    setCustomPerms(newPerms);
+  };
+
   const saveCustomPerms = async () => {
     if (!customPermUser) return;
     setCustomSaving(true);
@@ -1143,6 +1191,18 @@ export default function PermissionsManager({ department: deptFilter }) {
             </div>
           </DialogHeader>
 
+          <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+            <Button size="sm" variant="outline" onClick={() => toggleCustomAll("visible")} className="gap-1 text-xs h-7">
+              <Eye className="w-3 h-3" /> الكل ظاهر
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => toggleCustomAll("editable")} className="gap-1 text-xs h-7">
+              <Pencil className="w-3 h-3" /> الكل تعديل
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setCustomPerms({})} className="gap-1 text-xs h-7 text-amber-600 border-amber-300 hover:bg-amber-50">
+              <RotateCcw className="w-3 h-3" /> إعادة ضبط
+            </Button>
+          </div>
+
           <div className="flex-1 overflow-y-auto px-1" dir="rtl">
             <div className="divide-y">
               {customPermUser && getCustomDisplayItems().map(item => {
@@ -1191,6 +1251,34 @@ export default function PermissionsManager({ department: deptFilter }) {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-shrink-0 mr-2">
+                      {isTopLevel && hasChildren && (() => {
+                        const allItems = [item];
+                        const ch = menuItems.filter(i => i.parent_id === item.id);
+                        ch.forEach(c => { allItems.push(c); menuItems.filter(gc => gc.parent_id === c.id).forEach(gc => allItems.push(gc)); });
+                        const gp = activeGroup?.page_permissions || {};
+                        const allEditable = allItems.every(i => {
+                          const b = gp[i.href] || {}; const c2 = customPerms[i.href] || {};
+                          return (c2.editable !== undefined ? c2.editable : b.editable);
+                        });
+                        const someVisible = allItems.some(i => {
+                          const b = gp[i.href] || {}; const c2 = customPerms[i.href] || {};
+                          return (c2.visible !== undefined ? c2.visible : b.visible);
+                        });
+                        return (
+                          <>
+                            <button onClick={() => toggleCustomDeptAll(item, allEditable ? 'hidden' : 'editable')}
+                              className={`text-[8px] px-2 py-1 rounded-lg font-bold transition-all ${
+                                allEditable ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-600'
+                                : someVisible ? 'bg-blue-100 text-blue-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                : 'bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-700'
+                              }`}>
+                              {allEditable ? 'كامل ✓' : someVisible ? 'جزئي' : 'مخفي'}
+                            </button>
+                            <span className="w-px h-5 bg-slate-200" />
+                          </>
+                        );
+                      })()}
+
                       <button onClick={() => toggleCustomPerm(item, 'visible')}
                         className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
                           ${hasCustomVisible
