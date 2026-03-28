@@ -7,14 +7,7 @@ export CORS_ORIGINS="*"
 export SERVE_STATIC="true"
 
 echo "Using MongoDB Atlas"
+echo "Starting backend (serving API + static frontend)..."
 
-# Build frontend if not already built
-if [ ! -f /home/runner/workspace/frontend/build/index.html ]; then
-  echo "Building frontend..."
-  cd /home/runner/workspace/frontend
-  REACT_APP_BACKEND_URL="" yarn build
-fi
-
-# Start FastAPI backend on port 5000 (serves API + static frontend)
 cd /home/runner/workspace/backend
 python3 -m uvicorn server:app --host 0.0.0.0 --port 5000 --workers 2

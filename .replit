@@ -44,8 +44,8 @@ packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimageq
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "/home/runner/workspace/start_prod.sh"]
-build = ["bash", "-c", "cd /home/runner/workspace/frontend && REACT_APP_BACKEND_URL='' yarn build"]
+run = ["bash", "start_prod.sh"]
+build = ["bash", "-c", "cd frontend && REACT_APP_BACKEND_URL='' yarn build"]
 
 [userenv]
 
