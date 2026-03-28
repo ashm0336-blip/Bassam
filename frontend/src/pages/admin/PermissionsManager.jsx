@@ -221,13 +221,7 @@ export default function PermissionsManager({ department: deptFilter }) {
     const existing = member.custom_permissions || {};
     setCustomPerms(existing);
     setCustomPermUser(member);
-    const autoExp = {};
-    menuItems.forEach(item => {
-      if (!item.parent_id && menuItems.some(c => c.parent_id === item.id)) {
-        autoExp[item.id] = true;
-      }
-    });
-    setCustomExpanded(autoExp);
+    setCustomExpanded({});
   };
 
   const toggleCustomPerm = (item, field) => {
