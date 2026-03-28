@@ -305,15 +305,15 @@ async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_cur
         raise HTTPException(status_code=403, detail="صلاحيات غير كافية")
     await _check_dept_scope(user, employee.department)
 
-    # التحقق من تكرار رقم الهوية
-    if employee.national_id:
-        # تحقق من صحة التنسيق
-        if not re.match(r'^[12]\d{9}$', employee.national_id):
-            raise HTTPException(status_code=400, detail="رقم الهوية غير صحيح — يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2")
-        existing_emp = await db.employees.find_one({"national_id": employee.national_id})
-        if existing_emp:
-            # لا نكشف أي بيانات — فقط "مسجل"
-            raise HTTPException(status_code=400, detail="رقم الهوية مسجل مسبقاً في النظام")
+    # التحقق من رقم الهوية (إجباري)
+    if not re.match(r'^[12]\d{9}$', employee.national_id):
+        raise HTTPException(status_code=400, detail="رقم الهوية غير صحيح — يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2")
+    existing_emp = await db.employees.find_one({"national_id": employee.national_id})
+    if existing_emp:
+        raise HTTPException(status_code=400, detail="رقم الهوية مسجل مسبقاً في النظام")
+    # التحقق من الرقم الوظيفي (إجباري)
+    if not employee.employee_number or not employee.employee_number.strip():
+        raise HTTPException(status_code=400, detail="الرقم الوظيفي مطلوب")
 
     employee_id = str(uuid.uuid4())
     employee_doc = {
@@ -329,8 +329,7 @@ async def create_employee(employee: EmployeeCreate, user: dict = Depends(get_cur
 
     await db.employees.insert_one(employee_doc)
     await log_activity("employee_created", user, employee.name,
-        f"تم إضافة موظف: {employee.name} ({employee.department})"
-        + (" — تم إنشاء حساب تلقائي (معلق)" if user_id else " — لا رقم هوية، لا حساب")
+        f"تم إضافة موظف: {employee.name} ({employee.department}) — تم إنشاء حساب تلقائي (معلق)"
     )
     return {
         "message": "تم إضافة الموظف بنجاح",

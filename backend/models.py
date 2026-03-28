@@ -158,8 +158,8 @@ class EmployeeCreate(BaseModel):
     department: str
     location: str = ""
     shift: str = ""
-    employee_number: Optional[str] = None
-    national_id: Optional[str] = None       # رقم الهوية (10 أرقام)
+    employee_number: str
+    national_id: str                         # رقم الهوية (10 أرقام) — إجباري
     contact_phone: Optional[str] = None
     weekly_rest: Optional[str] = None
     rest_days: Optional[List[str]] = None

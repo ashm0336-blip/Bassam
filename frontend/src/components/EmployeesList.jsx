@@ -641,6 +641,9 @@ export default function EmployeesList({ department, editable: editableProp, onEm
     if (!form.name.trim()) return toast.error("الاسم مطلوب");
     if (!form.employee_number.trim()) return toast.error("الرقم الوظيفي مطلوب");
     if (!form.job_title.trim()) return toast.error("المسمى الوظيفي مطلوب");
+    if (!editEmp && !form.national_id) return toast.error("رقم الهوية مطلوب");
+    if (form.national_id && !/^[12]\d{9}$/.test(form.national_id)) return toast.error("رقم الهوية يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2");
+    if (nationalIdStatus === 'taken') return toast.error("رقم الهوية مسجل مسبقاً");
     setSaving(true);
     try {
       const payload = {
@@ -1174,7 +1177,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
             {/* National ID with live check */}
             <div>
               <Label className="text-[11px] font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500"/>رقم الهوية الوطنية
+                <ShieldCheck className="w-3 h-3 text-emerald-500"/>رقم الهوية الوطنية *
                 <span className="text-slate-400 font-normal text-[10px]">10 أرقام — لتسجيل الدخول</span>
               </Label>
               <Input value={form.national_id}
@@ -1184,6 +1187,7 @@ export default function EmployeesList({ department, editable: editableProp, onEm
                   clearTimeout(nationalIdTimerRef.current);
                   nationalIdTimerRef.current = setTimeout(() => checkNationalId(val, editEmp?.id||null), 500);
                 }}
+                required
                 className={`mt-1 h-9 font-mono tracking-widest text-center transition-colors
                   ${nationalIdStatus==='available' ? 'border-emerald-400 ring-1 ring-emerald-200' :
                     nationalIdStatus==='taken' ? 'border-red-400 ring-1 ring-red-200' :
