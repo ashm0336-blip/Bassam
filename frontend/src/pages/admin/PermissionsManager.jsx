@@ -162,13 +162,7 @@ export default function PermissionsManager({ department: deptFilter }) {
       if (!activeGroupId && deptGroups.length > 0) {
         setActiveGroupId(deptGroups[0].id);
       }
-      const autoExpand = {};
-      items.forEach(item => {
-        if (!item.parent_id && items.some(c => c.parent_id === item.id)) {
-          autoExpand[item.id] = true;
-        }
-      });
-      setExpandedItems(prev => ({ ...autoExpand, ...prev }));
+      setExpandedItems(prev => Object.keys(prev).length > 0 ? prev : {});
     } catch { toast.error("فشل جلب البيانات"); }
     finally { setLoading(false); }
   }, [activeGroupId, deptFilter]);
