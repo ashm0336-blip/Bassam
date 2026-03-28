@@ -295,6 +295,10 @@ async def delete_group(group_id: str, admin: dict = Depends(get_current_user)):
         {"permission_group_id": group_id},
         {"$set": {"permission_group_id": None}}
     )
+    await db.users.update_many(
+        {"permission_group_id": group_id},
+        {"$set": {"permission_group_id": None}}
+    )
     await log_activity("حذف مجموعة صلاحيات", admin, existing["name_ar"], f"تم حذف مجموعة: {existing['name_ar']}")
     await ws_manager.broadcast({"type": "permissions", "action": "group_changed"})
     return {"message": "تم حذف المجموعة"}
